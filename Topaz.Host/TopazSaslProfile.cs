@@ -1,4 +1,3 @@
-using System.Text;
 using Amqp;
 using Amqp.Sasl;
 using Amqp.Types;

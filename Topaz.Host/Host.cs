@@ -221,7 +221,11 @@ public class Host
                 SubscriptionControlPlane.New(_eventPipeline, _logger),
                 _logger,
                 TimeSpan.FromSeconds(30)),
-            new ExpiredDocumentsPurgeScheduler(_eventPipeline, TimeSpan.FromSeconds(60), _logger)
+            new ExpiredDocumentsPurgeScheduler(_eventPipeline, TimeSpan.FromSeconds(60), _logger),
+            new ServiceBusMessageExpiryScheduler(
+                new Service.ServiceBus.Filtering.ServiceBusRuleLoader(GlobalSettings.MainEmulatorDirectory, _logger),
+                _logger,
+                TimeSpan.FromSeconds(30)),
         };
 
         new BackgroundServiceOrchestrator(backgroundServices, _logger).StartAll(cancellationToken);
@@ -318,7 +322,7 @@ public class Host
 
         listener.RegisterRequestProcessor("$management", new ManagementProcessor(_logger));
         listener.RegisterLinkProcessor(new LinkProcessor(_logger,
-            new Service.ServiceBus.Filtering.ServiceBusRuleLoader(GlobalSettings.MainEmulatorDirectory)));
+            new Service.ServiceBus.Filtering.ServiceBusRuleLoader(GlobalSettings.MainEmulatorDirectory, _logger)));
 
         // Frame traces should be enabled only if LogLevel is set to Debug
         if (_logger.LogLevel == LogLevel.Debug)
@@ -482,7 +486,7 @@ public class Host
                             context.Response.StatusCode = (int)response.StatusCode;
 
                             // Copy upstream headers before writing the body — once WriteAsync
-                            // is called the response is flushed and headers can no longer be set.
+                            // is called, the response is flushed and headers can no longer be set.
                             // Skip Transfer-Encoding: HttpClient already decoded chunked bodies
                             // into a plain byte array via ReadAsByteArrayAsync.
                             foreach (var header in response.Headers)

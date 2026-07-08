@@ -444,25 +444,6 @@ TODO: Azure Disks: Full azcopy-compatible disk streaming via SAS URL
 -->
 
 <!--
-TODO: Service Bus: Dead letter queue — DeadLetteringOnMessageExpiration
-  Automatically move messages to the dead-letter sub-queue when their TTL expires.
-  When a message's TTL (TimeToLive on the message, or DefaultMessageTimeToLive on the
-  entity) elapses while the message is sitting in the queue, it should be routed to
-  <entity>/$DeadLetterQueue with DeadLetterReason="TTLExpiredException" instead of being
-  silently discarded.
-  Prerequisite: dead-letter queue support (v1.7-beta).
-  Required changes:
-  - Add a background scheduler (ITopazBackgroundService) that periodically scans
-    SubscriptionMessageStore for messages whose x-opt-enqueued-time-utc + TTL < UtcNow.
-  - Expired messages are removed from the main queue and enqueued in
-    <entity>/$deadletterqueue with the appropriate dead-letter annotations.
-  - Respect DeadLetteringOnMessageExpiration=false (default) per entity — when false,
-    expired messages are simply discarded rather than dead-lettered.
-  milestone: v1.9-preview
-  labels: enhancement, service-bus
--->
-
-<!--
 TODO: Service Bus: Dead letter queue — ForwardDeadLetteredMessagesTo
   When a queue or topic subscription has ForwardDeadLetteredMessagesTo set to another
   entity name, automatically forward messages that land in the DLQ to the target entity

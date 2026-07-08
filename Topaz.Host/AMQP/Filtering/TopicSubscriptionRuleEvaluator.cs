@@ -1,5 +1,4 @@
 using Amqp;
-using Amqp.Types;
 using Topaz.Service.ServiceBus.Models;
 
 namespace Topaz.Host.AMQP.Filtering;

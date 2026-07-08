@@ -235,6 +235,9 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger, Ser
         // Reset/create MessageAnnotations — the Event Hub SDK reads system properties from here.
         message.MessageAnnotations = new MessageAnnotations();
 
+        // Stamp the enqueue time so TTL expiry schedulers can compute message age.
+        message.MessageAnnotations[new Symbol("x-opt-enqueued-time-utc")] = DateTime.UtcNow;
+
         // Ensure every message has a MessageId. The Node.js @azure/service-bus SDK requires
         // messageId to track lock renewal; without it, the receiver throws
         // "Failed to stop auto lock renewal - no message ID".

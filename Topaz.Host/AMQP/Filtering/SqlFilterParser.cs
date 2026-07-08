@@ -1,6 +1,4 @@
 using Amqp;
-using Amqp.Framing;
-using Amqp.Types;
 
 namespace Topaz.Host.AMQP.Filtering;
 

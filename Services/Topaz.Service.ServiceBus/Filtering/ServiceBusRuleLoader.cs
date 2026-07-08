@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Xml;
 using Topaz.Service.ServiceBus.Models;
 using Topaz.Shared;
 
@@ -16,10 +17,12 @@ namespace Topaz.Service.ServiceBus.Filtering;
 public sealed class ServiceBusRuleLoader
 {
     private readonly string _baseEmulatorPath;
+    private readonly ITopazLogger? _logger;
 
-    public ServiceBusRuleLoader(string baseEmulatorPath)
+    public ServiceBusRuleLoader(string baseEmulatorPath, ITopazLogger? logger = null)
     {
         _baseEmulatorPath = baseEmulatorPath;
+        _logger = logger;
     }
 
     /// <summary>
@@ -179,9 +182,115 @@ public sealed class ServiceBusRuleLoader
 
             return defaultMaxDeliveryCount;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger?.LogDebug(nameof(ServiceBusRuleLoader), nameof(GetMaxDeliveryCount),
+                "Could not read MaxDeliveryCount for '{0}': {1}", entityAddress, ex.Message);
             return defaultMaxDeliveryCount;
+        }
+    }
+
+    /// <summary>
+    /// Returns the <c>DefaultMessageTimeToLive</c> configured for the given entity address.
+    /// Returns <see cref="TimeSpan.MaxValue"/> when the entity cannot be found or has no explicit TTL.
+    /// </summary>
+    public TimeSpan GetDefaultMessageTimeToLive(string entityAddress)
+    {
+        // Strip DLQ suffix so callers can pass the original entity address.
+        var address = entityAddress;
+        if (address.EndsWith("/$deadletterqueue", StringComparison.OrdinalIgnoreCase))
+            address = address[..^"/$deadletterqueue".Length];
+
+        try
+        {
+            var subscriptionsIdx = address.IndexOf("/subscriptions/", StringComparison.OrdinalIgnoreCase);
+            if (subscriptionsIdx > 0)
+            {
+                var topicName = address[..subscriptionsIdx];
+                var subscriptionName = address[(subscriptionsIdx + "/subscriptions/".Length)..];
+
+                // Subscriptions inherit DefaultMessageTimeToLive from their parent topic.
+                foreach (var topicDir in EnumerateTopicDirectories(topicName))
+                {
+                    var topicMetadata = Path.Combine(topicDir, "metadata.json");
+                    if (!File.Exists(topicMetadata)) continue;
+
+                    var resource = JsonSerializer.Deserialize<ServiceBusTopicResource>(
+                        File.ReadAllText(topicMetadata), GlobalSettings.JsonOptions);
+                    if (resource?.Properties?.DefaultMessageTimeToLive is { } raw)
+                        return XmlConvert.ToTimeSpan(raw);
+                }
+                return TimeSpan.MaxValue;
+            }
+
+            foreach (var queueDir in EnumerateQueueDirectories(address))
+            {
+                var metadataFile = Path.Combine(queueDir, "metadata.json");
+                if (!File.Exists(metadataFile)) continue;
+
+                var resource = JsonSerializer.Deserialize<ServiceBusQueueResource>(
+                    File.ReadAllText(metadataFile), GlobalSettings.JsonOptions);
+                if (resource?.Properties?.DefaultMessageTimeToLive is { } raw)
+                    return XmlConvert.ToTimeSpan(raw);
+            }
+            return TimeSpan.MaxValue;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(nameof(ServiceBusRuleLoader), nameof(GetDefaultMessageTimeToLive),
+                "Could not read DefaultMessageTimeToLive for '{0}': {1}", entityAddress, ex.Message);
+            return TimeSpan.MaxValue;
+        }
+    }
+
+    /// <summary>
+    /// Returns the <c>DeadLetteringOnMessageExpiration</c> flag for the given entity address.
+    /// Returns <c>false</c> when the entity cannot be found.
+    /// </summary>
+    public bool GetDeadLetteringOnMessageExpiration(string entityAddress)
+    {
+        var address = entityAddress;
+        if (address.EndsWith("/$deadletterqueue", StringComparison.OrdinalIgnoreCase))
+            address = address[..^"/$deadletterqueue".Length];
+
+        try
+        {
+            var subscriptionsIdx = address.IndexOf("/subscriptions/", StringComparison.OrdinalIgnoreCase);
+            if (subscriptionsIdx > 0)
+            {
+                var topicName = address[..subscriptionsIdx];
+                var subscriptionName = address[(subscriptionsIdx + "/subscriptions/".Length)..];
+
+                foreach (var topicDir in EnumerateTopicDirectories(topicName))
+                {
+                    var metadataFile = Path.Combine(topicDir, "subscriptions", subscriptionName, "metadata.json");
+                    if (!File.Exists(metadataFile)) continue;
+
+                    var resource = JsonSerializer.Deserialize<ServiceBusSubscriptionResource>(
+                        File.ReadAllText(metadataFile), GlobalSettings.JsonOptions);
+                    if (resource?.Properties?.DeadLetteringOnMessageExpiration is { } flag)
+                        return flag;
+                }
+                return false;
+            }
+
+            foreach (var queueDir in EnumerateQueueDirectories(address))
+            {
+                var metadataFile = Path.Combine(queueDir, "metadata.json");
+                if (!File.Exists(metadataFile)) continue;
+
+                var resource = JsonSerializer.Deserialize<ServiceBusQueueResource>(
+                    File.ReadAllText(metadataFile), GlobalSettings.JsonOptions);
+                if (resource?.Properties?.DeadLetteringOnMessageExpiration is { } flag)
+                    return flag;
+            }
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(nameof(ServiceBusRuleLoader), nameof(GetDeadLetteringOnMessageExpiration),
+                "Could not read DeadLetteringOnMessageExpiration for '{0}': {1}", entityAddress, ex.Message);
+            return false;
         }
     }
 
@@ -256,8 +365,10 @@ public sealed class ServiceBusRuleLoader
 
             return false;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger?.LogDebug(nameof(ServiceBusRuleLoader), nameof(LoadRequiresSessionFromDisk),
+                "Could not read RequiresSession for '{0}': {1}", normalisedAddress, ex.Message);
             return false;
         }
     }

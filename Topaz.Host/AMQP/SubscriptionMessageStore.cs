@@ -66,6 +66,35 @@ internal static class SubscriptionMessageStore
     /// <summary>Returns the next global message offset (thread-safe, no lock required).</summary>
     public static long NextOffset() => Interlocked.Increment(ref _nextOffset) - 1;
 
+    /// <summary>Returns a snapshot of all normalized entity addresses currently in the store.</summary>
+    public static IReadOnlyCollection<string> GetAllAddresses() => [.. _queues.Keys];
+
+    /// <summary>
+    /// Drains the queue at <paramref name="address"/>, passes each message through
+    /// <paramref name="isExpired"/>, re-enqueues non-expired messages in their original
+    /// order, and outputs the expired ones in <paramref name="removed"/>.
+    /// Must be called while holding <see cref="OutgoingLinkEndpoint.DeliveryLock"/>.
+    /// </summary>
+    public static void RemoveExpiredMessages(string address, Func<Message, bool> isExpired, out List<Message> removed)
+    {
+        removed = [];
+        var key = Normalize(address);
+        if (!_queues.TryGetValue(key, out var q) || q.Count == 0)
+            return;
+
+        var keep = new List<Message>(q.Count);
+        while (q.Count > 0)
+        {
+            var msg = q.Dequeue();
+            if (isExpired(msg))
+                removed.Add(msg);
+            else
+                keep.Add(msg);
+        }
+        foreach (var msg in keep)
+            q.Enqueue(msg);
+    }
+
     /// <summary>Normalizes an AMQP entity address to a stable dictionary key.</summary>
     public static string Normalize(string address) => address.Trim('/').ToLowerInvariant();
 }
