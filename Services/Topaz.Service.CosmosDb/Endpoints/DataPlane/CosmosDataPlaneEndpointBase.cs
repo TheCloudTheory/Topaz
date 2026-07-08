@@ -4,7 +4,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.CosmosDb.Endpoints.DataPlane;
@@ -27,10 +29,12 @@ namespace Topaz.Service.CosmosDb.Endpoints.DataPlane;
 /// <see cref="IEndpointDefinition.GetResponse"/> and return immediately when it
 /// returns <c>false</c> (the 401 response has already been written).
 /// </summary>
-internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane, ITopazLogger logger)
+internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane, Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private static readonly TimeSpan ReplayWindow = TimeSpan.FromMinutes(15);
+    
+    private readonly CosmosDbDataPlaneAuthorizationChecker _bearerChecker = new(eventPipeline, logger);
 
     public abstract string[] Endpoints { get; }
     public abstract string[] Permissions { get; }
@@ -53,10 +57,20 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
     public abstract void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options);
 
     /// <summary>
+    /// Convenience overload: resolves the subscription from the request host and delegates to
+    /// <see cref="IsRequestAuthorized(HttpContext,SubscriptionIdentifier,string[],HttpResponseMessage)"/>.
+    /// </summary>
+    protected bool IsRequestAuthorized(HttpContext context, HttpResponseMessage response)
+    {
+        var ctx = dataPlane.ResolveAccountContext(context);
+        return IsRequestAuthorized(context, ctx?.Sub ?? SubscriptionIdentifier.From(string.Empty), Permissions, response);
+    }
+
+    /// <summary>
     /// Validates the master-key HMAC-SHA256 Authorization header for the incoming request.
     /// Writes a 401 JSON response and returns <c>false</c> on any auth failure.
     /// </summary>
-    protected bool IsRequestAuthorized(HttpContext context, HttpResponseMessage response)
+    protected bool IsRequestAuthorized(HttpContext context, SubscriptionIdentifier subscriptionIdentifier, string[] requiredPermissions, HttpResponseMessage response)
     {
         var authHeader = context.Request.Headers["Authorization"].ToString();
         if (string.IsNullOrEmpty(authHeader))
@@ -92,7 +106,10 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
             return false;
         }
 
-        if (account.Properties.DisableLocalAuth)
+        var parts = authHeader.Split(' ', 2);
+        var scheme = parts[0];
+
+        if (account.Properties.DisableLocalAuth && scheme != "Bearer")
         {
             logger.LogDebug(nameof(CosmosDataPlaneEndpointBase), nameof(IsRequestAuthorized),
                 "Local authentication is disabled for account '{0}'", account.Name);
@@ -101,6 +118,14 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
             return false;
         }
 
+        if(scheme == "Bearer")
+        {
+            logger.LogDebug(nameof(CosmosDataPlaneEndpointBase), nameof(IsRequestAuthorized),
+                "Checking bearer authentication for '{0}'", account.Name);
+
+            return _bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, authHeader);
+        }
+        
         if (TryVerifySignature(account.Properties.PrimaryMasterKey, payload, sig, logger))
             return true;
 

@@ -11,10 +11,10 @@ internal sealed class GetDocumentEndpoint : CosmosDataPlaneEndpointBase
     private readonly CosmosDbDataPlane _dataPlane;
 
     public GetDocumentEndpoint(Pipeline eventPipeline, ITopazLogger logger)
-        : this(new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger), logger) { }
+        : this(new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger), eventPipeline, logger) { }
 
-    private GetDocumentEndpoint(CosmosDbDataPlane dataPlane, ITopazLogger logger)
-        : base(dataPlane, logger)
+    private GetDocumentEndpoint(CosmosDbDataPlane dataPlane, Pipeline eventPipeline, ITopazLogger logger)
+        : base(dataPlane, eventPipeline, logger)
     {
         _dataPlane = dataPlane;
     }

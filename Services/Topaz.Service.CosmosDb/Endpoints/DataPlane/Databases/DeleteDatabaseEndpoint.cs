@@ -11,10 +11,10 @@ internal sealed class DeleteDatabaseEndpoint : CosmosDataPlaneEndpointBase
     private readonly CosmosDbDataPlane _dataPlane;
 
     public DeleteDatabaseEndpoint(Pipeline eventPipeline, ITopazLogger logger)
-        : this(new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger), logger) { }
+        : this(new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger), eventPipeline, logger) { }
 
-    private DeleteDatabaseEndpoint(CosmosDbDataPlane dataPlane, ITopazLogger logger)
-        : base(dataPlane, logger)
+    private DeleteDatabaseEndpoint(CosmosDbDataPlane dataPlane, Pipeline eventPipeline, ITopazLogger logger)
+        : base(dataPlane, eventPipeline, logger)
     {
         _dataPlane = dataPlane;
     }

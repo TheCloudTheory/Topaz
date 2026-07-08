@@ -15,10 +15,10 @@ internal sealed class CreateDocumentEndpoint : CosmosDataPlaneEndpointBase
     private readonly ITopazLogger _logger;
 
     public CreateDocumentEndpoint(Pipeline eventPipeline, ITopazLogger logger)
-        : this(new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger), logger) { }
+        : this(new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger), eventPipeline, logger) { }
 
-    private CreateDocumentEndpoint(CosmosDbDataPlane dataPlane, ITopazLogger logger)
-        : base(dataPlane, logger)
+    private CreateDocumentEndpoint(CosmosDbDataPlane dataPlane, Pipeline eventPipeline, ITopazLogger logger)
+        : base(dataPlane, eventPipeline, logger)
     {
         _dataPlane = dataPlane;
         _logger = logger;

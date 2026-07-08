@@ -16,10 +16,10 @@ internal sealed class GetPartitionKeyRangesEndpoint : CosmosDataPlaneEndpointBas
     private readonly CosmosDbDataPlane _dataPlane;
 
     public GetPartitionKeyRangesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
-        : this(new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger), logger) { }
+        : this(new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger), eventPipeline, logger) { }
 
-    private GetPartitionKeyRangesEndpoint(CosmosDbDataPlane dataPlane, ITopazLogger logger)
-        : base(dataPlane, logger)
+    private GetPartitionKeyRangesEndpoint(CosmosDbDataPlane dataPlane, Pipeline eventPipeline, ITopazLogger logger)
+        : base(dataPlane, eventPipeline, logger)
     {
         _dataPlane = dataPlane;
     }
