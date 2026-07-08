@@ -1,14 +1,15 @@
 using Azure;
+using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Authorization;
 using Azure.ResourceManager.Authorization.Models;
 using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.CosmosDB.Models;
+using Azure.ResourceManager.Resources;
 using Microsoft.Azure.Cosmos;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
-using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -67,7 +68,8 @@ public class CosmosDbDataPlaneRbacTests
 
         await GrantRoleAtAccountScope(accountName, principalId,
             "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/write",
-            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/read");
+            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/read",
+            "Microsoft.DocumentDB/databaseAccounts/readMetadata");
 
         using var client = CreateBearerClient(endpoint, principalId);
 
@@ -87,7 +89,8 @@ public class CosmosDbDataPlaneRbacTests
 
         // Grant only on account A
         await GrantRoleAtAccountScope(accountNameA, principalId,
-            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/write");
+            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/write",
+            "Microsoft.DocumentDB/databaseAccounts/readMetadata");
 
         using var clientA = CreateBearerClient(endpointA, principalId);
         using var clientB = CreateBearerClient(endpointB, principalId);
@@ -110,7 +113,8 @@ public class CosmosDbDataPlaneRbacTests
 
         await GrantRoleAtAccountScope(accountName, principalId,
             "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/write",
-            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/write");
+            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/write",
+            "Microsoft.DocumentDB/databaseAccounts/readMetadata");
 
         using var client = CreateBearerClient(endpoint, principalId);
         var db = await client.CreateDatabaseAsync("acct-coll-db");
@@ -134,10 +138,13 @@ public class CosmosDbDataPlaneRbacTests
         await adminClient.CreateDatabaseAsync("db-allowed");
         await adminClient.CreateDatabaseAsync("db-denied");
 
-        // Grant principal access only to db-allowed
+        // Grant readMetadata at account scope (required for SDK discovery) + data access on db-allowed.
+        await GrantRoleAtAccountScope(accountName, principalId,
+            "Microsoft.DocumentDB/databaseAccounts/readMetadata");
         await GrantRoleAtDatabaseScope(accountName, "db-allowed", principalId,
             "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/write",
-            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/read");
+            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/read",
+            "Microsoft.DocumentDB/databaseAccounts/readMetadata");
 
         using var client = CreateBearerClient(endpoint, principalId);
 
@@ -163,10 +170,13 @@ public class CosmosDbDataPlaneRbacTests
         using var adminClient = CreateMasterKeyClient(endpoint, primaryKey);
         var db = await adminClient.CreateDatabaseAsync("docs-db");
         await db.Database.CreateContainerAsync(new ContainerProperties("docs-coll", "/pk"));
-
+        await GrantRoleAtAccountScope(accountName, principalId,
+            "Microsoft.DocumentDB/databaseAccounts/readMetadata");        
         await GrantRoleAtDatabaseScope(accountName, "docs-db", principalId,
             "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/write",
-            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/read");
+            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/read",
+            "Microsoft.DocumentDB/databaseAccounts/readMetadata",
+            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/read");
 
         using var client = CreateBearerClient(endpoint, principalId);
         var container = client.GetDatabase("docs-db").GetContainer("docs-coll");
@@ -195,10 +205,13 @@ public class CosmosDbDataPlaneRbacTests
         await db.Database.CreateContainerAsync(new ContainerProperties("coll-allowed", "/pk"));
         await db.Database.CreateContainerAsync(new ContainerProperties("coll-denied", "/pk"));
 
-        // Grant only on coll-allowed
+        // Grant readMetadata at account scope + data access scoped to coll-allowed only.
+        await GrantRoleAtAccountScope(accountName, principalId,
+            "Microsoft.DocumentDB/databaseAccounts/readMetadata");
         await GrantRoleAtContainerScope(accountName, "coll-scope-db", "coll-allowed", principalId,
             "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/write",
-            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/read");
+            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/read",
+            "Microsoft.DocumentDB/databaseAccounts/readMetadata");
 
         using var client = CreateBearerClient(endpoint, principalId);
 
@@ -227,7 +240,7 @@ public class CosmosDbDataPlaneRbacTests
         var db = await adminClient.CreateDatabaseAsync("no-role-db");
         await db.Database.CreateContainerAsync(new ContainerProperties("no-role-coll", "/pk"));
 
-        // No role assignment at all
+        // No role assignment at all — not even readMetadata, so SDK discovery also fails.
         using var client = CreateBearerClient(endpoint, principalId);
 
         var ex = Assert.ThrowsAsync<CosmosException>(async () =>
@@ -273,7 +286,7 @@ public class CosmosDbDataPlaneRbacTests
         var roleDefId = await CreateRoleDefinition(subscription, actions);
         var account = await (await subscription.GetResourceGroupAsync(ResourceGroupName))
             .Value.GetCosmosDBAccountAsync(accountName);
-        await account.Value.GetAuthorizationRoleAssignments()
+        await account.Value.GetRoleAssignments()
             .CreateOrUpdateAsync(WaitUntil.Completed,
                 new ResourceIdentifier(Guid.NewGuid().ToString()),
                 new RoleAssignmentCreateOrUpdateContent(roleDefId, principalId));
@@ -289,7 +302,7 @@ public class CosmosDbDataPlaneRbacTests
         var dbScope = new ResourceIdentifier(
             $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}" +
             $"/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/sqlDatabases/{databaseName}");
-        var collection = armClient.GetAuthorizationRoleAssignments(dbScope);
+        var collection = armClient.GetRoleAssignments(dbScope);
         await collection.CreateOrUpdateAsync(WaitUntil.Completed,
             new ResourceIdentifier(Guid.NewGuid().ToString()),
             new RoleAssignmentCreateOrUpdateContent(roleDefId, principalId));
@@ -306,7 +319,7 @@ public class CosmosDbDataPlaneRbacTests
             $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}" +
             $"/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}" +
             $"/sqlDatabases/{databaseName}/containers/{containerName}");
-        var collection = armClient.GetAuthorizationRoleAssignments(containerScope);
+        var collection = armClient.GetRoleAssignments(containerScope);
         await collection.CreateOrUpdateAsync(WaitUntil.Completed,
             new ResourceIdentifier(Guid.NewGuid().ToString()),
             new RoleAssignmentCreateOrUpdateContent(roleDefId, principalId));
