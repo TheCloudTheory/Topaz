@@ -52,8 +52,8 @@ There is no restart cycle and no static configuration file.
 | **AMQP/TLS** | ✅ | ✅ |
 | **AMQP WebSockets** | ❌ | ❌ |
 | **JMS protocol** | ❌ | ❌ |
-| **Dead letter queues** | ❌ (planned) | ✅ |
-| **Message sessions** | ❌ (planned) | ✅ |
+| **Dead letter queues** | ⚠️ Partial — auto-DLQ on `maxDeliveryCount` exceeded and `DeadLetteringOnMessageExpiration`; explicit `DeadLetter()` receiver API planned for v1.12 | ✅ |
+| **Message sessions** | ✅ | ✅ |
 | **Topic filters and rules** (correlation + SQL) | ✅ | ✅ |
 | **Partitioned entities** | ❌ | ❌ |
 | **Entity definitions persist across restarts** | ✅ | ❌ |
@@ -131,11 +131,11 @@ AMQP messaging (send and receive) works across all languages in both tools.
 
 For applications that rely on advanced messaging features, the current gaps in Topaz's Service Bus implementation are worth reviewing before switching:
 
-- **Dead letter queues**: not yet implemented
-- **Message sessions**: not yet implemented
-- **Authorization rules and SAS keys per entity**: not yet implemented
+- **Explicit dead-letter receiver API**: calling `receiver.DeadLetterAsync(reason, description)` and the full `/$DeadLetterQueue` sub-queue receiver surface is planned for v1.12. Auto-dead-lettering on `maxDeliveryCount` exceeded and on message TTL expiry (`DeadLetteringOnMessageExpiration=true`) already works.
+- **Scheduled message delivery**: `ScheduledEnqueueTimeUtc` and `CancelScheduledMessage` are planned for v1.12.
+- **Message deferral**: `Defer()` / `ReceiveDeferred()` are planned for v1.12.
 
-These features are planned for v1.7. The [roadmap](/roadmap) tracks the current status. If your application depends on any of these, the Azure Service Bus Emulator may be the better choice until they are available.
+The [roadmap](/roadmap) tracks the current status.
 
 ## Beyond Service Bus
 
@@ -163,7 +163,7 @@ If your application uses Service Bus alongside any other Azure service, running 
 
 The Azure Service Bus Emulator is the right choice if:
 
-- Your application uses dead letter queues or message sessions
+- Your application relies on the explicit `DeadLetter()` receiver API (full DLQ surface) or message deferral
 - You are working exclusively in .NET and do not need ARM-level tooling
 - You only need a single namespace and static entity configuration is sufficient
 - You have existing CI/CD pipelines built around the emulator's Docker setup and the migration cost is not worth it
@@ -185,4 +185,4 @@ Topaz implements the AMQP 1.0 messaging protocol. For send and receive operation
 
 For entity management, replace config.json-based setup with ARM API calls — either through `az servicebus` or Terraform. Topaz does not have a `config.json` equivalent; all entities are created through the standard ARM control plane.
 
-Before migrating, verify that your application does not rely on dead letter queues or message sessions — these are planned for v1.7 and not yet available. See the [roadmap](/roadmap) for the full list.
+Before migrating, verify that your application does not rely on the explicit `DeadLetter()` receiver API, scheduled messages, or message deferral — these are planned for v1.12. Auto-dead-lettering on max delivery count and TTL expiry is already supported. See the [roadmap](/roadmap) for the full list.
