@@ -8,6 +8,8 @@
   <img src="./website/static/img/demos/start-emulator.gif" alt="Topaz emulator demo" />
 </div>
 
+<br />
+
 ```bash
 # macOS
 brew tap thecloudtheory/topaz && brew install topaz && topaz-host
