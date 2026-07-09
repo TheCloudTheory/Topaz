@@ -20,7 +20,7 @@ const INSTALL_TABS = [
   },
   {
     label: 'Docker',
-    command: 'docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-host',
+    command: 'docker run -p 8899:8899 thecloudtheory/topaz-host',
   },
 ];
 
