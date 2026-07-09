@@ -145,40 +145,6 @@ TODO: Application Insights: Basic query API
 ### Log Analytics — initial control plane and ingestion
 
 <!--
-TODO: Log Analytics: New service project scaffold
-  Create Topaz.Service.LogAnalytics following existing service conventions:
-  - WorkspaceResourceProperties + WorkspaceResource (ArmResource<T>) capturing:
-    sku (PerGB2018/Free/CapacityReservation), retentionInDays, workspaceId (GUID),
-    customerId (same GUID, used for querying), provisioningState (always Succeeded),
-    publicNetworkAccessForIngestion, publicNetworkAccessForQuery.
-  - WorkspaceResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
-  - LogAnalyticsServiceControlPlane implementing IControlPlane with a working Deploy().
-  - IServiceDefinition registration and wiring in Topaz.Host.
-  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
-    case "Microsoft.OperationalInsights/workspaces": entry in
-    TemplateDeploymentOrchestrator.RouteDeployment().
-  See: https://learn.microsoft.com/en-us/rest/api/loganalytics/
-  milestone: v1.9-preview
-  labels: enhancement, log-analytics, good first issue
--->
-
-<!--
-TODO: Log Analytics: Workspace control plane endpoints
-  Implement the ARM-level workspace resource surface
-  (Microsoft.OperationalInsights/workspaces):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{name}  – delete
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{name}  – update (tags, retentionInDays, sku)
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.OperationalInsights/workspaces                              – list all
-  The workspaceId and customerId fields are generated as GUIDs on first creation and
-  persist across updates.
-  milestone: v1.9-preview
-  labels: enhancement, log-analytics, good first issue
--->
-
-<!--
 TODO: Log Analytics: Data Collection (Logs Ingestion API)
   Implement the Logs Ingestion API endpoint (Azure Monitor Data Collection):
   - POST https://{workspaceId}.ods.opinsights.topaz.local.dev/api/logs?api-version=2016-04-01
