@@ -40,6 +40,7 @@ Azure Disk|🚧|🚧
 Azure Load Balancer|✅|N/A
 Public IP Address|✅|N/A
 Azure App Configuration|🚧|🚧
+Log Analytics|🚧|🚧
 
 ✅ - fully supported (stable)
 

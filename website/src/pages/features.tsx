@@ -43,6 +43,7 @@ const SERVICES: Service[] = [
   { abbr: 'LB',   bg: '#1B63EB', name: 'Azure Load Balancer',      description: 'Load balancer control plane', preview: true },
   { abbr: 'PIP',  bg: '#1B63EB', name: 'Public IP Address',         description: 'Public IP address resources', preview: true },
   { abbr: 'AC',   bg: '#E8751A', name: 'Azure App Configuration',  description: 'Key-value store, feature flags, and access key management', preview: true },
+  { abbr: 'LA',   bg: '#FF9900', name: 'Azure Log Analytics',      description: 'Log Analytics workspace and data collection', preview: true },
 ];
 
 const TOOLING: Service[] = [
