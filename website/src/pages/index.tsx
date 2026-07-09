@@ -43,6 +43,7 @@ const SERVICES = [
   {name: 'Managed Identity', sub: 'System & User-Assigned'},
   {name: 'Microsoft Entra ID', sub: 'Tenants · Identity'},
   {name: 'Azure RBAC', sub: 'Roles · Assignments'},
+  {name: 'Azure Log Analytics', sub: 'Workspaces · Data Collection'},
 ];
 
 const INTEGRATIONS = [
@@ -53,6 +54,7 @@ const INTEGRATIONS = [
   'Python SDK',
   'GitHub Actions',
   'Docker Compose',
+  'VS Code',
 ];
 
 function HomepageHeader() {
