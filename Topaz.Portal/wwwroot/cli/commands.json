@@ -4305,6 +4305,171 @@
     ]
   },
   {
+    "name": "loganalytics create",
+    "group": "log-analytics",
+    "description": "Creates or updates an Azure Log Analytics workspace.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Workspace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Location.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--sku",
+        "description": "(Optional) SKU name (e.g. PerGB2018, Free, CapacityReservation).",
+        "required": false
+      },
+      {
+        "names": "--retention-in-days",
+        "description": "(Optional) Retention in days.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new Log Analytics workspace",
+        "command": "topaz loganalytics create --subscription-id 36a28ebb-9370-46d8-981c-84efe0204800 \\\n    --name \u0022my-workspace\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "loganalytics delete",
+    "group": "log-analytics",
+    "description": "Deletes an Azure Log Analytics workspace.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Workspace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a Log Analytics workspace",
+        "command": "topaz loganalytics delete --subscription-id 36a28ebb-9370-46d8-981c-84efe0204800 \\\n    --name \u0022my-workspace\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "loganalytics list",
+    "group": "log-analytics",
+    "description": "Lists Azure Log Analytics workspaces in a subscription or resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Optional) Filter by resource group name.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists Log Analytics workspaces in a resource group",
+        "command": "topaz loganalytics list --subscription-id 36a28ebb-9370-46d8-981c-84efe0204800 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "loganalytics show",
+    "group": "log-analytics",
+    "description": "Gets an Azure Log Analytics workspace.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Workspace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a Log Analytics workspace",
+        "command": "topaz loganalytics show --subscription-id 36a28ebb-9370-46d8-981c-84efe0204800 \\\n    --name \u0022my-workspace\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "loganalytics update",
+    "group": "log-analytics",
+    "description": "Updates an Azure Log Analytics workspace (tags, SKU, retentionInDays).",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Workspace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--tags",
+        "description": "(Optional) Tags in key=value format.",
+        "required": false
+      },
+      {
+        "names": "--sku",
+        "description": "(Optional) SKU name (e.g. PerGB2018, Free, CapacityReservation).",
+        "required": false
+      },
+      {
+        "names": "--retention-in-days",
+        "description": "(Optional) Retention in days.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Updates a Log Analytics workspace\u0027s retention",
+        "command": "topaz loganalytics update --subscription-id 36a28ebb-9370-46d8-981c-84efe0204800 \\\n    --name \u0022my-workspace\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --retention-in-days 60"
+      }
+    ]
+  },
+  {
     "name": "management-group create",
     "group": "management-group",
     "description": "Creates or updates a management group.",
