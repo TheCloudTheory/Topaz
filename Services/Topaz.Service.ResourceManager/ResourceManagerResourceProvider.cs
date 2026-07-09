@@ -22,6 +22,7 @@ public sealed class ResourceManagerResourceProvider(ITopazLogger logger) : Resou
         "Microsoft.Compute",
         "Microsoft.DocumentDB",
         "Microsoft.AppConfiguration",
+        "Microsoft.OperationalInsights",
     };
 
     private static string GetRegistrationsFilePath(Guid subscriptionId) =>

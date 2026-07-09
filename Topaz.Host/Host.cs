@@ -33,6 +33,7 @@ using Topaz.Service.Storage.Services;
 using Topaz.Service.Subscription;
 using Topaz.Service.Disk;
 using Topaz.Service.AppConfiguration;
+using Topaz.Service.LogAnalytics;
 using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
 using Topaz.Service.LoadBalancer;
@@ -120,6 +121,7 @@ public class Host
             new VirtualMachineService(_eventPipeline, _logger),
             new DiskService(_eventPipeline, _logger),
             new AppConfigurationService(_eventPipeline, _logger),
+            new LogAnalyticsService(_eventPipeline, _logger),
             new LoadBalancerService(_eventPipeline, _logger),
             new ManagedIdentityService(_eventPipeline, _logger),
             new ManagementGroupService(_eventPipeline, _logger),

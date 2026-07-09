@@ -14,3 +14,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Topaz.Service.Disk")]
 [assembly: InternalsVisibleTo("Topaz.Service.LoadBalancer")]
 [assembly: InternalsVisibleTo("Topaz.Service.AppConfiguration")]
+[assembly: InternalsVisibleTo("Topaz.Service.LogAnalytics")]
