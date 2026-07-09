@@ -691,3 +691,23 @@ resource "azurerm_app_configuration" "appconfig" {
 output "appconfig_name"     { value = azurerm_app_configuration.appconfig.name }
 output "appconfig_endpoint" { value = azurerm_app_configuration.appconfig.endpoint }
 output "appconfig_sku"      { value = azurerm_app_configuration.appconfig.sku }
+
+# ── Log Analytics ─────────────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "loganalytics_rg" {
+  name     = "tf-rm-loganalytics-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_log_analytics_workspace" "loganalytics" {
+  name                = "tf-rm-loganalytics"
+  resource_group_name = azurerm_resource_group.loganalytics_rg.name
+  location            = azurerm_resource_group.loganalytics_rg.location
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
+output "loganalytics_name"             { value = azurerm_log_analytics_workspace.loganalytics.name }
+output "loganalytics_workspace_id"     { value = azurerm_log_analytics_workspace.loganalytics.workspace_id }
+output "loganalytics_sku"              { value = azurerm_log_analytics_workspace.loganalytics.sku }
+output "loganalytics_retention_days"   { value = azurerm_log_analytics_workspace.loganalytics.retention_in_days }

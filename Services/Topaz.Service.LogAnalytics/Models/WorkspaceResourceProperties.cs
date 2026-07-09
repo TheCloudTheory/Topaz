@@ -9,6 +9,11 @@ public sealed class WorkspaceSku
     public string Name { get; set; } = "PerGB2018";
 }
 
+public sealed class WorkspaceFeatures
+{
+    public bool EnableLogAccessUsingOnlyResourcePermissions { get; set; } = true;
+}
+
 public sealed class WorkspaceResourceProperties
 {
     public WorkspaceSku? Sku { get; set; }
@@ -25,6 +30,8 @@ public sealed class WorkspaceResourceProperties
 
     public string PublicNetworkAccessForQuery { get; set; } = "Enabled";
 
+    public WorkspaceFeatures Features { get; set; } = new();
+
     public static WorkspaceResourceProperties FromRequest(WorkspaceResourceProperties? source)
     {
         var workspaceId = Guid.NewGuid().ToString();
@@ -36,6 +43,7 @@ public sealed class WorkspaceResourceProperties
             CustomerId = workspaceId,
             PublicNetworkAccessForIngestion = source?.PublicNetworkAccessForIngestion ?? "Enabled",
             PublicNetworkAccessForQuery = source?.PublicNetworkAccessForQuery ?? "Enabled",
+            Features = source?.Features ?? new WorkspaceFeatures(),
         };
     }
 

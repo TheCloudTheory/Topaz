@@ -1067,3 +1067,40 @@ TODO: Service Bus: Chained DLQ forwarding (A → B DLQ → C)
   milestone: v1.14
   labels: enhancement, service-bus
 -->
+
+## v1.15
+
+### Log Analytics — soft-delete and purge protection
+
+<!--
+TODO: Log Analytics: Soft-delete companion endpoints
+  The azurerm Terraform provider calls soft-delete endpoints during destroy. Add stubs that
+  return 404 (Topaz does not emulate soft-delete / purge protection):
+  - GET /subscriptions/{sub}/providers/Microsoft.OperationalInsights/deletedWorkspaces/{name}
+  - GET /subscriptions/{sub}/providers/Microsoft.OperationalInsights/locations/{location}/deletedWorkspaces
+  - POST /subscriptions/{sub}/providers/Microsoft.OperationalInsights/locations/{location}/deletedWorkspaces/{name}/purge
+  The GET /subscriptions/{sub}/providers/Microsoft.OperationalInsights/deletedWorkspaces
+  endpoint already exists as a stub (required for workspace creation). This work extends it
+  with the per-workspace and location-scoped variants.
+  milestone: v1.15
+  labels: enhancement, log-analytics
+-->
+
+<!--
+TODO: Log Analytics: Workspace soft-delete and restore
+  Implement soft-delete semantics on workspace deletion so that az monitor log-analytics workspace
+  delete (without --force) moves the workspace to a deleted state rather than immediately purging it:
+  - DELETE without query param ?force=true soft-deletes the workspace (sets deletedDate, retains data
+    for softDeleteRetentionInDays, returns 200 with ProvisioningState = Deleting).
+  - GET on a soft-deleted workspace returns the workspace with ProvisioningState = Deleting and
+    a deletedDate timestamp.
+  - GET /subscriptions/{sub}/providers/Microsoft.OperationalInsights/deletedWorkspaces returns
+    soft-deleted workspaces as a list.
+  - POST .../deletedWorkspaces/{name}/purge immediately removes the workspace and its data.
+  - DELETE with ?force=true bypasses soft-delete and purges immediately.
+  - Restoring a soft-deleted workspace is achieved by calling CreateOrUpdate with the same name;
+    ProvisioningState transitions back to Succeeded.
+  Prerequisite: soft-delete companion endpoints stub (above).
+  milestone: v1.15
+  labels: enhancement, log-analytics
+-->
