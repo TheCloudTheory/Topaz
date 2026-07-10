@@ -316,15 +316,30 @@ internal sealed class AppServiceSiteControlPlane(
     {
         var id = Guid.NewGuid().ToString();
         provider.SaveDeploymentZip(sub, rg, siteName, id, body);
-        provider.SaveDeploymentRecord(sub, rg, siteName, id, Models.DeploymentRecord.Succeeded(id));
+        provider.SaveDeploymentRecord(sub, rg, siteName, id, DeploymentRecord.Succeeded(id));
         return id;
     }
 
-    public Models.DeploymentRecord? GetDeployment(
+    public DeploymentRecord? GetDeployment(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string siteName, string id) =>
         provider.GetDeploymentRecord(sub, rg, siteName, id);
 
-    public IReadOnlyList<Models.DeploymentRecord> ListDeployments(
+    public IReadOnlyList<DeploymentRecord> ListDeployments(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string siteName) =>
         provider.ListDeploymentRecords(sub, rg, siteName);
+
+    public ControlPlaneOperationResult<PublishingCredentialsResource[]> ListPublishingCredentials(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string siteName)
+    {
+        var site = Get(subscriptionIdentifier, resourceGroupIdentifier, siteName);
+        if (site.Resource == null || site.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<PublishingCredentialsResource[]>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, siteName), NotFoundCode);
+        }
+
+        var credentials = provider.ListSubresourcesAs<PublishingCredentialsResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, siteName, nameof(Subresource.PublishingCredentials).ToLowerInvariant());
+        return new ControlPlaneOperationResult<PublishingCredentialsResource[]>(OperationResult.Success, credentials, null, null);
+    }
 }

@@ -28,6 +28,7 @@ public sealed class AppServiceSiteService(ITopazLogger logger) : IServiceDefinit
         new ListAppSettingsEndpoint(logger),
         new GetSlotConfigNamesEndpoint(logger),
         new DeleteAppServiceSiteEndpoint(logger),
-        new PostPublishXmlEndpoint(logger)
+        new PostPublishXmlEndpoint(logger),
+        new ListPublishingCredentialsEndpoint(logger)
     ];
 }
