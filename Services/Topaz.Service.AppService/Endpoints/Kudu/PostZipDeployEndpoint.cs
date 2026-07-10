@@ -6,22 +6,16 @@ using Topaz.Shared;
 namespace Topaz.Service.AppService.Endpoints.Kudu;
 
 internal sealed class PostZipDeployEndpoint(ITopazLogger logger)
-    : IEndpointDefinition
+    : KuduEndpointBase(logger)
 {
     private readonly AppServiceSiteControlPlane _controlPlane = AppServiceSiteControlPlane.New(logger);
+    private readonly ITopazLogger _logger = logger;
 
-    public string? ProviderNamespace => null;
+    public override string[] Endpoints => ["POST /api/zipdeploy"];
 
-    public string[] Endpoints => ["POST /api/zipdeploy"];
-
-    public string[] Permissions => [];
-
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultAppServiceKuduPort], Protocol.Https);
-
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(PostZipDeployEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        _logger.LogDebug(nameof(PostZipDeployEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
@@ -44,7 +38,7 @@ internal sealed class PostZipDeployEndpoint(ITopazLogger logger)
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            _logger.LogError(ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

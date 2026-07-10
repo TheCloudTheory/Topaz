@@ -7,22 +7,16 @@ using Topaz.Shared;
 namespace Topaz.Service.AppService.Endpoints.Kudu;
 
 internal sealed class GetDeploymentsEndpoint(ITopazLogger logger)
-    : IEndpointDefinition
+    : KuduEndpointBase(logger)
 {
     private readonly AppServiceSiteControlPlane _controlPlane = AppServiceSiteControlPlane.New(logger);
+    private readonly ITopazLogger _logger = logger;
 
-    public string? ProviderNamespace => null;
+    public override string[] Endpoints => ["GET /api/deployments"];
 
-    public string[] Endpoints => ["GET /api/deployments"];
-
-    public string[] Permissions => [];
-
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultAppServiceKuduPort], Protocol.Https);
-
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(GetDeploymentsEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        _logger.LogDebug(nameof(GetDeploymentsEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
@@ -43,7 +37,7 @@ internal sealed class GetDeploymentsEndpoint(ITopazLogger logger)
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            _logger.LogError(ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

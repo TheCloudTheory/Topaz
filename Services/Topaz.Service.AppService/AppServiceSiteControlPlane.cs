@@ -342,4 +342,37 @@ internal sealed class AppServiceSiteControlPlane(
             resourceGroupIdentifier, siteName, nameof(Subresource.PublishingCredentials).ToLowerInvariant());
         return new ControlPlaneOperationResult<PublishingCredentialsResource[]>(OperationResult.Success, credentials, null, null);
     }
+
+    public ControlPlaneOperationResult ValidateUsernameAndPassword(string siteName, string username, string password)
+    {
+        var dnsEntry = GlobalDnsEntries.GetEntry(AppServiceSiteService.UniqueName, siteName);
+        if (dnsEntry == null)
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, null, null);
+
+        var existingSubId = SubscriptionIdentifier.From(dnsEntry.Value.subscription);
+        var existingRgId = dnsEntry.Value.resourceGroup != null
+            ? ResourceGroupIdentifier.From(dnsEntry.Value.resourceGroup)
+            : null;
+
+        if (existingRgId == null)
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, null, null);
+        
+        var credentials = ListPublishingCredentials(existingSubId, existingRgId, siteName);
+        if (credentials.Result == OperationResult.NotFound || credentials.Resource == null || credentials.Resource.Length == 0)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, string.Format(NotFoundMessageTemplate, siteName), NotFoundCode);
+        }
+
+        if (credentials.Resource.Any(credential =>
+                credential.Properties.PublishingUserName == username &&
+                credential.Properties.PublishingPassword == password))
+        {
+            return new ControlPlaneOperationResult(OperationResult.Success, null, null);
+        }
+        
+        return new ControlPlaneOperationResult(OperationResult.Failed, null, "Invalid username or password");
+    }
 }
