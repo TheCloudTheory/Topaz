@@ -48,3 +48,6 @@ openssl req \
   echo 'extendedKeyUsage = serverAuth, clientAuth')
 
 openssl x509 -noout -text -in $PARENT.crt
+
+bash "$(dirname "$0")/convert.sh"
+bash "$(dirname "$0")/distribute.sh"
