@@ -10,7 +10,7 @@ sidebar_position: 5
 - Data plane – Table: [Azure Table Storage REST API](https://learn.microsoft.com/en-us/rest/api/storageservices/table-service-rest-api)
 :::
 
-This page tracks which Azure Storage REST API operations are implemented in Topaz, split by control plane (ARM resource management) and data plane (Blob Storage on port 8891, Table Storage on port 8890).
+This page tracks which Azure Storage REST API operations are implemented in Topaz, split by control plane (ARM resource management) and data plane (Blob Storage on port 8891, Table Storage on port 8891).
 
 ## Legend
 
@@ -107,7 +107,7 @@ Blob Storage is served on port **8891** (HTTP) in Topaz.
 
 ## Data Plane — Table Storage
 
-Table Storage is served on port **8890** (HTTPS) in Topaz.
+Table Storage is served on port **8891** (HTTPS) in Topaz.
 
 ### Service
 
@@ -145,7 +145,7 @@ Table Storage is served on port **8890** (HTTPS) in Topaz.
 
 ## Data Plane — Queue Storage
 
-Queue Storage is served on port **8893** (HTTPS) in Topaz.
+Queue Storage is served on port **8891** (HTTPS) in Topaz.
 
 ### Service
 

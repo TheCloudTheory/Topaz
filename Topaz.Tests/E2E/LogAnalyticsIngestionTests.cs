@@ -9,7 +9,6 @@ using Azure.ResourceManager.Resources;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
-using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -64,7 +63,7 @@ public class LogAnalyticsIngestionTests
     {
         return new HttpClient()
         {
-            BaseAddress = new Uri($"https://{_workspaceCustomerId}.ods.opinsights.topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}")
+            BaseAddress = new Uri(TopazResourceHelpers.GetLogAnalyticsIngestionEndpoint(_workspaceCustomerId))
         };
     }
 

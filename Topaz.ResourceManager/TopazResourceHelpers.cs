@@ -112,4 +112,12 @@ public static class TopazResourceHelpers
     /// <param name="primaryKey">The primary master key for the account.</param>
     /// <returns>A connection string configured to connect to the local Cosmos DB emulator.</returns>
     public static string GetCosmosDbConnectionString(string accountName, string primaryKey) => $"AccountEndpoint={GetCosmosDbAccountEndpoint(accountName)};AccountKey={primaryKey};";
+
+    /// <summary>
+    /// Gets the Log Analytics data collection (ingestion) endpoint URI for a specified workspace.
+    /// </summary>
+    /// <param name="workspaceCustomerId">The workspace customer ID (GUID), available from the workspace properties after creation.</param>
+    /// <returns>A URI string for the local Log Analytics data collection endpoint.</returns>
+    public static string GetLogAnalyticsIngestionEndpoint(string workspaceCustomerId) =>
+        $"https://{workspaceCustomerId}.ods.opinsights.topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}";
 }
