@@ -121,6 +121,18 @@ Open Keychain Access, import `topaz.crt`, and mark it as **Always Trust**, or us
 sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain topaz.crt
 ```
 
+:::note[.NET and the login keychain]
+
+The .NET runtime on macOS reads certificate trust from the **login keychain**, not the System keychain. If you use the Azure SDK or run .NET-based tools against Topaz (including the Topaz test suite itself), also run:
+
+```bash
+security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db topaz.crt
+```
+
+Note there is no `sudo` — this writes to your personal keychain.
+
+:::
+
 </TabItem>
 <TabItem value="linux" label="Linux / WSL">
 
