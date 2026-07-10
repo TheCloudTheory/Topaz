@@ -104,8 +104,4 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         new RecoverDeletedVaultEndpoint(eventPipeline, logger),
         new UpdateAccessPolicyEndpoint(eventPipeline, logger)
     ];
-
-    public void Bootstrap()
-    {
-    }
 }

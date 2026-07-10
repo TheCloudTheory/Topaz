@@ -42,6 +42,12 @@ internal sealed class AppServiceSiteControlPlane(
             var properties = AppServiceSiteResourceProperties.FromRequest(siteName, request);
             resource = new AppServiceSiteResource(subscriptionIdentifier, resourceGroupIdentifier, siteName, location,
                 request.Tags, request.Kind ?? "app", properties);
+            
+            // If it's a new App Service being created, new set of publishing credentials
+            // will be generated.
+            var credentials = PublishingCredentialsResource.Create(subscriptionIdentifier, resourceGroupIdentifier, siteName);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, credentials.Name,
+                siteName, nameof(Subresource.PublishingCredentials).ToLowerInvariant(), credentials);
         }
         else
         {

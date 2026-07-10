@@ -11,7 +11,7 @@ public sealed class AppServiceSiteService(ITopazLogger logger) : IServiceDefinit
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-web-sites");
-    public static IReadOnlyCollection<string>? Subresources => null;
+    public static IReadOnlyCollection<string>? Subresources => ["publishingcredentials"];
     public static string UniqueName => "app-service-site";
     public string Name => "Azure App Service Site";
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
