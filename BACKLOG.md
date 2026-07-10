@@ -1059,3 +1059,66 @@ TODO: Log Analytics: Workspace soft-delete and restore
   milestone: v1.15
   labels: enhancement, log-analytics
 -->
+
+### Log Analytics — Data Collection Endpoints (DCE) and Data Collection Rules (DCR)
+
+<!--
+TODO: Log Analytics: Data Collection Endpoint (DCE) control plane
+  Implement ARM-level CRUD for Data Collection Endpoints (microsoft.insights/dataCollectionEndpoints):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Insights/dataCollectionEndpoints/{name}
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Insights/dataCollectionEndpoints/{name}
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Insights/dataCollectionEndpoints/{name}
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Insights/dataCollectionEndpoints
+  - GET    /subscriptions/{sub}/providers/Microsoft.Insights/dataCollectionEndpoints
+  Resource properties to persist: location, description, networkAcls (publicNetworkAccess),
+  immutableId (generated on creation), logsIngestion.endpoint (generated as
+  https://{name}-{suffix}.{location}.ingest.monitor.azure.com), provisioningState (always Succeeded).
+  The logsIngestion.endpoint value is the URL used by LogsIngestionClient from Azure.Monitor.Ingestion SDK.
+  Register the DCE hostname pattern *.ingest.monitor.topaz.local.dev with the wildcard
+  certificate so that SDK clients can reach the ingestion data plane.
+  milestone: v1.15
+  labels: enhancement, log-analytics
+-->
+
+<!--
+TODO: Log Analytics: Data Collection Rule (DCR) control plane
+  Implement ARM-level CRUD for Data Collection Rules (microsoft.insights/dataCollectionRules):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Insights/dataCollectionRules/{name}
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Insights/dataCollectionRules/{name}
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Insights/dataCollectionRules/{name}
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Insights/dataCollectionRules/{name}
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Insights/dataCollectionRules
+  - GET    /subscriptions/{sub}/providers/Microsoft.Insights/dataCollectionRules
+  Resource properties to persist: location, kind, description, dataCollectionEndpointId,
+  streamDeclarations, destinations (logAnalytics[]), dataFlows, immutableId (generated,
+  prefixed dcr-), provisioningState (always Succeeded).
+  Also implement DCR association sub-resource:
+  - PUT    /{resourceUri}/providers/Microsoft.Insights/dataCollectionRuleAssociations/{associationName}
+  - GET    /{resourceUri}/providers/Microsoft.Insights/dataCollectionRuleAssociations/{associationName}
+  - DELETE /{resourceUri}/providers/Microsoft.Insights/dataCollectionRuleAssociations/{associationName}
+  - GET    /{resourceUri}/providers/Microsoft.Insights/dataCollectionRuleAssociations
+  milestone: v1.15
+  labels: enhancement, log-analytics
+-->
+
+<!--
+TODO: Log Analytics: Logs Ingestion API (DCR-based ingestion endpoint)
+  Implement the modern Logs Ingestion API data plane on the DCE ingestion endpoint so that
+  Azure.Monitor.Ingestion LogsIngestionClient works against Topaz:
+  - POST {dceEndpoint}/dataCollectionRules/{dcrImmutableId}/streams/{streamName}?api-version=2023-01-01
+  Authentication: validate Bearer token (Entra ID token issued by Topaz identity plane).
+  Request body: JSON array matching the stream's column schema declared in the DCR's
+  streamDeclarations. Respond 204 No Content on success.
+  Processing:
+  - Resolve the DCR by immutableId; find the dataFlow whose streams list contains {streamName}.
+  - Apply the transformKql if present (support source passthrough as minimum; full KQL
+    transforms are out of scope).
+  - Persist each record to the target Log Analytics workspace table (outputStream) under
+    .topaz/log-analytics/{workspaceId}/tables/{tableName}/{date}/{recordId}.json.
+  - Custom table names end in _CL; built-in table names use the Microsoft- prefix in streams
+    but map to the bare table name on storage.
+  Error cases: 404 if DCR immutableId not found; 400 if stream name not in DCR; 403 if
+  token subject does not have Monitoring Metrics Publisher role on the DCR.
+  milestone: v1.15
+  labels: enhancement, log-analytics
+-->
