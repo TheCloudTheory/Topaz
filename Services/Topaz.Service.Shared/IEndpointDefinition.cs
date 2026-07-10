@@ -19,10 +19,21 @@ public interface IEndpointDefinition
     public string? ProviderNamespace => null;
 
     /// <summary>
-    /// The second DNS label that must appear in the incoming <c>Host</c> header for this endpoint
-    /// to be selected by the Router. For example, a Blob Storage endpoint sets this to
-    /// <c>"blob"</c> so that requests to <c>{account}.blob.storage.topaz.local.dev</c> are
-    /// routed correctly even though Table and Queue endpoints share the same port.
+    /// A DNS label (or two-label segment) that must appear immediately after the first
+    /// dot-separated label of the incoming <c>Host</c> header for this endpoint to be
+    /// selected by the Router.
+    /// <para>
+    /// For single-label values (e.g. <c>"blob"</c>) the Router checks that the second DNS
+    /// label matches exactly, disambiguating storage sub-service endpoints that share the
+    /// same port:
+    /// <c>{account}.<b>blob</b>.storage.topaz.local.dev</c>
+    /// </para>
+    /// <para>
+    /// For two-label values (e.g. <c>"ods.opinsights"</c>) the Router checks that the host
+    /// remainder starts with that prefix, supporting services whose subdomain structure spans
+    /// two labels:
+    /// <c>{workspaceId}.<b>ods.opinsights</b>.topaz.local.dev</c>
+    /// </para>
     /// Leave <c>null</c> (the default) for endpoints whose hostname does not carry a
     /// service-discriminating label (ARM, Key Vault, ACR, etc.).
     /// </summary>

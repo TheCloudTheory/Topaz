@@ -332,12 +332,19 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
     /// </summary>
     private static bool IsHostServiceLabelMatch(string host, string requiredLabel)
     {
+        // Some services (e.g., Log Analytics) use a different subdomain structure:
+        //   {workspaceId}.ods.opinsights.topaz.local.dev
+        // This means that the required label may contain only one dot-separated label.
+        var isTwoLabelRequiredLabel = requiredLabel.Split('.').Length == 2;
         var firstDot = host.IndexOf('.');
         if (firstDot < 0) return false;
         var remainder = host[(firstDot + 1)..];
         var secondDot = remainder.IndexOf('.');
         var serviceLabel = secondDot >= 0 ? remainder[..secondDot] : remainder;
-        return string.Equals(serviceLabel, requiredLabel, StringComparison.OrdinalIgnoreCase);
+
+        return isTwoLabelRequiredLabel
+            ? remainder.StartsWith(requiredLabel, StringComparison.OrdinalIgnoreCase)
+            : string.Equals(serviceLabel, requiredLabel, StringComparison.OrdinalIgnoreCase);
     }
 
     private bool MatchesRegexExpressionForEndpoint(string endpointSegment, string pathSegment)

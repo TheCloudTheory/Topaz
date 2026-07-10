@@ -41,19 +41,19 @@ internal sealed class LogAnalyticsDataPlane(
             workspaces.AddRange(workspacesInSubscription.Resource);
         }
 
-        if (workspaces.Count == 0 || workspaces.All(w => w.Id != workspaceId))
+        if (workspaces.Count == 0 || workspaces.All(w => w.Properties.WorkspaceId != workspaceId))
         {
             return new DataPlaneOperationResult(OperationResult.Failed, "No workspaces found", "NoWorkspacesFound");
         }
 
-        var workspace = workspaces.SingleOrDefault(w => w.Id == workspaceId)!;
+        var workspace = workspaces.SingleOrDefault(w => w.Properties.WorkspaceId == workspaceId)!;
         var tableName = logTypeValue ?? "CustomLog";
         var dir = provider.GetDataPath(tableName, DateTime.UtcNow, Guid.NewGuid().ToString());
 
         logger.LogDebug(nameof(LogAnalyticsDataPlane), nameof(SaveIngestedData),
             $"Workspace: {workspace.Id}, Log Type: {tableName}");
 
-        provider.SaveIngestedData(workspace.GetSubscription(), workspace.GetResourceGroup(), workspaceId, data, dir);
+        provider.SaveIngestedData(workspace.GetSubscription(), workspace.GetResourceGroup(), workspace.Name, data, dir);
 
         return new DataPlaneOperationResult(OperationResult.Success, null, null);
     }

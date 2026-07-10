@@ -13,11 +13,12 @@ internal sealed class WorkspaceResourceProvider(ITopazLogger logger)
     internal string GetDataPath(string tableName, DateTime date, string id) =>
         string.Format(format: DataPathFormat,  tableName, date, id);
 
-    public void SaveIngestedData(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string workspaceId, string data, string dir)
+    public void SaveIngestedData(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string workspaceName, string data, string dir)
     {
-        var path = Path.Combine(GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, workspaceId), dir);
+        var path = Path.Combine(GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, workspaceName), dir);
         _logger.LogDebug(nameof(WorkspaceResourceProvider), nameof(SaveIngestedData), "Saving ingested data to {0}.", path);
         
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, data);
     }
 }

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
@@ -11,7 +10,7 @@ internal sealed class DataCollectionEndpoint(Pipeline eventPipeline, ITopazLogge
 {
     private readonly LogAnalyticsDataPlane _dataPlane = LogAnalyticsDataPlane.New(eventPipeline, logger);
     
-    public string[] Endpoints => ["/api/logs"];
+    public string[] Endpoints => ["POST /api/logs"];
     public string[] Permissions => [];
     public string? RequiredHostServiceLabel => "ods.opinsights";
 
@@ -21,19 +20,16 @@ internal sealed class DataCollectionEndpoint(Pipeline eventPipeline, ITopazLogge
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var workspaceId = context.Request.Host.Host.Split('.')[0];
-        var logType = context.Request.Headers["Log-Type"].FirstOrDefault() ?? "CustomLog";
-        var date = DateTime.UtcNow.ToString("yyyy-MM-dd");
-        var id = Guid.NewGuid().ToString();
-
         var body = new StreamReader(context.Request.Body).ReadToEnd();
-        var records = JsonSerializer.Deserialize<JsonElement[]>(body) ?? [];
-
-        var dir = Path.Combine(GlobalSettings.MainEmulatorDirectory, "log-analytics", workspaceId, logType, date);
-        Directory.CreateDirectory(dir);
-        File.WriteAllText(Path.Combine(dir, $"{id}.json"), JsonSerializer.Serialize(records));
         
-        _dataPlane.SaveIngestedData(workspaceId, context.Request.Headers["Log-Type"].FirstOrDefault(), body);
-
+        var result = _dataPlane.SaveIngestedData(workspaceId, context.Request.Headers["Log-Type"].FirstOrDefault(), body);
+        if (result.Result != OperationResult.Success)
+        {
+            logger.LogError(nameof(DataCollectionEndpoint), nameof(GetResponse), "Failed to save data: {0}", result.Reason);
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+        
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(string.Empty);
     }
