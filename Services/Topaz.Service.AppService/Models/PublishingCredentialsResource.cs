@@ -1,6 +1,8 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
 
 namespace Topaz.Service.AppService.Models;
 
@@ -39,5 +41,10 @@ internal sealed class PublishingCredentialsResource : ArmSubresource<PublishingC
         var scmUri = $"https://{appServiceName}.scm.azurewebsites.topaz.local.dev";
         var properties = PublishingCredentialsResourceProperties.Create(userName, scmUri);
         return new PublishingCredentialsResource(subscriptionIdentifier, resourceGroupIdentifier, appServiceName, userName, properties);
+    }
+
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
     }
 }

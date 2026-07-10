@@ -52,27 +52,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 
 ## v1.9-preview
 
-
-### Azure App Service — Kudu / SCM authentication
-
-<!--
-TODO: Azure App Service: Kudu SCM — publishing credentials and Basic auth
-  Implement per-site publishing credentials and Basic auth enforcement for the
-  Kudu/SCM data-plane (prerequisite: Kudu SCM data plane from v1.7-beta).
-  Publishing credentials:
-  - Generate a userName (${siteName}\$publishinguser format) and a random 44-character
-    password on site creation; persist as part of AppServiceSiteResourceProperties
-    (or as a dedicated sub-resource).
-  - Expose via ARM endpoint:
-    POST .../sites/{name}/listPublishingCredentials — returns userName, password, scmUri.
-  Kudu Basic auth enforcement:
-  - Validate Authorization: Basic base64({userName}:{password}) on all Kudu endpoints.
-  - Return 401 Unauthorized with WWW-Authenticate: Basic realm="Kudu" when credentials
-    are absent or incorrect.
-  milestone: v1.9-preview
-  labels: enhancement, app-service, security
--->
-
 ### Application Insights — initial control plane and ingestion
 
 <!--

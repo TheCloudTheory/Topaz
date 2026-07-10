@@ -40,7 +40,7 @@ internal sealed class ListPublishingCredentialsEndpoint(ITopazLogger logger) : I
                 return;
             }
 
-            response.CreateJsonContentResponse(result.Resource);
+            response.CreateJsonContentResponse(result.Resource.First());
         }
         catch (Exception ex)
         {
