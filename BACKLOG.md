@@ -145,17 +145,6 @@ TODO: Application Insights: Basic query API
 ### Log Analytics — initial control plane and ingestion
 
 <!--
-TODO: Log Analytics: Data Collection (Logs Ingestion API)
-  Implement the Logs Ingestion API endpoint (Azure Monitor Data Collection):
-  - POST https://{workspaceId}.ods.opinsights.topaz.local.dev/api/logs?api-version=2016-04-01
-    Body: JSON array of log records; header Log-Type sets the custom table name.
-  Persists each batch of records to .topaz/log-analytics/{workspaceId}/{tableName}/{date}/{id}.json.
-  Respond 200 with an empty body on success, matching real Azure behaviour.
-  milestone: v1.9-preview
-  labels: enhancement, log-analytics
--->
-
-<!--
 TODO: Log Analytics: Query API
   Implement a minimal KQL query endpoint so that `az monitor log-analytics query` and the
   Azure SDK LogsQueryClient work against Topaz:
