@@ -63,6 +63,7 @@ This page tracks which Azure App Service REST API operations are implemented in 
 | Update Application Settings | ✅ | `PUT .../config/appsettings` |
 | List Application Settings | ✅ | `POST .../config/appsettings/list` |
 | Get Slot Config Names | ✅ | `GET .../config/slotConfigNames` |
+| List Publishing Credentials | ✅ | `POST .../config/publishingcredentials/list` — returns userName, password, scmUri |
 
 ---
 
@@ -83,3 +84,4 @@ This page tracks which Azure App Service REST API operations are implemented in 
 | List Deployments | ✅ | `GET /api/deployments` |
 | Get Deployment | ✅ | `GET /api/deployments/{id}` |
 | Zip Deploy | ✅ | `POST /api/zipdeploy` — deploys a zip archive to the site |
+| Basic Auth | ✅ | All Kudu endpoints require `Authorization: Basic` with per-site publishing credentials; returns `401` with `WWW-Authenticate: Basic realm="Kudu"` when absent or invalid |
