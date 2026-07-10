@@ -95,7 +95,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return match != null ? Path.GetFileName(match) : id;
     }
 
-    private static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier,
+    protected static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier,
         ResourceGroupIdentifier? resourceGroupIdentifier)
     {
         if (subscriptionIdentifier == null)

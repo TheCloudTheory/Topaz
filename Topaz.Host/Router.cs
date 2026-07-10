@@ -28,14 +28,6 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         // external port (e.g. a random Docker host-port mapping in tests).
         var port = context.Connection.LocalPort;
 
-        if (method == null)
-        {
-            logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "Received request with no method.");
-
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            return;
-        }
-
         logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][port:{port}]");
 
         // Normalize consecutive slashes (some clients, e.g. `az resource`, emit
@@ -52,7 +44,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         foreach (var httpEndpoint in httpEndpoints.Where(e =>
                      e.PortsAndProtocol.Ports.Any(p => p == port) &&
                      (e.RequiredHostServiceLabel == null ||
-                      IsHostServiceLabelMatch(context.Request.Headers["Host"].ToString(), e.RequiredHostServiceLabel))))
+                      IsHostServiceLabelMatch(context.Request.Headers.Host.ToString(), e.RequiredHostServiceLabel))))
         {
             foreach (var endpointUrl in httpEndpoint.Endpoints)
             {
@@ -328,22 +320,14 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
     {
         return endpointParts.Contains("...");
     }
-
-    /// <summary>
-    /// Determines whether a given path segment matches a specified endpoint segment using a regular expression.
-    /// </summary>
-    /// <param name="endpointSegment">The endpoint segment, which may contain a regular expression.</param>
-    /// <param name="pathSegment">The path segment to compare against the endpoint segment.</param>
-    /// <returns>
-    /// True if the path segment matches the endpoint segment's regular expression; otherwise, false.
-    /// </returns>
+    
     /// <summary>
     /// Returns true when the second DNS label of <paramref name="host"/> equals
     /// <paramref name="requiredLabel"/> (case-insensitive).  Used to disambiguate
     /// storage sub-service endpoints (blob / table / queue) that share the same port
     /// but differ in the Host header subdomain structure:
     ///   {account}.<b>blob</b>.storage.topaz.local.dev:8891
-    /// When the host string does not contain at least two dot-separated labels the
+    /// When the host string does not contain at least two dot-separated labels, the
     /// method returns false, which prevents false-positive matches on bare hostnames.
     /// </summary>
     private static bool IsHostServiceLabelMatch(string host, string requiredLabel)
