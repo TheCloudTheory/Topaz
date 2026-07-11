@@ -345,10 +345,13 @@ internal sealed class AppServiceSiteControlPlane(
 
     public ControlPlaneOperationResult ValidateUsernameAndPassword(string siteName, string username, string password)
     {
+        logger.LogDebug(nameof(AppServicePlanControlPlane), nameof(ValidateUsernameAndPassword),
+            "Validating username ({0}) and password ({1}) for site '{3}'", username, password, siteName);
+        
         var dnsEntry = GlobalDnsEntries.GetEntry(AppServiceSiteService.UniqueName, siteName);
         if (dnsEntry == null)
             return new ControlPlaneOperationResult(
-                OperationResult.NotFound, null, null);
+                OperationResult.NotFound, string.Format(NotFoundMessageTemplate, siteName), NotFoundCode);
 
         var existingSubId = SubscriptionIdentifier.From(dnsEntry.Value.subscription);
         var existingRgId = dnsEntry.Value.resourceGroup != null
@@ -366,13 +369,11 @@ internal sealed class AppServiceSiteControlPlane(
                 OperationResult.NotFound, string.Format(NotFoundMessageTemplate, siteName), NotFoundCode);
         }
 
-        if (credentials.Resource.Any(credential =>
-                credential.Properties.PublishingUserName == username &&
-                credential.Properties.PublishingPassword == password))
-        {
-            return new ControlPlaneOperationResult(OperationResult.Success, null, null);
-        }
-        
-        return new ControlPlaneOperationResult(OperationResult.Failed, null, "Invalid username or password");
+        return credentials.Resource.Any(credential =>
+            credential.Properties.PublishingUserName == username &&
+            credential.Properties.PublishingPassword == password)
+            ? new ControlPlaneOperationResult(OperationResult.Success, null, null)
+            : new ControlPlaneOperationResult(OperationResult.Failed, "Invalid username or password",
+                "InvalidUsernameOrPassword");
     }
 }

@@ -15,7 +15,8 @@ internal sealed class ListPublishingCredentialsEndpoint(ITopazLogger logger) : I
 
     public string[] Endpoints =>
     [
-        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName}/config/publishingcredentials/list"
+        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName}/config/publishingcredentials/list",
+        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName}/slots/{slotName}/config/publishingcredentials/list"
     ];
 
     public string[] Permissions => ["Microsoft.Web/sites/publishxml/action"];

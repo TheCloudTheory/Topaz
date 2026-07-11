@@ -37,7 +37,7 @@ internal sealed class PublishingCredentialsResource : ArmSubresource<PublishingC
         ResourceGroupIdentifier resourceGroupIdentifier,
         string appServiceName)
     {
-        var userName = $"{appServiceName}\\$publishinguser";
+        var userName = $"${appServiceName}";
         var scmUri = $"https://{appServiceName}.scm.azurewebsites.topaz.local.dev";
         var properties = PublishingCredentialsResourceProperties.Create(userName, scmUri);
         return new PublishingCredentialsResource(subscriptionIdentifier, resourceGroupIdentifier, appServiceName, userName, properties);
