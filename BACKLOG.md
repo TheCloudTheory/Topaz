@@ -153,21 +153,6 @@ TODO: Azure Disks: Full azcopy-compatible disk streaming via SAS URL
   labels: enhancement
 -->
 
-<!--
-TODO: Service Bus: Dead letter queue — session-filtered DLQ access
-  Allow SDK callers to receive dead-lettered messages from session-enabled entities via a
-  session-filtered receiver on the DLQ address.
-  Prerequisite: dead-letter queue support (v1.7-beta), message session support.
-  Required changes:
-  - When a message is dead-lettered from a session-enabled queue or subscription, preserve
-    the SessionId annotation on the DLQ message.
-  - Accept session-filtered Attach frames (com.microsoft:session-filter) on
-    <entity>/$DeadLetterQueue addresses, applying the same session-lock semantics as the
-    main queue's session receiver (see Message session support backlog item).
-  milestone: v1.9-preview
-  labels: enhancement, service-bus
--->
-
 ## v1.10-preview
 
 <!--
