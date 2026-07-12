@@ -121,7 +121,11 @@ internal static class InFlightMessageStore
         }
         else
         {
-            SubscriptionMessageStore.Enqueue(entityAddress, message);
+            var sessionId = message.Properties?.GroupId;
+            if (sessionId != null)
+                SessionMessageStore.Enqueue(entityAddress, sessionId, message);
+            else
+                SubscriptionMessageStore.Enqueue(entityAddress, message);
             OutgoingLinkEndpoint.NotifyMessageEnqueued();
         }
     }
@@ -138,8 +142,12 @@ internal static class InFlightMessageStore
         }
         else
         {
+            var sessionId = message.Properties?.GroupId;
             var dlqAddress = $"{SubscriptionMessageStore.Normalize(entityAddress)}/$deadletterqueue";
-            SubscriptionMessageStore.Enqueue(dlqAddress, message);
+            if (sessionId != null)
+                SessionMessageStore.Enqueue(dlqAddress, sessionId, message);
+            else
+                SubscriptionMessageStore.Enqueue(dlqAddress, message);
         }
 
         OutgoingLinkEndpoint.NotifyMessageEnqueued();

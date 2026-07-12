@@ -154,4 +154,65 @@ public class ServiceBusSessionTests
         Assert.CatchAsync<OperationCanceledException>(
             async () => await client.AcceptNextSessionAsync(SessionQueueName, cancellationToken: cts.Token));
     }
+
+    [Test]
+    public async Task ServiceBusSessionTests_WhenSessionMessageIsDeadLettered_SessionFilteredDlqReceiverGetsIt()
+    {
+        const string sessionId = "session-dlq";
+        var adminClient = new ServiceBusAdministrationClient(ManagementConnectionString);
+        await adminClient.CreateQueueAsync(new CreateQueueOptions("dlq-session-queue") { RequiresSession = true, MaxDeliveryCount = 10 });
+
+        await using var client = new ServiceBusClient(ConnectionString);
+        await using var sender = client.CreateSender("dlq-session-queue");
+        await sender.SendMessageAsync(new ServiceBusMessage("dlq-body") { SessionId = sessionId });
+
+        // Receive and explicitly dead-letter
+        await using var receiver = await client.AcceptSessionAsync("dlq-session-queue", sessionId);
+        var msg = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(10));
+        Assert.That(msg, Is.Not.Null);
+        await receiver.DeadLetterMessageAsync(msg!, "TestReason", "TestDescription");
+
+        // Session-filtered receiver on DLQ should get the message
+        await using var dlqReceiver = await client.AcceptSessionAsync(
+            "dlq-session-queue", sessionId,
+            new ServiceBusSessionReceiverOptions { SubQueue = SubQueue.DeadLetter });
+        var dlqMsg = await dlqReceiver.ReceiveMessageAsync(TimeSpan.FromSeconds(10));
+
+        Assert.That(dlqMsg, Is.Not.Null);
+        Assert.That(dlqMsg!.Body.ToString(), Is.EqualTo("dlq-body"));
+        Assert.That(dlqMsg.SessionId, Is.EqualTo(sessionId));
+        Assert.That(dlqMsg.DeadLetterReason, Is.EqualTo("TestReason"));
+    }
+
+    [Test]
+    public async Task ServiceBusSessionTests_WhenSessionMessageExceedsMaxDeliveryCount_SessionFilteredDlqReceiverGetsIt()
+    {
+        const string sessionId = "session-maxdelivery";
+        var adminClient = new ServiceBusAdministrationClient(ManagementConnectionString);
+        await adminClient.CreateQueueAsync(new CreateQueueOptions("dlq-maxdelivery-queue") { RequiresSession = true, MaxDeliveryCount = 2 });
+
+        await using var client = new ServiceBusClient(ConnectionString);
+        await using var sender = client.CreateSender("dlq-maxdelivery-queue");
+        await sender.SendMessageAsync(new ServiceBusMessage("max-delivery-body") { SessionId = sessionId });
+
+        // Abandon until maxDeliveryCount is exceeded
+        for (var i = 0; i < 2; i++)
+        {
+            await using var receiver = await client.AcceptSessionAsync("dlq-maxdelivery-queue", sessionId);
+            var msg = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(10));
+            Assert.That(msg, Is.Not.Null);
+            await receiver.AbandonMessageAsync(msg!);
+        }
+
+        // Message should now be in DLQ with session preserved
+        await using var dlqReceiver = await client.AcceptSessionAsync(
+            "dlq-maxdelivery-queue", sessionId,
+            new ServiceBusSessionReceiverOptions { SubQueue = SubQueue.DeadLetter });
+        var dlqMsg = await dlqReceiver.ReceiveMessageAsync(TimeSpan.FromSeconds(10));
+
+        Assert.That(dlqMsg, Is.Not.Null);
+        Assert.That(dlqMsg!.Body.ToString(), Is.EqualTo("max-delivery-body"));
+        Assert.That(dlqMsg.SessionId, Is.EqualTo(sessionId));
+        Assert.That(dlqMsg.DeadLetterReason, Is.EqualTo("MaxDeliveryCountExceeded"));
+    }
 }
