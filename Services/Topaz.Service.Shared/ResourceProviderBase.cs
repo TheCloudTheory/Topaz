@@ -357,9 +357,9 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     public string GetServiceInstanceDataPath(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string id)
     {
-        ThrowIfIdentifierContainsForbiddenExpressions(subscriptionIdentifier.Value.ToString());
-        ThrowIfIdentifierContainsForbiddenExpressions(resourceGroupIdentifier.Value);
-        ThrowIfIdentifierContainsForbiddenExpressions(id);
+
+        if (id.Contains("..") || id.Contains('/') || id.Contains('\\'))
+            throw new InvalidOperationException("Identifier contains forbidden characters.");
 
         var basePath = Path.Combine(BaseEmulatorPath,
             GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
@@ -472,6 +472,12 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     private string GetSubresourcePath(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string parentId, string subresourceId, string subresource)
     {
+        if (parentId.Contains("..") || parentId.Contains('/') || parentId.Contains('\\'))
+            throw new InvalidOperationException("Identifier contains forbidden characters.");
+        if (subresourceId.Contains("..") || subresourceId.Contains('/') || subresourceId.Contains('\\'))
+            throw new InvalidOperationException("Identifier contains forbidden characters.");
+        if (subresource.Contains("..") || subresource.Contains('/') || subresource.Contains('\\'))
+            throw new InvalidOperationException("Identifier contains forbidden characters.");
         return Path.Combine(BaseEmulatorPath,
             GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), parentId,
             subresource, subresourceId);
@@ -509,6 +515,10 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
                 $"You can't get a subresource '{subresource}' for a parent service which doesn't define that subresource.");
         }
         
+        if (parentId.Contains("..") || parentId.Contains('/') || parentId.Contains('\\'))
+            throw new InvalidOperationException("Identifier contains forbidden characters.");
+        if (subresource.Contains("..") || subresource.Contains('/') || subresource.Contains('\\'))
+            throw new InvalidOperationException("Identifier contains forbidden characters.");
         var subresourcePath = Path.Combine(BaseEmulatorPath,
             GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), parentId,
             subresource);
@@ -543,6 +553,10 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
                 $"You can't get a subresource '{subresource}' for a parent service which doesn't define that subresource.");
         }
 
+        if (parentId.Contains("..") || parentId.Contains('/') || parentId.Contains('\\'))
+            throw new InvalidOperationException("Identifier contains forbidden characters.");
+        if (subresource.Contains("..") || subresource.Contains('/') || subresource.Contains('\\'))
+            throw new InvalidOperationException("Identifier contains forbidden characters.");
         var subresourcePath = Path.Combine(BaseEmulatorPath,
             GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), parentId,
             subresource);

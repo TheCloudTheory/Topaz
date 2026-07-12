@@ -15,6 +15,8 @@ internal sealed class WorkspaceResourceProvider(ITopazLogger logger)
 
     public void SaveIngestedData(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string workspaceName, string data, string dir)
     {
+        if (dir.Contains("..") || dir.Contains('/') || dir.Contains('\\'))
+            throw new InvalidOperationException("Identifier contains forbidden characters.");
         var path = Path.Combine(GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, workspaceName), dir);
         _logger.LogDebug(nameof(WorkspaceResourceProvider), nameof(SaveIngestedData), "Saving ingested data to {0}.", path);
         
