@@ -174,8 +174,7 @@ public class ServiceBusSessionTests
 
         // Session-filtered receiver on DLQ should get the message
         await using var dlqReceiver = await client.AcceptSessionAsync(
-            "dlq-session-queue", sessionId,
-            new ServiceBusSessionReceiverOptions { SubQueue = SubQueue.DeadLetter });
+            "dlq-session-queue/$DeadLetterQueue", sessionId);
         var dlqMsg = await dlqReceiver.ReceiveMessageAsync(TimeSpan.FromSeconds(10));
 
         Assert.That(dlqMsg, Is.Not.Null);
@@ -206,8 +205,7 @@ public class ServiceBusSessionTests
 
         // Message should now be in DLQ with session preserved
         await using var dlqReceiver = await client.AcceptSessionAsync(
-            "dlq-maxdelivery-queue", sessionId,
-            new ServiceBusSessionReceiverOptions { SubQueue = SubQueue.DeadLetter });
+            "dlq-maxdelivery-queue/$DeadLetterQueue", sessionId);
         var dlqMsg = await dlqReceiver.ReceiveMessageAsync(TimeSpan.FromSeconds(10));
 
         Assert.That(dlqMsg, Is.Not.Null);
