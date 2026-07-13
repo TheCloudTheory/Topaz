@@ -110,7 +110,16 @@ You only need to run this script once per machine (or WSL instance).
 
 ## Step 2 — Trust the certificate
 
-Topaz exposes HTTPS endpoints using a self-signed certificate that is bundled in the release package. You need to add it to your system trust store so that tools like the Azure CLI and the Azure SDKs can connect without TLS errors.
+Topaz exposes HTTPS endpoints using a self-signed certificate. You need to add it to your system trust store so that tools like the Azure CLI and the Azure SDKs can connect without TLS errors.
+
+**Where is `topaz.crt`?** It depends on how you installed Topaz:
+
+| Installation | Certificate location |
+|---|---|
+| Homebrew (macOS / Linux) | `$(brew --prefix)/bin/topaz.crt` |
+| Shell installer | `~/.topaz/topaz.crt` |
+| Standalone executable (release ZIP) | `topaz.crt` in the same directory as the binary |
+| Docker | Copy from the container: `docker run --rm --entrypoint cat thecloudtheory/topaz-host:<tag> /app/topaz.crt > topaz.crt` |
 
 <Tabs groupId="os">
 <TabItem value="macos" label="macOS">
