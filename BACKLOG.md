@@ -55,25 +55,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ### Application Insights — initial control plane and ingestion
 
 <!--
-TODO: Application Insights: New service project scaffold
-  Create Topaz.Service.ApplicationInsights following existing service conventions:
-  - ApplicationInsightsComponentResourceProperties + ApplicationInsightsComponentResource
-    (ArmResource<T>) capturing: applicationType (web/other), kind (web/ios/other),
-    flowType, requestSource, instrumentationKey (generated GUID), connectionString
-    (InstrumentationKey=...;IngestionEndpoint=...;LiveEndpoint=...),
-    provisioningState (always Succeeded), ingestionMode.
-  - ApplicationInsightsResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
-  - ApplicationInsightsServiceControlPlane implementing IControlPlane with a working Deploy().
-  - IServiceDefinition registration and wiring in Topaz.Host.
-  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
-    case "microsoft.insights/components": entry in TemplateDeploymentOrchestrator.RouteDeployment().
-  - Add GlobalSettings.DefaultApplicationInsightsPort constant (8897).
-  See: https://learn.microsoft.com/en-us/rest/api/application-insights/
-  milestone: v1.9-preview
-  labels: enhancement, application-insights, good first issue
--->
-
-<!--
 TODO: Application Insights: Component control plane endpoints
   Implement the ARM-level component resource surface (microsoft.insights/components):
   - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components/{name}  – create or update

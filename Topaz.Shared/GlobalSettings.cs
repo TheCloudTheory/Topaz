@@ -69,6 +69,8 @@ public static class GlobalSettings
     public const ushort DefaultAppConfigurationPort = 8893;
     public const string AppServiceKuduDnsSuffix = "scm.azurewebsites.topaz.local.dev";
     public const string AppConfigurationDnsSuffix = "azconfig.topaz.local.dev";
+    public const ushort DefaultApplicationInsightsPort = 8900;
+    public const string ApplicationInsightsDnsSuffix = "applicationinsights.topaz.local.dev";
 
     public static string GetAppConfigurationEndpoint(string storeName) =>
         $"https://{storeName}.{AppConfigurationDnsSuffix}:{DefaultAppConfigurationPort}/";

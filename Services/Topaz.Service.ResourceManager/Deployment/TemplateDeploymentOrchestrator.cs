@@ -23,6 +23,7 @@ using Topaz.Service.Sql;
 using Topaz.Service.CosmosDb;
 using Topaz.Service.Disk;
 using Topaz.Service.AppConfiguration;
+using Topaz.Service.Insights;
 using Topaz.Service.LogAnalytics;
 using Topaz.Service.LoadBalancer;
 using Topaz.Service.VirtualMachine;
@@ -360,6 +361,9 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
                 case "Microsoft.OperationalInsights/workspaces":
                     controlPlane = LogAnalyticsServiceControlPlane.New(eventPipeline, logger);
+                    break;
+                case "microsoft.insights/components":
+                    controlPlane = ApplicationInsightsServiceControlPlane.New(eventPipeline, logger);
                     break;
                 case "Microsoft.ManagedIdentity/userAssignedIdentities":
                     controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);

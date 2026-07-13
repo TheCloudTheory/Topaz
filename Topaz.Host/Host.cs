@@ -129,7 +129,7 @@ public class Host
             new ResourceGroupAuthorizationService(),
             new RoleDefinitionService(_eventPipeline, _logger),
             new RoleAssignmentService(_eventPipeline, _logger),
-            new InsightsService(),
+            new InsightsService(_eventPipeline, _logger),
             new EntraService(_eventPipeline, _logger),
             new ContainerRegistryService(_eventPipeline, _logger),
             new AppServicePlanService(_eventPipeline, _logger),

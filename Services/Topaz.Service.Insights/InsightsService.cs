@@ -1,11 +1,14 @@
-﻿using Topaz.Service.ResourceGroup;
+﻿using Topaz.EventPipeline;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Service.Insights;
 
-public sealed class InsightsService : IServiceDefinition
+public sealed class InsightsService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
+    private readonly ApplicationInsightsServiceControlPlane _controlPlane =
+        ApplicationInsightsServiceControlPlane.New(eventPipeline, logger);
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".insights");
     public static IReadOnlyCollection<string>? Subresources => null;
@@ -16,8 +19,4 @@ public sealed class InsightsService : IServiceDefinition
     [
         new InsightsServiceEndpoint()
     ];
-
-    public void Bootstrap()
-    {
-    }
 }
