@@ -472,7 +472,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     private string GetSubresourcePath(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string parentId, string subresourceId, string subresource)
     {
-        if (parentId.Contains("..") || parentId.Contains('/') || parentId.Contains('\\'))
+        if (parentId.Contains("..") || parentId.Contains('\\'))
             throw new InvalidOperationException("Identifier contains forbidden characters.");
         if (subresourceId.Contains("..") || subresourceId.Contains('/') || subresourceId.Contains('\\'))
             throw new InvalidOperationException("Identifier contains forbidden characters.");
@@ -515,7 +515,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
                 $"You can't get a subresource '{subresource}' for a parent service which doesn't define that subresource.");
         }
         
-        if (parentId.Contains("..") || parentId.Contains('/') || parentId.Contains('\\'))
+        if (parentId.Contains("..") || parentId.Contains('\\'))
             throw new InvalidOperationException("Identifier contains forbidden characters.");
         if (subresource.Contains("..") || subresource.Contains('/') || subresource.Contains('\\'))
             throw new InvalidOperationException("Identifier contains forbidden characters.");
@@ -553,7 +553,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
                 $"You can't get a subresource '{subresource}' for a parent service which doesn't define that subresource.");
         }
 
-        if (parentId.Contains("..") || parentId.Contains('/') || parentId.Contains('\\'))
+        if (parentId.Contains("..") || parentId.Contains('\\'))
             throw new InvalidOperationException("Identifier contains forbidden characters.");
         if (subresource.Contains("..") || subresource.Contains('/') || subresource.Contains('\\'))
             throw new InvalidOperationException("Identifier contains forbidden characters.");
