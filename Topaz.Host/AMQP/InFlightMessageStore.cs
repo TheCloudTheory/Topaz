@@ -135,6 +135,11 @@ internal static class InFlightMessageStore
         message.MessageAnnotations[new Symbol("x-opt-deadletter-reason")] = reason ?? "Unspecified";
         message.MessageAnnotations[new Symbol("x-opt-deadletter-error-description")] = description ?? string.Empty;
 
+        // The Azure.Messaging.ServiceBus SDK reads DeadLetterReason from ApplicationProperties, not from MessageAnnotations.
+        message.ApplicationProperties ??= new ApplicationProperties();
+        message.ApplicationProperties["DeadLetterReason"] = reason ?? "Unspecified";
+        message.ApplicationProperties["DeadLetterErrorDescription"] = description ?? string.Empty;
+
         var forwardTarget = _ruleLoader?.GetForwardDeadLetteredMessagesTo(entityAddress);
         if (!string.IsNullOrEmpty(forwardTarget) && (_ruleLoader?.IsKnownQueue(forwardTarget) ?? false))
         {

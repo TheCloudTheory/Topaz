@@ -232,8 +232,8 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger, Ser
     /// </summary>
     private static void PrepareMessageForDelivery(Message message)
     {
-        // Reset/create MessageAnnotations — the Event Hub SDK reads system properties from here.
-        message.MessageAnnotations = new MessageAnnotations();
+        // Ensure MessageAnnotations exists — preserve any existing entries (e.g. dead-letter reason/description).
+        message.MessageAnnotations ??= new MessageAnnotations();
 
         // Stamp the enqueue time so TTL expiry schedulers can compute message age.
         message.MessageAnnotations[new Symbol("x-opt-enqueued-time-utc")] = DateTime.UtcNow;
