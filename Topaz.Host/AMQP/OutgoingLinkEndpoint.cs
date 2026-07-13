@@ -319,8 +319,17 @@ public class OutgoingLinkEndpoint : LinkEndpoint
                 case Rejected rejected:
                     lock (DeliveryLock)
                     {
-                        var reason = rejected.Error?.Condition?.ToString();
-                        var description = rejected.Error?.Description;
+                        // The Azure SDK sends the user-specified reason/description in Error.Info
+                        // (keys are Symbol), and sets Error.Condition to "com.microsoft:dead-letter".
+                        var info = rejected.Error?.Info;
+                        var reasonKey = new Symbol("DeadLetterReason");
+                        var descKey = new Symbol("DeadLetterErrorDescription");
+                        var reason = info != null && info.ContainsKey(reasonKey)
+                            ? info[reasonKey]?.ToString()
+                            : rejected.Error?.Condition?.ToString();
+                        var description = info != null && info.ContainsKey(descKey)
+                            ? info[descKey]?.ToString()
+                            : rejected.Error?.Description;
                         InFlightMessageStore.HandleDeadLetterByMessage(message, reason, description);
                     }
                     break;
