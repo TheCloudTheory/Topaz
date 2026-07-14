@@ -1,4 +1,5 @@
 ﻿using Topaz.EventPipeline;
+using Topaz.Service.Insights.Endpoints;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -17,6 +18,12 @@ public sealed class InsightsService(Pipeline eventPipeline, ITopazLogger logger)
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new InsightsServiceEndpoint()
+        new InsightsServiceEndpoint(),
+        new CreateOrUpdateComponentEndpoint(eventPipeline, logger),
+        new GetComponentEndpoint(eventPipeline, logger),
+        new DeleteComponentEndpoint(eventPipeline, logger),
+        new UpdateComponentEndpoint(eventPipeline, logger),
+        new ListComponentsByResourceGroupEndpoint(eventPipeline, logger),
+        new ListComponentsBySubscriptionEndpoint(eventPipeline, logger),
     ];
 }

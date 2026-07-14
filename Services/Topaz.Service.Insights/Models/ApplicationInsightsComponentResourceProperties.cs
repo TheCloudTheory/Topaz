@@ -20,6 +20,10 @@ public sealed class ApplicationInsightsComponentResourceProperties
 
     public string IngestionMode { get; set; } = "LogAnalytics";
 
+    public int RetentionInDays { get; set; } = 90;
+
+    public string PublicNetworkAccessForIngestion { get; set; } = "Enabled";
+
     public static ApplicationInsightsComponentResourceProperties FromRequest(
         ApplicationInsightsComponentResourceProperties? source,
         string name,

@@ -113,6 +113,28 @@ internal sealed class ApplicationInsightsServiceControlPlane(
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
+    public ControlPlaneOperationResult<ApplicationInsightsComponentResource> Update(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name,
+        UpdateComponentRequest request)
+    {
+        var existing = provider.GetAs<ApplicationInsightsComponentResource>(sub, rg, name);
+        if (existing == null)
+            return new ControlPlaneOperationResult<ApplicationInsightsComponentResource>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode);
+
+        if (request.Tags != null)
+            existing.Tags = request.Tags;
+        if (request.Properties?.RetentionInDays.HasValue == true)
+            existing.Properties.RetentionInDays = request.Properties.RetentionInDays.Value;
+        if (request.Properties?.PublicNetworkAccessForIngestion != null)
+            existing.Properties.PublicNetworkAccessForIngestion = request.Properties.PublicNetworkAccessForIngestion;
+
+        provider.CreateOrUpdate(sub, rg, name, existing);
+        return new ControlPlaneOperationResult<ApplicationInsightsComponentResource>(OperationResult.Updated, existing, null, null);
+    }
+
     public ControlPlaneOperationResult<ApplicationInsightsComponentResource[]> ListByResourceGroup(
         SubscriptionIdentifier sub,
         ResourceGroupIdentifier rg)
