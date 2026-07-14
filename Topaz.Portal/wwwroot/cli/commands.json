@@ -2303,6 +2303,166 @@
     ]
   },
   {
+    "name": "insights component create",
+    "group": "application-insights",
+    "description": "Creates or updates an Application Insights component.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) component name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) location",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "--application-type",
+        "description": "Application type (default: web)",
+        "required": false
+      },
+      {
+        "names": "--kind",
+        "description": "Kind (default: web)",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new Application Insights component",
+        "command": "topaz insights component create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-appinsights\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --location \u0022westeurope\u0022"
+      }
+    ]
+  },
+  {
+    "name": "insights component delete",
+    "group": "application-insights",
+    "description": "Deletes an Application Insights component.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) component name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes an Application Insights component",
+        "command": "topaz insights component delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-appinsights\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "insights component list",
+    "group": "application-insights",
+    "description": "Lists Application Insights components in a subscription or resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Optional) filter by resource group name",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists Application Insights components in a resource group",
+        "command": "topaz insights component list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "insights component show",
+    "group": "application-insights",
+    "description": "Gets an Application Insights component.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) component name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets an Application Insights component",
+        "command": "topaz insights component show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-appinsights\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "insights component update",
+    "group": "application-insights",
+    "description": "Updates tags or properties of an Application Insights component.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) component name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "--retention-in-days",
+        "description": "Data retention in days",
+        "required": false
+      },
+      {
+        "names": "--public-network-access-for-ingestion",
+        "description": "Public network access for ingestion (Enabled/Disabled)",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Updates the retention period of an Application Insights component",
+        "command": "topaz insights component update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-appinsights\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --retention-in-days 180"
+      }
+    ]
+  },
+  {
     "name": "keyvault certificate backup",
     "group": "key-vault",
     "description": "Backs up a certificate from an Azure Key Vault as an opaque blob.",
