@@ -77,6 +77,7 @@ See the [roadmap](https://topaz.thecloudtheory.com/roadmap/) for what's coming n
 | Azure Disk | ✅ | — | Preview |
 | Azure Load Balancer | ✅ | — | Preview |
 | Azure Log Analytics | ✅ | ✅ | Preview |
+| Azure Application Insights | ✅ | - | Preview |
 | Public IP Address | ✅ | — | Preview |
 
 See the [API coverage docs](https://topaz.thecloudtheory.com/docs/category/api-coverage/) for the full operation-level breakdown per service.

@@ -41,6 +41,7 @@ Azure Load Balancer|✅|N/A
 Public IP Address|✅|N/A
 Azure App Configuration|🚧|🚧
 Log Analytics|🚧|🚧
+Application Insights|🚧|🚧
 
 ✅ - fully supported (stable)
 

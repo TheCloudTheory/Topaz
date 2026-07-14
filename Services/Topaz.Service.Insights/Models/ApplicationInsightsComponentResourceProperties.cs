@@ -12,8 +12,13 @@ public sealed class ApplicationInsightsComponentResourceProperties
 
     public string? RequestSource { get; set; }
 
+    // For some reason, some fields in Application Insights response models
+    // are supposed to break convention and instead of using camelCase,
+    // their wire path enforces PascalCase (e.g. properties.InstrumentationKey)
+    [JsonPropertyName("InstrumentationKey")]
     public string? InstrumentationKey { get; set; }
 
+    [JsonPropertyName("ConnectionString")]
     public string? ConnectionString { get; set; }
 
     public string ProvisioningState => "Succeeded";

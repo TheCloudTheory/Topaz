@@ -36,4 +36,6 @@ public sealed class ApplicationInsightsComponentResource : ArmResource<Applicati
     public sealed override ResourceSku? Sku { get; init; }
     public sealed override string? Kind { get; init; }
     public sealed override ApplicationInsightsComponentResourceProperties Properties { get; init; }
+    
+    
 }

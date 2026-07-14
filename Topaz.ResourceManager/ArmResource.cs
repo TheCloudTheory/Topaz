@@ -28,14 +28,12 @@ public abstract class ArmResource<T>
 
     public bool IsInSubscription(SubscriptionIdentifier subscriptionIdentifier)
     {
-        if (Id is null) return false;
         var segments = Id.Split("/");
         return segments.Length > 2 && segments[2] == subscriptionIdentifier.Value.ToString();
     }
 
     public bool IsInResourceGroup(ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        if (Id is null) return false;
         var segments = Id.Split("/");
         return segments.Length > 4 && segments[4] == resourceGroupIdentifier.Value;
     }
