@@ -24,6 +24,7 @@ using Topaz.Service.Disk.Commands;
 using Topaz.Service.CosmosDb.Commands;
 using Topaz.Service.Sql.Commands;
 using Topaz.FinOps.Commands;
+using Topaz.Service.Insights.Commands;
 using Topaz.Service.LogAnalytics.Commands;
 
 Console.WriteLine($"Topaz.Documentation.Generator {ThisAssembly.AssemblyInformationalVersion}");
@@ -57,7 +58,8 @@ _ = new[]
     typeof(GenericFinOpsCommand),
     typeof(HealthCommand),
     typeof(GenericChaosCommand),
-    typeof(GenericLogAnalyticsCommand)
+    typeof(GenericLogAnalyticsCommand),
+    typeof(GenericInsightsCommand)
 };
 
 Console.WriteLine("Looking for commands...");

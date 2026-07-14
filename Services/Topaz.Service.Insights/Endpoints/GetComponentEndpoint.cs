@@ -32,7 +32,7 @@ internal sealed class GetComponentEndpoint(Pipeline eventPipeline, ITopazLogger 
         var rg = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         var name = context.Request.Path.Value.ExtractValueFromPath(8);
 
-        var result = _controlPlane.Get(sub, rg, name);
+        var result = _controlPlane.Get(sub, rg, name!);
         if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
