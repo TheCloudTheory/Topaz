@@ -55,21 +55,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ### Application Insights — initial control plane and ingestion
 
 <!--
-TODO: Application Insights: Component control plane endpoints
-  Implement the ARM-level component resource surface (microsoft.insights/components):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components/{name}  – delete
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components/{name}  – update (tags, RetentionInDays, publicNetworkAccessForIngestion)
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components          – list by resource group
-  - GET    /subscriptions/{sub}/providers/microsoft.insights/components                              – list all
-  The instrumentationKey and connectionString fields are generated on first creation and
-  persisted; they remain stable across updates.
-  milestone: v1.9-preview
-  labels: enhancement, application-insights, good first issue
--->
-
-<!--
 TODO: Application Insights: Telemetry ingestion endpoint
   Implement the Application Insights ingestion endpoint on DefaultApplicationInsightsPort
   (8897) that accepts telemetry items from the Azure Monitor OpenTelemetry SDK and the
