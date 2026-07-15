@@ -21,6 +21,8 @@ public sealed class InsightsService(Pipeline eventPipeline, ITopazLogger logger)
         new InsightsServiceEndpoint(),
         new CreateOrUpdateComponentEndpoint(eventPipeline, logger),
         new GetComponentEndpoint(eventPipeline, logger),
+        new GetCurrentBillingFeaturesEndpoint(),
+        new PutCurrentBillingFeaturesEndpoint(),
         new DeleteComponentEndpoint(eventPipeline, logger),
         new UpdateComponentEndpoint(eventPipeline, logger),
         new ListComponentsByResourceGroupEndpoint(eventPipeline, logger),

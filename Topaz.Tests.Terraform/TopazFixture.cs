@@ -27,14 +27,14 @@ public class TopazFixture
     // Persisted on the host so providers and the Terraform binary are downloaded only once
     // across all test-class fixture setups, regardless of how many containers are created.
     // Override with TOPAZ_TERRAFORM_CACHE_DIR to use a different path.
-    // Default: /tmp/topaz-test-cache — accessible to both Docker Desktop and Colima.
-    // The path is resolved to its real filesystem path (no symlinks) so that the Docker daemon
-    // receives a path it can validate against its virtiofs mounts. On macOS /tmp is a symlink
-    // to /private/tmp; passing the symlink path to the Docker API causes a BadRequest error.
+    // Default: ~/.topaz-test-cache — the home directory is always accessible to both Docker
+    // Desktop and Colima without any additional file-sharing configuration. /tmp was previously
+    // used but on macOS it is a symlink to /private/tmp; Docker Desktop exposes /tmp in its
+    // virtiofs mounts but not /private/tmp, causing a BadRequest bind-mount error at startup.
     private static readonly string TerraformCacheDir =
         ResolveSymlinks(
             Environment.GetEnvironmentVariable("TOPAZ_TERRAFORM_CACHE_DIR")
-            ?? "/tmp/topaz-test-cache");
+            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".topaz-test-cache"));
 
     /// <summary>
     /// Resolves every symlink component in <paramref name="path"/> and returns the
@@ -138,6 +138,16 @@ public class TopazFixture
 
             await _containerTopaz.StartAsync().ConfigureAwait(false);
             await Task.Delay(TimeSpan.FromSeconds(3));
+
+            // Clear any state left by a previous interrupted test run in this container.
+            // Safe to run unconditionally: on a fresh container the directory doesn't exist yet;
+            // on a reused container it wipes stale resource state that would otherwise cause
+            // ARM creates to find pre-existing filesystem entries but an empty DNS cache,
+            // leading to data-plane probes looping forever with 404.
+            await _containerTopaz.ExecAsync(new List<string>
+            {
+                "/bin/sh", "-c", "rm -rf /app/.topaz"
+            });
 
             _containerTerraform = new ContainerBuilder()
                 .WithImage(AzureCliContainerImage)

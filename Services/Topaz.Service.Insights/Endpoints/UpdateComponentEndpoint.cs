@@ -51,7 +51,7 @@ internal sealed class UpdateComponentEndpoint(Pipeline eventPipeline, ITopazLogg
         var result = _controlPlane.Update(sub, rg, name, request);
         if (result.Result != OperationResult.Updated || result.Resource == null)
         {
-            response.CreateErrorResponse(result.Code!, result.Reason!);
+            response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
             return;
         }
 

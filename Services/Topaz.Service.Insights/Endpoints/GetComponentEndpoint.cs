@@ -35,7 +35,7 @@ internal sealed class GetComponentEndpoint(Pipeline eventPipeline, ITopazLogger 
         var result = _controlPlane.Get(sub, rg, name!);
         if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
-            response.CreateErrorResponse(result.Code!, result.Reason!);
+            response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
             return;
         }
 

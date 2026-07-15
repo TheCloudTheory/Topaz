@@ -711,3 +711,22 @@ output "loganalytics_name"             { value = azurerm_log_analytics_workspace
 output "loganalytics_workspace_id"     { value = azurerm_log_analytics_workspace.loganalytics.workspace_id }
 output "loganalytics_sku"              { value = azurerm_log_analytics_workspace.loganalytics.sku }
 output "loganalytics_retention_days"   { value = azurerm_log_analytics_workspace.loganalytics.retention_in_days }
+
+# ── Application Insights ──────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "insights_rg" {
+  name     = "tf-rm-insights-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_application_insights" "insights" {
+  name                = "tf-rm-insights"
+  resource_group_name = azurerm_resource_group.insights_rg.name
+  location            = azurerm_resource_group.insights_rg.location
+  application_type    = "web"
+}
+
+output "insights_name"               { value = azurerm_application_insights.insights.name }
+output "insights_application_type"   { value = azurerm_application_insights.insights.application_type }
+output "insights_instrumentation_key" { value = nonsensitive(azurerm_application_insights.insights.instrumentation_key) }
+output "insights_connection_string"  { value = nonsensitive(azurerm_application_insights.insights.connection_string) }
