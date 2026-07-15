@@ -42,6 +42,7 @@ RUN pwsh -NonInteractive -Command " \
     Install-Module -Name Az.Sql               -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
     Install-Module -Name Az.CosmosDB          -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
     Install-Module -Name Az.OperationalInsights -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
+    Install-Module -Name Az.ApplicationInsights -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
     Write-Host 'Az modules installed.' \
     "
 

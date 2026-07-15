@@ -81,7 +81,7 @@ internal sealed class ApplicationInsightsServiceControlPlane(
         var location = request.Location ?? rgOp.Resource!.Location!;
         var properties = ApplicationInsightsComponentResourceProperties.FromRequest(
             request.Properties, name, GlobalSettings.DefaultApplicationInsightsPort);
-        var resource = new ApplicationInsightsComponentResource(sub, rg, name, location, request.Tags, properties);
+        var resource = new ApplicationInsightsComponentResource(sub, rg, name, location, request.Tags, request.Kind, properties);
 
         provider.CreateOrUpdate(sub, rg, name, resource, createOperation: true);
         return new ControlPlaneOperationResult<ApplicationInsightsComponentResource>(OperationResult.Created, resource, null, null);

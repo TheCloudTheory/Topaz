@@ -6,8 +6,6 @@ public sealed class ApplicationInsightsComponentResourceProperties
 {
     public string? ApplicationType { get; set; }
 
-    public string? Kind { get; set; }
-
     public string? FlowType { get; set; }
 
     public string? RequestSource { get; set; }
@@ -40,7 +38,6 @@ public sealed class ApplicationInsightsComponentResourceProperties
         return new ApplicationInsightsComponentResourceProperties
         {
             ApplicationType = source?.ApplicationType ?? "web",
-            Kind = source?.Kind ?? "web",
             FlowType = source?.FlowType ?? "Redfield",
             RequestSource = source?.RequestSource ?? "rest",
             InstrumentationKey = key,

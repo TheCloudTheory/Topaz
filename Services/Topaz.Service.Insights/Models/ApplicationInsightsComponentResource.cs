@@ -19,6 +19,7 @@ public sealed class ApplicationInsightsComponentResource : ArmResource<Applicati
         string name,
         string location,
         IDictionary<string, string>? tags,
+        string? kind,
         ApplicationInsightsComponentResourceProperties properties)
     {
         Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/microsoft.insights/components/{name}";
@@ -26,6 +27,7 @@ public sealed class ApplicationInsightsComponentResource : ArmResource<Applicati
         Location = location;
         Tags = tags ?? new Dictionary<string, string>();
         Properties = properties;
+        Kind = kind ?? "web";
     }
 
     public sealed override string Id { get; init; }

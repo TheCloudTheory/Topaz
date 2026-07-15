@@ -83,6 +83,7 @@ public record GlobalDnsEntries
         var file = File.ReadAllText(GlobalSettings.GlobalDnsEntriesFilePath);
         if (string.IsNullOrWhiteSpace(file))
         {
+            _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(GetDnsEntriesFromFile), "DNS file didn't exist and was created by the DNS itself.");
             File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath,
                 JsonSerializer.Serialize(new GlobalDnsEntries()));
             return new GlobalDnsEntries();
