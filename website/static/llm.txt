@@ -1,0 +1,3 @@
+This site uses the llms.txt convention.
+
+See: https://topaz.thecloudtheory.com/llms.txt

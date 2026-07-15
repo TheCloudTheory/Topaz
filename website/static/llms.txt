@@ -1,0 +1,40 @@
+# Topaz
+
+> Topaz is a local Azure environment emulator for developers and cloud engineers. This file provides a curated index of high-value documentation and product pages for LLM and agent use.
+
+Topaz resources are versioned. Prefer stable docs for production usage and compatibility guidance.
+
+## Product
+
+- [Topaz website](https://topaz.thecloudtheory.com/): Product home and navigation entry point.
+- [Features](https://topaz.thecloudtheory.com/features): Core capabilities and differentiators.
+- [Use Cases](https://topaz.thecloudtheory.com/use-cases): Common development and testing scenarios.
+- [Demo](https://topaz.thecloudtheory.com/demo): Product walkthrough and demonstrations.
+- [Pricing](https://topaz.thecloudtheory.com/pricing): Licensing and plan information.
+- [Roadmap](https://topaz.thecloudtheory.com/roadmap): Planned work and direction.
+
+## Docs
+
+- [Introduction](https://topaz.thecloudtheory.com/docs/intro/): Start here for setup and orientation.
+- [Supported Services](https://topaz.thecloudtheory.com/docs/supported-services): Azure services currently emulated.
+- [Local Azure Emulator](https://topaz.thecloudtheory.com/docs/local-azure-emulator): Conceptual overview and positioning.
+- [Using CLI](https://topaz.thecloudtheory.com/docs/using-cli): Main CLI workflows.
+- [CLI Reference](https://topaz.thecloudtheory.com/docs/category/cli-reference): Command reference and usage details.
+- [MCP Server](https://topaz.thecloudtheory.com/docs/mcp-server): MCP capabilities and integration notes.
+- [Integrations](https://topaz.thecloudtheory.com/docs/category/integrations): CI/CD and tool integrations.
+- [Tutorials](https://topaz.thecloudtheory.com/docs/category/tutorials): Step-by-step guides.
+- [Troubleshooting](https://topaz.thecloudtheory.com/docs/troubleshooting): Diagnostics and issue resolution.
+- [Known Limitations](https://topaz.thecloudtheory.com/docs/known-limitations): Current constraints and caveats.
+- [Compatibility](https://topaz.thecloudtheory.com/docs/compatibility): Runtime and tooling compatibility.
+
+## Repository
+
+- [GitHub Repository](https://github.com/TheCloudTheory/Topaz): Source code, issues, and discussions.
+- [README](https://github.com/TheCloudTheory/Topaz/blob/main/README.md): Project summary and quick usage.
+
+## Optional
+
+- [Blog](https://topaz.thecloudtheory.com/blog): Updates, announcements, and long-form posts.
+- [Contact](https://topaz.thecloudtheory.com/contact): Support and commercial inquiries.
+- [Stable Docs v1.8](https://topaz.thecloudtheory.com/docs/v1.8/intro/): Stable documentation version.
+- [Next Docs (unreleased)](https://topaz.thecloudtheory.com/docs/next/intro/): Preview of upcoming documentation.

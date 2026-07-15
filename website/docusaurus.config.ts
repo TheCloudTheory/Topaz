@@ -236,6 +236,10 @@ const config: Config = {
               to: '/blog',
             },
             {
+              label: 'LLMs.txt',
+              href: '/llms.txt',
+            },
+            {
               label: 'GitHub',
               href: 'https://github.com/TheCloudTheory/Topaz',
             },
