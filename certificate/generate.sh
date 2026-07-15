@@ -40,6 +40,7 @@ openssl req \
   echo "DNS.14 = *.azurewebsites.${PARENT}${SUFFIX}"; \
   echo "DNS.15 = *.azconfig.${PARENT}${SUFFIX}"; \
   echo "DNS.16 = *.ods.opinsights.${PARENT}${SUFFIX}"; \
+  echo "DNS.17 = *.applicationinsights.${PARENT}${SUFFIX}"; \
   echo '[ v3_ca ]'; \
   echo 'subjectKeyIdentifier=hash'; \
   echo 'authorityKeyIdentifier=keyid:always,issuer'; \

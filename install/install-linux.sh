@@ -79,6 +79,23 @@ echo "address=/.vault.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.loca
 echo "address=/.storage.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
 echo "address=/.servicebus.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
 echo "address=/.eventhub.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
+echo "address=/.ods.opinsights.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
+echo "address=/.applicationinsights.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
+
+echo "--------------------------------------------"
+echo "Step 3 - Removing stale manual /etc/hosts entries for topaz.local.dev..."
+echo "(These may have been added before dnsmasq was available; dnsmasq supersedes them)"
+echo "--------------------------------------------"
+
+# Remove any manually-added topaz.local.dev lines from /etc/hosts so they don't
+# shadow the dnsmasq-provided 127.0.0.1 addresses with stale values (e.g. 127.0.2.1).
+if grep -q "topaz\.local\.dev" /etc/hosts; then
+    cp /etc/hosts /etc/hosts.topaz-backup
+    sed -i '/topaz\.local\.dev/d' /etc/hosts
+    echo "Removed topaz.local.dev entries from /etc/hosts (backup at /etc/hosts.topaz-backup)"
+else
+    echo "No topaz.local.dev entries found in /etc/hosts — nothing to remove"
+fi
 
 # Enable and start dnsmasq service
 systemctl enable dnsmasq
@@ -112,7 +129,16 @@ if systemctl is-active --quiet NetworkManager; then
     
     # Restart NetworkManager
     systemctl restart NetworkManager
-    
+
+    # NetworkManager may overwrite /etc/resolv.conf with DHCP nameservers after restart.
+    # Explicitly set dnsmasq as the primary nameserver so topaz.local.dev resolves locally.
+    sleep 1
+    if ! grep -q "^nameserver 127.0.0.1" /etc/resolv.conf; then
+        cp /etc/resolv.conf /etc/resolv.conf.nm-backup 2>/dev/null || true
+        sed -i '1s/^/nameserver 127.0.0.1\n/' /etc/resolv.conf
+        echo "Prepended nameserver 127.0.0.1 to /etc/resolv.conf"
+    fi
+
     echo "NetworkManager configured to use dnsmasq"
 else
     echo "NetworkManager not detected. Configuring /etc/resolv.conf..."

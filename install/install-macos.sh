@@ -45,6 +45,8 @@ echo "address=/.storage.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.
 echo "address=/.cr.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 echo "address=/.servicebus.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 echo "address=/.eventhub.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
+echo "address=/.ods.opinsights.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
+echo "address=/.applicationinsights.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 
 # Step 4 - Start dnsmasq service
 brew services restart dnsmasq

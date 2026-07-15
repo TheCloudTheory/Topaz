@@ -12,6 +12,7 @@ namespace Topaz.Service.Insights;
 internal sealed class ApplicationInsightsServiceControlPlane(
     Pipeline eventPipeline,
     ApplicationInsightsResourceProvider provider,
+    SubscriptionControlPlane subscriptionControlPlane,
     ITopazLogger logger) : IControlPlane
 {
     private const string NotFoundCode = "ResourceNotFound";
@@ -21,7 +22,7 @@ internal sealed class ApplicationInsightsServiceControlPlane(
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
     public static ApplicationInsightsServiceControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
-        new(eventPipeline, new ApplicationInsightsResourceProvider(logger), logger);
+        new(eventPipeline, new ApplicationInsightsResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
     public OperationResult Deploy(GenericResource resource)
     {
@@ -152,5 +153,39 @@ internal sealed class ApplicationInsightsServiceControlPlane(
             .Where(r => r.IsInSubscription(sub))
             .ToArray();
         return new ControlPlaneOperationResult<ApplicationInsightsComponentResource[]>(OperationResult.Success, resources, null, null);
+    }
+
+    public ControlPlaneOperationResult<ApplicationInsightsComponentResource?> GetByInstrumentationKey(
+        string instrumentationKey)
+    {
+        var subscriptions = subscriptionControlPlane.List();
+        if (subscriptions.Result != OperationResult.Success || subscriptions.Resource == null ||
+            subscriptions.Resource.Length == 0)
+        {
+            return new ControlPlaneOperationResult<ApplicationInsightsComponentResource?>(OperationResult.Failed, null,"No subscriptions found",
+                "NoSubscriptionsFound");
+        }
+        
+        var components = new List<ApplicationInsightsComponentResource>();
+        foreach (var subscription in subscriptions.Resource)
+        {
+            var componentsInSubscription =
+                ListBySubscription(SubscriptionIdentifier.From(subscription.SubscriptionId));
+            if (componentsInSubscription.Result != OperationResult.Success ||
+                componentsInSubscription.Resource == null || componentsInSubscription.Resource.Length == 0)
+            {
+                continue;
+            }
+
+            components.AddRange(componentsInSubscription.Resource);
+        }
+        
+        if (components.Count == 0 || components.All(w => w.Properties.InstrumentationKey != instrumentationKey))
+        {
+            return new ControlPlaneOperationResult<ApplicationInsightsComponentResource?>(OperationResult.Failed, null, "No resources found", "NoComponentsFound");
+        }
+        
+        var component = components.SingleOrDefault(w => w.Properties.InstrumentationKey == instrumentationKey)!;
+        return new ControlPlaneOperationResult<ApplicationInsightsComponentResource?>(OperationResult.Updated, component, null, null);
     }
 }

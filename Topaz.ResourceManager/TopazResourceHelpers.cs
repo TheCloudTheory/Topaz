@@ -120,4 +120,12 @@ public static class TopazResourceHelpers
     /// <returns>A URI string for the local Log Analytics data collection endpoint.</returns>
     public static string GetLogAnalyticsIngestionEndpoint(string workspaceCustomerId) =>
         $"https://{workspaceCustomerId}.ods.opinsights.topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}";
+
+    /// <summary>
+    /// Gets the Application Insights telemetry ingestion endpoint URI for a specified component.
+    /// </summary>
+    /// <param name="componentName">The name of the Application Insights component.</param>
+    /// <returns>A URI string for the local Application Insights ingestion endpoint.</returns>
+    public static string GetApplicationInsightsIngestionEndpoint(string componentName) =>
+        $"https://{componentName}.applicationinsights.topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}";
 }
