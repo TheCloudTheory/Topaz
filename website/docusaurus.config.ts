@@ -237,7 +237,7 @@ const config: Config = {
             },
             {
               label: 'LLMs.txt',
-              href: '/llms.txt',
+              href: 'pathname:///llms.txt',
             },
             {
               label: 'GitHub',

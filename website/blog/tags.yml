@@ -87,3 +87,73 @@ authorization:
   label: Authorization
   permalink: /authorization
   description: Azure Authorization and RBAC related posts
+
+app-configuration:
+  label: App Configuration
+  permalink: /app-configuration
+  description: Azure App Configuration related posts
+
+blob-storage:
+  label: Blob Storage
+  permalink: /blob-storage
+  description: Azure Blob Storage related posts
+
+ci:
+  label: CI
+  permalink: /ci
+  description: Continuous integration related posts
+
+cli:
+  label: CLI
+  permalink: /cli
+  description: Topaz CLI related posts
+
+compute:
+  label: Compute
+  permalink: /compute
+  description: Azure compute related posts
+
+container-registry:
+  label: Container Registry
+  permalink: /container-registry
+  description: Azure Container Registry related posts
+
+cosmos-db:
+  label: Cosmos DB
+  permalink: /cosmos-db
+  description: Azure Cosmos DB related posts
+
+devops:
+  label: DevOps
+  permalink: /devops
+  description: DevOps related posts
+
+docker:
+  label: Docker
+  permalink: /docker
+  description: Docker related posts
+
+documentation:
+  label: Documentation
+  permalink: /documentation
+  description: Documentation related posts
+
+key-vault:
+  label: Key Vault
+  permalink: /key-vault
+  description: Azure Key Vault related posts
+
+log-analytics:
+  label: Log Analytics
+  permalink: /log-analytics
+  description: Azure Log Analytics related posts
+
+testing:
+  label: Testing
+  permalink: /testing
+  description: Testing related posts
+
+vscode:
+  label: VS Code
+  permalink: /vscode
+  description: Visual Studio Code related posts
