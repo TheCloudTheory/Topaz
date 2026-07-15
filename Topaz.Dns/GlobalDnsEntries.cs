@@ -81,6 +81,13 @@ public record GlobalDnsEntries
         }
 
         var file = File.ReadAllText(GlobalSettings.GlobalDnsEntriesFilePath);
+        if (string.IsNullOrWhiteSpace(file))
+        {
+            File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath,
+                JsonSerializer.Serialize(new GlobalDnsEntries()));
+            return new GlobalDnsEntries();
+        }
+
         var entries = JsonSerializer.Deserialize<GlobalDnsEntries>(file, GlobalSettings.JsonOptions);
         return entries;
     }
