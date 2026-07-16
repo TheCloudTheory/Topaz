@@ -9,6 +9,7 @@ using Topaz.Portal.Models.Rbac;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.ResourceManager;
 using Topaz.Portal.Models.ServiceBus;
+using Topaz.Portal.Models.CosmosDb;
 using Topaz.Portal.Models.Sql;
 using Topaz.Portal.Models.Storage;
 using Topaz.Portal.Models.Subscriptions;
@@ -219,6 +220,44 @@ public interface ITopazClient
         string resourceGroupName,
         string serverName,
         string databaseName,
+        CancellationToken cancellationToken = default);
+
+    // Cosmos DB
+    Task<ListCosmosDbAccountsResponse> ListCosmosDbAccounts(
+        CancellationToken cancellationToken = default);
+
+    Task<CosmosDbAccountDto?> GetCosmosDbAccount(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string accountName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateCosmosDbAccount(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string accountName,
+        string location,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteCosmosDbAccount(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string accountName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdateCosmosDbAccountTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string accountName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteCosmosDbAccountTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string accountName,
+        string tagName,
         CancellationToken cancellationToken = default);
 
     // Managed Identities

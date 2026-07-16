@@ -5,6 +5,7 @@
 @using Topaz.Portal.Models.ServiceBus
 @using Topaz.Portal.Models.VirtualMachines
 @using Topaz.Portal.Models.VirtualNetworks
+@using Topaz.Portal.Models.CosmosDb
 @inject ITopazClient TopazClient
 
 <div class="card h-100">
@@ -87,6 +88,13 @@
                         <a href="/portal/virtual-networks" class="small stretched-link text-decoration-none">View →</a>
                     </div>
                 </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100 position-relative">
+                        <div class="display-6 fw-bold text-primary">@_cosmosDbAccountCount</div>
+                        <div class="small text-muted mt-1">Cosmos DB accounts</div>
+                        <a href="/portal/cosmos-db" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
             </div>
         }
     </div>
@@ -104,6 +112,7 @@
     private int _serviceBusNamespaceCount;
     private int _virtualMachineCount;
     private int _virtualNetworkCount;
+    private int _cosmosDbAccountCount;
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,8 +127,9 @@
             var sbTask = TopazClient.ListServiceBusNamespaces();
             var vmTask = TopazClient.ListVirtualMachines();
             var vnetTask = TopazClient.ListVirtualNetworks();
+            var cosmosTask = TopazClient.ListCosmosDbAccounts();
 
-            await Task.WhenAll(storageTask, keyVaultTask, subsTask, rgsTask, miTask, ehTask, sbTask, vmTask, vnetTask);
+            await Task.WhenAll(storageTask, keyVaultTask, subsTask, rgsTask, miTask, ehTask, sbTask, vmTask, vnetTask, cosmosTask);
 
             _storageCount = (await storageTask).Value?.Length ?? 0;
             _keyVaultCount = (await keyVaultTask).Value?.Length ?? 0;
@@ -130,6 +140,7 @@
             _serviceBusNamespaceCount = (await sbTask).Value?.Length ?? 0;
             _virtualMachineCount = (await vmTask).Value?.Length ?? 0;
             _virtualNetworkCount = (await vnetTask).Value?.Length ?? 0;
+            _cosmosDbAccountCount = (await cosmosTask).Value?.Length ?? 0;
         }
         catch (Exception ex)
         {

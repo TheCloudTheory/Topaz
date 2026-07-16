@@ -1,0 +1,116 @@
+@page "/portal/cosmos-db/{SubscriptionId:guid}/{ResourceGroupName}/{AccountName}/tags"
+@using System.Net
+@using Topaz.Portal.Models.CosmosDb
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/cosmos-db">Cosmos DB accounts</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/cosmos-db/{SubscriptionId:D}/{ResourceGroupName}/{AccountName}")">@DecodedAccountName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Tags</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedAccountName</h1>
+
+<CosmosDbAccountDetailsShell SubscriptionId="SubscriptionId"
+                              ResourceGroupName="@DecodedRg"
+                              AccountName="@DecodedAccountName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_loadError</div>
+    }
+    else
+    {
+        <TagsPanel Tags="_tags"
+                   OnAdd="AddTagAsync"
+                   OnRemove="RemoveTagAsync"
+                   OnEdit="EditTagAsync" />
+    }
+</CosmosDbAccountDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string AccountName { get; set; } = "";
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedAccountName => WebUtility.UrlDecode(AccountName);
+
+    private bool _loading = true;
+    private string? _loadError;
+    private Dictionary<string, string> _tags = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAccountAsync();
+    }
+
+    private async Task LoadAccountAsync()
+    {
+        _loading = true;
+        _loadError = null;
+
+        try
+        {
+            var account = await TopazClient.GetCosmosDbAccount(SubscriptionId, DecodedRg, DecodedAccountName);
+            _tags = account?.Tags ?? [];
+        }
+        catch (Exception ex)
+        {
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<string?> AddTagAsync(string key, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateCosmosDbAccountTag(SubscriptionId, DecodedRg, DecodedAccountName, key, value);
+            await LoadAccountAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> RemoveTagAsync(string key)
+    {
+        try
+        {
+            await TopazClient.DeleteCosmosDbAccountTag(SubscriptionId, DecodedRg, DecodedAccountName, key);
+            await LoadAccountAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> EditTagAsync(string key, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateCosmosDbAccountTag(SubscriptionId, DecodedRg, DecodedAccountName, key, value);
+            await LoadAccountAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+}
