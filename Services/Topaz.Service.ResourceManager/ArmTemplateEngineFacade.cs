@@ -1,16 +1,16 @@
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Azure.Deployments.Core.Components;
 using Azure.Deployments.Core.Configuration;
 using Azure.Deployments.Core.Definitions.Schema;
 using Azure.Deployments.Core.Diagnostics;
 using Azure.Deployments.Core.ErrorResponses;
 using Azure.Deployments.Expression.Engines;
+using Azure.Deployments.Expression.Expressions;
 using Azure.Deployments.Templates.Engines;
 using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
-using System.Text.RegularExpressions;
-using System.Text.Json;
-using Azure.Deployments.Expression.Expressions;
 using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -123,7 +123,7 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
         var metrics = new TemplateMetricsRecorder();
         var evalCtx = TemplateEngine.GetExpressionEvaluationContext(
             string.Empty, subscriptionId, resourceGroupName, template, metrics,
-            false, null, null, null, null, null, null);
+            false);
 
         EvaluateJTokenExpressions(properties, evalCtx);
     }
@@ -198,29 +198,41 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
     /// When the Azure SDK expression engine cannot evaluate an expression (e.g. <c>reference()</c>),
     /// <paramref name="referenceResolver"/> is tried before falling back to <c>null</c>.
     /// </summary>
+    /// <param name="subscriptionId">The subscription ID used to build the expression evaluation context.</param>
+    /// <param name="resourceGroupName">The resource group name used to build the expression evaluation context.</param>
+    /// <param name="template">The already-processed ARM template whose outputs are to be evaluated.</param>
+    /// <param name="armLogger">Logger used to emit warnings when an output expression cannot be evaluated.</param>
+    /// <param name="referenceResolver">
+    /// Optional delegate that attempts to resolve a <c>reference()</c> ARM expression to a
+    /// <see cref="JToken"/> when the Azure SDK expression engine cannot evaluate it (e.g. <c>listKeys</c>,
+    /// <c>reference()</c>). Receives the raw ARM expression string and returns the resolved value, or
+    /// <c>null</c> if it cannot be resolved.
+    /// </param>
     /// <param name="symbolicNameMap">
     /// Optional mapping from Bicep symbolic resource names (dict-key in newer ARM templates)
-    /// to their resource type.  Enables resolution of <c>reference('symbolicName')</c>
+    /// to their resource type. Enables resolution of <c>reference('symbolicName')</c>
     /// expressions that the ARM engine cannot resolve at output-evaluation time.
     /// </param>
     public JObject EvaluateOutputs(
         string subscriptionId,
         string resourceGroupName,
         Template template,
-        ITopazLogger logger,
+        ITopazLogger armLogger,
         Func<string, JToken?>? referenceResolver = null,
         IReadOnlyDictionary<string, string>? symbolicNameMap = null)
     {
         var metrics = new TemplateMetricsRecorder();
         var evalCtx = TemplateEngine.GetExpressionEvaluationContext(
             string.Empty, subscriptionId, resourceGroupName, template, metrics,
-            false, null, null, null, null, null, null);
+            false);
 
         var result = new JObject();
         foreach (var kv in template.Outputs)
         {
-            var entry = new JObject();
-            entry["type"] = kv.Value.Type?.Value.ToString().ToLowerInvariant() ?? "object";
+            var entry = new JObject
+            {
+                ["type"] = kv.Value.Type?.Value.ToString().ToLowerInvariant() ?? "object"
+            };
 
             var rawJToken = kv.Value.Value?.Value;
             if (rawJToken != null)
@@ -290,7 +302,7 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
                                             string.Equals(r.Type?.Value?.ToString(), resourceType,
                                                 StringComparison.OrdinalIgnoreCase));
                                         if (match?.Name?.Value == null) return m.Value;
-                                        var resolvedName = match.Name.Value.ToString()!;
+                                        var resolvedName = match.Name.Value!;
                                         return $"reference(resourceId('{resourceType}', '{resolvedName}')){propPath}";
                                     });
                                 }
@@ -319,7 +331,7 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
                             entry["value"] = resolved;
                         else
                         {
-                            logger.LogWarning($"ARM output '{kv.Key}' could not be evaluated: {ex.Message}");
+                            armLogger.LogWarning($"ARM output '{kv.Key}' could not be evaluated: {ex.Message}");
                             entry["value"] = null;
                         }
                     }

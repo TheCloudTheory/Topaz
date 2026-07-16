@@ -411,9 +411,9 @@ public sealed class TemplateDeploymentOrchestrator(
             {
                 var record = Models.OperationRecord.Create(
                     templateDeployment.Id,
-                    genericResource.Id ?? string.Empty,
-                    resourceType ?? string.Empty,
-                    genericResource.Name ?? string.Empty,
+                    genericResource.Id,
+                    resourceType,
+                    genericResource.Name,
                     succeeded: result != OperationResult.Failed,
                     start: operationStart,
                     end: DateTimeOffset.UtcNow);

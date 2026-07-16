@@ -10,15 +10,26 @@ namespace Topaz.Service.ResourceManager.Deployment;
 /// Lifecycle callbacks and persistence are injected as delegates, keeping the orchestrator
 /// scope-agnostic.
 /// </summary>
-internal sealed class TemplateDeployment
+internal sealed class TemplateDeployment(
+    string id,
+    string name,
+    Template template,
+    Action complete,
+    Action cancel,
+    Action fail,
+    Action persist,
+    Action<System.Text.Json.JsonElement?> setOutputs,
+    InsensitiveDictionary<JToken> metadata,
+    System.Text.Json.JsonElement? parameters,
+    Action<DeploymentErrorInfo?>? setError = null)
 {
-    public string Id { get; }
-    public string Name { get; }
-    public Template Template { get; }
+    public string Id { get; } = id;
+    public string Name { get; } = name;
+    public Template Template { get; } = template;
     public DeploymentStatus Status { get; private set; } = DeploymentStatus.New;
     public CancellationToken CancellationToken => _cts?.Token ?? CancellationToken.None;
-    public InsensitiveDictionary<JToken> Metadata { get; }
-    public System.Text.Json.JsonElement? Parameters { get; }
+    public InsensitiveDictionary<JToken> Metadata { get; } = metadata;
+    public System.Text.Json.JsonElement? Parameters { get; } = parameters;
 
     /// <summary>
     /// Outputs from nested module deployments, keyed by deployment resource name.
@@ -38,38 +49,7 @@ internal sealed class TemplateDeployment
 
     private CancellationTokenSource? _cts;
 
-    private readonly Action _complete;
-    private readonly Action _cancel;
-    private readonly Action _fail;
-    private readonly Action _persist;
-    private readonly Action<System.Text.Json.JsonElement?> _setOutputs;
-    private readonly Action<DeploymentErrorInfo?> _setError;
-
-    public TemplateDeployment(
-        string id,
-        string name,
-        Template template,
-        Action complete,
-        Action cancel,
-        Action fail,
-        Action persist,
-        Action<System.Text.Json.JsonElement?> setOutputs,
-        InsensitiveDictionary<JToken> metadata,
-        System.Text.Json.JsonElement? parameters,
-        Action<DeploymentErrorInfo?>? setError = null)
-    {
-        Id = id;
-        Name = name;
-        Template = template;
-        _complete = complete;
-        _cancel = cancel;
-        _fail = fail;
-        _persist = persist;
-        _setOutputs = setOutputs;
-        _setError = setError ?? (_ => { });
-        Metadata = metadata;
-        Parameters = parameters;
-    }
+    private readonly Action<DeploymentErrorInfo?> _setError = setError ?? (_ => { });
 
     public void SetCancellationTokenSource(CancellationTokenSource cts) => _cts = cts;
 
@@ -77,25 +57,25 @@ internal sealed class TemplateDeployment
 
     public void Complete()
     {
-        _complete();
+        complete();
         Status = DeploymentStatus.Completed;
     }
 
     public void Cancel()
     {
-        _cancel();
+        cancel();
         Status = DeploymentStatus.Cancelled;
     }
 
     public void Fail()
     {
-        _fail();
+        fail();
         Status = DeploymentStatus.Failed;
     }
 
-    public void Persist() => _persist();
+    public void Persist() => persist();
 
-    public void SetOutputs(System.Text.Json.JsonElement? outputs) => _setOutputs(outputs);
+    public void SetOutputs(System.Text.Json.JsonElement? outputs) => setOutputs(outputs);
 
     public void SetError(DeploymentErrorInfo? error) => _setError(error);
 
