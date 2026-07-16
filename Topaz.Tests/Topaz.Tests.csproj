@@ -15,7 +15,6 @@
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
     <PackageReference Include="Azure.ResourceManager.AppConfiguration" Version="1.4.1" />
     <PackageReference Include="Azure.ResourceManager.ApplicationInsights" Version="1.1.0" />
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="3.1.2" />
     <PackageReference Include="Azure.ResourceManager.Authorization" Version="1.1.6" />
     <PackageReference Include="Azure.ResourceManager.Compute" Version="1.14.0" />
     <PackageReference Include="Azure.ResourceManager.ContainerRegistry" Version="1.4.0" />
