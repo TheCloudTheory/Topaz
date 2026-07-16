@@ -1,4 +1,5 @@
 using Topaz.Portal.Components.Shared;
+using Topaz.Portal.Models.CosmosDb;
 using Topaz.Portal.Models.EventHubs;
 using Topaz.Portal.Models.KeyVaults;
 using Topaz.Portal.Models.ManagedIdentities;
