@@ -163,6 +163,7 @@ public class ResourceSummaryWidget_ShowsStorageAndKeyVaultCounts : BunitTestCont
         client.ListServiceBusNamespaces().Returns(Task.FromResult(new ListServiceBusNamespacesResponse { Value = [] }));
         client.ListVirtualMachines().Returns(Task.FromResult(new ListVirtualMachinesResponse { Value = [] }));
         client.ListVirtualNetworks().Returns(Task.FromResult(new ListVirtualNetworksResponse { Value = [] }));
+        client.ListCosmosDbAccounts().Returns(Task.FromResult(new ListCosmosDbAccountsResponse { Value = [] }));
 
         var cut = RenderComponent<ResourceSummaryWidget>();
 
@@ -193,6 +194,7 @@ public class ResourceSummaryWidget_ShowsError_WhenLoadFails : BunitTestContext
         client.ListServiceBusNamespaces().Returns(Task.FromResult(new ListServiceBusNamespacesResponse { Value = [] }));
         client.ListVirtualMachines().Returns(Task.FromResult(new ListVirtualMachinesResponse { Value = [] }));
         client.ListVirtualNetworks().Returns(Task.FromResult(new ListVirtualNetworksResponse { Value = [] }));
+        client.ListCosmosDbAccounts().Returns(Task.FromResult(new ListCosmosDbAccountsResponse { Value = [] }));
 
         var cut = RenderComponent<ResourceSummaryWidget>();
 
