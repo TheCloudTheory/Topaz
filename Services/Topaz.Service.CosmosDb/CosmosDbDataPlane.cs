@@ -164,7 +164,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
             ["groupByAliases"] = new JsonArray(),
             ["rewrittenQuery"] = query,
             ["hasSelectValue"] = false,
-            ["hasNonStreamingOrderBy"] = true
+            ["hasNonStreamingOrderBy"] = false
         },
         ["queryRanges"] = new JsonArray
         {

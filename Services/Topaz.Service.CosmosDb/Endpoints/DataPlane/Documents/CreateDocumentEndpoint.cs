@@ -103,6 +103,11 @@ internal sealed class CreateDocumentEndpoint : CosmosDataPlaneEndpointBase
                     return;
                 case OperationResult.BadRequest:
                     response.StatusCode = HttpStatusCode.BadRequest;
+                    response.CreateJsonContentResponse(new System.Text.Json.Nodes.JsonObject
+                    {
+                        ["code"] = "BadRequest",
+                        ["message"] = queryResult.Reason ?? "Bad request."
+                    });
                     return;
             }
 

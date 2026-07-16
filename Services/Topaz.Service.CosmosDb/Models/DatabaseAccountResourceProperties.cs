@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json.Serialization;
 using Topaz.Service.CosmosDb.Models.Requests;
 using Topaz.Shared;
 
@@ -15,10 +16,25 @@ public sealed class DatabaseAccountLocation
 {
     public string? Id { get; set; }
     public string? LocationName { get; set; }
+
+    /// <summary>
+    /// Alias for <see cref="LocationName"/> — used by the @azure/cosmos SDK when
+    /// reading the data-plane GET / response to match preferred locations.
+    /// </summary>
+    [JsonPropertyName("name")]
+    public string? Name => LocationName;
+
     public int? FailoverPriority { get; set; }
     public bool? IsZoneRedundant { get; set; }
     public string? ProvisioningState { get; set; }
     public string? DocumentEndpoint { get; set; }
+
+    /// <summary>
+    /// Alias for <see cref="DocumentEndpoint"/> — used by the @azure/cosmos SDK when
+    /// building the endpoint list from writableLocations / readableLocations.
+    /// </summary>
+    [JsonPropertyName("databaseAccountEndpoint")]
+    public string? DatabaseAccountEndpoint => DocumentEndpoint;
 }
 
 public sealed class FailoverPolicy

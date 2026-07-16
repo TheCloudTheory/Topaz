@@ -5,7 +5,7 @@ namespace Topaz.Service.CosmosDb.SqlQuery;
 
 internal enum TokenKind
 {
-    Select, From, Where, Group, Order, By, Asc, Desc, Offset, Limit,
+    Select, Top, From, Where, Group, Order, By, Asc, Desc, Offset, Limit,
     And, Or, Not, In, Between, Value,
     Count, Sum, Min, Max, Avg,
     IsNull, IsDefined, IsString, IsNumber, IsBool,
@@ -182,6 +182,14 @@ internal sealed class CosmosDbSqlParser
         _pos = 0;
 
         Expect(TokenKind.Select);
+
+        int? top = null;
+        if (CurrentIs(TokenKind.Top))
+        {
+            Advance();
+            top = (int)(double)ExpectNumber();
+        }
+
         var select = ParseSelectClause();
 
         Expect(TokenKind.From);
@@ -237,7 +245,7 @@ internal sealed class CosmosDbSqlParser
             OrderByPath = orderByPath,
             OrderByAscending = orderByAsc,
             Offset = offset,
-            Limit = limit
+            Limit = limit ?? top
         };
     }
 
@@ -572,6 +580,7 @@ internal sealed class CosmosDbSqlParser
             "ASC"        => new Token(TokenKind.Asc,       word),
             "DESC"       => new Token(TokenKind.Desc,      word),
             "OFFSET"     => new Token(TokenKind.Offset,    word),
+            "TOP"        => new Token(TokenKind.Top,       word),
             "LIMIT"      => new Token(TokenKind.Limit,     word),
             "AND"        => new Token(TokenKind.And,       word),
             "OR"         => new Token(TokenKind.Or,        word),
