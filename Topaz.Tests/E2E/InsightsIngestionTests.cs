@@ -16,6 +16,7 @@ public class InsightsIngestionTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly Guid SubscriptionId = Guid.Parse("A9C8B7D6-3333-0000-0000-AC0300000000");
+    private static readonly HttpClient Http = new();
 
     private const string SubscriptionName = "sub-e2e-insights-ingestion";
     private const string ResourceGroupName = "rg-e2e-insights-ingestion";
@@ -132,6 +133,22 @@ public class InsightsIngestionTests
         var client = new TelemetryClient(config);
         client.TrackRequest("GET /api/ping", DateTimeOffset.UtcNow, TimeSpan.FromMilliseconds(5), "200", true);
         Assert.DoesNotThrow(client.Flush);
+    }
+
+    [Test]
+    public async Task Ingestion_InvalidInstrumentationKey_Returns401()
+    {
+        var invalidKey = Guid.NewGuid().ToString();
+        var ingestionEndpoint = TopazResourceHelpers.GetApplicationInsightsIngestionEndpoint(ComponentName);
+
+        // Minimal NDJSON envelope matching the Application Insights wire format.
+        var payload = $"{{\"iKey\":\"{invalidKey}\",\"data\":{{\"baseType\":\"RequestData\",\"baseData\":{{}}}}}}";
+        
+        using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/x-json-stream");
+
+        var response = await Http.PostAsync($"{ingestionEndpoint}/v2/track", content);
+
+        Assert.That((int)response.StatusCode, Is.EqualTo(401));
     }
 
     [Test]

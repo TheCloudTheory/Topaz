@@ -55,23 +55,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ### Application Insights — initial control plane and ingestion
 
 <!--
-TODO: Application Insights: Telemetry ingestion endpoint
-  Implement the Application Insights ingestion endpoint on DefaultApplicationInsightsPort
-  (8897) that accepts telemetry items from the Azure Monitor OpenTelemetry SDK and the
-  classic Application Insights SDK:
-  - POST /v2/track — accepts a JSON array of telemetry envelopes (RequestData, TraceData,
-    ExceptionData, EventData, MetricData, DependencyData); responds 200 with
-    {"itemsReceived":N,"itemsAccepted":N,"errors":[]}.
-  Received envelopes are persisted to disk under
-  .topaz/application-insights/{instrumentationKey}/telemetry/{date}/{type}/{id}.json so
-  they can be queried via the query endpoint.
-  Map the incoming instrumentationKey (from the iKey field or the Authorization header)
-  to the correct component resource.
-  milestone: v1.9-preview
-  labels: enhancement, application-insights
--->
-
-<!--
 TODO: Application Insights: Basic query API
   Implement a minimal subset of the Application Insights Query API so that
   `az monitor app-insights query` and the Azure SDK QueryClient work against Topaz:
