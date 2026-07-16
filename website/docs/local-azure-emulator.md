@@ -81,9 +81,14 @@ Tests run against a fresh Topaz instance on every build — no shared state, no 
 | Azure Virtual Networks | VNet, subnet, NIC, check IP availability |
 | Azure Load Balancer | Full control plane |
 | Azure Disks | Control plane + SAS access |
+| Public IP Address | Control plane |
 | Managed Identity | Token issuance |
+| RBAC | Role assignments |
 | ARM control plane | Resource groups, subscriptions, deployments (all scopes) |
 | Entra ID | Applications, service principals, groups, device code, ROPC |
+| Azure App Configuration | Control & data plane |
+| Log Analytics | Control & data plane |
+| Application Insights | Control & data plane |
 
 See [Supported services](./supported-services.md) for the full operation-level breakdown.
 

@@ -44,6 +44,7 @@ const SERVICES = [
   {name: 'Microsoft Entra ID', sub: 'Tenants · Identity'},
   {name: 'Azure RBAC', sub: 'Roles · Assignments'},
   {name: 'Azure Log Analytics', sub: 'Workspaces · Data Collection'},
+  {name: 'Azure Application Insights', sub: 'Workspaces · Data Collection · Query'},
 ];
 
 const INTEGRATIONS = [

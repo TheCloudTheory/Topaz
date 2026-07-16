@@ -30,18 +30,18 @@ Azure Resource Manager|🚧|N/A
 Managed Identity|✅|N/A
 Container Registry|✅|🚧
 Azure SQL|✅|:x:
-Azure App Service|🚧|N/A
+Azure App Service|✅|N/A
 Azure Virtual Machines|🚧|N/A
 Entra ID|N/A|🚧
-RBAC|🚧|N/A
+RBAC|✅|N/A
 Monitor|🚧|:x:
-Cosmos DB|🚧|🚧
-Azure Disk|🚧|🚧
+Cosmos DB|✅|✅
+Azure Disk|✅|🚧
 Azure Load Balancer|✅|N/A
 Public IP Address|✅|N/A
-Azure App Configuration|🚧|🚧
-Log Analytics|🚧|🚧
-Application Insights|🚧|🚧
+Azure App Configuration|✅|🚧
+Log Analytics|✅|🚧
+Application Insights|✅|🚧
 
 ✅ - fully supported (stable)
 

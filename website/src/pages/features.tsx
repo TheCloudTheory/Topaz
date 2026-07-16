@@ -44,6 +44,7 @@ const SERVICES: Service[] = [
   { abbr: 'PIP',  bg: '#1B63EB', name: 'Public IP Address',         description: 'Public IP address resources', preview: true },
   { abbr: 'AC',   bg: '#E8751A', name: 'Azure App Configuration',  description: 'Key-value store, feature flags, and access key management', preview: true },
   { abbr: 'LA',   bg: '#FF9900', name: 'Azure Log Analytics',      description: 'Log Analytics workspace and data collection', preview: true },
+  { abbr: 'AI',   bg: '#FF9900', name: 'Azure Application Insights', description: 'Application Insights workspace, data collection, and query', preview: true },
 ];
 
 const TOOLING: Service[] = [
