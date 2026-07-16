@@ -114,6 +114,13 @@ public static class TopazResourceHelpers
     public static string GetCosmosDbConnectionString(string accountName, string primaryKey) => $"AccountEndpoint={GetCosmosDbAccountEndpoint(accountName)};AccountKey={primaryKey};";
 
     /// <summary>
+    /// Gets the Log Analytics query endpoint URI (equivalent to api.loganalytics.io in Azure).
+    /// </summary>
+    /// <returns>A URI string for the local Log Analytics query endpoint.</returns>
+    public static string GetLogAnalyticsQueryEndpoint() =>
+        $"https://api.loganalytics.topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}";
+
+    /// <summary>
     /// Gets the Log Analytics data collection (ingestion) endpoint URI for a specified workspace.
     /// </summary>
     /// <param name="workspaceCustomerId">The workspace customer ID (GUID), available from the workspace properties after creation.</param>

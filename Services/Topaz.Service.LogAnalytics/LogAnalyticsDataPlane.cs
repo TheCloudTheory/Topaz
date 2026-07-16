@@ -57,4 +57,9 @@ internal sealed class LogAnalyticsDataPlane(
 
         return new DataPlaneOperationResult(OperationResult.Success, null, null);
     }
+
+    public DataPlaneOperationResult QueryData(string? workspaceId, string query)
+    {
+        return new DataPlaneOperationResult(OperationResult.Success, null, null);
+    }
 }

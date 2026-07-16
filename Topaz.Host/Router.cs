@@ -330,7 +330,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
     /// When the host string does not contain at least two dot-separated labels, the
     /// method returns false, which prevents false-positive matches on bare hostnames.
     /// </summary>
-    private static bool IsHostServiceLabelMatch(string host, string requiredLabel)
+    private bool IsHostServiceLabelMatch(string host, string requiredLabel)
     {
         // Some services (e.g., Log Analytics) use a different subdomain structure:
         //   {workspaceId}.ods.opinsights.topaz.local.dev
@@ -338,6 +338,14 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         var isTwoLabelRequiredLabel = requiredLabel.Split('.').Length == 2;
         var firstDot = host.IndexOf('.');
         if (firstDot < 0) return false;
+        
+        // Fast-track for services which don't use [instance].[subdomain].topaz.local.dev
+        if (isTwoLabelRequiredLabel && host.StartsWith(requiredLabel, StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogDebug(nameof(Router), nameof(IsHostServiceLabelMatch), "Host {0} matches required label {1}", host, requiredLabel);
+            return true;
+        }
+        
         var remainder = host[(firstDot + 1)..];
         var secondDot = remainder.IndexOf('.');
         var serviceLabel = secondDot >= 0 ? remainder[..secondDot] : remainder;

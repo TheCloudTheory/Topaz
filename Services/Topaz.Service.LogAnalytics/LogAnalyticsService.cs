@@ -25,6 +25,7 @@ public sealed class LogAnalyticsService(Pipeline eventPipeline, ITopazLogger log
         new ListWorkspacesByResourceGroupEndpoint(eventPipeline, logger),
         new ListWorkspacesBySubscriptionEndpoint(eventPipeline, logger),
         new ListDeletedWorkspacesEndpoint(),
-        new DataCollectionEndpoint(eventPipeline, logger)
+        new DataCollectionEndpoint(eventPipeline, logger),
+        new QueryWorkspaceEndpoint(eventPipeline, logger)
     ];
 }

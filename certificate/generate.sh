@@ -41,7 +41,8 @@ openssl req \
   echo "DNS.14 = *.azurewebsites.${PARENT}${SUFFIX}"; \
   echo "DNS.15 = *.azconfig.${PARENT}${SUFFIX}"; \
   echo "DNS.16 = *.ods.opinsights.${PARENT}${SUFFIX}"; \
-  echo "DNS.17 = *.applicationinsights.${PARENT}${SUFFIX}")
+  echo "DNS.17 = *.applicationinsights.${PARENT}${SUFFIX}"; \
+  echo "DNS.18 = api.loganalytics.${PARENT}${SUFFIX}")
 
 openssl x509 -noout -text -in $PARENT.crt
 
