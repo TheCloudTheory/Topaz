@@ -15,6 +15,11 @@
                              href="@TagsHref">
                         Tags
                     </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@ConnectionStringsHref">
+                        Connection strings
+                    </NavLink>
                 </div>
             </div>
         </div>
@@ -38,4 +43,5 @@
 
     private string OverviewHref => Base;
     private string TagsHref => $"{Base}/tags";
+    private string ConnectionStringsHref => $"{Base}/connection-strings";
 }

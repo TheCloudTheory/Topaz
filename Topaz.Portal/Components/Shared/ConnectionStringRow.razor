@@ -1,0 +1,17 @@
+<div class="mb-3">
+    <label class="form-label text-muted small mb-1">@Label</label>
+    <div class="input-group">
+        <input type="text" class="form-control font-monospace" readonly value="@Value" />
+        <button class="btn btn-outline-secondary" type="button"
+                title="Copy to clipboard"
+                @onclick="() => OnCopy.InvokeAsync(Value)">
+            Copy
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> OnCopy { get; set; }
+}

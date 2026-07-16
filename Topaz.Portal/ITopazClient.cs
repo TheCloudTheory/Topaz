@@ -260,6 +260,12 @@ public interface ITopazClient
         string tagName,
         CancellationToken cancellationToken = default);
 
+    Task<CosmosDbAccountKeysDto> GetCosmosDbAccountKeys(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string accountName,
+        CancellationToken cancellationToken = default);
+
     // Managed Identities
     Task<ListManagedIdentitiesResponse> ListManagedIdentities(
         CancellationToken cancellationToken = default);

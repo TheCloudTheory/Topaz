@@ -3,6 +3,7 @@ using Azure.Core;
 using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.CosmosDB.Models;
 using Topaz.Portal.Models.CosmosDb;
+using Topaz.ResourceManager;
 
 namespace Topaz.Portal;
 
@@ -181,6 +182,30 @@ internal sealed partial class TopazClient
             throw new InvalidOperationException(
                 $"Deleting Cosmos DB account tag failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. {body}");
         }
+    }
+
+    public async Task<CosmosDbAccountKeysDto> GetCosmosDbAccountKeys(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string accountName,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        var resourceId = CosmosDBAccountResource.CreateResourceIdentifier(subscriptionId.ToString(), resourceGroupName, accountName);
+        var keys = await _armClient!.GetCosmosDBAccountResource(resourceId).GetKeysAsync(cancellationToken: cancellationToken);
+
+        var primaryKey = keys.Value.PrimaryMasterKey ?? string.Empty;
+        var secondaryKey = keys.Value.SecondaryMasterKey ?? string.Empty;
+
+        return new CosmosDbAccountKeysDto
+        {
+            PrimaryConnectionString = TopazResourceHelpers.GetCosmosDbConnectionString(accountName, primaryKey),
+            SecondaryConnectionString = TopazResourceHelpers.GetCosmosDbConnectionString(accountName, secondaryKey),
+            PrimaryKey = primaryKey,
+            SecondaryKey = secondaryKey,
+            AccountEndpoint = TopazResourceHelpers.GetCosmosDbAccountEndpoint(accountName),
+        };
     }
 
     private static CosmosDbAccountDto MapToCosmosDbAccountDto(
