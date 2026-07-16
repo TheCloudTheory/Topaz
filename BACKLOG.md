@@ -52,24 +52,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 
 ## v1.9-preview
 
-### Application Insights — initial control plane and ingestion
-
-<!--
-TODO: Application Insights: Basic query API
-  Implement a minimal subset of the Application Insights Query API so that
-  `az monitor app-insights query` and the Azure SDK QueryClient work against Topaz:
-  - POST /v1/apps/{instrumentationKey}/query — accepts {"query":"...","timespan":"..."};
-    evaluates a simplified KQL-like query over the persisted telemetry envelopes.
-  Supported table names: requests, traces, exceptions, customEvents, customMetrics,
-  dependencies.
-  Supported operators: where (equality, contains, startswith), project, summarize count(),
-  order by timestamp desc, take N.
-  Return the standard {"tables":[{"name":"PrimaryResult","columns":[...],"rows":[...]}]}
-  schema.
-  milestone: v1.9-preview
-  labels: enhancement, application-insights
--->
-
 ### Log Analytics — initial control plane and ingestion
 
 <!--

@@ -12,7 +12,7 @@ internal sealed class IngestionEndpoint(Pipeline eventPipeline, ITopazLogger log
 {
     private readonly ApplicationInsightsServiceControlPlane
         _controlPlane = ApplicationInsightsServiceControlPlane.New(eventPipeline, logger);
-    private readonly ApplicationInsightsDataPlane _dataPlane = ApplicationInsightsDataPlane.New;
+    private readonly ApplicationInsightsDataPlane _dataPlane = ApplicationInsightsDataPlane.New(eventPipeline, logger);
     private string? _requestContent;
     
     public string[] Endpoints => ["POST /v2/track", "POST /v2.1/track"];

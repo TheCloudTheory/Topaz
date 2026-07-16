@@ -118,6 +118,9 @@ public class TopazFixture
             .WithExtraHost("topazacrrun01.cr.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("kudu-cli-deploy.scm.azurewebsites.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("kudu-cli-list.scm.azurewebsites.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("cli-app-insights-query.applicationinsights.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("cli-app-insights-query-qry.applicationinsights.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("cli-app-insights-query-empty.applicationinsights.topaz.local.dev", _containerTopaz.IpAddress)
             .Build();
         
         // Act

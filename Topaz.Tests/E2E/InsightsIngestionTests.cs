@@ -200,4 +200,110 @@ public class InsightsIngestionTests
 
         Assert.DoesNotThrow(() => new TelemetryClient(config).Flush());
     }
+
+    // ── Query API tests ──────────────────────────────────────────────────────
+
+    private async Task<(string ikey, string ingestionEndpoint)> GetComponentKeys()
+    {
+        var armClient = CreateArmClient();
+        var rg = await GetResourceGroup(armClient);
+        var component = (await rg.GetApplicationInsightsComponents().GetAsync(ComponentName)).Value;
+        var ingestionEndpoint = TopazResourceHelpers.GetApplicationInsightsIngestionEndpoint(ComponentName);
+        return (component.Data.InstrumentationKey!, ingestionEndpoint);
+    }
+
+    private async Task IngestRequestViaHttp(string ikey, string ingestionEndpoint, string requestName)
+    {
+        var payload = $"{{\"iKey\":\"{ikey}\",\"time\":\"{DateTimeOffset.UtcNow:O}\",\"data\":{{\"baseType\":\"RequestData\",\"baseData\":{{\"name\":\"{requestName}\",\"duration\":\"00:00:00.100\",\"responseCode\":\"200\",\"success\":true}}}}}}";
+        using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/x-json-stream");
+        await Http.PostAsync($"{ingestionEndpoint}/v2/track", content);
+    }
+
+    private async Task<System.Text.Json.JsonDocument> RunQuery(string ingestionEndpoint, string ikey, string query)
+    {
+        var body = System.Text.Json.JsonSerializer.Serialize(new { query });
+        using var content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
+        var response = await Http.PostAsync($"{ingestionEndpoint}/v1/apps/{ikey}/query", content);
+        response.EnsureSuccessStatusCode();
+        return System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+    }
+
+    [Test]
+    public async Task Query_AfterIngestingRequest_TakeReturnsOneRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/query-test");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey, "requests | take 10");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(table.GetProperty("name").GetString(), Is.EqualTo("PrimaryResult"));
+            Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+        }
+    }
+
+    [Test]
+    public async Task Query_WhereNameFilter_ReturnsOnlyMatchingRows()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/filter-match");
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/other");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey, "requests | where name == \"GET /api/filter-match\"");
+        var table = doc.RootElement.GetProperty("tables")[0];
+        var rows = table.GetProperty("rows");
+
+        Assert.That(rows.GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+        // Every returned row must have the matched name in its columns
+        var columns = table.GetProperty("columns").EnumerateArray()
+            .Select((c, i) => (name: c.GetProperty("name").GetString()!, index: i))
+            .ToList();
+        var nameIdx = columns.FirstOrDefault(c => c.name == "name").index;
+        foreach (var nameVal in rows.EnumerateArray().Select(row => row[nameIdx].GetString()))
+        {
+            Assert.That(nameVal, Is.EqualTo("GET /api/filter-match"));
+        }
+    }
+
+    [Test]
+    public async Task Query_SummarizeCount_ReturnsSingleRowWithCount()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/count-me");
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/count-me");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey, "requests | summarize count()");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(table.GetProperty("name").GetString(), Is.EqualTo("PrimaryResult"));
+            Assert.That(table.GetProperty("rows").GetArrayLength(), Is.EqualTo(1));
+        }
+
+        var columns = table.GetProperty("columns").EnumerateArray()
+            .Select((c, i) => (name: c.GetProperty("name").GetString()!, index: i))
+            .ToList();
+        var countIdx = columns.FirstOrDefault(c => c.name == "count_").index;
+        var countVal = table.GetProperty("rows")[0][countIdx].GetInt32();
+        Assert.That(countVal, Is.GreaterThanOrEqualTo(2));
+    }
+
+    [Test]
+    public async Task Query_UnknownTable_ReturnsEmptyResultWithPrimaryResultName()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey, "unknownTable | take 10");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(table.GetProperty("name").GetString(), Is.EqualTo("PrimaryResult"));
+            Assert.That(table.GetProperty("rows").GetArrayLength(), Is.EqualTo(0));
+        }
+    }
 }
+
