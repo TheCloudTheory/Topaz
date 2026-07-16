@@ -1003,6 +1003,29 @@ TODO: Log Analytics: Logs Ingestion API (DCR-based ingestion endpoint)
 ## Planned
 
 <!--
+TODO: Log Analytics: Data Collector API authentication (HMAC-SHA256)
+  The DataCollectionEndpoint (POST /api/logs on ods.opinsights host) currently accepts
+  any request without validating credentials. The real Azure Data Collector API requires
+  an Authorization header with a HMAC-SHA256 signature over the request body, date, and
+  content type:
+    Authorization: SharedKey {workspaceId}:{Base64(HMAC-SHA256(stringToSign, primaryKey))}
+  Implement signature validation using the workspace's primary key (persisted alongside
+  the workspace resource). Requests with a missing or invalid Authorization header should
+  return 403.
+  labels: enhancement, log-analytics, security
+-->
+
+<!--
+TODO: Log Analytics: Query API authentication (Bearer token)
+  The QueryWorkspaceEndpoint (POST /v1/workspaces/{id}/query on api.loganalytics host)
+  currently accepts any request without validating credentials. The real Azure Log
+  Analytics Query API requires a Bearer token scoped to https://api.loganalytics.io.
+  Implement Bearer token validation using the existing Topaz Entra identity plane (accept
+  any token issued by Topaz; reject requests with no Authorization header).
+  labels: enhancement, log-analytics, security
+-->
+
+<!--
 TODO: Application Insights: currentbillingfeatures endpoint — real billing logic
   The GET .../components/{name}/currentbillingfeatures endpoint currently returns a static
   stub (Basic tier, 100 GB cap). Enhance it to reflect the component's actual configuration:
