@@ -22,12 +22,16 @@ DESTINATIONS=(
   "$SCRIPT_DIR/../../topaz-testcontainers/src/Testcontainers.Topaz"
   "$SCRIPT_DIR/../../topaz-demo"
   "$SCRIPT_DIR/../../topaz-demo/tests/Topaz.Demo.Bicep.Tests"
+  "$SCRIPT_DIR/../publish"
 )
+
+PFX="$SCRIPT_DIR/topaz.pfx"
 
 for dest in "${DESTINATIONS[@]}"; do
   if [ -d "$dest" ]; then
     cp "$CRT" "$dest/topaz.crt"
     cp "$KEY" "$dest/topaz.key"
+    cp "$PFX" "$dest/topaz.pfx"
     echo "✓ $dest"
   else
     echo "⚠ Skipped (not found): $dest"

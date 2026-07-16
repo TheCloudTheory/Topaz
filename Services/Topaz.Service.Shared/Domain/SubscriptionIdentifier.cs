@@ -2,6 +2,8 @@ namespace Topaz.Service.Shared.Domain;
 
 public record SubscriptionIdentifier(Guid Value)
 {
+    public static readonly SubscriptionIdentifier Empty = new(Guid.Empty);
+
     public static SubscriptionIdentifier From(Guid value)
     {
         return new SubscriptionIdentifier(value);

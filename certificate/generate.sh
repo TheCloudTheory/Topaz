@@ -12,16 +12,17 @@ openssl req \
 -out $PARENT.crt \
 -subj "/CN=${PARENT}" \
 -extensions v3_ca \
--extensions v3_req \
 -config <( \
   echo '[req]'; \
   echo 'default_bits= 4096'; \
   echo 'distinguished_name=req'; \
   echo 'x509_extension = v3_ca'; \
-  echo 'req_extensions = v3_req'; \
-  echo '[v3_req]'; \
-  echo 'basicConstraints = CA:FALSE'; \
-  echo 'keyUsage = nonRepudiation, digitalSignature, keyEncipherment'; \
+  echo '[ v3_ca ]'; \
+  echo 'subjectKeyIdentifier=hash'; \
+  echo 'authorityKeyIdentifier=keyid:always,issuer'; \
+  echo 'basicConstraints = critical, CA:TRUE, pathlen:0'; \
+  echo 'keyUsage = critical, cRLSign, keyCertSign, digitalSignature, keyEncipherment'; \
+  echo 'extendedKeyUsage = serverAuth, clientAuth'; \
   echo 'subjectAltName = @alt_names'; \
   echo '[ alt_names ]'; \
   echo "DNS.1 = www.${PARENT}${SUFFIX}"; \
@@ -40,13 +41,7 @@ openssl req \
   echo "DNS.14 = *.azurewebsites.${PARENT}${SUFFIX}"; \
   echo "DNS.15 = *.azconfig.${PARENT}${SUFFIX}"; \
   echo "DNS.16 = *.ods.opinsights.${PARENT}${SUFFIX}"; \
-  echo "DNS.17 = *.applicationinsights.${PARENT}${SUFFIX}"; \
-  echo '[ v3_ca ]'; \
-  echo 'subjectKeyIdentifier=hash'; \
-  echo 'authorityKeyIdentifier=keyid:always,issuer'; \
-  echo 'basicConstraints = critical, CA:TRUE, pathlen:0'; \
-  echo 'keyUsage = critical, cRLSign, keyCertSign'; \
-  echo 'extendedKeyUsage = serverAuth, clientAuth')
+  echo "DNS.17 = *.applicationinsights.${PARENT}${SUFFIX}")
 
 openssl x509 -noout -text -in $PARENT.crt
 

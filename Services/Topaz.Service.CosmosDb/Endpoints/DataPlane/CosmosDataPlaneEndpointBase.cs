@@ -63,7 +63,7 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
     protected bool IsRequestAuthorized(HttpContext context, HttpResponseMessage response)
     {
         var ctx = dataPlane.ResolveAccountContext(context);
-        var sub = ctx?.Sub ?? SubscriptionIdentifier.From(string.Empty);
+        var sub = ctx?.Sub ?? SubscriptionIdentifier.Empty;
         var scope = ctx != null
             ? ComputeResourceScope(ctx, context.Request.Path.Value ?? string.Empty)
             : string.Empty;
