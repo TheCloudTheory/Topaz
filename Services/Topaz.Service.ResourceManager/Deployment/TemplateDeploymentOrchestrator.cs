@@ -326,76 +326,77 @@ public sealed class TemplateDeploymentOrchestrator(
             // certain resource types (e.g. Microsoft.Resources/deployments); fall back to the
             // type string preserved in the deserialized GenericResource.
             var resourceType = resource.Type?.Value ?? genericResource.Type;
+            var normalizedResourceType = resourceType.ToLowerInvariant();
 
-            switch (resourceType)
+            switch (normalizedResourceType)
             {
-                case "Microsoft.ContainerRegistry/registries":
+                case "microsoft.containerregistry/registries":
                     controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.KeyVault/vaults":
+                case "microsoft.keyvault/vaults":
                     controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Network/virtualNetworks":
+                case "microsoft.network/virtualnetworks":
                     controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Network/networkSecurityGroups":
+                case "microsoft.network/networksecuritygroups":
                     controlPlane = NetworkSecurityGroupControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Network/networkInterfaces":
+                case "microsoft.network/networkinterfaces":
                     controlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Network/publicIPAddresses":
+                case "microsoft.network/publicipaddresses":
                     controlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Network/loadBalancers":
+                case "microsoft.network/loadbalancers":
                     controlPlane = LoadBalancerControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Compute/virtualMachines":
+                case "microsoft.compute/virtualmachines":
                     controlPlane = VirtualMachineServiceControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Compute/disks":
+                case "microsoft.compute/disks":
                     controlPlane = DiskServiceControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.AppConfiguration/configurationStores":
+                case "microsoft.appconfiguration/configurationstores":
                     controlPlane = AppConfigurationServiceControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.OperationalInsights/workspaces":
+                case "microsoft.operationalinsights/workspaces":
                     controlPlane = LogAnalyticsServiceControlPlane.New(eventPipeline, logger);
                     break;
                 case "microsoft.insights/components":
                     controlPlane = ApplicationInsightsServiceControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.ManagedIdentity/userAssignedIdentities":
+                case "microsoft.managedidentity/userassignedidentities":
                     controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.EventHub/namespaces":
+                case "microsoft.eventhub/namespaces":
                     controlPlane = EventHubServiceControlPlane.New(logger);
                     break;
-                case "Microsoft.ServiceBus/namespaces":
+                case "microsoft.servicebus/namespaces":
                     controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Storage/storageAccounts":
+                case "microsoft.storage/storageaccounts":
                     controlPlane = AzureStorageControlPlane.New(logger);
                     break;
-                case "Microsoft.Web/serverfarms":
+                case "microsoft.web/serverfarms":
                     controlPlane = AppServicePlanControlPlane.New(logger);
                     break;
-                case "Microsoft.Web/sites":
+                case "microsoft.web/sites":
                     controlPlane = AppServiceSiteControlPlane.New(logger);
                     break;
-                case "Microsoft.Sql/servers":
+                case "microsoft.sql/servers":
                     controlPlane = SqlServiceControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Sql/servers/databases":
+                case "microsoft.sql/servers/databases":
                     controlPlane = SqlServiceControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.DocumentDB/databaseAccounts":
+                case "microsoft.documentdb/databaseaccounts":
                     controlPlane = CosmosDbServiceControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Resources/resourceGroups":
+                case "microsoft.resources/resourcegroups":
                     controlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
                     break;
-                case "Microsoft.Resources/deployments":
+                case "microsoft.resources/deployments":
                     HandleNestedDeployment(genericResource, templateDeployment, resource, ref hasProvisioningFailed);
                     break;
                 default:

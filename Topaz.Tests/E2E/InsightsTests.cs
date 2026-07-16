@@ -4,6 +4,7 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.ApplicationInsights;
 using Azure.ResourceManager.ApplicationInsights.Models;
 using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -190,6 +191,35 @@ public class InsightsTests
         {
             Assert.That(updated.Data.Tags.ContainsKey("env"), Is.True);
             Assert.That(updated.Data.Tags["env"], Is.EqualTo("test"));
+        }
+    }
+
+    [Test]
+    public async Task Insights_ArmDeployment_CreatesComponentWithLogAnalyticsWorkspace()
+    {
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, "sub-insights-arm-deploy");
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, "rg-insights-arm-deploy",
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, "deploy-insights",
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-insights.json"))
+            }));
+
+        var component = (await rg.Value.GetApplicationInsightsComponents().GetAsync("topaz-insights-deploy01")).Value;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(component.Data.Name, Is.EqualTo("topaz-insights-deploy01"));
+            Assert.That(component.Data.WorkspaceResourceId.ToString(), Is.Not.Null.And.Not.Empty);
+            Assert.That(component.Data.InstrumentationKey, Is.Not.Null.And.Not.Empty);
+            Assert.That(component.Data.ConnectionString, Does.Contain("InstrumentationKey="));
         }
     }
 }

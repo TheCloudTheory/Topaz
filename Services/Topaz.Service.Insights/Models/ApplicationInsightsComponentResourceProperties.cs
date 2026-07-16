@@ -1,13 +1,12 @@
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 
 namespace Topaz.Service.Insights.Models;
 
 public sealed class ApplicationInsightsComponentResourceProperties
 {
     public string? ApplicationType { get; set; }
-
     public string? FlowType { get; set; }
-
     public string? RequestSource { get; set; }
 
     // For some reason, some fields in Application Insights response models
@@ -19,13 +18,14 @@ public sealed class ApplicationInsightsComponentResourceProperties
     [JsonPropertyName("ConnectionString")]
     public string? ConnectionString { get; set; }
 
-    public string ProvisioningState => "Succeeded";
+    [UsedImplicitly] public string ProvisioningState => "Succeeded";
 
     public string IngestionMode { get; set; } = "LogAnalytics";
-
     public int RetentionInDays { get; set; } = 90;
-
     public string PublicNetworkAccessForIngestion { get; set; } = "Enabled";
+    
+    [JsonPropertyName("WorkspaceResourceId")]
+    public string? WorkspaceResourceId { get; set; }
 
     public static ApplicationInsightsComponentResourceProperties FromRequest(
         ApplicationInsightsComponentResourceProperties? source,
@@ -43,6 +43,7 @@ public sealed class ApplicationInsightsComponentResourceProperties
             InstrumentationKey = key,
             ConnectionString = $"InstrumentationKey={key};IngestionEndpoint={ingestionEndpoint};LiveEndpoint={liveEndpoint}",
             IngestionMode = source?.IngestionMode ?? "LogAnalytics",
+            WorkspaceResourceId = source?.WorkspaceResourceId,
         };
     }
 }
