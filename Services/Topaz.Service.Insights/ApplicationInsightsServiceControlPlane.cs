@@ -186,6 +186,6 @@ internal sealed class ApplicationInsightsServiceControlPlane(
         }
         
         var component = components.SingleOrDefault(w => w.Properties.InstrumentationKey == instrumentationKey)!;
-        return new ControlPlaneOperationResult<ApplicationInsightsComponentResource?>(OperationResult.Updated, component, null, null);
+        return new ControlPlaneOperationResult<ApplicationInsightsComponentResource?>(OperationResult.Success, component, null, null);
     }
 }

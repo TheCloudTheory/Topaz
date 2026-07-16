@@ -7,6 +7,6 @@ public abstract class TopazApiModel
 {
     public override string ToString()
     {
-        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+        return JsonSerializer.Serialize(this, GetType(), GlobalSettings.JsonOptions);
     }
 }

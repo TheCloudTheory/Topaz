@@ -136,6 +136,38 @@ public class InsightsIngestionTests
     }
 
     [Test]
+    public async Task Ingestion_ValidInstrumentationKey_ReturnsEnvelopeWithExpectedShape()
+    {
+        // Retrieve the real instrumentation key from the created component.
+        var armClient = CreateArmClient();
+        var rg = await GetResourceGroup(armClient);
+        var component = (await rg.GetApplicationInsightsComponents().GetAsync(ComponentName)).Value;
+        var realKey = component.Data.InstrumentationKey;
+
+        var ingestionEndpoint = TopazResourceHelpers.GetApplicationInsightsIngestionEndpoint(ComponentName);
+        var payload = $"{{\"iKey\":\"{realKey}\",\"data\":{{\"baseType\":\"RequestData\",\"baseData\":{{}}}}}}";
+
+        using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/x-json-stream");
+        var response = await Http.PostAsync($"{ingestionEndpoint}/v2/track", content);
+
+        Assert.That((int)response.StatusCode, Is.EqualTo(200));
+
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = System.Text.Json.JsonDocument.Parse(body);
+        var root = doc.RootElement;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(root.TryGetProperty("itemsReceived", out _), Is.True, "Response must contain 'itemsReceived'");
+            Assert.That(root.TryGetProperty("itemsAccepted", out _), Is.True, "Response must contain 'itemsAccepted'");
+            Assert.That(!root.TryGetProperty("errors", out var errors) ||
+                        errors.ValueKind == System.Text.Json.JsonValueKind.Null ||
+                        errors.ValueKind == System.Text.Json.JsonValueKind.Array,
+                "errors must be null or an array");
+        }
+    }
+
+    [Test]
     public async Task Ingestion_InvalidInstrumentationKey_Returns401()
     {
         var invalidKey = Guid.NewGuid().ToString();

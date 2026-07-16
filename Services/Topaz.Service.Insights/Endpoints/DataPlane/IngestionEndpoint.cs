@@ -13,6 +13,7 @@ internal sealed class IngestionEndpoint(Pipeline eventPipeline, ITopazLogger log
     private readonly ApplicationInsightsServiceControlPlane
         _controlPlane = ApplicationInsightsServiceControlPlane.New(eventPipeline, logger);
     private readonly ApplicationInsightsDataPlane _dataPlane = ApplicationInsightsDataPlane.New;
+    private string? _requestContent;
     
     public string[] Endpoints => ["POST /v2/track", "POST /v2.1/track"];
     public string[] Permissions => EndpointPermissions.None;
@@ -25,6 +26,7 @@ internal sealed class IngestionEndpoint(Pipeline eventPipeline, ITopazLogger log
     {
         using var reader = new StreamReader(context.Request.Body);
         var content = reader.ReadToEnd();
+        _requestContent = content;
         
         // Application Insights SDK sends data as NDJSON
         var firstLine = content.Split('\n', StringSplitOptions.RemoveEmptyEntries)[0];
@@ -37,7 +39,10 @@ internal sealed class IngestionEndpoint(Pipeline eventPipeline, ITopazLogger log
         }
 
         var operation = _controlPlane.GetByInstrumentationKey(ikey);
-        if (operation is { Result: OperationResult.Success, Resource: not null }) return (true, null);
+        if (operation is { Result: OperationResult.Success, Resource: not null })
+        {
+            return (true, null);
+        }
         
         logger.LogDebug(nameof(IngestionEndpoint), nameof(Authorize), "There is no component for instrumentation key {0}.", ikey);
         return (false, null);
@@ -45,9 +50,7 @@ internal sealed class IngestionEndpoint(Pipeline eventPipeline, ITopazLogger log
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        using var reader = new StreamReader(context.Request.Body);
-        
-        var content = reader.ReadToEnd();
+        var content = _requestContent ?? string.Empty;
         var firstLine = content.Split('\n', StringSplitOptions.RemoveEmptyEntries)[0];
         var json = JsonNode.Parse(firstLine);
         var instrumentationKey = json?["iKey"]?.ToString();
