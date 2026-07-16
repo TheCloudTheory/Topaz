@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Topaz.EventPipeline;
 using Topaz.Service.LogAnalytics.Models;
 using Topaz.Service.Shared;
@@ -56,9 +58,59 @@ internal sealed class LogAnalyticsDataPlane(
         logger.LogDebug(nameof(LogAnalyticsDataPlane), nameof(SaveIngestedData),
             $"Workspace: {workspace.Id}, Log Type: {tableName}");
 
-        provider.SaveIngestedData(workspace.GetSubscription(), workspace.GetResourceGroup(), workspace.Name, data, dir);
+        provider.SaveIngestedData(workspace.GetSubscription(), workspace.GetResourceGroup(), workspace.Name, ApplyTypeSuffixes(data), dir);
 
         return new DataPlaneOperationResult(OperationResult.Success, null, null);
+    }
+
+    // Azure Data Collector API appends type suffixes to every user-defined field:
+    //   string → _s, number → _d, bool → _b, datetime string → _t, guid string → _g
+    // Reserved fields (TimeGenerated, RawData) are passed through unchanged.
+    private static readonly HashSet<string> ReservedFields =
+        new(StringComparer.OrdinalIgnoreCase) { "TimeGenerated", "RawData", "Type", "TenantId" };
+
+    private static string ApplyTypeSuffixes(string json)
+    {
+        try
+        {
+            var arr = JsonNode.Parse(json);
+            if (arr is not JsonArray jsonArray) return json;
+
+            var transformed = new JsonArray();
+            foreach (var item in jsonArray)
+            {
+                if (item is not JsonObject obj) { transformed.Add(item?.DeepClone()); continue; }
+                var newObj = new JsonObject();
+                foreach (var (key, value) in obj)
+                {
+                    if (ReservedFields.Contains(key) || HasTypeSuffix(key))
+                    {
+                        newObj[key] = value?.DeepClone();
+                        continue;
+                    }
+                    var suffix = value?.GetValueKind() switch
+                    {
+                        JsonValueKind.True or JsonValueKind.False => "_b",
+                        JsonValueKind.Number => "_d",
+                        _ => "_s"
+                    };
+                    newObj[key + suffix] = value?.DeepClone();
+                }
+                transformed.Add(newObj);
+            }
+            return transformed.ToJsonString();
+        }
+        catch (JsonException)
+        {
+            return json;
+        }
+    }
+
+    private static bool HasTypeSuffix(string name)
+    {
+        if (name.Length < 3) return false;
+        var sfx = name[^2..];
+        return sfx is "_s" or "_d" or "_b" or "_t" or "_g";
     }
 
     public DataPlaneOperationResult<LogAnalyticsQueryResult> QueryData(string? workspaceId, string query)

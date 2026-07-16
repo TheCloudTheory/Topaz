@@ -52,24 +52,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 
 ## v1.9-preview
 
-### Log Analytics — initial control plane and ingestion
-
-<!--
-TODO: Log Analytics: Query API
-  Implement a minimal KQL query endpoint so that `az monitor log-analytics query` and the
-  Azure SDK LogsQueryClient work against Topaz:
-  - POST /v1/workspaces/{workspaceId}/query — body: {"query":"...","timespan":"..."}
-  Supported tables: custom tables ingested via the Logs Ingestion API, plus built-in
-  aliases: AzureActivity, AzureDiagnostics (both always return empty results for
-  resources not linked to the workspace).
-  Supported KQL operators: where (==, contains, startswith, between), project, extend,
-  summarize count()/sum()/avg()/min()/max() by, order by, take, union.
-  Return the standard {"tables":[{"name":"PrimaryResult","columns":[...],"rows":[...]}]}
-  schema matching the Log Analytics REST contract.
-  milestone: v1.9-preview
-  labels: enhancement, log-analytics
--->
-
 ### Azure Disks — full disk data streaming (azcopy)
 
 <!--
