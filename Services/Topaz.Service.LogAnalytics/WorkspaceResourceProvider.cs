@@ -23,4 +23,18 @@ internal sealed class WorkspaceResourceProvider(ITopazLogger logger)
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, data);
     }
+
+    public IEnumerable<string> LoadIngestedData(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string workspaceName,
+        string tableName)
+    {
+        var dataPath = GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, workspaceName);
+        var tableDir = Path.Combine(dataPath, tableName);
+        if (!Directory.Exists(tableDir))
+            return [];
+        return Directory.EnumerateFiles(tableDir, "*.json", SearchOption.AllDirectories)
+            .Select(File.ReadAllText);
+    }
 }

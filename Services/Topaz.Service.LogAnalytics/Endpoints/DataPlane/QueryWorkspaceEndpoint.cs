@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
@@ -41,14 +43,31 @@ internal sealed class QueryWorkspaceEndpoint(Pipeline eventPipeline, ITopazLogge
         }
         
         var result = _dataPlane.QueryData(workspaceId, query);
-        if (result.Result != OperationResult.Success)
+        if (result.Result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        if (result.Result != OperationResult.Success || result.Resource == null)
         {
             logger.LogError(nameof(QueryWorkspaceEndpoint), nameof(GetResponse), "Failed to query data: {0}", result.Reason);
             response.StatusCode = HttpStatusCode.InternalServerError;
             return;
         }
-        
+
+        var wire = new
+        {
+            tables = result.Resource.Tables.Select(t => new
+            {
+                name = t.Name,
+                columns = t.Columns.Select(c => new { name = c.Name, type = c.Type }).ToArray(),
+                rows = t.Rows
+            }).ToArray()
+        };
+
+        var json = JsonSerializer.Serialize(wire, GlobalSettings.JsonOptions);
         response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(string.Empty);
+        response.Content = new StringContent(json);
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 }
