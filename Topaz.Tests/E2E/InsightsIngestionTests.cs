@@ -1,8 +1,5 @@
-using Azure;
-using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ApplicationInsights;
-using Azure.ResourceManager.ApplicationInsights.Models;
 using Azure.ResourceManager.Resources;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -14,6 +11,7 @@ using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
 
+[NonParallelizable]
 public class InsightsIngestionTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
