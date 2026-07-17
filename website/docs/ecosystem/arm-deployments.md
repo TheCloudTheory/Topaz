@@ -115,7 +115,7 @@ await rg.Value.GetArmDeployments().CreateOrUpdateAsync(
 
 ## Azure CLI
 
-With Topaz [configured as an Azure CLI cloud](../azure-cli-integration.md), the standard `az deployment group create` command works without changes.
+With Topaz [configured as an Azure CLI cloud](../integrations/azure-cli-integration.md), the standard `az deployment group create` command works without changes.
 
 ```bash
 # Simple deployment

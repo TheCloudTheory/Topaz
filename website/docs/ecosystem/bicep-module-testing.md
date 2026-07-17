@@ -323,6 +323,6 @@ Use xUnit's `[Theory]` with `[InlineData]` to cover every allowed value for a co
 
 :::tip[Integration with the IaC testing tutorial]
 
-This guide focuses on individual Bicep modules. For testing full Terraform and Bicep configurations — `init/plan/apply` pipelines with multiple resources — see [Testing infrastructure-as-code with Topaz](../../tutorials/testing-iac-with-topaz.md).
+This guide focuses on individual Bicep modules. For testing full Terraform and Bicep configurations — `init/plan/apply` pipelines with multiple resources — see [Testing infrastructure-as-code with Topaz](../tutorials/testing-iac-with-topaz.md).
 
 :::
