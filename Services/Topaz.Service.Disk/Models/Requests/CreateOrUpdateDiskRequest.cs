@@ -1,6 +1,3 @@
-using Topaz.ResourceManager;
-using Topaz.Service.Disk.Models;
-
 namespace Topaz.Service.Disk.Models.Requests;
 
 public sealed class CreateOrUpdateDiskRequest

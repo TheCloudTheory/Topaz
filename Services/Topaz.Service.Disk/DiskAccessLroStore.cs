@@ -10,13 +10,13 @@ internal sealed class DiskAccessLroStore
 
     public static DiskAccessLroStore Instance { get; } = new();
 
-    public void Add(Guid operationId, string accessSAS) =>
-        _entries[operationId] = new DiskAccessLroEntry(accessSAS, DateTimeOffset.UtcNow);
+    public void Add(Guid operationId, string accessSas) =>
+        _entries[operationId] = new DiskAccessLroEntry(accessSas, DateTimeOffset.UtcNow);
 
     public DiskAccessLroEntry? TryGet(Guid operationId)
     {
         PurgeStale();
-        return _entries.TryGetValue(operationId, out var entry) ? entry : null;
+        return _entries.GetValueOrDefault(operationId);
     }
 
     public void Remove(Guid operationId) => _entries.TryRemove(operationId, out _);

@@ -3,7 +3,6 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Shared;
-using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Disk.Endpoints;
 

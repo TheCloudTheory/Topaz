@@ -8,7 +8,6 @@ using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
-using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Disk;
 
@@ -94,7 +93,7 @@ internal sealed class DiskServiceControlPlane(
 
         if (existing != null)
         {
-            existing.Location = request.Location?.ToString() ?? existing.Location;
+            existing.Location = request.Location ?? existing.Location;
             existing.Tags = request.Tags ?? existing.Tags;
             DiskResourceProperties.UpdateFromRequest(existing.Properties, request);
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, diskName, existing);
