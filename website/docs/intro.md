@@ -130,6 +130,12 @@ Open Keychain Access, import `topaz.crt`, and mark it as **Always Trust**, or us
 sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain topaz.crt
 ```
 
+:::tip[Use the trust script]
+
+You can also download and run the [trust-cert-macos.sh](https://github.com/TheCloudTheory/Topaz/blob/main/install/trust-cert-macos.sh) helper script. It locates `topaz.crt` automatically and adds it to the System keychain.
+
+:::
+
 :::note[.NET and the login keychain]
 
 The .NET runtime on macOS reads certificate trust from the **login keychain**, not the System keychain. If you use the Azure SDK or run .NET-based tools against Topaz (including the Topaz test suite itself), also run:
@@ -152,12 +158,6 @@ sudo update-ca-certificates
 
 </TabItem>
 </Tabs>
-
-:::tip[Skip certificates with Docker]
-
-When running Topaz as a Docker container you can expose only the HTTP data-plane ports and skip this step entirely. HTTPS is still available inside the container on port 8899 (ARM), but services like Blob and Table Storage use plain HTTP on their own ports.
-
-:::
 
 ## Step 3 — Run the emulator
 

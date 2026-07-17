@@ -47,6 +47,10 @@ This page lists the tool and SDK versions that Topaz is tested against in CI. Us
 | `Azure.Containers.ContainerRegistry` | `1.3.0` |
 | `Azure.Data.AppConfiguration` | `1.10.0` |
 | `Azure.ResourceManager.AppConfiguration` | `1.4.1` |
+| `Azure.ResourceManager.ApplicationInsights` | `1.1.0` |
+| `Azure.ResourceManager.OperationalInsights` | `1.3.2` |
+| `Azure.Monitor.Query` | `1.7.1` |
+| `Microsoft.Azure.Cosmos` | `3.61.0` |
 | `Microsoft.Graph` | `5.103.0` |
 
 ## Runtime
@@ -116,8 +120,9 @@ Azure Python packages used by the test image:
 | `azure-mgmt-compute` | `>=33.0.0` |
 | `azure-mgmt-network` | `>=26.0.0` |
 | `azure-mgmt-web` | `>=7.3.0` |
-| `azure-mgmt-resource` | `>=26.0.0` |
+| `azure-mgmt-resource` | `==26.0.0` |
 | `azure-mgmt-subscription` | `>=3.1.0` |
+| `azure-eventhub` | `>=5.11.0` |
 
 ## Versioning policy
 

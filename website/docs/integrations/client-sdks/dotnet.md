@@ -202,6 +202,7 @@ TopazArmClient(AzureLocalCredential credentials)
 | `CreateManagementGroupAsync(string groupId, string displayName)` | `Task` | Creates a management group at the tenant root. |
 | `CreateManagementGroupWithParentAsync(string groupId, string displayName, string parentGroupId)` | `Task` | Creates a management group nested under an existing parent group. |
 | `GetManagementGroupAsync(string groupId)` | `Task<JsonNode>` | Returns the management group resource JSON. |
+| `GetManagementGroupWithChildrenAsync(string groupId)` | `Task<JsonNode>` | Returns the management group resource JSON with its immediate children expanded. |
 | `GetDescendantsAsync(string groupId)` | `Task<JsonNode>` | Returns the list of descendants (child groups and subscriptions) of a management group. |
 | `GetEntitiesAsync()` | `Task<JsonNode>` | Returns all entities (management groups and subscriptions) visible to the caller via `POST /providers/Microsoft.Management/getEntities`. |
 | `AssociateSubscriptionWithManagementGroupAsync(string groupId, string subscriptionId)` | `Task<JsonNode>` | Associates a subscription with a management group. |
@@ -223,7 +224,19 @@ TopazArmClient(AzureLocalCredential credentials)
 | Method | Returns | Description |
 |---|---|---|
 | `ListDeploymentsAtTenantScopeAsync()` | `Task<JsonNode>` | Lists all ARM deployments at tenant scope. |
+| `CreateDeploymentAtTenantScopeAsync(string deploymentName, string location, string templateJson)` | `Task<JsonNode>` | Creates an incremental ARM deployment at tenant scope. |
+| `GetDeploymentAtTenantScopeAsync(string deploymentName)` | `Task<JsonNode>` | Returns a deployment at tenant scope by name. |
+| `DeleteDeploymentAtTenantScopeAsync(string deploymentName)` | `Task<HttpResponseMessage>` | Deletes a deployment at tenant scope. |
+| `CheckExistenceAtTenantScopeAsync(string deploymentName)` | `Task<HttpResponseMessage>` | Checks (HEAD) whether a deployment exists at tenant scope. |
+| `ValidateDeploymentAtTenantScopeAsync(string deploymentName, string location, string templateJson)` | `Task<JsonNode>` | Validates a deployment template at tenant scope without executing it. |
+| `CancelDeploymentAtTenantScopeAsync(string deploymentName)` | `Task<HttpResponseMessage>` | Cancels a running deployment at tenant scope. |
 | `ListDeploymentsAtManagementGroupScopeAsync(string groupId)` | `Task<JsonNode>` | Lists all ARM deployments scoped to a management group. Throws `HttpRequestException` with status 404 if the group does not exist. |
+| `CreateDeploymentAtManagementGroupScopeAsync(string groupId, string deploymentName, string location, string templateJson)` | `Task<JsonNode>` | Creates an incremental ARM deployment scoped to a management group. |
+| `CancelDeploymentAtManagementGroupScopeAsync(string groupId, string deploymentName)` | `Task<HttpResponseMessage>` | Cancels a running deployment scoped to a management group. Throws `HttpRequestException` with status 404 if the deployment or group does not exist. |
+| `GetDeploymentOperationsAtTenantScopeAsync(string deploymentName)` | `Task<JsonNode>` | Returns all deployment operations for a tenant-scope deployment. |
+| `GetDeploymentOperationAtTenantScopeByIdAsync(string deploymentName, string operationId)` | `Task<JsonNode>` | Returns a single deployment operation at tenant scope by operation ID. |
+| `GetDeploymentOperationsAtManagementGroupScopeAsync(string groupId, string deploymentName)` | `Task<JsonNode>` | Returns all deployment operations for a management-group-scope deployment. |
+| `GetDeploymentOperationAtManagementGroupScopeByIdAsync(string groupId, string deploymentName, string operationId)` | `Task<JsonNode>` | Returns a single deployment operation at management-group scope by operation ID. |
 
 #### Resource Providers
 
@@ -264,6 +277,11 @@ A static class that generates service endpoint URIs and connection strings for e
 | `GetServiceBusConnectionStringForManagement(string serviceBusNamespaceName)` | `string` | Returns a connection string for management-plane operations on a Service Bus namespace. |
 | `GetEventHubConnectionString(string eventHubNamespaceName)` | `string` | Returns an AMQP connection string for an Event Hub namespace. Sets `UseDevelopmentEmulator=true`. |
 | `GetContainerRegistryLoginServer(string registryName)` | `string` | Returns the `host:port` login server string for a Container Registry instance (e.g. `myregistry.cr.topaz.local.dev:8892`). Pass this to `docker login` or the ACR SDK. |
+| `GetCosmosDbAccountEndpoint(string accountName)` | `string` | Returns the Cosmos DB account endpoint URI (e.g. `https://myaccount.documents.topaz.local.dev:8895/`). |
+| `GetCosmosDbConnectionString(string accountName, string primaryKey)` | `string` | Returns a full `AccountEndpoint=…;AccountKey=…;` connection string for a Cosmos DB account. |
+| `GetLogAnalyticsQueryEndpoint()` | `string` | Returns the Log Analytics query endpoint URI (equivalent to `api.loganalytics.io` in Azure). |
+| `GetLogAnalyticsIngestionEndpoint(string workspaceCustomerId)` | `string` | Returns the Log Analytics data collection (ingestion) endpoint URI for a workspace. Pass the workspace Customer ID (GUID) from the workspace properties. |
+| `GetApplicationInsightsIngestionEndpoint(string componentName)` | `string` | Returns the Application Insights telemetry ingestion endpoint URI for a component. |
 
 ---
 

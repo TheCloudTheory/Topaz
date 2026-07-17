@@ -83,15 +83,24 @@ Event Hub also uses AMQP for the data plane.
 | Default hostname | `https://{siteName}.azurewebsites.topaz.local.dev` | **8899** |
 | Kudu (SCM) | `https://{siteName}.scm.azurewebsites.topaz.local.dev` | **8896** |
 
-### Log Analytics (ingestion)
+### Application Insights
 
-The ingestion endpoint uses the workspace **Customer ID** (a GUID), not the workspace name. Retrieve it from the workspace properties after creation.
+| Plane | Endpoint pattern | Port |
+|---|---|---|
+| Ingestion & query | `https://{name}.applicationinsights.topaz.local.dev` | **8899** |
 
-| Endpoint pattern | Port |
-|---|---|
-| `https://{workspaceCustomerId}.ods.opinsights.topaz.local.dev` | **8899** |
+### Log Analytics
 
-This endpoint shares port 8899 with ARM; the Topaz router dispatches it by the `ods.opinsights` subdomain label.
+Log Analytics exposes two separate endpoints — one for ingestion and one for querying.
+
+**Ingestion** uses the workspace **Customer ID** (a GUID), not the workspace name. Retrieve it from the workspace properties after creation.
+
+| Plane | Endpoint pattern | Port |
+|---|---|---|
+| Ingestion | `https://{workspaceCustomerId}.ods.opinsights.topaz.local.dev` | **8899** |
+| Query | `https://api.loganalytics.topaz.local.dev` | **8899** |
+
+Both endpoints share port 8899 with ARM; the Topaz router dispatches them by subdomain label.
 
 ## Port summary
 
@@ -107,6 +116,6 @@ This endpoint shares port 8899 with ARM; the Topaz router dispatches it by the `
 | **8896** | App Service Kudu |
 | **8897** | Event Hub – HTTP control plane |
 | **8898** | Key Vault |
-| **8899** | ARM, Entra ID, App Service, Log Analytics ingestion |
+| **8899** | ARM, Entra ID, App Service, Log Analytics, Application Insights |
 | **5671** | Service Bus – AMQPS (TLS) |
 | **44380** | Built-in HTTP CONNECT proxy |

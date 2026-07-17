@@ -51,11 +51,12 @@ const TOOLING: Service[] = [
   { abbr: 'CLI',  bg: '#0078D4', name: 'Azure CLI',              description: 'Full az command support via cloud environment' },
   { abbr: 'PS',   bg: '#2671BE', name: 'Azure PowerShell',       description: 'Az module support via cloud environment' },
   { abbr: '.NET', bg: '#512BD4', name: '.NET SDK',               description: 'Azure SDK for .NET — first-class support' },
-  { abbr: 'TF',   bg: '#7B42BC', name: 'Terraform',              description: 'AzureRM, AzAPI, and Entra ID provider support', preview: true },
-  { abbr: 'MCP',  bg: '#8661C5', name: 'MCP Server',             description: 'AI assistant integration via Model Context Protocol', preview: true },
+  { abbr: 'TF',   bg: '#7B42BC', name: 'Terraform',              description: 'AzureRM, AzAPI, and Entra ID provider support' },
+  { abbr: 'MCP',  bg: '#8661C5', name: 'MCP Server',             description: 'AI assistant integration via Model Context Protocol' },
   { abbr: 'PY',   bg: '#3776AB', name: 'Python SDK',             description: 'Azure SDK for Python — topaz-sdk on PyPI', preview: true },
   { abbr: 'JS',   bg: '#F7DF1E', name: 'JavaScript / TS SDK',    description: 'Azure SDK for JavaScript and TypeScript', comingSoon: true },
   { abbr: 'JV',   bg: '#E76F00', name: 'Java SDK',               description: 'Azure SDK for Java', comingSoon: true },
+  { abbr: 'AZC',   bg: '#24292F', name: 'azcopy',         description: 'Command-line tool for copying data to and from Azure Storage' },
 ];
 
 type Capability = {

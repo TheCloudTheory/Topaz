@@ -56,6 +56,7 @@ const INTEGRATIONS = [
   'GitHub Actions',
   'Docker Compose',
   'VS Code',
+  'azcopy'
 ];
 
 function HomepageHeader() {
