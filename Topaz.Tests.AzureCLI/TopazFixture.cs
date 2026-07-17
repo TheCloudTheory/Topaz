@@ -37,6 +37,10 @@ public class TopazFixture
     private IContainer? _containerTopaz;
     private INetwork? _network;
     private IContainer? _containerAzureCli;
+
+    protected string TopazContainerIpAddress => _containerTopaz!.IpAddress;
+    protected INetwork ContainerNetwork => _network!;
+    protected IContainer AzureCliContainer => _containerAzureCli!;
     
     [OneTimeSetUp]
     public async Task OneTimeSetUp()

@@ -187,7 +187,17 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
             return;
         }
 
-        response.StatusCode = HttpStatusCode.Accepted;
+        // The Azure REST API has two copy-blob variants:
+        //   • Async Copy Blob (all API versions):         returns 202, caller must poll x-ms-copy-status
+        //   • Sync Put Blob from URL (API ≥ 2020-06-12):  returns 201, requires x-ms-requires-sync: true
+        //
+        // azcopy v10 uses the Go SDK's CopyFromURL() which expects 201 (sync path), but
+        // does not send x-ms-requires-sync: true — this appears to be an omission in
+        // that SDK/azcopy version. Real Azure returns 201 for this call because small
+        // blobs complete instantaneously (the service treats it as a synchronous copy
+        // regardless of the header). Topaz mirrors that behaviour: since every copy
+        // in Topaz is always synchronous (in-memory), we always return 201.
+        response.StatusCode = HttpStatusCode.Created;
         response.Headers.TryAddWithoutValidation("x-ms-copy-id", op.Resource!.CopyId);
         response.Headers.TryAddWithoutValidation("x-ms-copy-status", "success");
 
