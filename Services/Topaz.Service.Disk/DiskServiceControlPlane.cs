@@ -236,6 +236,8 @@ internal sealed class DiskServiceControlPlane(
         resource.Properties.DiskState = "ActiveSAS";
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, diskName, resource);
 
+        DiskByteStore.Instance.Allocate(resource.Properties.UniqueId, resource.Properties.DiskSizeBytes);
+
         var sasUrl = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/disk-sas/{resource.Properties.UniqueId}";
         var operationId = Guid.NewGuid();
         DiskAccessLroStore.Instance.Add(operationId, sasUrl);
@@ -259,6 +261,8 @@ internal sealed class DiskServiceControlPlane(
 
         resource.Properties.DiskState = "Unattached";
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, diskName, resource);
+
+        DiskByteStore.Instance.Release(resource.Properties.UniqueId);
 
         return OperationResult.Success;
     }
