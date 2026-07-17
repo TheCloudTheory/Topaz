@@ -31,7 +31,7 @@ public class SetupTopazTool
         [Description("Log level to be used by Topaz (e.g. Information, Debug, Warning)")]
         LogLevel logLevel = LogLevel.Information,
         [Description("Image tag to use when running the emulator")]
-        string version = "v1.6.89-beta",
+        string version = "v1.8.95-beta",
         [Description(
             "Docker platform to pull and run (e.g. 'linux/arm64' for Apple Silicon / ARM64 hosts, " +
             "'linux/amd64' for Intel/AMD x86-64 hosts). " +
