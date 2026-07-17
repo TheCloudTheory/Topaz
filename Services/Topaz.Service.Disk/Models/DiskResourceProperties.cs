@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Topaz.Service.Disk.Models.Requests;
 
 namespace Topaz.Service.Disk.Models;
@@ -24,7 +25,7 @@ public sealed class DiskResourceProperties
 
     public string NetworkAccessPolicy { get; set; } = "AllowAll";
 
-    public string ProvisioningState => "Succeeded";
+    [UsedImplicitly] public string ProvisioningState => "Succeeded";
 
     public DateTimeOffset TimeCreated { get; init; }
 

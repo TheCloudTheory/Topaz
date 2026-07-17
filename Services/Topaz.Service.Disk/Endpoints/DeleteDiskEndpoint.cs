@@ -14,7 +14,7 @@ internal sealed class DeleteDiskEndpoint(Pipeline eventPipeline, ITopazLogger lo
     private readonly DiskServiceControlPlane _controlPlane =
         DiskServiceControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.Compute";
+    public string ProviderNamespace => "Microsoft.Compute";
 
     public string[] Endpoints =>
     [

@@ -11,7 +11,7 @@ internal sealed class GetDiskAccessOperationStatusEndpoint : IEndpointDefinition
 {
     private static readonly TimeSpan InProgressThreshold = TimeSpan.FromMilliseconds(500);
 
-    public string? ProviderNamespace => "Microsoft.Compute";
+    public string ProviderNamespace => "Microsoft.Compute";
 
     public string[] Endpoints =>
     [

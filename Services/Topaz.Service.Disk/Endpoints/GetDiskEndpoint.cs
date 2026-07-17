@@ -14,7 +14,7 @@ internal sealed class GetDiskEndpoint(Pipeline eventPipeline, ITopazLogger logge
     private readonly DiskServiceControlPlane _controlPlane =
         DiskServiceControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.Compute";
+    public string ProviderNamespace => "Microsoft.Compute";
 
     public string[] Endpoints =>
     [
