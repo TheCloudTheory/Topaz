@@ -5,7 +5,7 @@ namespace Topaz.Service.Disk;
 /// <summary>
 /// Holds byte-addressable storage for disks that have an active SAS grant.
 /// Small disks (≤ InMemoryThresholdBytes) are kept in memory; larger ones
-/// are backed by a sparse file on disk.
+/// are backed by a sparse file on the disk.
 /// </summary>
 internal sealed class DiskByteStore
 {
@@ -29,7 +29,7 @@ internal sealed class DiskByteStore
     }
 
     public IDiskStore? TryGet(Guid uniqueId) =>
-        _stores.TryGetValue(uniqueId, out var store) ? store : null;
+        _stores.GetValueOrDefault(uniqueId);
 
     public void Release(Guid uniqueId)
     {
