@@ -50,22 +50,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
   labels: enhancement, service-bus, event-hub, amqp
 -->
 
-## v1.9-preview
-
-### Azure Disks — full disk data streaming (azcopy)
-
-<!--
-TODO: Azure Disks: Full azcopy-compatible disk streaming via SAS URL
-  - On beginGetAccess, Topaz stores sparse byte store keyed by uniqueId.
-  - GET /disk-sas/{uniqueId} honours HTTP Range requests.
-  - PUT to same URL accepts byte-range uploads with page-blob headers.
-  - HEAD reports Content-Length = diskSizeGB * 1024^3.
-  - endGetAccess clears the byte store and sets diskState back to Unattached.
-  - Large disks use on-disk .topaz/disks/{uniqueId}.vhd sparse file.
-  milestone: v1.9-preview
-  labels: enhancement
--->
-
 ## v1.10-preview
 
 <!--
