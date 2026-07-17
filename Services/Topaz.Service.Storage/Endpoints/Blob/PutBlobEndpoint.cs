@@ -56,7 +56,7 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
                      !string.IsNullOrEmpty(copySource))
             {
                 HandleCopyBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
-                    context.Request.Path.Value!, blobName!, copySource!, response);
+                    context.Request.Path.Value!, blobName!, copySource!, context, response);
             }
             else
             {
@@ -152,6 +152,7 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
         string dstBlobPath,
         string dstBlobName,
         string copySourceUrl,
+        HttpContext context,
         HttpResponseMessage response)
     {
         Logger.LogDebug(nameof(PutBlobEndpoint), nameof(HandleCopyBlobRequest),
@@ -187,17 +188,20 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
             return;
         }
 
-        // The Azure REST API has two copy-blob variants:
-        //   • Async Copy Blob (all API versions):         returns 202, caller must poll x-ms-copy-status
-        //   • Sync Put Blob from URL (API ≥ 2020-06-12):  returns 201, requires x-ms-requires-sync: true
+        // The Azure REST API has two copy-blob variants on the same wire format:
+        //   • Async Copy Blob:        PUT + x-ms-copy-source → 202 Accepted  (caller polls x-ms-copy-status)
+        //   • Sync Put Blob from URL: PUT + x-ms-copy-source + x-ms-requires-sync: true → 201 Created
         //
-        // azcopy v10 uses the Go SDK's CopyFromURL() which expects 201 (sync path), but
-        // does not send x-ms-requires-sync: true — this appears to be an omission in
-        // that SDK/azcopy version. Real Azure returns 201 for this call because small
-        // blobs complete instantaneously (the service treats it as a synchronous copy
-        // regardless of the header). Topaz mirrors that behaviour: since every copy
-        // in Topaz is always synchronous (in-memory), we always return 201.
-        response.StatusCode = HttpStatusCode.Created;
+        // Both variants omit x-ms-requires-sync when called by some clients:
+        //   • .NET SDK StartCopyFromUri → expects 202 (polls until x-ms-copy-status = success in response/properties)
+        //   • azcopy v10 CopyFromURL   → expects 201 (Go SDK enforces 201; does not poll)
+        //
+        // Since azcopy sends a distinct User-Agent we can tell them apart and return the
+        // status each client expects. Topaz copies synchronously either way, so both
+        // branches set x-ms-copy-status: success.
+        var userAgent = context.Request.Headers.TryGetValue("User-Agent", out var ua) ? ua.ToString() : "";
+        var isAzCopy = userAgent.Contains("azcopy", StringComparison.OrdinalIgnoreCase);
+        response.StatusCode = isAzCopy ? HttpStatusCode.Created : HttpStatusCode.Accepted;
         response.Headers.TryAddWithoutValidation("x-ms-copy-id", op.Resource!.CopyId);
         response.Headers.TryAddWithoutValidation("x-ms-copy-status", "success");
 
