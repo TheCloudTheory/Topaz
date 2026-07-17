@@ -284,6 +284,6 @@ Replace the three values in `local.settings.json` with real Azure connection str
 
 :::tip[Integration testing the function]
 
-Use Testcontainers to start Topaz and the Azure Functions runtime in your CI pipeline. See [How to write integration tests with Testcontainers](../integrations/ecosystem/testcontainers.md) for the shared fixture pattern.
+Use Testcontainers to start Topaz and the Azure Functions runtime in your CI pipeline. See [How to write integration tests with Testcontainers](../ecosystem/testcontainers.md) for the shared fixture pattern.
 
 :::

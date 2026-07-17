@@ -288,7 +288,7 @@ MassTransit uses the standard .NET TLS stack, so the Topaz certificate must be t
 
 ## Step 9: Automate with Testcontainers
 
-When running tests, start Topaz automatically using [Testcontainers](../integrations/ecosystem/testcontainers.md):
+When running tests, start Topaz automatically using [Testcontainers](../ecosystem/testcontainers.md):
 
 ```csharp
 var container = new ContainerBuilder("thecloudtheory/topaz-host:latest")
@@ -300,7 +300,7 @@ var container = new ContainerBuilder("thecloudtheory/topaz-host:latest")
 await container.StartAsync();
 ```
 
-Then create the namespace and queue via the ARM SDK before each test class, using the same provisioning pattern shown in the [Testcontainers guide](../integrations/ecosystem/testcontainers.md).
+Then create the namespace and queue via the ARM SDK before each test class, using the same provisioning pattern shown in the [Testcontainers guide](../ecosystem/testcontainers.md).
 
 ## Common gotchas
 

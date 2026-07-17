@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 8
 description: Use Topaz Portal — a web UI for browsing and managing emulated Azure resources running in Topaz without writing any CLI commands.
 keywords: [topaz portal, azure emulator ui, local azure portal, topaz web interface, azure portal local]
 ---

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 10
 description: Overview of Azure services supported by Topaz, including Azure Storage, Key Vault, Service Bus, Event Hubs, Container Registry, Managed Identity, and ARM template deployments.
 keywords: [supported azure services, azure storage emulator, key vault emulator, service bus emulator, event hub emulator, arm template, bicep, managed identity]
 ---

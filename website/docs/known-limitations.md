@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 13
 description: Known limitations of Topaz — behaviours that differ from real Azure due to deliberate design trade-offs, planned for a future release.
 keywords: [topaz limitations, azure emulator limitations, storage ports, topaz known issues]
 ---

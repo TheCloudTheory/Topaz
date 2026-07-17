@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 11
 description: Compatibility matrix for Topaz — tested Terraform providers, Azure SDKs, Azure CLI versions, Azure PowerShell setup, and runtime requirements.
 keywords: [topaz compatibility, terraform azurerm version, azure sdk version, azure cli version, azure powershell, python sdk, topaz supported versions]
 ---

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 16
 description: Topaz is a local Azure emulator that runs Storage, Key Vault, Service Bus, Event Hubs, Container Registry, and more on your machine — no subscription, no internet connection, no cost.
 keywords: [local azure emulator, local azure development, azure local emulator, azure emulator local, run azure locally, azure development without subscription]
 ---

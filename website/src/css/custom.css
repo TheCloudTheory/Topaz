@@ -142,3 +142,23 @@ body {
   background-color: #4d6fa5;
   color: #ffffff;
 }
+
+/* Diataxis sidebar section headers */
+.sidebar-section-header > .menu__list-item-collapsible {
+  cursor: default;
+  pointer-events: none;
+  margin-top: 1rem;
+}
+
+.sidebar-section-header > .menu__list-item-collapsible .menu__link {
+  font-size: var(--ifm-font-size-base);
+  font-weight: 700;
+  color: var(--ifm-font-color-base);
+  padding: 0.25rem 0.75rem;
+}
+
+.sidebar-section-header > .menu__list-item-collapsible .menu__caret {
+  display: none;
+}
+
+
