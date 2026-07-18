@@ -43,10 +43,14 @@ jobs:
         context: .
         file: ./Topaz.Host/Dockerfile
         push: false
+        load: true
         tags: topaz/host
-        platforms: linux/amd64
     - name: Build PowerShell container
       run: ./scripts/build-powershell-container.sh
+    - name: Build Python container
+      run: ./scripts/build-python-container.sh
+    - name: Build NodeJS container
+      run: ./scripts/build-nodejs-container.sh
     - name: Test
       run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults --filter "FullyQualifiedName!~Topaz.Example"
     - name: Publish Test Results
