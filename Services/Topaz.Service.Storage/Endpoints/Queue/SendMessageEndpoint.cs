@@ -34,7 +34,7 @@ internal sealed class SendMessageEndpoint(Pipeline eventPipeline, ITopazLogger l
         try
         {
             if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;
-            if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
+            if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
             {
                 response.StatusCode = HttpStatusCode.NotFound;
                 response.Content = new ByteArrayContent([]);

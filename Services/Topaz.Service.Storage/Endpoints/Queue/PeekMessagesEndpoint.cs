@@ -23,7 +23,7 @@ internal sealed class PeekMessagesEndpoint(Pipeline eventPipeline, ITopazLogger 
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
         {
             Logger.LogError(nameof(PeekMessagesEndpoint), nameof(GetResponse), "TryGetStorageAccount failed");
             response.StatusCode = HttpStatusCode.NotFound;

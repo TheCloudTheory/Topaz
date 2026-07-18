@@ -90,7 +90,7 @@ internal abstract class QueueDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         return true;
     }
 
-    protected bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
+    protected bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount, out string? originalStorageAccountName)
     {
         Logger.LogDebug(nameof(QueueDataPlaneEndpointBase), nameof(TryGetStorageAccount),
             "Trying to get storage account.");
@@ -100,11 +100,13 @@ internal abstract class QueueDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
             Logger.LogError("`Host` header not found - it's required for storage account creation.");
 
             storageAccount = null;
+            originalStorageAccountName = null;
             return false;
         }
 
         var pathParts = host.ToString().Split('.');
         var accountName = pathParts[0];
+        originalStorageAccountName = accountName;
 
         Logger.LogDebug(nameof(QueueDataPlaneEndpointBase), nameof(TryGetStorageAccount),
             "About to check if storage account '{0}' exists.", accountName);

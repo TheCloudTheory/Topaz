@@ -30,7 +30,7 @@ internal sealed class GetMessagesEndpoint(Pipeline eventPipeline, ITopazLogger l
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
         {
             Logger.LogError(nameof(GetMessagesEndpoint), nameof(GetResponse), "TryGetStorageAccount failed");
             response.StatusCode = HttpStatusCode.NotFound;
