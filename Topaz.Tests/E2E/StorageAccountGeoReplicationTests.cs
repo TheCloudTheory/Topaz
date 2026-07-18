@@ -10,6 +10,7 @@ using Azure.Data.Tables;
 using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
@@ -27,6 +28,25 @@ public class StorageAccountGeoReplicationTests
     private const string RagrsAccountName = "geoaccountragrs";
     private const string RagzrsAccountName = "geoaccountragzrs";
     private const string LrsAccountName = "geoaccountlrs";
+
+    // Dedicated accounts for geo-lag tests — isolated from the shared constants so
+    // parallel test runs cannot trigger each other's scheduler watermark.
+    private const string BlobLagRagrsAccountName = "geobloblagragrs";
+    private const string BlobLagRagzrsAccountName = "geobloblagragzrs";
+    private const string QueueLagRagrsAccountName = "geoqueulagragrs";
+    private const string QueueLagRagzrsAccountName = "geoqueulragzrs";
+
+    [TearDown]
+    public async Task TearDown()
+    {
+        await Program.RunAsync(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            SubscriptionId.ToString()
+        ]);
+    }
 
     [SetUp]
     public async Task SetUp()
@@ -388,6 +408,12 @@ public class StorageAccountGeoReplicationTests
         var primaryClient = new QueueServiceClient(primaryConnectionString, clientOptions);
         await primaryClient.CreateQueueAsync("secondary-read-queue");
 
+        // Advance the geo-replication watermark so the queue is visible on secondary
+        AzureStorageControlPlane.New(new PrettyTopazLogger()).UpdateLastGeoSyncTime(
+            SubscriptionIdentifier.From(SubscriptionId),
+            ResourceGroupIdentifier.From(ResourceGroupName),
+            RagrsAccountName);
+
         // Act — list queues via the secondary endpoint
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
@@ -517,7 +543,7 @@ public class StorageAccountGeoReplicationTests
         // and must be invisible on the secondary until the scheduler advances the watermark.
         var armClient = CreateArmClient();
         var resourceGroup = GetResourceGroup(armClient);
-        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+        var storageAccount = CreateStorageAccount(resourceGroup, BlobLagRagrsAccountName, StorageSkuName.StandardRagrs);
         var key = storageAccount.GetKeys().First().Value;
 
         var clientOptions = new BlobClientOptions
@@ -530,17 +556,17 @@ public class StorageAccountGeoReplicationTests
         };
 
         var primaryConnectionString =
-            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{RagrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"DefaultEndpointsProtocol=https;AccountName={BlobLagRagrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{BlobLagRagrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
         var secondaryConnectionString =
-            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"DefaultEndpointsProtocol=https;AccountName={BlobLagRagrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{BlobLagRagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
 
         var primaryClient = new BlobServiceClient(primaryConnectionString, clientOptions);
         var secondaryClient = new BlobServiceClient(secondaryConnectionString, clientOptions);
 
         // Upload a blob to the primary
-        var containerName = "geo-lag-test-ragrs";
+        const string containerName = "geo-lag-blobs";
         await primaryClient.CreateBlobContainerAsync(containerName);
         var blobClient = primaryClient.GetBlobContainerClient(containerName).GetBlobClient("file.txt");
         await blobClient.UploadAsync(new BinaryData("hello"));
@@ -555,15 +581,12 @@ public class StorageAccountGeoReplicationTests
         Assert.That(blobsBeforeSync.Any(b => b.Name == "file.txt"), Is.False,
             "Blob should not be visible on secondary before geo-replication scheduler runs");
 
-        // Trigger the geo-replication scheduler
+        // Trigger geo-replication for this account only
         var logger = new PrettyTopazLogger();
-        var eventPipeline = new Pipeline(logger);
-        var scheduler = new GeoReplicationSyncScheduler(
-            AzureStorageControlPlane.New(logger),
-            SubscriptionControlPlane.New(eventPipeline, logger),
-            logger,
-            TimeSpan.FromSeconds(30));
-        await scheduler.ScanAndUpdateAsync();
+        AzureStorageControlPlane.New(logger).UpdateLastGeoSyncTime(
+            SubscriptionIdentifier.From(SubscriptionId),
+            ResourceGroupIdentifier.From(ResourceGroupName),
+            BlobLagRagrsAccountName);
 
         // Act — list blobs on secondary after geo-sync
         var blobsAfterSync = secondaryClient
@@ -582,7 +605,7 @@ public class StorageAccountGeoReplicationTests
         // Arrange — RA-GZRS account; same replication-lag behaviour as RA-GRS.
         var armClient = CreateArmClient();
         var resourceGroup = GetResourceGroup(armClient);
-        var storageAccount = CreateStorageAccount(resourceGroup, RagzrsAccountName, StorageSkuName.StandardRagzrs);
+        var storageAccount = CreateStorageAccount(resourceGroup, BlobLagRagzrsAccountName, StorageSkuName.StandardRagzrs);
         var key = storageAccount.GetKeys().First().Value;
 
         var clientOptions = new BlobClientOptions
@@ -595,17 +618,17 @@ public class StorageAccountGeoReplicationTests
         };
 
         var primaryConnectionString =
-            $"DefaultEndpointsProtocol=https;AccountName={RagzrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{RagzrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"DefaultEndpointsProtocol=https;AccountName={BlobLagRagzrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{BlobLagRagzrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
         var secondaryConnectionString =
-            $"DefaultEndpointsProtocol=https;AccountName={RagzrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{RagzrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"DefaultEndpointsProtocol=https;AccountName={BlobLagRagzrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{BlobLagRagzrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
 
         var primaryClient = new BlobServiceClient(primaryConnectionString, clientOptions);
         var secondaryClient = new BlobServiceClient(secondaryConnectionString, clientOptions);
 
         // Upload a blob to the primary
-        var containerName = "geo-lag-test-ragzrs";
+        const string containerName = "geo-lag-blobs";
         await primaryClient.CreateBlobContainerAsync(containerName);
         var blobClient = primaryClient.GetBlobContainerClient(containerName).GetBlobClient("file.txt");
         await blobClient.UploadAsync(new BinaryData("hello"));
@@ -620,15 +643,12 @@ public class StorageAccountGeoReplicationTests
         Assert.That(blobsBeforeSync.Any(b => b.Name == "file.txt"), Is.False,
             "Blob should not be visible on secondary before geo-replication scheduler runs");
 
-        // Trigger the geo-replication scheduler
+        // Trigger geo-replication for this account only
         var logger = new PrettyTopazLogger();
-        var eventPipeline = new Pipeline(logger);
-        var scheduler = new GeoReplicationSyncScheduler(
-            AzureStorageControlPlane.New(logger),
-            SubscriptionControlPlane.New(eventPipeline, logger),
-            logger,
-            TimeSpan.FromSeconds(30));
-        await scheduler.ScanAndUpdateAsync();
+        AzureStorageControlPlane.New(logger).UpdateLastGeoSyncTime(
+            SubscriptionIdentifier.From(SubscriptionId),
+            ResourceGroupIdentifier.From(ResourceGroupName),
+            BlobLagRagzrsAccountName);
 
         // Act — list blobs on secondary after geo-sync
         var blobsAfterSync = secondaryClient
@@ -639,5 +659,112 @@ public class StorageAccountGeoReplicationTests
         // Assert — blob must now be visible
         Assert.That(blobsAfterSync.Any(b => b.Name == "file.txt"), Is.True,
             "Blob should be visible on secondary after geo-replication scheduler runs");
+    }
+
+    [Test]
+    public async Task QueueStorage_RAGRS_BeforeGeoSync_QueueNotVisibleOnSecondary_AfterGeoSync_QueueVisible()
+    {
+        // Arrange — RA-GRS account; a queue created after account provisioning will have
+        // LastWriteTimeUtc > LastGeoSyncTime and must be hidden on the secondary until the scheduler runs.
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, QueueLagRagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var clientOptions = new QueueClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                })
+        };
+
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={QueueLagRagrsAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{QueueLagRagrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={QueueLagRagrsAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{QueueLagRagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+
+        var primaryClient = new QueueServiceClient(primaryConnectionString, clientOptions);
+        var secondaryClient = new QueueServiceClient(secondaryConnectionString, clientOptions);
+
+        // Create a queue via the primary endpoint
+        await primaryClient.CreateQueueAsync("geo-lag-queue");
+
+        // Act — list queues on secondary before geo-sync
+        var queuesBeforeSync = secondaryClient.GetQueuesAsync().ToBlockingEnumerable().ToList();
+
+        // Assert — queue must not be visible yet
+        Assert.That(queuesBeforeSync.Any(q => q.Name == "geo-lag-queue"), Is.False,
+            "Queue should not be visible on secondary before geo-replication scheduler runs");
+
+        // Trigger geo-replication for this account only
+        var logger = new PrettyTopazLogger();
+        AzureStorageControlPlane.New(logger).UpdateLastGeoSyncTime(
+            SubscriptionIdentifier.From(SubscriptionId),
+            ResourceGroupIdentifier.From(ResourceGroupName),
+            QueueLagRagrsAccountName);
+
+        // Act — list queues on secondary after geo-sync
+        var queuesAfterSync = secondaryClient.GetQueuesAsync().ToBlockingEnumerable().ToList();
+
+        // Assert — queue must now be visible
+        Assert.That(queuesAfterSync.Any(q => q.Name == "geo-lag-queue"), Is.True,
+            "Queue should be visible on secondary after geo-replication scheduler runs");
+    }
+
+    [Test]
+    public async Task QueueStorage_RAGZRS_BeforeGeoSync_QueueNotVisibleOnSecondary_AfterGeoSync_QueueVisible()
+    {
+        // Arrange — RA-GZRS account; same replication-lag behaviour as RA-GRS.
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, QueueLagRagzrsAccountName, StorageSkuName.StandardRagzrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var clientOptions = new QueueClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                })
+        };
+
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={QueueLagRagzrsAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{QueueLagRagzrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={QueueLagRagzrsAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{QueueLagRagzrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+
+        var primaryClient = new QueueServiceClient(primaryConnectionString, clientOptions);
+        var secondaryClient = new QueueServiceClient(secondaryConnectionString, clientOptions);
+
+        // Create a queue via the primary endpoint
+        await primaryClient.CreateQueueAsync("geo-lag-queue");
+
+        // Act — list queues on secondary before geo-sync
+        var queuesBeforeSync = secondaryClient.GetQueuesAsync().ToBlockingEnumerable().ToList();
+
+        // Assert — queue must not be visible yet
+        Assert.That(queuesBeforeSync.Any(q => q.Name == "geo-lag-queue"), Is.False,
+            "Queue should not be visible on secondary before geo-replication scheduler runs");
+
+        // Trigger geo-replication for this account only
+        var logger = new PrettyTopazLogger();
+        AzureStorageControlPlane.New(logger).UpdateLastGeoSyncTime(
+            SubscriptionIdentifier.From(SubscriptionId),
+            ResourceGroupIdentifier.From(ResourceGroupName),
+            QueueLagRagzrsAccountName);
+
+        // Act — list queues on secondary after geo-sync
+        var queuesAfterSync = secondaryClient.GetQueuesAsync().ToBlockingEnumerable().ToList();
+
+        // Assert — queue must now be visible
+        Assert.That(queuesAfterSync.Any(q => q.Name == "geo-lag-queue"), Is.True,
+            "Queue should be visible on secondary after geo-replication scheduler runs");
     }
 }

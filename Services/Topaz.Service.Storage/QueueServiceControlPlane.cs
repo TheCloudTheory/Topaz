@@ -29,9 +29,9 @@ internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, I
             var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
             if (lastSyncTime != null)
             {
-                // Repeat fetching queues, but this time apply a filter. 
-                queues = provider.ListAs<Queue>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, 10,
-                    f => File.GetLastWriteTimeUtc(f) < lastSyncTime.Value);
+                queues = provider.ListPaths(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, 10)
+                    .Where(path => File.GetLastWriteTimeUtc(path) < lastSyncTime.Value)
+                    .Select(path => JsonSerializer.Deserialize<Queue>(File.ReadAllText(path), GlobalSettings.JsonOptions)!);
             }
         }
         

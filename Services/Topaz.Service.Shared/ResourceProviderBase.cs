@@ -172,16 +172,37 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             .Select(File.ReadAllText);
     }
 
+    public IEnumerable<string> ListPaths(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null)
+    {
+        var listBasePath = Path.Combine(BaseEmulatorPath,
+            GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
+        var servicePath = string.IsNullOrWhiteSpace(id)
+            ? listBasePath
+            : Path.Combine(listBasePath, ResolveIdCasing(listBasePath, id));
+
+        if (!Directory.Exists(servicePath))
+            return [];
+
+        var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
+        var servicePathSegments = TService.LocalDirectoryPath.Split("/");
+        var defaultLookForNoOfSegments = servicePathSegments.Length + 2;
+        var sep = Path.DirectorySeparatorChar.ToString();
+        var serviceDiscriminator = TService.LocalDirectoryPath
+            .Split(['/', Path.DirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries)
+            .LastOrDefault(s => !s.StartsWith('{'));
+
+        return metadataFiles
+            .Where(file =>
+                file.Split("/").Length ==
+                (lookForNoOfSegments.HasValue ? lookForNoOfSegments.Value : defaultLookForNoOfSegments)
+                && (serviceDiscriminator == null || file.Contains(sep + serviceDiscriminator + sep)));
+    }
+
     public IEnumerable<T> ListAs<T>(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null,
-        Func<string, bool>? filter = null)
+        ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null)
     {
         var contents = List(subscriptionIdentifier, resourceGroupIdentifier, id, lookForNoOfSegments);
-        if (filter != null)
-        {
-            contents = contents.Where(filter);    
-        }
-        
         return contents.Select(file => JsonSerializer.Deserialize<T>(file, GlobalSettings.JsonOptions)!);
     }
 

@@ -15,24 +15,6 @@ internal sealed class QueueServiceDataPlane(QueueServiceControlPlane controlPlan
         var controlPlane = QueueServiceControlPlane.New(logger);
         return new QueueServiceDataPlane(controlPlane, resourceProvider, logger);
     }
-    public DataPlaneOperationResult<QueueEnumerationResult> ListQueues(
-        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
-        string storageAccountName)
-    {
-        logger.LogDebug(nameof(QueueServiceDataPlane), nameof(ListQueues),
-            "Executing {0}: {1}", nameof(ListQueues), storageAccountName);
-
-        var result = controlPlane.ListQueues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
-        if (result.Result == OperationResult.Success && result.Resource != null)
-        {
-            var queueEnumeration = new QueueEnumerationResult(storageAccountName, result.Resource);
-            return new DataPlaneOperationResult<QueueEnumerationResult>(OperationResult.Success, queueEnumeration,
-                null, null);
-        }
-
-        return new DataPlaneOperationResult<QueueEnumerationResult>(OperationResult.Failed, null,
-            "Failed to list queues.", null);
-    }
 
     public DataPlaneOperationResult<Queue> CreateQueue(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName)
