@@ -173,6 +173,12 @@
 .milestoneGreen  { background: #1a8a5a; }
 .milestoneRed    { background: #c0392b; }
 
+.milestoneBody {
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
 .featureList {
   list-style: none;
   margin: 0;
