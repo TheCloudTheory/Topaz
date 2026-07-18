@@ -18,7 +18,7 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["PUT /{containerName}/..."];
 
@@ -27,16 +27,16 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out var originalStorageAccountName))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
-        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+        var resourceGroupIdentifier = storageAccount.GetResourceGroup();
 
-        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, Permissions, context, response))
             return;
 
         try
@@ -49,13 +49,13 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
 
             if (context.Request.Query.HasQueryKeyWithValue("comp", "metadata"))
             {
-                HandleSetBlobMetadataRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
-                    context.Request.Path, blobName!, context.Request.Headers, response);
+                HandleSetBlobMetadataRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name,
+                    originalStorageAccountName!, context.Request.Path, blobName!, context.Request.Headers, response);
             }
             else if (context.Request.Headers.TryGetValue("x-ms-copy-source", out var copySource) &&
                      !string.IsNullOrEmpty(copySource))
             {
-                HandleCopyBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
+                HandleCopyBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name,
                     context.Request.Path.Value!, blobName!, copySource!, context, response);
             }
             else
@@ -66,7 +66,7 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
                     ? blobContentType.ToString()
                     : context.Request.ContentType;
 
-                HandleUploadBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
+                HandleUploadBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name,
                     context.Request.Path, blobName!, context.Request.Body, context.Request.Headers, response, contentType);
             }
         }
@@ -80,8 +80,8 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
     }
 
     private void HandleUploadBlobRequest(
-        Service.Shared.Domain.SubscriptionIdentifier subscriptionIdentifier,
-        Service.Shared.Domain.ResourceGroupIdentifier resourceGroupIdentifier,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         string blobPath,
         string blobName,
@@ -114,9 +114,10 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
     }
 
     private void HandleSetBlobMetadataRequest(
-        Service.Shared.Domain.SubscriptionIdentifier subscriptionIdentifier,
-        Service.Shared.Domain.ResourceGroupIdentifier resourceGroupIdentifier,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
+        string originalStorageAccountName,
         string blobPath,
         string blobName,
         IHeaderDictionary headers,
@@ -137,7 +138,7 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
         else
         {
             var props = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccountName, blobPath, blobName);
+                storageAccountName, originalStorageAccountName, blobPath, blobName);
 
             response.StatusCode = HttpStatusCode.OK;
 
@@ -204,8 +205,7 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
         response.StatusCode = isAzCopy ? HttpStatusCode.Created : HttpStatusCode.Accepted;
         response.Headers.TryAddWithoutValidation("x-ms-copy-id", op.Resource!.CopyId);
         response.Headers.TryAddWithoutValidation("x-ms-copy-status", "success");
-
-        if (op.Resource.Properties != null)
-            SetResponseHeaders(response, op.Resource.Properties);
+        
+        SetResponseHeaders(response, op.Resource.Properties);
     }
 }

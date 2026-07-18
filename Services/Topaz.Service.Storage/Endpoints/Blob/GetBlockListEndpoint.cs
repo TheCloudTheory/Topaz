@@ -27,7 +27,7 @@ internal sealed class GetBlockListEndpoint(Pipeline eventPipeline, ITopazLogger 
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out var originalStorageAccountName))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -50,7 +50,7 @@ internal sealed class GetBlockListEndpoint(Pipeline eventPipeline, ITopazLogger 
 
             var op = _dataPlane.GetBlockList(
                 subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name, context.Request.Path.Value!, blockListType);
+                storageAccount!.Name, originalStorageAccountName!, context.Request.Path.Value!, blockListType);
 
             if (op.Result == OperationResult.NotFound)
             {

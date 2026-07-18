@@ -23,7 +23,7 @@ internal sealed class GetBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out var originalStorageAccountName))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -47,7 +47,7 @@ internal sealed class GetBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
                 "Handling blob download for {0}.", context.Request.Path.Value);
 
             var props = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name, context.Request.Path.Value!, blobName!);
+                storageAccount!.Name, originalStorageAccountName!, context.Request.Path.Value!, blobName!);
 
             if (props.Result == OperationResult.NotFound)
             {
@@ -62,13 +62,13 @@ internal sealed class GetBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
             if (props.Resource?.BlobType == "PageBlob")
             {
                 var binaryOp = _dataPlane.GetBlobBytes(subscriptionIdentifier, resourceGroupIdentifier,
-                    storageAccount!.Name, context.Request.Path.Value!);
+                    storageAccount!.Name, originalStorageAccountName!,context.Request.Path.Value!);
                 bytes = binaryOp.Resource ?? [];
             }
             else
             {
                 var textOp = _dataPlane.GetBlob(subscriptionIdentifier, resourceGroupIdentifier,
-                    storageAccount!.Name, context.Request.Path.Value!);
+                    storageAccount!.Name, originalStorageAccountName!, context.Request.Path.Value!);
                 bytes = textOp.Resource != null ? System.Text.Encoding.UTF8.GetBytes(textOp.Resource) : [];
             }
 

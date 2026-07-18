@@ -23,7 +23,7 @@ internal sealed class GetBlobMetadataEndpoint(Pipeline eventPipeline, ITopazLogg
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out var originalStorageAccountName))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -41,7 +41,7 @@ internal sealed class GetBlobMetadataEndpoint(Pipeline eventPipeline, ITopazLogg
                 "Handling blob metadata for {0}.", context.Request.Path.Value);
 
             var op = _dataPlane.GetBlobMetadata(subscriptionIdentifier,
-                resourceGroupIdentifier, storageAccount!.Name, context.Request.Path.Value!);
+                resourceGroupIdentifier, storageAccount!.Name, originalStorageAccountName!, context.Request.Path.Value!);
 
             if (op.Result == OperationResult.NotFound)
             {

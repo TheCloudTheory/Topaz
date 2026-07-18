@@ -233,6 +233,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         string blobPath,
+        string originalStorageAccountName,
         long? startByte = null,
         long? endByte = null)
     {
@@ -249,7 +250,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         if (!File.Exists(propertiesPath))
             return new DataPlaneOperationResult<BlobPageRangesResult>(OperationResult.NotFound, null, null, null);
         
-        if(IsRagrsOrRagzrsAccount(storageAccountName, accountOperation.Resource.Sku?.Name))
+        if(IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
         {
             var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
             if (lastSyncTime.HasValue && lastSyncTime.Value < File.GetLastWriteTimeUtc(propertiesPath))
@@ -300,28 +301,31 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     }
 
     public DataPlaneOperationResult<byte[]> GetBlobBytes(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string originalStorageAccountName,
+        string blobPath)
     {
         logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlobBytes), "Executing {0}: {1} {2}",
             nameof(GetBlobBytes), storageAccountName, blobPath);
-        
+
         var accountOperation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (accountOperation.Result != OperationResult.Success || accountOperation.Resource == null)
         {
-            return new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null, accountOperation.Reason, accountOperation.Code);
+            return new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null, accountOperation.Reason,
+                accountOperation.Code);
         }
-        
+
         var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
-        if (!IsRagrsOrRagzrsAccount(storageAccountName, accountOperation.Resource.Sku?.Name))
+        if (!IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
             return !File.Exists(fullPath)
                 ? new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null, null, null)
                 : new DataPlaneOperationResult<byte[]>(OperationResult.Success, File.ReadAllBytes(fullPath), null,
                     null);
-        
+
         var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
         if (lastSyncTime.HasValue && lastSyncTime.Value < File.GetLastWriteTimeUtc(fullPath))
         {
-            return new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null, "Blob is not replicated to the primary region yet.", "BlobNotReplicated");
+            return new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null,
+                "Blob is not replicated to the primary region yet.", "BlobNotReplicated");
         }
 
         return !File.Exists(fullPath)
@@ -512,7 +516,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
     public DataPlaneOperationResult<BlobProperties> GetBlobProperties(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
-        string storageAccountName, string blobPath, string blobName)
+        string storageAccountName, string originalStorageAccountName, string blobPath, string blobName)
     {
         logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlobProperties), "Executing {0}: {1} {2} {3}", nameof(GetBlobProperties), storageAccountName, blobPath, blobName);
         
@@ -525,7 +529,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var fullPath =
             GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
-        if (IsRagrsOrRagzrsAccount(storageAccountName, accountOperation.Resource.Sku?.Name))
+        if (IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
         {
             var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
             if (lastSyncTime.HasValue && lastSyncTime.Value < File.GetLastWriteTimeUtc(fullPath))
@@ -617,6 +621,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
+        string originalStorageAccountName,
         string blobPath,
         string blockListType)
     {
@@ -632,7 +637,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
         var blobExists = File.Exists(propertiesPath);
 
-        if (IsRagrsOrRagzrsAccount(storageAccountName, accountOperation.Resource.Sku?.Name))
+        if (IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
         {
             var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
             if (lastSyncTime.HasValue && lastSyncTime.Value < File.GetLastWriteTimeUtc(propertiesPath))
@@ -693,28 +698,31 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     }
 
     public DataPlaneOperationResult<string> GetBlob(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string originalStorageAccountName,
+        string blobPath)
     {
         logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlob), "Executing {0}: {1} {2}", nameof(GetBlob),
             storageAccountName, blobPath);
-        
+
         var accountOperation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (accountOperation.Result != OperationResult.Success || accountOperation.Resource == null)
         {
-            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, accountOperation.Reason, accountOperation.Code);
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, accountOperation.Reason,
+                accountOperation.Code);
         }
 
         var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
-        if (!IsRagrsOrRagzrsAccount(storageAccountName, accountOperation.Resource.Sku?.Name))
+        if (!IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
             return !File.Exists(fullPath)
                 ? new DataPlaneOperationResult<string>(OperationResult.NotFound, null, null, null)
                 : new DataPlaneOperationResult<string>(OperationResult.Success, File.ReadAllText(fullPath), null, null);
-        
+
         var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
         if (lastSyncTime.HasValue && lastSyncTime.Value < File.GetLastWriteTimeUtc(fullPath))
         {
-            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, "Blob is not replicated to the primary region yet.", "BlobNotReplicated");
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null,
+                "Blob is not replicated to the primary region yet.", "BlobNotReplicated");
         }
 
         return !File.Exists(fullPath)
@@ -812,6 +820,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
+        string originalStorageAccountName,
         string blobPath)
     {
         logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlobMetadata),
@@ -825,7 +834,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
-        if (IsRagrsOrRagzrsAccount(storageAccountName, accountOperation.Resource.Sku?.Name))
+        if (IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
         {
             var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
             if (lastSyncTime.HasValue && lastSyncTime.Value < File.GetLastWriteTimeUtc(fullPath))
@@ -932,7 +941,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             properties.ContentDisposition = disposition!;
 
         properties.LastModified = DateTimeOffset.UtcNow.ToString("R");
-        properties.ETag = new Azure.ETag(DateTimeOffset.UtcNow.Ticks.ToString());
+        properties.ETag = new ETag(DateTimeOffset.UtcNow.Ticks.ToString());
 
         File.WriteAllText(propertiesPath, JsonSerializer.Serialize(properties));
 
@@ -964,7 +973,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         if (contentDisposition != null) properties.ContentDisposition = contentDisposition;
 
         properties.LastModified = DateTimeOffset.UtcNow.ToString("R");
-        properties.ETag = new Azure.ETag(DateTimeOffset.UtcNow.Ticks.ToString());
+        properties.ETag = new ETag(DateTimeOffset.UtcNow.Ticks.ToString());
 
         File.WriteAllText(propertiesPath, JsonSerializer.Serialize(properties));
 

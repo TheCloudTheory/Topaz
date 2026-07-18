@@ -23,7 +23,7 @@ internal sealed class GetBlobPropertiesEndpoint(Pipeline eventPipeline, ITopazLo
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out var originalStorageAccountName))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -47,7 +47,7 @@ internal sealed class GetBlobPropertiesEndpoint(Pipeline eventPipeline, ITopazLo
                 "Handling blob properties for {0}.", context.Request.Path.Value);
 
             var op = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name, context.Request.Path.Value!, blobName!);
+                storageAccount!.Name, originalStorageAccountName!, context.Request.Path.Value!, blobName!);
 
             if (op.Result == OperationResult.NotFound)
             {
@@ -100,7 +100,7 @@ internal sealed class GetBlobPropertiesEndpoint(Pipeline eventPipeline, ITopazLo
             }
 
             var metaOp = _dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name, context.Request.Path.Value!);
+                storageAccount!.Name, originalStorageAccountName!, context.Request.Path.Value!);
 
             if (metaOp.Resource == null) return;
             foreach (var (key, value) in metaOp.Resource)
