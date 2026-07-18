@@ -15,18 +15,6 @@ interface Milestone {
 
 const MILESTONES: Milestone[] = [
   {
-    version: 'v1.9-preview',
-    label: 'v1.9 preview',
-    colorClass: styles.milestoneGreen,
-    features: [
-      { service: 'Application Insights', summary: 'Initial control plane · telemetry ingestion · KQL query' },
-      { service: 'Log Analytics', summary: 'Initial control plane · logs ingestion · KQL query' },
-      { service: 'Azure Disks', summary: 'Full azcopy-compatible disk streaming via SAS URL' },
-      { service: 'Azure Storage', summary: 'Geo-replication sync simulation' },
-      { service: 'Cosmos DB', summary: 'TTL enforcement · container-level RBAC' },
-    ],
-  },
-  {
     version: 'v1.10-preview',
     label: 'v1.10 preview',
     colorClass: styles.milestoneRed,
@@ -61,6 +49,16 @@ const MILESTONES: Milestone[] = [
       { service: 'Event Hub', summary: 'Consumer group epoch tracking · checkpoint store simulation · partition cursor persistence' },
     ],
   },
+  {
+    version: 'v1.13',
+    label: 'v1.13',
+    colorClass: styles.milestoneGreen,
+    features: [
+      { service: 'Container Instances', summary: 'Docker-backed container group execution · log streaming · local Container Registry integration' },
+      { service: 'Azure Functions', summary: 'Function App resource type · admin management API · host.json parsing and validation' },
+      { service: 'Chaos Engineering', summary: 'AMQP link detach injection · credit starvation · session timeout injection' },
+    ],
+  },
 ];
 
 export default function RoadmapFeatureMap(): JSX.Element {
@@ -69,7 +67,7 @@ export default function RoadmapFeatureMap(): JSX.Element {
       <div className="container">
         <h2 className={styles.featureMapTitle}>What's coming</h2>
         <p className={styles.featureMapSubtitle}>
-          v1.8 is now released. Here is a quick overview of the services and features planned for upcoming releases.
+          v1.9 is now released. Here is a quick overview of the services and features planned for upcoming releases.
         </p>
         <div className={styles.milestoneGrid}>
           {MILESTONES.map((milestone) => (
