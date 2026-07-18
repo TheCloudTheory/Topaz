@@ -71,6 +71,10 @@ const config: Config = {
               label: 'Next (unreleased)',
               badge: false,
             },
+            'v1.9': {
+              label: 'v1.9 (stable)',
+              badge: true,
+            },
             'v1.8': {
               label: 'v1.8 (stable)',
               badge: true,
@@ -78,13 +82,9 @@ const config: Config = {
             'v1.7': {
               label: 'v1.7 (stable)',
               badge: true,
-            },
-            'v1.6': {
-              label: 'v1.6 (deprecated)',
-              badge: true,
             }
           },
-          lastVersion: 'v1.8',
+          lastVersion: 'v1.9',
         },
         blog: {
           showReadingTime: true,

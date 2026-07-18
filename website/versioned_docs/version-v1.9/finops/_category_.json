@@ -1,0 +1,8 @@
+{
+  "label": "FinOps",
+  "position": 20,
+  "link": {
+    "type": "generated-index",
+    "description": "Cost estimation and FinOps features powered by the ACE (Azure Cost Estimator) integration."
+  }
+}
