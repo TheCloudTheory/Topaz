@@ -23,7 +23,7 @@ internal sealed class ListBlobsEndpoint(Pipeline eventPipeline, ITopazLogger log
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out var originalStorageAccountName))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -43,7 +43,7 @@ internal sealed class ListBlobsEndpoint(Pipeline eventPipeline, ITopazLogger log
                 "Handling listing blobs for {0}/{1}.", storageAccount!.Name, containerName);
 
             var op = _dataPlane.ListBlobs(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
-                containerName);
+                containerName, originalStorageAccountName!);
 
             using var sw = new EncodingAwareStringWriter();
             var serializer = new XmlSerializer(typeof(BlobEnumerationResult));

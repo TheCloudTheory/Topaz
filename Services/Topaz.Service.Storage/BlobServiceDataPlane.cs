@@ -12,24 +12,29 @@ namespace Topaz.Service.Storage;
 internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane, ITopazLogger logger)
 {
     private readonly AzureStorageControlPlane _controlPlane = AzureStorageControlPlane.New(logger);
-    
-    public DataPlaneOperationResult<BlobEnumerationResult> ListBlobs(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+
+    public DataPlaneOperationResult<BlobEnumerationResult> ListBlobs(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName,
+        string originalStorageAccountName)
     {
-        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(ListBlobs), "Executing {0}: {1} {2}", nameof(ListBlobs), storageAccountName, containerName);
-        
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(ListBlobs), "Executing {0}: {1} {2}", nameof(ListBlobs),
+            storageAccountName, containerName);
+
         var accountOperation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (accountOperation.Result != OperationResult.Success || accountOperation.Resource == null)
         {
-            return new DataPlaneOperationResult<BlobEnumerationResult>(OperationResult.NotFound, null, accountOperation.Reason, accountOperation.Code);
+            return new DataPlaneOperationResult<BlobEnumerationResult>(OperationResult.NotFound, null,
+                accountOperation.Reason, accountOperation.Code);
         }
-        
-        var path = controlPlane.GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+
+        var path = controlPlane.GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, containerName);
         var files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories)
             .Where(f => !Path.GetRelativePath(path, f).Split(Path.DirectorySeparatorChar).Any(s => s.StartsWith('.')));
-        
+
         // If it's a RAGRS/RAGZRS account, only blobs that "would" be replicated to the primary region are returned
         var sku = accountOperation.Resource.Sku?.Name;
-        if (IsRagrsOrRagzrsAccount(storageAccountName, sku))
+        if (IsRagrsOrRagzrsAccount(originalStorageAccountName, sku))
         {
             var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
             if (lastSyncTime != null)
@@ -42,10 +47,12 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         {
             Name = Path.GetRelativePath(path, file).Replace(Path.DirectorySeparatorChar, '/'),
             Properties = GetDeserializedBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccountName, containerName, Path.GetRelativePath(path, file).Replace(Path.DirectorySeparatorChar, '/'))
+                storageAccountName, containerName,
+                Path.GetRelativePath(path, file).Replace(Path.DirectorySeparatorChar, '/'))
         }).ToArray();
 
-        return new DataPlaneOperationResult<BlobEnumerationResult>(OperationResult.Success, new BlobEnumerationResult(storageAccountName, entities), null, null);
+        return new DataPlaneOperationResult<BlobEnumerationResult>(OperationResult.Success,
+            new BlobEnumerationResult(storageAccountName, entities), null, null);
     }
 
     private static bool IsRagrsOrRagzrsAccount(string storageAccountName, string? sku)
