@@ -132,7 +132,7 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
         return true;
     }
 
-    protected bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
+    protected bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount, out string? accountName)
     {
         Logger.LogDebug(nameof(BlobDataPlaneEndpointBase), nameof(TryGetStorageAccount),
             "Trying to get storage account.");
@@ -142,11 +142,12 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
             Logger.LogError("`Host` header not found - it's required for storage account creation.");
 
             storageAccount = null;
+            accountName = null;
             return false;
         }
 
         var pathParts = host.ToString().Split('.');
-        var accountName = pathParts[0];
+        accountName = pathParts[0];
 
         Logger.LogDebug(nameof(BlobDataPlaneEndpointBase), nameof(TryGetStorageAccount),
             "About to check if storage account '{0}' exists.", accountName);

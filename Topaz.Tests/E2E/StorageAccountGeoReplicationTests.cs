@@ -7,8 +7,11 @@ using Azure.ResourceManager.Storage.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Azure.Data.Tables;
+using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Service.Storage;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
@@ -17,10 +20,12 @@ public class StorageAccountGeoReplicationTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly Guid SubscriptionId = Guid.Parse("FA0B1C2D-3E4F-5A6B-7C8D-9E0F1A2B3C4D");
+    private static readonly HttpClient HttpClient = new();
 
     private const string SubscriptionName = "geo-replication-tests";
     private const string ResourceGroupName = "test";
     private const string RagrsAccountName = "geoaccountragrs";
+    private const string RagzrsAccountName = "geoaccountragzrs";
     private const string LrsAccountName = "geoaccountlrs";
 
     [SetUp]
@@ -68,7 +73,7 @@ public class StorageAccountGeoReplicationTests
     }
 
     private ArmClient CreateArmClient() =>
-        new ArmClient(new AzureLocalCredential(Globals.GlobalAdminId), SubscriptionId.ToString(), ArmClientOptions);
+        new(new AzureLocalCredential(Globals.GlobalAdminId), SubscriptionId.ToString(), ArmClientOptions);
 
     private Azure.ResourceManager.Resources.ResourceGroupResource GetResourceGroup(ArmClient armClient) =>
         armClient.GetDefaultSubscription().GetResourceGroup(ResourceGroupName).Value;
@@ -139,11 +144,6 @@ public class StorageAccountGeoReplicationTests
         var secondaryEndpoint =
             $"https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/";
 
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var httpClient = new HttpClient(handler);
 
         var statsUrl = $"{secondaryEndpoint}?restype=service&comp=stats";
         var request = new HttpRequestMessage(HttpMethod.Get, statsUrl);
@@ -159,7 +159,7 @@ public class StorageAccountGeoReplicationTests
             "SharedKey", $"{RagrsAccountName}:{signature}");
 
         // Act
-        var response = await httpClient.SendAsync(request);
+        var response = await HttpClient.SendAsync(request);
         var body = await response.Content.ReadAsStringAsync();
 
         // Assert
@@ -179,15 +179,9 @@ public class StorageAccountGeoReplicationTests
         var secondaryEndpoint =
             $"https://{LrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/";
 
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        using var httpClient = new HttpClient(handler);
-
         // Act
-        var response = await httpClient.GetAsync($"{secondaryEndpoint}?restype=service&comp=stats");
-        var body = await response.Content.ReadAsStringAsync();
+        var response = await HttpClient.GetAsync($"{secondaryEndpoint}?restype=service&comp=stats");
+        _ = await response.Content.ReadAsStringAsync();
 
         // Assert — LRS account is not found via secondary lookup (no `-secondary` DNS entry for it)
         // The endpoint returns 404 since TryGetStorageAccountFromSecondaryHost won't find a registration
@@ -195,97 +189,139 @@ public class StorageAccountGeoReplicationTests
     }
 
     [Test]
-    public async Task BlobStorage_WriteOnSecondary_Returns403()
+    public Task BlobStorage_WriteOnSecondary_Returns403()
     {
-        // Arrange
-        var armClient = CreateArmClient();
-        var resourceGroup = GetResourceGroup(armClient);
-        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
-        var key = storageAccount.GetKeys().First().Value;
+        try
+        {
+            // Arrange
+            var armClient = CreateArmClient();
+            var resourceGroup = GetResourceGroup(armClient);
+            var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+            var key = storageAccount.GetKeys().First().Value;
 
-        var secondaryConnectionString =
-            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};" +
-            $"AccountKey={key};" +
-            $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            var secondaryConnectionString =
+                $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};" +
+                $"AccountKey={key};" +
+                $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
 
-        var clientOptions = new BlobClientOptions();
-        clientOptions.Transport = new Azure.Core.Pipeline.HttpClientTransport(
-            new HttpClientHandler
+            var clientOptions = new BlobClientOptions
             {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            });
+                Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                    new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    })
+            };
 
-        var blobServiceClient = new BlobServiceClient(secondaryConnectionString, clientOptions);
+            var blobServiceClient = new BlobServiceClient(secondaryConnectionString, clientOptions);
 
-        // Act + Assert — creating a container on a secondary endpoint must fail with 403
-        var ex = Assert.ThrowsAsync<Azure.RequestFailedException>(async () =>
-            await blobServiceClient.CreateBlobContainerAsync("test-secondary-write"));
+            // Act + Assert — creating a container on a secondary endpoint must fail with 403
+            var ex = Assert.ThrowsAsync<RequestFailedException>(async () =>
+                await blobServiceClient.CreateBlobContainerAsync("test-secondary-write"));
 
-        Assert.That(ex!.Status, Is.EqualTo(403));
-        Assert.That(ex.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(ex!.Status, Is.EqualTo(403));
+                Assert.That(ex.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+            }
+            
+            return Task.CompletedTask;
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException(exception);
+        }
     }
 
     [Test]
-    public async Task QueueStorage_WriteOnSecondary_Returns403()
+    public Task QueueStorage_WriteOnSecondary_Returns403()
     {
-        // Arrange
-        var armClient = CreateArmClient();
-        var resourceGroup = GetResourceGroup(armClient);
-        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
-        var key = storageAccount.GetKeys().First().Value;
+        try
+        {
+            // Arrange
+            var armClient = CreateArmClient();
+            var resourceGroup = GetResourceGroup(armClient);
+            var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+            var key = storageAccount.GetKeys().First().Value;
 
-        var secondaryConnectionString =
-            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};" +
-            $"AccountKey={key};" +
-            $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+            var secondaryConnectionString =
+                $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};" +
+                $"AccountKey={key};" +
+                $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
 
-        var clientOptions = new QueueClientOptions();
-        clientOptions.Transport = new Azure.Core.Pipeline.HttpClientTransport(
-            new HttpClientHandler
+            var clientOptions = new QueueClientOptions
             {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            });
+                Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                    new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    })
+            };
 
-        var queueServiceClient = new QueueServiceClient(secondaryConnectionString, clientOptions);
+            var queueServiceClient = new QueueServiceClient(secondaryConnectionString, clientOptions);
 
-        // Act + Assert — creating a queue on a secondary endpoint must fail with 403
-        var ex = Assert.ThrowsAsync<Azure.RequestFailedException>(async () =>
-            await queueServiceClient.CreateQueueAsync("test-secondary-write"));
+            // Act + Assert — creating a queue on a secondary endpoint must fail with 403
+            var ex = Assert.ThrowsAsync<RequestFailedException>(async () =>
+                await queueServiceClient.CreateQueueAsync("test-secondary-write"));
 
-        Assert.That(ex!.Status, Is.EqualTo(403));
-        Assert.That(ex.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(ex!.Status, Is.EqualTo(403));
+                Assert.That(ex.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+            }
+            
+            return Task.CompletedTask;
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException(exception);
+        }
     }
 
     [Test]
-    public async Task TableStorage_WriteOnSecondary_Returns403()
+    public Task TableStorage_WriteOnSecondary_Returns403()
     {
-        // Arrange
-        var armClient = CreateArmClient();
-        var resourceGroup = GetResourceGroup(armClient);
-        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
-        var key = storageAccount.GetKeys().First().Value;
+        try
+        {
+            // Arrange
+            var armClient = CreateArmClient();
+            var resourceGroup = GetResourceGroup(armClient);
+            var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+            var key = storageAccount.GetKeys().First().Value;
 
-        var secondaryEndpoint =
-            $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+            var secondaryEndpoint =
+                $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
 
-        var tableClientOptions = new TableClientOptions();
-        tableClientOptions.Transport = new Azure.Core.Pipeline.HttpClientTransport(
-            new HttpClientHandler
+            var tableClientOptions = new TableClientOptions
             {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            });
+                Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                    new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    })
+            };
 
-        var tableServiceClient = new TableServiceClient(
-            new Uri(secondaryEndpoint),
-            new TableSharedKeyCredential(RagrsAccountName, key),
-            tableClientOptions);
+            var tableServiceClient = new TableServiceClient(
+                new Uri(secondaryEndpoint),
+                new TableSharedKeyCredential(RagrsAccountName, key),
+                tableClientOptions);
 
-        // Act + Assert — creating a table on a secondary endpoint must fail with 403
-        var ex = Assert.ThrowsAsync<Azure.RequestFailedException>(async () =>
-            await tableServiceClient.CreateTableAsync("testsecondarytable"));
+            // Act + Assert — creating a table on a secondary endpoint must fail with 403
+            var ex = Assert.ThrowsAsync<RequestFailedException>(async () =>
+                await tableServiceClient.CreateTableAsync("testsecondarytable"));
 
-        Assert.That(ex!.Status, Is.EqualTo(403));
-        Assert.That(ex.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(ex!.Status, Is.EqualTo(403));
+                Assert.That(ex.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+            }
+            
+            return Task.CompletedTask;
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException(exception);
+        }
     }
 
     [Test]
@@ -301,12 +337,14 @@ public class StorageAccountGeoReplicationTests
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
             $"BlobEndpoint=https://{RagrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
 
-        var clientOptions = new BlobClientOptions();
-        clientOptions.Transport = new Azure.Core.Pipeline.HttpClientTransport(
-            new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            });
+        var clientOptions = new BlobClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                })
+        };
 
         // Create a container via the primary endpoint
         var primaryClient = new BlobServiceClient(primaryConnectionString, clientOptions);
@@ -333,12 +371,14 @@ public class StorageAccountGeoReplicationTests
         var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
         var key = storageAccount.GetKeys().First().Value;
 
-        var clientOptions = new QueueClientOptions();
-        clientOptions.Transport = new Azure.Core.Pipeline.HttpClientTransport(
-            new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            });
+        var clientOptions = new QueueClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                })
+        };
 
         // Create a queue via the primary endpoint
         var primaryConnectionString =
@@ -369,12 +409,14 @@ public class StorageAccountGeoReplicationTests
         var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
         var key = storageAccount.GetKeys().First().Value;
 
-        var tableClientOptions = new TableClientOptions();
-        tableClientOptions.Transport = new Azure.Core.Pipeline.HttpClientTransport(
-            new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            });
+        var tableClientOptions = new TableClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                })
+        };
 
         // Create a table and insert an entity via the primary endpoint
         var primaryConnectionString =
@@ -384,7 +426,7 @@ public class StorageAccountGeoReplicationTests
         var primaryServiceClient = new TableServiceClient(primaryConnectionString, tableClientOptions);
         await primaryServiceClient.CreateTableAsync("secondaryreadtable");
         var primaryTableClient = primaryServiceClient.GetTableClient("secondaryreadtable");
-        await primaryTableClient.AddEntityAsync(new Azure.Data.Tables.TableEntity("pk", "rk") { { "Value", "hello" } });
+        await primaryTableClient.AddEntityAsync(new TableEntity("pk", "rk") { { "Value", "hello" } });
 
         // Act — query entities via the secondary endpoint
         var secondaryEndpoint =
@@ -396,7 +438,7 @@ public class StorageAccountGeoReplicationTests
             tableClientOptions);
 
         var secondaryTableClient = secondaryServiceClient.GetTableClient("secondaryreadtable");
-        var entities = secondaryTableClient.Query<Azure.Data.Tables.TableEntity>().ToList();
+        var entities = secondaryTableClient.Query<TableEntity>().ToList();
 
         // Assert
         Assert.That(entities.Any(e => e.PartitionKey == "pk" && e.RowKey == "rk"), Is.True);
@@ -465,5 +507,137 @@ public class StorageAccountGeoReplicationTests
         var stats = await client.GetStatisticsAsync();
 
         Assert.That(stats.Value.GeoReplication.LastSyncedOn, Is.LessThan(beforeStats));
+    }
+
+    [Test]
+    public async Task BlobStorage_RAGRS_BeforeGeoSync_BlobNotVisibleOnSecondary_AfterGeoSync_BlobVisible()
+    {
+        // Arrange — RA-GRS account; LastGeoSyncTime is set to UtcNow-30s on creation,
+        // so a blob uploaded right after creation will be newer than LastGeoSyncTime
+        // and must be invisible on the secondary until the scheduler advances the watermark.
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var clientOptions = new BlobClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                })
+        };
+
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{RagrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+
+        var primaryClient = new BlobServiceClient(primaryConnectionString, clientOptions);
+        var secondaryClient = new BlobServiceClient(secondaryConnectionString, clientOptions);
+
+        // Upload a blob to the primary
+        var containerName = "geo-lag-test-ragrs";
+        await primaryClient.CreateBlobContainerAsync(containerName);
+        var blobClient = primaryClient.GetBlobContainerClient(containerName).GetBlobClient("file.txt");
+        await blobClient.UploadAsync(new BinaryData("hello"));
+
+        // Act — list blobs on secondary before geo-sync
+        var blobsBeforeSync = secondaryClient
+            .GetBlobContainerClient(containerName)
+            .GetBlobs()
+            .ToList();
+
+        // Assert — blob must not be visible yet
+        Assert.That(blobsBeforeSync.Any(b => b.Name == "file.txt"), Is.False,
+            "Blob should not be visible on secondary before geo-replication scheduler runs");
+
+        // Trigger the geo-replication scheduler
+        var logger = new PrettyTopazLogger();
+        var eventPipeline = new Pipeline(logger);
+        var scheduler = new GeoReplicationSyncScheduler(
+            AzureStorageControlPlane.New(logger),
+            SubscriptionControlPlane.New(eventPipeline, logger),
+            logger,
+            TimeSpan.FromSeconds(30));
+        await scheduler.ScanAndUpdateAsync();
+
+        // Act — list blobs on secondary after geo-sync
+        var blobsAfterSync = secondaryClient
+            .GetBlobContainerClient(containerName)
+            .GetBlobs()
+            .ToList();
+
+        // Assert — blob must now be visible
+        Assert.That(blobsAfterSync.Any(b => b.Name == "file.txt"), Is.True,
+            "Blob should be visible on secondary after geo-replication scheduler runs");
+    }
+
+    [Test]
+    public async Task BlobStorage_RAGZRS_BeforeGeoSync_BlobNotVisibleOnSecondary_AfterGeoSync_BlobVisible()
+    {
+        // Arrange — RA-GZRS account; same replication-lag behaviour as RA-GRS.
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, RagzrsAccountName, StorageSkuName.StandardRagzrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var clientOptions = new BlobClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                })
+        };
+
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagzrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{RagzrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagzrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{RagzrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+
+        var primaryClient = new BlobServiceClient(primaryConnectionString, clientOptions);
+        var secondaryClient = new BlobServiceClient(secondaryConnectionString, clientOptions);
+
+        // Upload a blob to the primary
+        var containerName = "geo-lag-test-ragzrs";
+        await primaryClient.CreateBlobContainerAsync(containerName);
+        var blobClient = primaryClient.GetBlobContainerClient(containerName).GetBlobClient("file.txt");
+        await blobClient.UploadAsync(new BinaryData("hello"));
+
+        // Act — list blobs on secondary before geo-sync
+        var blobsBeforeSync = secondaryClient
+            .GetBlobContainerClient(containerName)
+            .GetBlobs()
+            .ToList();
+
+        // Assert — blob must not be visible yet
+        Assert.That(blobsBeforeSync.Any(b => b.Name == "file.txt"), Is.False,
+            "Blob should not be visible on secondary before geo-replication scheduler runs");
+
+        // Trigger the geo-replication scheduler
+        var logger = new PrettyTopazLogger();
+        var eventPipeline = new Pipeline(logger);
+        var scheduler = new GeoReplicationSyncScheduler(
+            AzureStorageControlPlane.New(logger),
+            SubscriptionControlPlane.New(eventPipeline, logger),
+            logger,
+            TimeSpan.FromSeconds(30));
+        await scheduler.ScanAndUpdateAsync();
+
+        // Act — list blobs on secondary after geo-sync
+        var blobsAfterSync = secondaryClient
+            .GetBlobContainerClient(containerName)
+            .GetBlobs()
+            .ToList();
+
+        // Assert — blob must now be visible
+        Assert.That(blobsAfterSync.Any(b => b.Name == "file.txt"), Is.True,
+            "Blob should be visible on secondary after geo-replication scheduler runs");
     }
 }

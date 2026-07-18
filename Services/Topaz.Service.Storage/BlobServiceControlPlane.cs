@@ -1,4 +1,3 @@
-using System.Net;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;

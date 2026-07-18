@@ -15,7 +15,7 @@ internal sealed class ListBlobsEndpoint(Pipeline eventPipeline, ITopazLogger log
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /{containerName}?restype=container&comp=list"];
 
@@ -23,7 +23,7 @@ internal sealed class ListBlobsEndpoint(Pipeline eventPipeline, ITopazLogger log
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -41,10 +41,6 @@ internal sealed class ListBlobsEndpoint(Pipeline eventPipeline, ITopazLogger log
 
             Logger.LogDebug(nameof(ListBlobsEndpoint), nameof(GetResponse),
                 "Handling listing blobs for {0}/{1}.", storageAccount!.Name, containerName);
-
-            // TODO: The request may come with additional keys in the query string, e.g.:
-            // ?restype=container&comp=list&prefix=localhost/eh-test/$default/ownership/&include=Metadata
-            // We need to handle them as well
 
             var op = _dataPlane.ListBlobs(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
                 containerName);

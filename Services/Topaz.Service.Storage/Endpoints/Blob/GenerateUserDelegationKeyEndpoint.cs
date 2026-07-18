@@ -24,7 +24,7 @@ namespace Topaz.Service.Storage.Endpoints.Blob;
 internal sealed class GenerateUserDelegationKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : BlobDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["POST /?restype=service&comp=userdelegationkey"];
 
@@ -66,7 +66,7 @@ internal sealed class GenerateUserDelegationKeyEndpoint(Pipeline eventPipeline, 
             return;
         }
 
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount) || storageAccount == null)
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _) || storageAccount == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;

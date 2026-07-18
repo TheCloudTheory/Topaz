@@ -23,7 +23,7 @@ internal sealed class GetBlobPropertiesEndpoint(Pipeline eventPipeline, ITopazLo
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
