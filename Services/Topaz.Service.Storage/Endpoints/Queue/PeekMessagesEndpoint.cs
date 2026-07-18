@@ -15,7 +15,7 @@ internal sealed class PeekMessagesEndpoint(Pipeline eventPipeline, ITopazLogger 
 {
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /{queue-name}/messages?peekonly=true"];
 

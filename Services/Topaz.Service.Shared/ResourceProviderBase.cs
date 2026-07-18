@@ -173,9 +173,15 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     }
 
     public IEnumerable<T> ListAs<T>(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null)
+        ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null,
+        Func<string, bool>? filter = null)
     {
         var contents = List(subscriptionIdentifier, resourceGroupIdentifier, id, lookForNoOfSegments);
+        if (filter != null)
+        {
+            contents = contents.Where(filter);    
+        }
+        
         return contents.Select(file => JsonSerializer.Deserialize<T>(file, GlobalSettings.JsonOptions)!);
     }
 

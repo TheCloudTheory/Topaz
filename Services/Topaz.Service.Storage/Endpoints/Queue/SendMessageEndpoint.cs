@@ -22,7 +22,7 @@ internal sealed class SendMessageEndpoint(Pipeline eventPipeline, ITopazLogger l
     private readonly QueueServiceControlPlane _controlPlane = QueueServiceControlPlane.New(logger);
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["POST /{queue-name}/messages"];
 

@@ -12,7 +12,7 @@ internal sealed class SetQueueServicePropertiesEndpoint(Pipeline eventPipeline, 
 {
     private readonly QueueServiceControlPlane _controlPlane = QueueServiceControlPlane.New(logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["PUT /?restype=service&comp=properties"];
 

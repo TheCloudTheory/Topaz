@@ -11,10 +11,30 @@ namespace Topaz.Service.Storage;
 internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, ITopazLogger logger)
 {
     public static QueueServiceControlPlane New(ITopazLogger logger) => new(new QueueResourceProvider(logger), logger);
+    
+    private readonly AzureStorageControlPlane _controlPlane = AzureStorageControlPlane.New(logger);
+    
     public ControlPlaneOperationResult<QueueProperties[]> ListQueues(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string originalStorageAccountName)
     {
+        var accountOperation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (accountOperation.Result != OperationResult.Success || accountOperation.Resource == null)
+        {
+            return new ControlPlaneOperationResult<QueueProperties[]>(OperationResult.NotFound, null, accountOperation.Reason, accountOperation.Code);
+        }
+        
         var queues = provider.ListAs<Queue>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, 10);
+        if (IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
+        {
+            var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
+            if (lastSyncTime != null)
+            {
+                // Repeat fetching queues, but this time apply a filter. 
+                queues = provider.ListAs<Queue>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, 10,
+                    f => File.GetLastWriteTimeUtc(f) < lastSyncTime.Value);
+            }
+        }
+        
         var result = queues.Select(queue => new QueueProperties
         {
             Name = queue.Name,
@@ -22,7 +42,7 @@ internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, I
             UpdatedTime = DateTimeOffset.UtcNow,
             ApproximateMessageCount = 0,
             Metadata = new Dictionary<string, string>()
-        }).ToArray()!;
+        }).ToArray();
 
         return new ControlPlaneOperationResult<QueueProperties[]>(OperationResult.Success, result, null, null);
     }
@@ -132,12 +152,27 @@ internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, I
 
     public ControlPlaneOperationResult<string> GetQueueServicePropertiesXml(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
-        string storageAccountName)
+        string storageAccountName, string originalStorageAccountName)
     {
-        var storageControlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
-        var path = storageControlPlane.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier,
+        var accountOperation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (accountOperation.Result != OperationResult.Success || accountOperation.Resource == null)
+        {
+            return new ControlPlaneOperationResult<string>(OperationResult.NotFound, null,
+                accountOperation.Reason, accountOperation.Code);
+        }
+        
+        var path = _controlPlane.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName);
         var propertiesFilePath = Path.Combine(path, "queue-service-properties.xml");
+        
+        if (IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
+        {
+            var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
+            if (lastSyncTime.HasValue && lastSyncTime.Value < File.GetLastWriteTimeUtc(propertiesFilePath))
+            {
+                return new ControlPlaneOperationResult<string>(OperationResult.NotFound, null, "Queue is not replicated to the primary region yet.", "QueueNotReplicated");
+            }
+        }
 
         if (!File.Exists(propertiesFilePath))
             return new ControlPlaneOperationResult<string>(OperationResult.Success, DefaultQueueServicePropertiesXml,
@@ -145,6 +180,13 @@ internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, I
 
         return new ControlPlaneOperationResult<string>(OperationResult.Success,
             File.ReadAllText(propertiesFilePath), null, null);
+    }
+    
+    private static bool IsRagrsOrRagzrsAccount(string storageAccountName, string? sku)
+    {
+        return storageAccountName.Contains("-secondary", StringComparison.InvariantCulture) &&
+               !string.IsNullOrWhiteSpace(sku) && (sku.Contains("RAGRS", StringComparison.OrdinalIgnoreCase) ||
+                                                   sku.Contains("RAGZRS", StringComparison.OrdinalIgnoreCase));
     }
 
     public ControlPlaneOperationResult SetQueueServiceProperties(SubscriptionIdentifier subscriptionIdentifier,

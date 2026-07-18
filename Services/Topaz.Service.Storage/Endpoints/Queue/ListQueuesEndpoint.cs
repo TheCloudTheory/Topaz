@@ -1,10 +1,8 @@
 using Topaz.EventPipeline;
 using System.Net;
 using System.Text;
-using System.Xml.Serialization;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
-using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Queue;
@@ -14,7 +12,7 @@ internal sealed class ListQueuesEndpoint(Pipeline eventPipeline, ITopazLogger lo
 {
     private readonly QueueServiceControlPlane _controlPlane = new(new QueueResourceProvider(logger), logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /?comp=list"];
 
@@ -22,25 +20,25 @@ internal sealed class ListQueuesEndpoint(Pipeline eventPipeline, ITopazLogger lo
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out var originalStorageAccountName))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
-        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+        var resourceGroupIdentifier = storageAccount.GetResourceGroup();
 
-        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, Permissions, context, response))
             return;
 
         try
         {
             Logger.LogDebug(nameof(ListQueuesEndpoint), nameof(GetResponse),
-                "Handling listing queues for {0}.", storageAccount!.Name);
+                "Handling listing queues for {0}.", storageAccount.Name);
 
             var op = _controlPlane.ListQueues(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name);
+                storageAccount.Name, originalStorageAccountName!);
 
             if (op.Result != OperationResult.Success || op.Resource == null)
             {

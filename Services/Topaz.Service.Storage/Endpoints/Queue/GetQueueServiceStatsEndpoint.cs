@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Endpoints.Queue;
 internal sealed class GetQueueServiceStatsEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : QueueDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /?restype=service&comp=stats"];
 

@@ -13,7 +13,7 @@ internal sealed class GetQueueAclEndpoint(Pipeline eventPipeline, ITopazLogger l
 {
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /{queue-name}?comp=acl"];
 

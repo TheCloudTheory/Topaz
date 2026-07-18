@@ -16,7 +16,7 @@ internal sealed class DeleteMessageEndpoint(Pipeline eventPipeline, ITopazLogger
 {
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["DELETE /{queue-name}/messages/{message-id}"];
 

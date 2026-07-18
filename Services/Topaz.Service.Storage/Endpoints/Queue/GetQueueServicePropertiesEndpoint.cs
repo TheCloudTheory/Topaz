@@ -12,7 +12,7 @@ internal sealed class GetQueueServicePropertiesEndpoint(Pipeline eventPipeline, 
 {
     private readonly QueueServiceControlPlane _controlPlane = QueueServiceControlPlane.New(logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /?restype=service&comp=properties"];
 
@@ -20,7 +20,7 @@ internal sealed class GetQueueServicePropertiesEndpoint(Pipeline eventPipeline, 
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out var originalStorageAccountName))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -29,11 +29,11 @@ internal sealed class GetQueueServicePropertiesEndpoint(Pipeline eventPipeline, 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
 
-        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, Permissions, context, response))
             return;
 
         var result = _controlPlane.GetQueueServicePropertiesXml(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccount.Name);
+            storageAccount.Name, originalStorageAccountName!);
 
         response.Content = new StringContent(result.Resource!, Encoding.UTF8, "application/xml");
         response.StatusCode = HttpStatusCode.OK;
