@@ -1,5 +1,4 @@
 using Topaz.CLI;
-using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Storage.Queues;

@@ -8,7 +8,6 @@ using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.ManagedServiceIdentities;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
-using System.Text.Json.Nodes;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 

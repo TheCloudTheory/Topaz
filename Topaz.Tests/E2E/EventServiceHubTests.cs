@@ -3,7 +3,6 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.EventHubs;
-using Azure.ResourceManager.Network;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Topaz.Identity;

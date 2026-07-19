@@ -9,7 +9,6 @@ using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Service.CosmosDb;
-using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;

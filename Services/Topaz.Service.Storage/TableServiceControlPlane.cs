@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using Azure.Data.Tables.Models;
@@ -16,25 +17,51 @@ namespace Topaz.Service.Storage;
 
 internal sealed class TableServiceControlPlane(TableResourceProvider provider, ITopazLogger logger)
 {
+    private readonly AzureStorageControlPlane _controlPlane = AzureStorageControlPlane.New(logger);
+    
     public ControlPlaneOperationResult<TableProperties[]> GetTables(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string originalStorageAccountName)
     {
+        var accountOperation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (accountOperation.Result != OperationResult.Success || accountOperation.Resource == null)
+        {
+            return new ControlPlaneOperationResult<TableProperties[]>(OperationResult.NotFound, null,
+                accountOperation.Reason, accountOperation.Code);
+        }
+        
         var tables =
             provider.ListAs<TableItem>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, 10);
+        
+        if (IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
+        {
+            var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
+            if (lastSyncTime != null)
+            {
+                tables = provider.ListPaths(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, 10)
+                    .Where(path => File.GetLastWriteTimeUtc(path) < lastSyncTime.Value)
+                    .Select(path => JsonSerializer.Deserialize<TableItem>(File.ReadAllText(path), GlobalSettings.JsonOptions)!);
+            }
+        }
+        
         var result = tables.Select(table => new TableProperties
         {
             Name = table.Name
-        }).ToArray()!;
+        }).ToArray();
 
         return new ControlPlaneOperationResult<TableProperties[]>(OperationResult.Success, result, null, null);
+    }
+    
+    private static bool IsRagrsOrRagzrsAccount(string storageAccountName, string? sku)
+    {
+        return storageAccountName.Contains("-secondary", StringComparison.InvariantCulture) &&
+               !string.IsNullOrWhiteSpace(sku) && (sku.Contains("RAGRS", StringComparison.OrdinalIgnoreCase) ||
+                                                   sku.Contains("RAGZRS", StringComparison.OrdinalIgnoreCase));
     }
 
     public ControlPlaneOperationResult<TableItem> CreateTable(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, CreateTableRequest request)
     {
         var model = new TableItem(request.TableName);
-        ;
-
         provider.Create(subscriptionIdentifier, resourceGroupIdentifier, request.TableName!, storageAccountName, model);
 
         return new ControlPlaneOperationResult<TableItem>(OperationResult.Created, model, null, null);
@@ -44,7 +71,6 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
         var model = new TableItem(tableName);
-        ;
 
         provider.Create(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName, model);
 

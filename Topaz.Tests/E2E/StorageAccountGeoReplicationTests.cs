@@ -7,12 +7,10 @@ using Azure.ResourceManager.Storage.Models;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Azure.Data.Tables;
-using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage;
-using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
@@ -26,7 +24,6 @@ public class StorageAccountGeoReplicationTests
     private const string SubscriptionName = "geo-replication-tests";
     private const string ResourceGroupName = "test";
     private const string RagrsAccountName = "geoaccountragrs";
-    private const string RagzrsAccountName = "geoaccountragzrs";
     private const string LrsAccountName = "geoaccountlrs";
 
     // Dedicated accounts for geo-lag tests — isolated from the shared constants so
@@ -35,6 +32,8 @@ public class StorageAccountGeoReplicationTests
     private const string BlobLagRagzrsAccountName = "geobloblagragzrs";
     private const string QueueLagRagrsAccountName = "geoqueulagragrs";
     private const string QueueLagRagzrsAccountName = "geoqueulragzrs";
+    private const string TableLagRagrsAccountName = "geotablagragrs";
+    private const string TableLagRagzrsAccountName = "geotablragzrs";
 
     [TearDown]
     public async Task TearDown()
@@ -454,6 +453,12 @@ public class StorageAccountGeoReplicationTests
         var primaryTableClient = primaryServiceClient.GetTableClient("secondaryreadtable");
         await primaryTableClient.AddEntityAsync(new TableEntity("pk", "rk") { { "Value", "hello" } });
 
+        // Advance the geo-replication watermark so the queue is visible on secondary
+        AzureStorageControlPlane.New(new PrettyTopazLogger()).UpdateLastGeoSyncTime(
+            SubscriptionIdentifier.From(SubscriptionId),
+            ResourceGroupIdentifier.From(ResourceGroupName),
+            RagrsAccountName);
+        
         // Act — query entities via the secondary endpoint
         var secondaryEndpoint =
             $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
@@ -766,5 +771,112 @@ public class StorageAccountGeoReplicationTests
         // Assert — queue must now be visible
         Assert.That(queuesAfterSync.Any(q => q.Name == "geo-lag-queue"), Is.True,
             "Queue should be visible on secondary after geo-replication scheduler runs");
+    }
+
+    [Test]
+    public async Task TableStorage_RAGRS_BeforeGeoSync_TableNotVisibleOnSecondary_AfterGeoSync_TableVisible()
+    {
+        // Arrange — RA-GRS account; a table created after account provisioning will have
+        // LastWriteTimeUtc > LastGeoSyncTime and must be hidden on the secondary until the watermark advances.
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, TableLagRagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var clientOptions = new TableClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                })
+        };
+
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={TableLagRagrsAccountName};AccountKey={key};" +
+            $"TableEndpoint=https://{TableLagRagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;";
+
+        var primaryServiceClient = new TableServiceClient(primaryConnectionString, clientOptions);
+        await primaryServiceClient.CreateTableAsync("georeplag");
+
+        var secondaryEndpoint =
+            $"https://{TableLagRagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+        var secondaryServiceClient = new TableServiceClient(
+            new Uri(secondaryEndpoint),
+            new TableSharedKeyCredential(TableLagRagrsAccountName, key),
+            clientOptions);
+
+        // Act — query tables on secondary before geo-sync
+        var tablesBeforeSync = secondaryServiceClient.Query().ToList();
+
+        // Assert — table must not be visible yet
+        Assert.That(tablesBeforeSync.Any(t => t.Name == "georeplag"), Is.False,
+            "Table should not be visible on secondary before geo-replication scheduler runs");
+
+        // Trigger geo-replication for this account only
+        AzureStorageControlPlane.New(new PrettyTopazLogger()).UpdateLastGeoSyncTime(
+            SubscriptionIdentifier.From(SubscriptionId),
+            ResourceGroupIdentifier.From(ResourceGroupName),
+            TableLagRagrsAccountName);
+
+        // Act — query tables on secondary after geo-sync
+        var tablesAfterSync = secondaryServiceClient.Query().ToList();
+
+        // Assert — table must now be visible
+        Assert.That(tablesAfterSync.Any(t => t.Name == "georeplag"), Is.True,
+            "Table should be visible on secondary after geo-replication scheduler runs");
+    }
+
+    [Test]
+    public async Task TableStorage_RAGZRS_BeforeGeoSync_TableNotVisibleOnSecondary_AfterGeoSync_TableVisible()
+    {
+        // Arrange — RA-GZRS account; same replication-lag behaviour as RA-GRS.
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, TableLagRagzrsAccountName, StorageSkuName.StandardRagzrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var clientOptions = new TableClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                })
+        };
+
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={TableLagRagzrsAccountName};AccountKey={key};" +
+            $"TableEndpoint=https://{TableLagRagzrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;";
+
+        var primaryServiceClient = new TableServiceClient(primaryConnectionString, clientOptions);
+        await primaryServiceClient.CreateTableAsync("georeplag");
+
+        var secondaryEndpoint =
+            $"https://{TableLagRagzrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+        var secondaryServiceClient = new TableServiceClient(
+            new Uri(secondaryEndpoint),
+            new TableSharedKeyCredential(TableLagRagzrsAccountName, key),
+            clientOptions);
+
+        // Act — query tables on secondary before geo-sync
+        var tablesBeforeSync = secondaryServiceClient.Query().ToList();
+
+        // Assert — table must not be visible yet
+        Assert.That(tablesBeforeSync.Any(t => t.Name == "georeplag"), Is.False,
+            "Table should not be visible on secondary before geo-replication scheduler runs");
+
+        // Trigger geo-replication for this account only
+        AzureStorageControlPlane.New(new PrettyTopazLogger()).UpdateLastGeoSyncTime(
+            SubscriptionIdentifier.From(SubscriptionId),
+            ResourceGroupIdentifier.From(ResourceGroupName),
+            TableLagRagzrsAccountName);
+
+        // Act — query tables on secondary after geo-sync
+        var tablesAfterSync = secondaryServiceClient.Query().ToList();
+
+        // Assert — table must now be visible
+        Assert.That(tablesAfterSync.Any(t => t.Name == "georeplag"), Is.True,
+            "Table should be visible on secondary after geo-replication scheduler runs");
     }
 }

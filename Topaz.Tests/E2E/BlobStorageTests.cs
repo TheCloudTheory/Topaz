@@ -7,7 +7,6 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Topaz.Identity;
 using Topaz.ResourceManager;
-using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 

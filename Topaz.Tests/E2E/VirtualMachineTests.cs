@@ -5,7 +5,6 @@ using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Network;
 using Azure.ResourceManager.Network.Models;
-using Azure.ResourceManager.Resources;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;

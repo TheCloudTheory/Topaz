@@ -13,6 +13,8 @@ namespace Topaz.Service.Storage;
 
 internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvider, ITopazLogger logger)
 {
+    private readonly AzureStorageControlPlane _controlPlane = AzureStorageControlPlane.New(logger);
+    
     internal string InsertEntity(Stream input, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
@@ -54,7 +56,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         return rawContent;
     }
 
-    internal string GetEntity(SubscriptionIdentifier subscriptionIdentifier,
+    internal DataPlaneOperationResult<string> GetEntity(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName,
         string originalStorageAccountName,
         string partitionKey, string rowKey)
@@ -63,11 +65,28 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
 
         PathGuard.ValidateName(partitionKey);
         PathGuard.ValidateName(rowKey);
+        
+        var accountOperation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (accountOperation.Result != OperationResult.Success || accountOperation.Resource == null)
+        {
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null,
+                accountOperation.Reason, accountOperation.Code);
+        }
 
         var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
-
         var fileName = $"{PathGuard.SanitizeName(partitionKey)}_{PathGuard.SanitizeName(rowKey)}.json";
         var entityPath = Path.Combine(path, fileName);
+
+        if (IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
+        {
+            var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
+            if (lastSyncTime.HasValue && lastSyncTime.Value < File.GetLastWriteTimeUtc(entityPath))
+            {
+                return new DataPlaneOperationResult<string>(OperationResult.NotFound, null,
+                    "Entity is not replicated to the primary region yet.", "EntityNotReplicated");
+            }
+        }
+        
         PathGuard.EnsureWithinDirectory(entityPath, path);
 
         if (!File.Exists(entityPath))
@@ -75,21 +94,45 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
             throw new EntityNotFoundException();
         }
 
-        return File.ReadAllText(entityPath);
+        return new DataPlaneOperationResult<string>(OperationResult.Success, File.ReadAllText(entityPath), null, null);
+    }
+    
+    private static bool IsRagrsOrRagzrsAccount(string storageAccountName, string? sku)
+    {
+        return storageAccountName.Contains("-secondary", StringComparison.InvariantCulture) &&
+               !string.IsNullOrWhiteSpace(sku) && (sku.Contains("RAGRS", StringComparison.OrdinalIgnoreCase) ||
+                                                   sku.Contains("RAGZRS", StringComparison.OrdinalIgnoreCase));
     }
 
-    internal TableQueryResult QueryEntities(QueryString query, SubscriptionIdentifier subscriptionIdentifier,
+    internal DataPlaneOperationResult<TableQueryResult> QueryEntities(QueryString query, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName,
-        string? originalStorageAccountName)
+        string originalStorageAccountName)
     {
         logger.LogDebug(nameof(TableServiceDataPlane), nameof(QueryEntities), "Executing {0}: {1} {2} {3}", nameof(QueryEntities), query, tableName, storageAccountName);
 
+        var accountOperation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (accountOperation.Result != OperationResult.Success || accountOperation.Resource == null)
+        {
+            return new DataPlaneOperationResult<TableQueryResult>(OperationResult.NotFound, null,
+                accountOperation.Reason, accountOperation.Code);
+        }
+        
         var options = TableODataQueryOptions.Parse(query);
 
         var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
-
+        var rawEntities = Directory.EnumerateFiles(path);
+        
+        if (IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
+        {
+            var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
+            if (lastSyncTime != null)
+            {
+                rawEntities = rawEntities.Where(f => File.GetLastWriteTimeUtc(f) < lastSyncTime.Value);
+            }
+        }
+        
         // Load all entities from disk as JsonObject so we can inspect individual properties.
-        var allEntities = Directory.EnumerateFiles(path)
+        var allEntities = rawEntities
             .Select(file =>
             {
                 var content = File.ReadAllText(file);
@@ -172,7 +215,8 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
             result = page.Cast<object?>().ToArray();
         }
 
-        return new TableQueryResult(result, contNextPk, contNextRk);
+        return new DataPlaneOperationResult<TableQueryResult>(OperationResult.Success,
+            new TableQueryResult(result, contNextPk, contNextRk), null, null);
     }
 
     internal void DeleteEntity(SubscriptionIdentifier subscriptionIdentifier,

@@ -4,7 +4,6 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Storage;
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Azure.Storage.Sas;
 using Topaz.CLI;

@@ -1,5 +1,4 @@
 using Azure;
-using Azure.Core;
 using Azure.Messaging.ServiceBus.Administration;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ServiceBus;

@@ -53,14 +53,20 @@ internal sealed class QueryTableEntitiesEndpoint(Pipeline eventPipeline, ITopazL
             var result = DataPlane.QueryEntities(context.Request.QueryString, subscriptionIdentifier,
                 resourceGroupIdentifier, potentialTableName, storageAccount.Name, originalStorageAccountName!);
 
-            if (result.NextPartitionKey is not null)
+            if (result.Result != OperationResult.Success || result.Resource == null)
             {
-                response.Headers.Add("x-ms-continuation-NextPartitionKey", result.NextPartitionKey);
-                if (result.NextRowKey is not null)
-                    response.Headers.Add("x-ms-continuation-NextRowKey", result.NextRowKey);
+                response.StatusCode = HttpStatusCode.NotFound;
+                return;
             }
 
-            response.Content = JsonContent.Create(new TableDataEndpointResponse(result.Entities));
+            if (result.Resource.NextPartitionKey is not null)
+            {
+                response.Headers.Add("x-ms-continuation-NextPartitionKey", result.Resource.NextPartitionKey);
+                if (result.Resource.NextRowKey is not null)
+                    response.Headers.Add("x-ms-continuation-NextRowKey", result.Resource.NextRowKey);
+            }
+
+            response.Content = JsonContent.Create(new TableDataEndpointResponse(result.Resource.Entities));
             response.StatusCode = HttpStatusCode.OK;
             return;
         }

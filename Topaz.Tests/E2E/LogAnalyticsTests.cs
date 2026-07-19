@@ -7,7 +7,6 @@ using Azure.ResourceManager.Resources;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
-using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 

@@ -4,7 +4,6 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
-using Azure.ResourceManager.Resources;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;

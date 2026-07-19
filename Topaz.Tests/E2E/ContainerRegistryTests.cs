@@ -13,7 +13,6 @@ using System.Text;
 using System.Text.Json;
 using Topaz.Identity;
 using Topaz.ResourceManager;
-using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 

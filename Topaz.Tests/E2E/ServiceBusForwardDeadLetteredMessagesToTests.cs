@@ -1,10 +1,7 @@
 using Azure;
-using Azure.Core;
 using Azure.Messaging.ServiceBus;
-using Azure.Messaging.ServiceBus.Administration;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ServiceBus;
-using Azure.ResourceManager.ServiceBus.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;

@@ -1,5 +1,3 @@
-using Amqp;
-using Amqp.Types;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 using Topaz.CLI;

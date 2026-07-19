@@ -1,9 +1,7 @@
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Sql;
-using Azure.ResourceManager.Sql.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;

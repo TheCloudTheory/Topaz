@@ -43,7 +43,7 @@ internal sealed class GetTableEntityEndpoint(Pipeline eventPipeline, ITopazLogge
             var entityJson = DataPlane.GetEntity(subscriptionIdentifier, resourceGroupIdentifier, tableName,
                 storageAccount.Name, originalStorageAccountName!, partitionKey, rowKey);
 
-            var entity = JsonSerializer.Deserialize<object>(entityJson, GlobalSettings.JsonOptions);
+            var entity = JsonSerializer.Deserialize<object>(entityJson.Resource!, GlobalSettings.JsonOptions);
             response.StatusCode = HttpStatusCode.OK;
             response.Content = JsonContent.Create(entity);
         }
