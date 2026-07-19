@@ -879,4 +879,246 @@ public class StorageAccountGeoReplicationTests
         Assert.That(tablesAfterSync.Any(t => t.Name == "georeplag"), Is.True,
             "Table should be visible on secondary after geo-replication scheduler runs");
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Nuance tests
+    // ─────────────────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task QueueStorage_GetMessages_OnSecondary_Returns403()
+    {
+        // Real Azure blocks dequeue on secondary because GetMessages mutates state
+        // (sets visibility timeout and increments dequeue count). Topaz follows the
+        // same WriteOperationNotSupportedOnSecondary convention used for all other
+        // secondary mutations.
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        // Send a message via primary
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{RagrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+        var primaryOptions = new QueueClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator })
+        };
+        var primaryClient = new QueueServiceClient(primaryConnectionString, primaryOptions);
+        await primaryClient.CreateQueueAsync("getmsg-secondary-test");
+        await primaryClient.GetQueueClient("getmsg-secondary-test").SendMessageAsync("hello");
+
+        // Attempt to receive (dequeue) from secondary
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+        var secondaryOptions = new QueueClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator })
+        };
+        var secondaryQueueClient = new QueueClient(secondaryConnectionString, "getmsg-secondary-test", secondaryOptions);
+
+        var ex = Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await secondaryQueueClient.ReceiveMessageAsync());
+
+        Assert.That(ex!.Status, Is.EqualTo(403));
+        Assert.That(ex.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+    }
+
+    [Test]
+    public async Task TableStorage_ODataQuery_OnSecondary_FiltersProjectsAndLimitsCorrectly()
+    {
+        // All standard OData operations ($filter, $select, $top) must work on the secondary endpoint.
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var tableOptions = new TableClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator })
+        };
+
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"TableEndpoint=https://{RagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;";
+        var primaryService = new TableServiceClient(primaryConnectionString, tableOptions);
+        await primaryService.CreateTableAsync("odatatest");
+        var primary = primaryService.GetTableClient("odatatest");
+        await primary.AddEntityAsync(new TableEntity("pk", "r1") { { "Score", 10 }, { "Tag", "alpha" } });
+        await primary.AddEntityAsync(new TableEntity("pk", "r2") { { "Score", 20 }, { "Tag", "beta" } });
+        await primary.AddEntityAsync(new TableEntity("pk", "r3") { { "Score", 30 }, { "Tag", "alpha" } });
+
+        AzureStorageControlPlane.New(new PrettyTopazLogger()).UpdateLastGeoSyncTime(
+            SubscriptionIdentifier.From(SubscriptionId),
+            ResourceGroupIdentifier.From(ResourceGroupName),
+            RagrsAccountName);
+
+        var secondaryEndpoint =
+            $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+        var secondaryService = new TableServiceClient(new Uri(secondaryEndpoint),
+            new TableSharedKeyCredential(RagrsAccountName, key), tableOptions);
+        var secondary = secondaryService.GetTableClient("odatatest");
+
+        // $filter
+        var filtered = secondary.Query<TableEntity>(e => e.GetString("Tag") == "alpha").ToList();
+        Assert.That(filtered.Count, Is.EqualTo(2), "$filter should return only alpha-tagged rows");
+
+        // $select
+        var projected = secondary.Query<TableEntity>(select: ["RowKey", "Tag"]).ToList();
+        Assert.That(projected.All(e => !e.ContainsKey("Score")), Is.True, "$select should exclude Score column");
+
+        // $top
+        var topped = secondary.Query<TableEntity>(maxPerPage: 2).Take(2).ToList();
+        Assert.That(topped.Count, Is.EqualTo(2), "$top=2 should return at most 2 rows");
+    }
+
+    [Test]
+    public async Task GeoReplication_UniformWatermark_SingleSyncMakesBlobQueueTableVisible()
+    {
+        // A single UpdateLastGeoSyncTime call on one account must advance the watermark for
+        // all three services simultaneously — blob, queue, and table share one LastGeoSyncTime.
+        const string account = "geouniformwm";
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, account, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var blobOptions = new BlobClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator })
+        };
+        var queueOptions = new QueueClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator })
+        };
+        var tableOptions = new TableClientOptions
+        {
+            Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator })
+        };
+
+        // Write one resource to each service via primary
+        var primaryBlob = new BlobServiceClient(
+            $"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};" +
+            $"BlobEndpoint=https://{account}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;",
+            blobOptions);
+        await primaryBlob.CreateBlobContainerAsync("wmcontainer");
+        await primaryBlob.GetBlobContainerClient("wmcontainer").GetBlobClient("wm.txt").UploadAsync(new BinaryData("x"));
+
+        var primaryQueue = new QueueServiceClient(
+            $"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};" +
+            $"QueueEndpoint=https://{account}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;",
+            queueOptions);
+        await primaryQueue.CreateQueueAsync("wmqueue");
+
+        var primaryTable = new TableServiceClient(
+            $"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};" +
+            $"TableEndpoint=https://{account}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;",
+            tableOptions);
+        await primaryTable.CreateTableAsync("wmtable");
+
+        // Single watermark advance
+        AzureStorageControlPlane.New(new PrettyTopazLogger()).UpdateLastGeoSyncTime(
+            SubscriptionIdentifier.From(SubscriptionId),
+            ResourceGroupIdentifier.From(ResourceGroupName),
+            account);
+
+        // Verify all three are now visible on their respective secondary endpoints
+        var secondaryBlob = new BlobServiceClient(
+            $"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};" +
+            $"BlobEndpoint=https://{account}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;",
+            blobOptions);
+        var blobs = secondaryBlob.GetBlobContainerClient("wmcontainer").GetBlobs().ToList();
+        Assert.That(blobs.Any(b => b.Name == "wm.txt"), Is.True, "Blob must be visible after single watermark advance");
+
+        var secondaryQueue = new QueueServiceClient(
+            $"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};" +
+            $"QueueEndpoint=https://{account}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;",
+            queueOptions);
+        var queues = secondaryQueue.GetQueuesAsync().ToBlockingEnumerable().ToList();
+        Assert.That(queues.Any(q => q.Name == "wmqueue"), Is.True, "Queue must be visible after single watermark advance");
+
+        var secondaryTable = new TableServiceClient(
+            new Uri($"https://{account}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/"),
+            new TableSharedKeyCredential(account, key), tableOptions);
+        var tables = secondaryTable.Query().ToList();
+        Assert.That(tables.Any(t => t.Name == "wmtable"), Is.True, "Table must be visible after single watermark advance");
+    }
+
+    [Test]
+    public Task SecondaryEndpoint_AllWriteOperations_Return403()
+    {
+        try
+        {
+            // Verify 403 WriteOperationNotSupportedOnSecondary across a representative set of
+            // mutating HTTP methods: PUT (blob upload), DELETE (blob), entity upsert (table merge).
+            var armClient = CreateArmClient();
+            var resourceGroup = GetResourceGroup(armClient);
+            var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+            var key = storageAccount.GetKeys().First().Value;
+
+            var blobOptions = new BlobClientOptions
+            {
+                Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                    new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator })
+            };
+            var tableOptions = new TableClientOptions
+            {
+                Transport = new Azure.Core.Pipeline.HttpClientTransport(
+                    new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator })
+            };
+
+            var secondaryBlobService = new BlobServiceClient(
+                $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+                $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;",
+                blobOptions);
+            var secondaryTableService = new TableServiceClient(
+                new Uri($"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/"),
+                new TableSharedKeyCredential(RagrsAccountName, key), tableOptions);
+
+            using (Assert.EnterMultipleScope())
+            {
+                // PUT blob (upload) on secondary
+                var blobUploadEx = Assert.ThrowsAsync<RequestFailedException>(async () =>
+                    await secondaryBlobService
+                        .GetBlobContainerClient("any-container")
+                        .GetBlobClient("any.txt")
+                        .UploadAsync(new BinaryData("x"), overwrite: true));
+                Assert.That(blobUploadEx!.Status, Is.EqualTo(403));
+                Assert.That(blobUploadEx.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+
+                // DELETE blob container on secondary
+                var containerDeleteEx = Assert.ThrowsAsync<RequestFailedException>(async () =>
+                    await secondaryBlobService.DeleteBlobContainerAsync("any-container"));
+                Assert.That(containerDeleteEx!.Status, Is.EqualTo(403));
+                Assert.That(containerDeleteEx.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+
+                // CREATE table on secondary (already covered but kept for completeness)
+                var tableCreateEx = Assert.ThrowsAsync<RequestFailedException>(async () =>
+                    await secondaryTableService.CreateTableAsync("writetable"));
+                Assert.That(tableCreateEx!.Status, Is.EqualTo(403));
+                Assert.That(tableCreateEx.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+
+                // UPSERT entity on secondary
+                var entityUpsertEx = Assert.ThrowsAsync<RequestFailedException>(async () =>
+                    await secondaryTableService
+                        .GetTableClient("writetable")
+                        .UpsertEntityAsync(new TableEntity("pk", "rk")));
+                Assert.That(entityUpsertEx!.Status, Is.EqualTo(403));
+                Assert.That(entityUpsertEx.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
+            }
+
+            return Task.CompletedTask;
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException(exception);
+        }
+    }
 }
