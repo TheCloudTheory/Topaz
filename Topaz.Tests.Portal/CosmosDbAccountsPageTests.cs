@@ -5,7 +5,7 @@ using Topaz.Portal.Models.ResourceGroups;
 namespace Topaz.Tests.Portal;
 
 [TestFixture]
-public class CosmosDbAccountsPage_EmptyList_Tests : BunitTestContext
+public class CosmosDbAccountsPageEmptyListTests : BunitTestContext
 {
     private ITopazClient _client = null!;
 
@@ -24,7 +24,7 @@ public class CosmosDbAccountsPage_EmptyList_Tests : BunitTestContext
         _client.ListCosmosDbAccounts(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new ListCosmosDbAccountsResponse { Value = [] }));
 
-        var cut = RenderComponent<CosmosDbAccounts>();
+        var cut = Render<CosmosDbAccounts>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find("p").TextContent, Does.Contain("No Cosmos DB accounts found")));
@@ -32,7 +32,7 @@ public class CosmosDbAccountsPage_EmptyList_Tests : BunitTestContext
 }
 
 [TestFixture]
-public class CosmosDbAccountsPage_WithAccounts_Tests : BunitTestContext
+public class CosmosDbAccountsPageWithAccountsTests : BunitTestContext
 {
     private ITopazClient _client = null!;
 
@@ -76,7 +76,7 @@ public class CosmosDbAccountsPage_WithAccounts_Tests : BunitTestContext
                 ]
             }));
 
-        var cut = RenderComponent<CosmosDbAccounts>();
+        var cut = Render<CosmosDbAccounts>();
 
         cut.WaitForAssertion(() =>
         {
@@ -88,7 +88,7 @@ public class CosmosDbAccountsPage_WithAccounts_Tests : BunitTestContext
 }
 
 [TestFixture]
-public class CosmosDbAccountsPage_Create_Tests : BunitTestContext
+public class CosmosDbAccountsPageCreateTests : BunitTestContext
 {
     private ITopazClient _client = null!;
 
@@ -145,25 +145,25 @@ public class CosmosDbAccountsPage_Create_Tests : BunitTestContext
                 Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var cut = RenderComponent<CosmosDbAccounts>();
+        var cut = Render<CosmosDbAccounts>();
 
-        cut.WaitForAssertion(() =>
+        await cut.WaitForAssertionAsync(() =>
             Assert.That(cut.Find("p").TextContent, Does.Contain("No Cosmos DB accounts found")));
 
-        cut.Find("button.btn-primary").Click();
+        await cut.Find("button.btn-primary").ClickAsync();
 
-        cut.Find("select").Change(subscriptionId.ToString("D"));
+        await cut.Find("select").ChangeAsync(subscriptionId.ToString("D"));
 
-        cut.WaitForAssertion(() => Assert.That(cut.FindAll("select").Count, Is.GreaterThanOrEqualTo(2)));
+        await cut.WaitForAssertionAsync(() => Assert.That(cut.FindAll("select").Count, Is.GreaterThanOrEqualTo(2)));
 
         var selects = cut.FindAll("select");
-        selects[1].Change("rg1");
+        await selects[1].ChangeAsync("rg1");
 
-        cut.Find("input[placeholder='e.g. my-cosmos-account']").Change(accountName);
+        await cut.Find("input[placeholder='e.g. my-cosmos-account']").ChangeAsync(accountName);
 
-        cut.Find("button.btn-success").Click();
+        await cut.Find("button.btn-success").ClickAsync();
 
-        cut.WaitForAssertion(() =>
+        await cut.WaitForAssertionAsync(() =>
         {
             var cells = cut.FindAll("td");
             Assert.That(cells.Any(td => td.TextContent.Contains(accountName)), Is.True,

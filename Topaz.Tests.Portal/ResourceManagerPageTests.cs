@@ -1,9 +1,7 @@
 using Topaz.Portal.Components.Pages.ResourceManager;
 using Topaz.Portal.Models.KeyVaults;
 using Topaz.Portal.Models.ResourceGroups;
-using Topaz.Portal.Models.ResourceManager;
 using Topaz.Portal.Models.Storage;
-using Topaz.Portal.Models.Subscriptions;
 
 namespace Topaz.Tests.Portal;
 
@@ -32,7 +30,7 @@ public class AllResourcesPage_ShowsAggregatedResources_WhenLoaded : BunitTestCon
         }));
         client.ListResourceGroups().Returns(Task.FromResult(new ListResourceGroupsResponse { Value = [] }));
 
-        var cut = RenderComponent<AllResourcesPage>();
+        var cut = Render<AllResourcesPage>();
 
         cut.WaitForAssertion(() =>
         {
@@ -59,7 +57,7 @@ public class AllResourcesPage_ShowsEmptyMessage_WhenNoResources : BunitTestConte
         client.ListKeyVaults().Returns(Task.FromResult(new ListKeyVaultsResponse { Value = [] }));
         client.ListResourceGroups().Returns(Task.FromResult(new ListResourceGroupsResponse { Value = [] }));
 
-        var cut = RenderComponent<AllResourcesPage>();
+        var cut = Render<AllResourcesPage>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Markup, Does.Contain("No resources found")));
@@ -79,7 +77,7 @@ public class AllResourcesPage_ShowsError_WhenLoadFails : BunitTestContext
         client.ListKeyVaults().Returns(Task.FromResult(new ListKeyVaultsResponse { Value = [] }));
         client.ListResourceGroups().Returns(Task.FromResult(new ListResourceGroupsResponse { Value = [] }));
 
-        var cut = RenderComponent<AllResourcesPage>();
+        var cut = Render<AllResourcesPage>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find(".alert-danger").TextContent, Does.Contain("arm down")));
@@ -99,7 +97,7 @@ public class ManagementGroupsPage_ShowsEmptyState_WhenNoGroups : BunitTestContex
             .ReturnsForAnyArgs(Task.FromResult(
                 new Topaz.Portal.Models.ManagementGroups.GetManagementGroupEntitiesResponse { Value = [] }));
 
-        var cut = RenderComponent<ManagementGroupsPage>();
+        var cut = Render<ManagementGroupsPage>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Markup, Does.Contain("No management groups found")));
@@ -121,7 +119,7 @@ public class ResourceManagerDeploymentsPage_ShowsHint_OnLoad : BunitTestContext
         }));
         client.ListResourceGroups().Returns(Task.FromResult(new ListResourceGroupsResponse { Value = [] }));
 
-        var cut = RenderComponent<ResourceManagerDeploymentsPage>();
+        var cut = Render<ResourceManagerDeploymentsPage>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Markup, Does.Contain("Select a subscription and resource group")));
@@ -140,7 +138,7 @@ public class ResourceManagerDeploymentsPage_ShowsError_WhenLoadFails : BunitTest
         client.ListSubscriptions().Returns<ListSubscriptionsResponse>(_ => throw new InvalidOperationException("network failure"));
         client.ListResourceGroups().Returns(Task.FromResult(new ListResourceGroupsResponse { Value = [] }));
 
-        var cut = RenderComponent<ResourceManagerDeploymentsPage>();
+        var cut = Render<ResourceManagerDeploymentsPage>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find(".alert-danger").TextContent, Does.Contain("network failure")));

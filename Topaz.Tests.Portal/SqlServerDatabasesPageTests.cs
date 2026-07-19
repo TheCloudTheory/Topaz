@@ -36,7 +36,7 @@ public class SqlServerDatabasesPage_Load_Tests : BunitTestContext
                 ]
             }));
 
-        var cut = RenderComponent<SqlServerDatabases>(parameters => parameters
+        var cut = Render<SqlServerDatabases>(parameters => parameters
             .Add(p => p.SubscriptionId, subscriptionId)
             .Add(p => p.ResourceGroupName, "rg1")
             .Add(p => p.ServerName, "sql-one"));
@@ -92,7 +92,7 @@ public class SqlServerDatabasesPage_CreateDelete_Tests : BunitTestContext
         _client.DeleteSqlDatabase(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var cut = RenderComponent<SqlServerDatabases>(parameters => parameters
+        var cut = Render<SqlServerDatabases>(parameters => parameters
             .Add(p => p.SubscriptionId, subscriptionId)
             .Add(p => p.ResourceGroupName, "rg1")
             .Add(p => p.ServerName, "sql-one"));

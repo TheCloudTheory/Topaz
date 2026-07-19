@@ -6,7 +6,7 @@ namespace Topaz.Tests.Portal;
 [TestFixture]
 public class ResourceGroupTagsPageTests : BunitTestContext
 {
-    private ITopazClient _client = default!;
+    private ITopazClient _client = null!;
 
     [SetUp]
     public void SetUp()
@@ -53,23 +53,23 @@ public class ResourceGroupTagsPageTests : BunitTestContext
         _client.CreateOrUpdateResourceGroupTag(default, default!, default!, default!, default)
             .ReturnsForAnyArgs(Task.CompletedTask);
 
-        var cut = RenderComponent<ResourceGroupTags>(p => p
+        var cut = Render<ResourceGroupTags>(p => p
             .Add(x => x.SubscriptionId, subId)
             .Add(x => x.ResourceGroupName, rgName));
 
         // Wait for initial load — no tags yet
-        cut.WaitForAssertion(() =>
+        await cut.WaitForAssertionAsync(() =>
             Assert.That(cut.Find("p.text-muted").TextContent, Does.Contain("No tags assigned")));
 
         // Fill in the tag inputs — uses oninput so must use Input(), not Change()
-        cut.Find("#tagsPanelName").Input(tagKey);
-        cut.Find("#tagsPanelValue").Input(tagValue);
+        await cut.Find("#tagsPanelName").InputAsync(tagKey);
+        await cut.Find("#tagsPanelValue").InputAsync(tagValue);
 
         // Click Add tag
-        cut.Find("button.btn-primary").Click();
+        await cut.Find("button.btn-primary").ClickAsync();
 
         // Assert the tag row appears
-        cut.WaitForAssertion(() =>
+        await cut.WaitForAssertionAsync(() =>
         {
             var cells = cut.FindAll("td");
             Assert.That(cells.Any(td => td.TextContent.Contains(tagKey)), Is.True,

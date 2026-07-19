@@ -8,7 +8,7 @@ public class TerminalPanel_IsHidden_ByDefault : BunitTestContext
     [Test]
     public void Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
 
         Assert.That(cut.Markup.Trim(), Is.Empty);
     }
@@ -20,7 +20,7 @@ public class TerminalPanel_IsVisible_AfterOpen : BunitTestContext
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
 
         await cut.InvokeAsync(() => cut.Instance.Open());
         cut.WaitForAssertion(() =>
@@ -34,7 +34,7 @@ public class TerminalPanel_IsHidden_AfterClose : BunitTestContext
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
         await cut.InvokeAsync(() => cut.Instance.Open());
         cut.WaitForAssertion(() => cut.Find(".terminal-overlay"));
 
@@ -50,7 +50,7 @@ public class TerminalPanel_Toggle_OpensAndCloses : BunitTestContext
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
 
         await cut.InvokeAsync(() => cut.Instance.Toggle());
         cut.WaitForAssertion(() => Assert.That(cut.Find(".terminal-overlay"), Is.Not.Null));
@@ -66,7 +66,7 @@ public class TerminalPanel_ClosesViaButton : BunitTestContext
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
         await cut.InvokeAsync(() => cut.Instance.Open());
         cut.WaitForAssertion(() => cut.Find(".terminal-close-btn"));
 
@@ -82,7 +82,7 @@ public class TerminalPanel_ShowsCommandInHistory_AfterEnter : BunitTestContext
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
         await cut.InvokeAsync(() => cut.Instance.Open());
         cut.WaitForAssertion(() => cut.Find(".terminal-input"));
 
@@ -103,7 +103,7 @@ public class TerminalPanel_ClearsInput_AfterEnter : BunitTestContext
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
         await cut.InvokeAsync(() => cut.Instance.Open());
         cut.WaitForAssertion(() => cut.Find(".terminal-input"));
 
@@ -124,7 +124,7 @@ public class TerminalPanel_IgnoresEmptyCommand_OnEnter : BunitTestContext
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
         await cut.InvokeAsync(() => cut.Instance.Open());
         cut.WaitForAssertion(() => cut.Find(".terminal-input"));
 
@@ -140,7 +140,7 @@ public class TerminalPanel_IgnoresNonEnterKey : BunitTestContext
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
         await cut.InvokeAsync(() => cut.Instance.Open());
         cut.WaitForAssertion(() => cut.Find(".terminal-input"));
 
@@ -166,7 +166,7 @@ public class TerminalPanel_ExecuteCommand_ShowsOutput : BunitTestContext
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
         await cut.InvokeAsync(() => cut.Instance.Open());
         cut.WaitForAssertion(() => cut.Find(".terminal-input"));
 
@@ -196,7 +196,7 @@ public class TerminalPanel_ExecuteCommand_ShowsError : BunitTestContext
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
         await cut.InvokeAsync(() => cut.Instance.Open());
         cut.WaitForAssertion(() => cut.Find(".terminal-input"));
 
@@ -226,7 +226,7 @@ public class TerminalPanel_ExecuteCommand_ClearsInputBeforeResult : BunitTestCon
     [Test]
     public async Task Test()
     {
-        var cut = RenderComponent<TerminalPanel>();
+        var cut = Render<TerminalPanel>();
         await cut.InvokeAsync(() => cut.Instance.Open());
         cut.WaitForAssertion(() => cut.Find(".terminal-input"));
 

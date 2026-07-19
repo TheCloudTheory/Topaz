@@ -34,7 +34,7 @@ public class SubscriptionsWidget_ShowsCount_WhenSubscriptionsLoaded : BunitTestC
             ]
         }));
 
-        var cut = RenderComponent<SubscriptionsWidget>();
+        var cut = Render<SubscriptionsWidget>();
 
         cut.WaitForAssertion(() =>
         {
@@ -54,7 +54,7 @@ public class SubscriptionsWidget_ShowsEmptyMessage_WhenNoSubscriptions : BunitTe
         Services.AddSingleton(client);
         client.ListSubscriptions().Returns(Task.FromResult(new ListSubscriptionsResponse { Value = [] }));
 
-        var cut = RenderComponent<SubscriptionsWidget>();
+        var cut = Render<SubscriptionsWidget>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Markup, Does.Contain("No subscriptions found")));
@@ -71,7 +71,7 @@ public class SubscriptionsWidget_ShowsError_WhenLoadFails : BunitTestContext
         Services.AddSingleton(client);
         client.ListSubscriptions().Returns<ListSubscriptionsResponse>(_ => throw new InvalidOperationException("boom"));
 
-        var cut = RenderComponent<SubscriptionsWidget>();
+        var cut = Render<SubscriptionsWidget>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find(".alert-danger").TextContent, Does.Contain("boom")));
@@ -96,7 +96,7 @@ public class ResourceGroupsWidget_ShowsCount_WhenResourceGroupsLoaded : BunitTes
             ]
         }));
 
-        var cut = RenderComponent<ResourceGroupsWidget>();
+        var cut = Render<ResourceGroupsWidget>();
 
         cut.WaitForAssertion(() =>
         {
@@ -116,7 +116,7 @@ public class ResourceGroupsWidget_ShowsEmptyMessage_WhenNoResourceGroups : Bunit
         Services.AddSingleton(client);
         client.ListResourceGroups().Returns(Task.FromResult(new ListResourceGroupsResponse { Value = [] }));
 
-        var cut = RenderComponent<ResourceGroupsWidget>();
+        var cut = Render<ResourceGroupsWidget>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Markup, Does.Contain("No resource groups found")));
@@ -133,7 +133,7 @@ public class ResourceGroupsWidget_ShowsError_WhenLoadFails : BunitTestContext
         Services.AddSingleton(client);
         client.ListResourceGroups().Returns<ListResourceGroupsResponse>(_ => throw new HttpRequestException("network error"));
 
-        var cut = RenderComponent<ResourceGroupsWidget>();
+        var cut = Render<ResourceGroupsWidget>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find(".alert-danger").TextContent, Does.Contain("network error")));
@@ -166,7 +166,7 @@ public class ResourceSummaryWidget_ShowsStorageAndKeyVaultCounts : BunitTestCont
         client.ListVirtualNetworks().Returns(Task.FromResult(new ListVirtualNetworksResponse { Value = [] }));
         client.ListCosmosDbAccounts().Returns(Task.FromResult(new ListCosmosDbAccountsResponse { Value = [] }));
 
-        var cut = RenderComponent<ResourceSummaryWidget>();
+        var cut = Render<ResourceSummaryWidget>();
 
         cut.WaitForAssertion(() =>
         {
@@ -197,7 +197,7 @@ public class ResourceSummaryWidget_ShowsError_WhenLoadFails : BunitTestContext
         client.ListVirtualNetworks().Returns(Task.FromResult(new ListVirtualNetworksResponse { Value = [] }));
         client.ListCosmosDbAccounts().Returns(Task.FromResult(new ListCosmosDbAccountsResponse { Value = [] }));
 
-        var cut = RenderComponent<ResourceSummaryWidget>();
+        var cut = Render<ResourceSummaryWidget>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find(".alert-danger").TextContent, Does.Contain("storage down")));
@@ -239,7 +239,7 @@ public class DeploymentsWidget_ShowsDeployments_SortedByTimestamp : BunitTestCon
                 ]
             }));
 
-        var cut = RenderComponent<DeploymentsWidget>();
+        var cut = Render<DeploymentsWidget>();
 
         cut.WaitForAssertion(() =>
         {
@@ -264,7 +264,7 @@ public class DeploymentsWidget_ShowsEmptyMessage_WhenNoDeployments : BunitTestCo
         client.ListSubscriptions().Returns(Task.FromResult(new ListSubscriptionsResponse { Value = [] }));
         client.ListResourceGroups().Returns(Task.FromResult(new ListResourceGroupsResponse { Value = [] }));
 
-        var cut = RenderComponent<DeploymentsWidget>();
+        var cut = Render<DeploymentsWidget>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Markup, Does.Contain("No deployments found")));
@@ -283,7 +283,7 @@ public class DeploymentsWidget_ShowsError_WhenLoadFails : BunitTestContext
         client.ListSubscriptions().Returns<ListSubscriptionsResponse>(_ => throw new InvalidOperationException("arm unavailable"));
         client.ListResourceGroups().Returns(Task.FromResult(new ListResourceGroupsResponse { Value = [] }));
 
-        var cut = RenderComponent<DeploymentsWidget>();
+        var cut = Render<DeploymentsWidget>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find(".alert-danger").TextContent, Does.Contain("arm unavailable")));

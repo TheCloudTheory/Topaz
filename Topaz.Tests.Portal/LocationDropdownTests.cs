@@ -10,7 +10,7 @@ public class LocationDropdownTests : BunitTestContext
     public void LocationDropdown_Renders_CorrectlyWithAllFeatures()
     {
         // Arrange & Act
-        var cut = RenderComponent<LocationDropdown>();
+        var cut = Render<LocationDropdown>();
 
         // Assert - Verify select element structure
         var select = cut.Find("select.form-select");

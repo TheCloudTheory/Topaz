@@ -24,7 +24,7 @@ public class SqlServersPage_EmptyList_Tests : BunitTestContext
         _client.ListSqlServers(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new ListSqlServersResponse { Value = [] }));
 
-        var cut = RenderComponent<SqlServers>();
+        var cut = Render<SqlServers>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find("p").TextContent, Does.Contain("No SQL servers found")));
@@ -76,7 +76,7 @@ public class SqlServersPage_WithServers_Tests : BunitTestContext
                 ]
             }));
 
-        var cut = RenderComponent<SqlServers>();
+        var cut = Render<SqlServers>();
 
         cut.WaitForAssertion(() =>
         {
@@ -146,7 +146,7 @@ public class SqlServersPage_Create_Tests : BunitTestContext
                 Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var cut = RenderComponent<SqlServers>();
+        var cut = Render<SqlServers>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find("p").TextContent, Does.Contain("No SQL servers found")));

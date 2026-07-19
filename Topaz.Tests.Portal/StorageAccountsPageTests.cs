@@ -24,7 +24,7 @@ public class StorageAccountsPage_EmptyList_Tests : BunitTestContext
         _client.ListStorageAccounts()
             .Returns(Task.FromResult(new ListStorageAccountsResponse { Value = [] }));
 
-        var cut = RenderComponent<StorageAccounts>();
+        var cut = Render<StorageAccounts>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find("p").TextContent, Does.Contain("No storage accounts found")));
@@ -74,7 +74,7 @@ public class StorageAccountsPage_WithAccounts_Tests : BunitTestContext
                 ]
             }));
 
-        var cut = RenderComponent<StorageAccounts>();
+        var cut = Render<StorageAccounts>();
 
         cut.WaitForAssertion(() =>
         {
@@ -144,7 +144,7 @@ public class StorageAccountsPage_Create_Tests : BunitTestContext
             Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var cut = RenderComponent<StorageAccounts>();
+        var cut = Render<StorageAccounts>();
 
         // Wait for initial load
         cut.WaitForAssertion(() =>

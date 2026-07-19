@@ -24,7 +24,7 @@ public class ServiceBusNamespacesPage_EmptyList_Tests : BunitTestContext
         _client.ListServiceBusNamespaces(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new ListServiceBusNamespacesResponse { Value = [] }));
 
-        var cut = RenderComponent<ServiceBusNamespaces>();
+        var cut = Render<ServiceBusNamespaces>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find("p").TextContent, Does.Contain("No Service Bus namespaces found")));
@@ -73,7 +73,7 @@ public class ServiceBusNamespacesPage_WithNamespaces_Tests : BunitTestContext
                 ]
             }));
 
-        var cut = RenderComponent<ServiceBusNamespaces>();
+        var cut = Render<ServiceBusNamespaces>();
 
         cut.WaitForAssertion(() =>
         {
@@ -141,7 +141,7 @@ public class ServiceBusNamespacesPage_Create_Tests : BunitTestContext
                 Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var cut = RenderComponent<ServiceBusNamespaces>();
+        var cut = Render<ServiceBusNamespaces>();
 
         // Wait for initial load
         cut.WaitForAssertion(() =>

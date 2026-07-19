@@ -62,7 +62,7 @@ public class ResourceGroupsPageTests : BunitTestContext
         _client.CreateResourceGroup(default, default!, default!, default)
             .ReturnsForAnyArgs(Task.CompletedTask);
 
-        var cut = RenderComponent<ResourceGroups>();
+        var cut = Render<ResourceGroups>();
 
         // Wait for initial load
         cut.WaitForAssertion(() =>

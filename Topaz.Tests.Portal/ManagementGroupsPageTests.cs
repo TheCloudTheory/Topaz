@@ -6,13 +6,13 @@ namespace Topaz.Tests.Portal;
 [TestFixture]
 public class ManagementGroupsPageTests
 {
-    private Bunit.TestContext _ctx = null!;
+    private BunitContext _ctx = null!;
     private ITopazClient _client = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _ctx = new Bunit.TestContext();
+        _ctx = new BunitContext();
         _client = Substitute.For<ITopazClient>();
         _ctx.Services.AddSingleton(_client);
     }
@@ -27,7 +27,7 @@ public class ManagementGroupsPageTests
             .ReturnsForAnyArgs(Task.FromResult(
                 new GetManagementGroupEntitiesResponse { Value = [] }));
 
-        var cut = _ctx.RenderComponent<ManagementGroupsPage>();
+        var cut = _ctx.Render<ManagementGroupsPage>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Markup, Does.Contain("No management groups found")));
@@ -68,7 +68,7 @@ public class ManagementGroupsPageTests
                 ]
             }));
 
-        var cut = _ctx.RenderComponent<ManagementGroupsPage>();
+        var cut = _ctx.Render<ManagementGroupsPage>();
 
         cut.WaitForAssertion(() =>
         {
@@ -85,7 +85,7 @@ public class ManagementGroupsPageTests
             .ReturnsForAnyArgs(Task.FromResult(
                 new GetManagementGroupEntitiesResponse { Value = [] }));
 
-        var cut = _ctx.RenderComponent<ManagementGroupsPage>();
+        var cut = _ctx.Render<ManagementGroupsPage>();
         cut.WaitForAssertion(() => Assert.That(cut.Markup, Does.Contain("No management groups found")));
 
         Assert.That(cut.Markup, Does.Not.Contain("Group ID"));
@@ -102,7 +102,7 @@ public class ManagementGroupsPageTests
             .ReturnsForAnyArgs(Task.FromResult(
                 new GetManagementGroupEntitiesResponse { Value = [] }));
 
-        var cut = _ctx.RenderComponent<ManagementGroupsPage>();
+        var cut = _ctx.Render<ManagementGroupsPage>();
         cut.WaitForAssertion(() => Assert.That(cut.Markup, Does.Contain("No management groups found")));
 
         cut.Find("button.btn-outline-secondary").Click();
@@ -138,13 +138,13 @@ public class ManagementGroupsPageTests
         _client.CreateManagementGroup(null!, null!, null, CancellationToken.None)
             .ReturnsForAnyArgs(Task.CompletedTask);
 
-        var cut = _ctx.RenderComponent<ManagementGroupsPage>();
-        cut.WaitForAssertion(() => Assert.That(cut.Markup, Does.Contain("No management groups found")));
+        var cut = _ctx.Render<ManagementGroupsPage>();
+        await cut.WaitForAssertionAsync(() => Assert.That(cut.Markup, Does.Contain("No management groups found")));
 
-        cut.Find("button.btn-outline-primary").Click();
-        cut.Find("input[placeholder='e.g. my-group']").Change(groupId);
-        cut.Find("input[placeholder='e.g. My Group']").Change(displayName);
-        cut.Find("button.btn-primary").Click();
+        await cut.Find("button.btn-outline-primary").ClickAsync();
+        await cut.Find("input[placeholder='e.g. my-group']").ChangeAsync(groupId);
+        await cut.Find("input[placeholder='e.g. My Group']").ChangeAsync(displayName);
+        await cut.Find("button.btn-primary").ClickAsync();
 
         await _client.Received(1).CreateManagementGroup(
             Arg.Is<string>(s => s == groupId),
@@ -152,7 +152,7 @@ public class ManagementGroupsPageTests
             Arg.Is<string?>(s => s == null),
             Arg.Any<CancellationToken>());
 
-        cut.WaitForAssertion(() =>
+        await cut.WaitForAssertionAsync(() =>
             Assert.That(cut.Markup, Does.Contain(displayName)));
     }
 
@@ -163,7 +163,7 @@ public class ManagementGroupsPageTests
             .ReturnsForAnyArgs(Task.FromResult(
                 new GetManagementGroupEntitiesResponse { Value = [] }));
 
-        var cut = _ctx.RenderComponent<ManagementGroupsPage>();
+        var cut = _ctx.Render<ManagementGroupsPage>();
         cut.WaitForAssertion(() => Assert.That(cut.Markup, Does.Contain("No management groups found")));
 
         cut.Find("button.btn-outline-primary").Click();
@@ -179,7 +179,7 @@ public class ManagementGroupsPageTests
             .ReturnsForAnyArgs<GetManagementGroupEntitiesResponse>(_ =>
                 throw new InvalidOperationException("service unavailable"));
 
-        var cut = _ctx.RenderComponent<ManagementGroupsPage>();
+        var cut = _ctx.Render<ManagementGroupsPage>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find(".alert-danger").TextContent, Does.Contain("service unavailable")));

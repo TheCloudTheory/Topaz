@@ -5,7 +5,7 @@ using Topaz.Portal.Models.ResourceGroups;
 namespace Topaz.Tests.Portal;
 
 [TestFixture]
-public class ContainerRegistriesPage_EmptyList_Tests : BunitTestContext
+public class ContainerRegistriesPageEmptyListTests : BunitTestContext
 {
     private ITopazClient _client = null!;
 
@@ -24,7 +24,7 @@ public class ContainerRegistriesPage_EmptyList_Tests : BunitTestContext
         _client.ListContainerRegistries()
             .Returns(Task.FromResult(new ListContainerRegistriesResponse { Value = [] }));
 
-        var cut = RenderComponent<ContainerRegistries>();
+        var cut = Render<ContainerRegistries>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find("p").TextContent, Does.Contain("No container registries found")));
@@ -32,7 +32,7 @@ public class ContainerRegistriesPage_EmptyList_Tests : BunitTestContext
 }
 
 [TestFixture]
-public class ContainerRegistriesPage_WithRegistries_Tests : BunitTestContext
+public class ContainerRegistriesPageWithRegistriesTests : BunitTestContext
 {
     private ITopazClient _client = null!;
 
@@ -74,7 +74,7 @@ public class ContainerRegistriesPage_WithRegistries_Tests : BunitTestContext
                 ]
             }));
 
-        var cut = RenderComponent<ContainerRegistries>();
+        var cut = Render<ContainerRegistries>();
 
         cut.WaitForAssertion(() =>
         {
@@ -86,7 +86,7 @@ public class ContainerRegistriesPage_WithRegistries_Tests : BunitTestContext
 }
 
 [TestFixture]
-public class ContainerRegistriesPage_Create_Tests : BunitTestContext
+public class ContainerRegistriesPageCreateTests : BunitTestContext
 {
     private ITopazClient _client = null!;
 
@@ -143,33 +143,33 @@ public class ContainerRegistriesPage_Create_Tests : BunitTestContext
             Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var cut = RenderComponent<ContainerRegistries>();
+        var cut = Render<ContainerRegistries>();
 
         // Wait for initial load
-        cut.WaitForAssertion(() =>
+        await cut.WaitForAssertionAsync(() =>
             Assert.That(cut.Find("p").TextContent, Does.Contain("No container registries found")));
 
         // Open create panel
-        cut.Find("button.btn-primary").Click();
+        await cut.Find("button.btn-primary").ClickAsync();
 
         // Select subscription
-        cut.Find("select").Change(subId.ToString("D"));
+        await cut.Find("select").ChangeAsync(subId.ToString("D"));
 
         // Wait for resource group dropdown to populate
-        cut.WaitForAssertion(() => Assert.That(cut.FindAll("select").Count, Is.GreaterThanOrEqualTo(2)));
+        await cut.WaitForAssertionAsync(() => Assert.That(cut.FindAll("select").Count, Is.GreaterThanOrEqualTo(2)));
 
         // Select resource group
         var selects = cut.FindAll("select");
-        selects[1].Change("rg1");
+        await selects[1].ChangeAsync("rg1");
 
         // Fill in registry name
-        cut.Find("input[placeholder='e.g. myregistry']").Change(registryName);
+        await cut.Find("input[placeholder='e.g. myregistry']").ChangeAsync(registryName);
 
         // Submit
-        cut.Find("button.btn-success").Click();
+        await cut.Find("button.btn-success").ClickAsync();
 
         // Assert new registry appears in the list
-        cut.WaitForAssertion(() =>
+        await cut.WaitForAssertionAsync(() =>
         {
             var cells = cut.FindAll("td");
             Assert.That(cells.Any(td => td.TextContent.Contains(registryName)), Is.True,

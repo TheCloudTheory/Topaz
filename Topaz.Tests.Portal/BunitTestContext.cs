@@ -1,6 +1,3 @@
-using Topaz.Portal.Models.Cli;
-using Topaz.Portal.Services;
-
 namespace Topaz.Tests.Portal;
 
 /// <summary>
@@ -8,7 +5,7 @@ namespace Topaz.Tests.Portal;
 /// Inherit from this instead of <see cref="Bunit.TestContext"/> directly so that NUnit lifecycle
 /// methods are correctly honoured.
 /// </summary>
-public abstract class BunitTestContext : Bunit.TestContext
+public abstract class BunitTestContext : BunitContext
 {
     /// <summary>
     /// Registers default NSubstitute stubs for all services that Topaz Portal components inject.

@@ -24,7 +24,7 @@ public class ManagedIdentitiesPage_EmptyList_Tests : BunitTestContext
         _client.ListManagedIdentities()
             .Returns(Task.FromResult(new ListManagedIdentitiesResponse { Value = [] }));
 
-        var cut = RenderComponent<ManagedIdentities>();
+        var cut = Render<ManagedIdentities>();
 
         cut.WaitForAssertion(() =>
             Assert.That(cut.Find("p").TextContent, Does.Contain("No managed identities found")));
@@ -73,7 +73,7 @@ public class ManagedIdentitiesPage_WithIdentities_Tests : BunitTestContext
                 ]
             }));
 
-        var cut = RenderComponent<ManagedIdentities>();
+        var cut = Render<ManagedIdentities>();
 
         cut.WaitForAssertion(() =>
         {
@@ -140,7 +140,7 @@ public class ManagedIdentitiesPage_Create_Tests : BunitTestContext
                 Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var cut = RenderComponent<ManagedIdentities>();
+        var cut = Render<ManagedIdentities>();
 
         // Wait for initial load
         cut.WaitForAssertion(() =>

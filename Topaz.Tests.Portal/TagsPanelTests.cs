@@ -26,7 +26,7 @@ public class TagsPanel_AddTag_CallsOnAddWithCorrectArguments : BunitTestContext
         string? addedKey = null;
         string? addedValue = null;
 
-        var cut = RenderComponent<TagsPanel>(p => p
+        var cut = Render<TagsPanel>(p => p
             .Add(x => x.Tags, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase))
             .Add(x => x.OnAdd, (key, value) =>
             {
@@ -52,7 +52,7 @@ public class TagsPanel_AddTag_DuplicateKey_ShowsError : BunitTestContext
     [Test]
     public void Test()
     {
-        var cut = RenderComponent<TagsPanel>(p => p
+        var cut = Render<TagsPanel>(p => p
             .Add(x => x.Tags, TagsPanelHelpers.SingleTag("env", "prod"))
             .Add(x => x.OnAdd, TagsPanelHelpers.SuccessAdd)
             .Add(x => x.OnRemove, TagsPanelHelpers.SuccessRemove)
@@ -72,7 +72,7 @@ public class TagsPanel_EditTag_ClickEdit_ShowsInputPrefilledWithCurrentValue : B
     [Test]
     public void Test()
     {
-        var cut = RenderComponent<TagsPanel>(p => p
+        var cut = Render<TagsPanel>(p => p
             .Add(x => x.Tags, TagsPanelHelpers.SingleTag("env", "prod"))
             .Add(x => x.OnAdd, TagsPanelHelpers.SuccessAdd)
             .Add(x => x.OnRemove, TagsPanelHelpers.SuccessRemove)
@@ -96,7 +96,7 @@ public class TagsPanel_EditTag_Save_CallsOnEditAndExitsEditMode : BunitTestConte
         string? editedKey = null;
         string? editedValue = null;
 
-        var cut = RenderComponent<TagsPanel>(p => p
+        var cut = Render<TagsPanel>(p => p
             .Add(x => x.Tags, TagsPanelHelpers.SingleTag("env", "prod"))
             .Add(x => x.OnAdd, TagsPanelHelpers.SuccessAdd)
             .Add(x => x.OnRemove, TagsPanelHelpers.SuccessRemove)
@@ -123,7 +123,7 @@ public class TagsPanel_EditTag_Cancel_RestoresDisplayMode : BunitTestContext
     [Test]
     public void Test()
     {
-        var cut = RenderComponent<TagsPanel>(p => p
+        var cut = Render<TagsPanel>(p => p
             .Add(x => x.Tags, TagsPanelHelpers.SingleTag("env", "prod"))
             .Add(x => x.OnAdd, TagsPanelHelpers.SuccessAdd)
             .Add(x => x.OnRemove, TagsPanelHelpers.SuccessRemove)
@@ -146,7 +146,7 @@ public class TagsPanel_RemoveTag_CallsOnRemoveWithCorrectKey : BunitTestContext
     {
         string? removedKey = null;
 
-        var cut = RenderComponent<TagsPanel>(p => p
+        var cut = Render<TagsPanel>(p => p
             .Add(x => x.Tags, TagsPanelHelpers.SingleTag("env", "prod"))
             .Add(x => x.OnAdd, TagsPanelHelpers.SuccessAdd)
             .Add(x => x.OnRemove, key =>

@@ -40,7 +40,7 @@ public class SubscriptionsPageTests : BunitTestContext
         _client.CreateSubscription(Guid.Empty, null!, CancellationToken.None)
             .ReturnsForAnyArgs(Task.CompletedTask);
 
-        var cut = RenderComponent<Subscriptions>();
+        var cut = Render<Subscriptions>();
 
         // Assert initial empty state
         cut.WaitForAssertion(() => Assert.That(cut.Find("p").TextContent, Does.Contain("No subscriptions found")));

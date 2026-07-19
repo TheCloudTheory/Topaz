@@ -9,8 +9,8 @@
 
   <ItemGroup>
     <!-- 1.5.0 breaks bUnit (removed IHtmlCollection indexer); suppress NU1902 until bUnit supports AngleSharp 1.5.x -->
-    <PackageReference Include="AngleSharp" Version="1.4.0" NoWarn="NU1902" />
-    <PackageReference Include="bunit" Version="1.37.7" />
+    <PackageReference Include="AngleSharp" Version="1.5.2" NoWarn="NU1902" />
+    <PackageReference Include="bunit" Version="2.7.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
     <PackageReference Include="NUnit" Version="3.13.3" />
