@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 5
 description: Manage Azure Active Directory (Entra ID) objects — users, groups, applications, and service principals — with Terraform and the azuread provider against a local Topaz emulator.
 keywords: [topaz entra, azuread terraform, terraform azure ad local, topaz azuread provider, service principal terraform local]
 ---
@@ -27,21 +27,11 @@ All operations run locally against Topaz — no real Azure or Entra resources ar
 - Terraform installed (`terraform --version`)
 - Azure CLI installed and configured for Topaz (see [Azure CLI integration](../integrations/azure-cli-integration.md))
 
-## Step 1: Start Topaz
+:::note[Before you start]
+Topaz must be running and the Azure CLI pointed at it. See [Getting started](../intro.md) and [Azure CLI integration](../integrations/azure-cli-integration.md) if you have not done this yet.
+:::
 
-Start Topaz with a stable tenant and subscription ID:
-
-```bash
-topaz-host \
-  --default-subscription 00000000-0000-0000-0000-000000000001 \
-  --log-level Information
-```
-
-You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
-
-Keep Topaz running for the rest of this tutorial.
-
-## Step 2: Create a Terraform project
+## Step 1: Create a Terraform project
 
 Create a working directory:
 
@@ -72,7 +62,7 @@ provider "azuread" {
 
 The `azuread` provider redirects all Microsoft Graph API calls to Topaz as soon as `metadata_host` is set. No other endpoint overrides are needed.
 
-## Step 3: Create Entra resources
+## Step 2: Create Entra resources
 
 Create `main.tf` with an application, service principal, group, and user:
 
@@ -118,7 +108,7 @@ output "user_upn" {
 }
 ```
 
-## Step 4: Run the Terraform workflow
+## Step 3: Run the Terraform workflow
 
 Initialize:
 
@@ -140,7 +130,7 @@ terraform apply -auto-approve tfplan
 
 Terraform should report four resources created and print the output values.
 
-## Step 5: Verify with Azure CLI
+## Step 4: Verify with Azure CLI
 
 Confirm the objects exist in Topaz:
 
@@ -158,7 +148,7 @@ az ad group list --display-name local-developers --output table
 az ad user show --id alice@mytenant.onmicrosoft.com --output table
 ```
 
-## Step 6: Clean up
+## Step 5: Clean up
 
 ```bash
 terraform destroy -auto-approve

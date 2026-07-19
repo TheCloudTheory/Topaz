@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 7
 description: Use Topaz for Azure Blob Storage local development — create a storage account, upload and download blobs, manage containers, and connect the Azure SDK and Azure CLI without a real Azure subscription.
 keywords: [azure blob storage local, blob storage local development, local blob storage emulator, topaz blob storage, azure storage emulator, azurite alternative, blob storage testing local]
 ---
@@ -26,19 +26,8 @@ In this tutorial, we will create a local Storage Account on Topaz, upload a blob
 - Azure CLI installed (`az --version`)
 - Topaz cloud registered in Azure CLI (see [Azure CLI integration](../integrations/azure-cli-integration.md))
 
-## Step 1: Start Topaz
-
-```bash
-topaz-host \
-  --default-subscription 00000000-0000-0000-0000-000000000001 \
-  --log-level Information
-```
-
-You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
-
-Leave this terminal open and Topaz running throughout the tutorial.
-
-## Step 2: Set the active cloud to Topaz
+:::note[Before you start]
+Topaz must be running and the Azure CLI pointed at it. See [Getting started](../intro.md) and [Azure CLI integration](../integrations/azure-cli-integration.md), then activate:
 
 ```bash
 az cloud set -n Topaz
@@ -46,8 +35,9 @@ export AZURE_CORE_INSTANCE_DISCOVERY=false
 az login
 az account set --subscription 00000000-0000-0000-0000-000000000001
 ```
+:::
 
-## Step 3: Create a resource group and Storage Account
+## Step 1: Create a resource group and Storage Account
 
 ```bash
 az group create \
@@ -64,7 +54,7 @@ az storage account create \
 
 Topaz assigns the account a local hostname: `stlocaldev001.blob.storage.topaz.local.dev`, which resolves to `127.0.0.1` via the DNS setup you completed in the prerequisites.
 
-## Step 4: Retrieve the storage account key
+## Step 2: Retrieve the storage account key
 
 ```bash
 az storage account keys list \
@@ -84,7 +74,7 @@ STORAGE_KEY=$(az storage account keys list \
   --output tsv)
 ```
 
-## Step 5: Create a container and upload blobs
+## Step 3: Create a container and upload blobs
 
 Create a container:
 
@@ -121,7 +111,7 @@ az storage blob list \
   --output table
 ```
 
-## Step 6: Download a blob
+## Step 4: Download a blob
 
 ```bash
 az storage blob download \
@@ -137,7 +127,7 @@ cat /tmp/hello-downloaded.txt
 
 Expected output: `hello from topaz`
 
-## Step 7: Connect with the Azure SDK
+## Step 5: Connect with the Azure SDK
 
 <Tabs groupId="sdk-language">
 <TabItem value="dotnet" label=".NET">
@@ -254,7 +244,7 @@ The only difference from production is the connection string. Replace it with th
 
 :::
 
-## Step 8: Working with blob metadata
+## Step 6: Working with blob metadata
 
 <Tabs groupId="sdk-language">
 <TabItem value="dotnet" label=".NET">
@@ -286,7 +276,7 @@ for key, value in properties.metadata.items():
 </TabItem>
 </Tabs>
 
-## Step 9: List and delete containers
+## Step 7: List and delete containers
 
 List all containers in the account:
 

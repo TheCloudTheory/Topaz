@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 9
 description: Your first complete Topaz workflow — create a storage account, upload a blob, and retrieve it. Completes in about 15 minutes with no prior Azure knowledge required.
 keywords: [topaz getting started tutorial, azure emulator first steps, topaz beginner, local azure blob first tutorial]
 ---
@@ -16,54 +16,26 @@ No prior Azure knowledge is required. You will need Topaz installed and set up (
 - A blob container named `files`
 - A text file uploaded and then downloaded back
 
-## Step 1: Start Topaz
-
-In a terminal, start the emulator with a default subscription:
+:::note[Before you start]
+Topaz must be installed, running, and the Azure CLI pointed at it. Follow [Getting started](../intro.md) and [Azure CLI integration](../integrations/azure-cli-integration.md) if you have not done this yet, then run:
 
 ```bash
-topaz-host --default-subscription 00000000-0000-0000-0000-000000000001 --log-level Information
+az cloud set -n Topaz
+export AZURE_CORE_INSTANCE_DISCOVERY=false
+az login
+az account set --subscription 00000000-0000-0000-0000-000000000001
 ```
 
-You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
-
-Leave this terminal open. Topaz runs in the foreground.
-
-## Step 2: Verify Topaz is running
-
-Open a second terminal and run:
+Verify Topaz is ready:
 
 ```bash
 topaz health
 ```
 
-You should see:
+You should see `Status: Healthy` before proceeding.
+:::
 
-```
-Host is running
-  Status:       Healthy
-  Host version: <version>
-  CLI version:  <version>
-  Directory:    /path/to/your/project
-  Port:         8899
-```
-
-Notice that "Status: Healthy" confirms the emulator is ready to accept requests.
-
-## Step 3: Register Topaz as an Azure cloud
-
-We need to tell the Azure CLI about Topaz before it can communicate with it. This is a one-time step per machine:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/refs/heads/main/cloud.json -o cloud.json
-az cloud register -n Topaz --cloud-config @"cloud.json"
-az cloud set -n Topaz
-export AZURE_CORE_INSTANCE_DISCOVERY=false
-az login
-```
-
-`az login` will open a browser. Complete the sign-in prompt — Topaz handles this locally, no real Microsoft account is used.
-
-## Step 4: Create a resource group
+## Step 1: Create a resource group
 
 Resources in Azure are organised into resource groups. Let's create one:
 
@@ -75,7 +47,7 @@ az group create \
 
 You should see a JSON response with `"provisioningState": "Succeeded"`. Notice that the resource group name and location are now registered in Topaz.
 
-## Step 5: Create a Storage Account
+## Step 2: Create a Storage Account
 
 ```bash
 az storage account create \
@@ -95,7 +67,7 @@ The command returns a JSON document describing the new storage account. Look for
 
 Notice that Topaz assigned the account a local hostname: `stfirstdemo.blob.storage.topaz.local.dev`. That hostname resolves to `127.0.0.1` via the DNS setup you ran during installation.
 
-## Step 6: Get the storage account key
+## Step 3: Get the storage account key
 
 ```bash
 STORAGE_KEY=$(az storage account keys list \
@@ -109,7 +81,7 @@ echo "Key retrieved: ${STORAGE_KEY:0:8}..."
 
 You should see a partial key printed, confirming the variable is set.
 
-## Step 7: Create a container
+## Step 4: Create a container
 
 ```bash
 az storage container create \
@@ -127,7 +99,7 @@ You should see:
 }
 ```
 
-## Step 8: Upload a blob
+## Step 5: Upload a blob
 
 Create a small text file and upload it:
 
@@ -149,7 +121,7 @@ You should see:
 Finished[#############################################################]  100.0000%
 ```
 
-## Step 9: List the blobs
+## Step 6: List the blobs
 
 ```bash
 az storage blob list \
@@ -170,7 +142,7 @@ hello.txt  BlockBlob    Hot          18        application/octet-stream
 
 Notice that `hello.txt` is listed with a length of 18 bytes — the length of "Hello from Topaz!\n".
 
-## Step 10: Download the blob
+## Step 7: Download the blob
 
 ```bash
 az storage blob download \

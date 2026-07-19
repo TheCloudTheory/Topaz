@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 4
 description: Step-by-step tutorial for Terraform AzureRM local testing with Topaz. Covers provider configuration, authentication, init/plan/apply/destroy, and common gotchas — no Azure subscription needed.
 keywords: [topaz tutorial, terraform local azure, azurerm with topaz, local terraform development, topaz gotchas, terraform azurerm local testing, terraform local testing azure]
 ---
@@ -27,54 +27,11 @@ Before you start:
 - Terraform installed (`terraform --version`)
 - Azure CLI installed (`az --version`)
 
-## Step 1: Start Topaz with deterministic IDs
+:::note[Before you start]
+Topaz must be running and the Azure CLI pointed at it. See [Getting started](../intro.md) and [Azure CLI integration](../integrations/azure-cli-integration.md) if you have not done this yet.
+:::
 
-Start Topaz with a stable subscription ID and your Entra tenant ID:
-
-```bash
-topaz-host \
-  --default-subscription 00000000-0000-0000-0000-000000000001 \
-  --log-level Information
-```
-
-You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
-
-Keep Topaz running for the rest of this tutorial.
-
-## Step 2: Configure Azure CLI for Topaz cloud
-
-If you have not done this before, follow [Azure CLI integration](../integrations/azure-cli-integration.md).
-
-Minimal flow:
-
-```bash
-# One-time registration
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/refs/heads/main/cloud.json -o cloud.json
-az cloud register -n Topaz --cloud-config @"cloud.json"
-
-# Use Topaz cloud
-az cloud set -n Topaz
-
-# Required for Topaz Entra endpoint
-export AZURE_CORE_INSTANCE_DISCOVERY=false
-
-# Login
-az login
-```
-
-Verify:
-
-```bash
-az account show --output table
-```
-
-You should see the Topaz subscription listed:
-
-```
-Name        CloudName    SubscriptionId                        TenantId     State    IsDefault
-----------  -----------  ------------------------------------  -----------  -------  -----------
-dev-local   Topaz        00000000-0000-0000-0000-000000000001  <tenant-id>  Enabled  True
-```
+## Step 1: Create a Terraform project
 
 Create a clean working directory:
 
@@ -170,7 +127,7 @@ Set a deterministic subscription in your shell:
 export ARM_SUBSCRIPTION_ID=00000000-0000-0000-0000-000000000001
 ```
 
-## Step 4: Run Terraform workflow
+## Step 2: Run Terraform workflow
 
 Initialize:
 
@@ -192,7 +149,7 @@ terraform apply -auto-approve tfplan
 
 You should see resources created successfully.
 
-## Step 5: Verify with Azure CLI
+## Step 3: Verify with Azure CLI
 
 Confirm resources exist in Topaz:
 
@@ -201,7 +158,7 @@ az group show --name rg-topaz-tutorial --output table
 az storage account show --name topaztutorialsa001 --resource-group rg-topaz-tutorial --output table
 ```
 
-## Step 6: Clean up
+## Step 4: Clean up
 
 Destroy resources:
 

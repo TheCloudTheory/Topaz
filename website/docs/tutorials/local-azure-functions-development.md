@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 12
 description: Develop Azure Functions locally with Service Bus triggers, Key Vault references, and Cosmos DB output — all against Topaz, with no real Azure subscription needed.
 keywords: [azure functions local development, azure functions topaz, azure functions service bus local, azure functions key vault local, azure functions cosmos db local, local azure functions emulator]
 ---
@@ -28,23 +28,20 @@ A complete runnable example is available in [`Examples/Topaz.Example.Functions`]
 - [Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local) installed (`func --version`)
 - .NET 10 SDK installed
 
-## Step 1: Start Topaz and provision resources
-
-Start Topaz with a stable subscription ID:
-
-```bash
-topaz-host \
-  --default-subscription 00000000-0000-0000-0000-000000000001 \
-  --log-level Information
-```
-
-Switch the Azure CLI to Topaz and create the required Azure resources:
+:::note[Before you start]
+Topaz must be running and the Azure CLI pointed at it. See [Getting started](../intro.md) and [Azure CLI integration](../integrations/azure-cli-integration.md), then activate:
 
 ```bash
 az cloud set -n Topaz
 export AZURE_CORE_INSTANCE_DISCOVERY=false
 az login
 az account set --subscription 00000000-0000-0000-0000-000000000001
+```
+:::
+
+## Step 1: Provision resources
+
+Create the required Azure resources:
 
 az group create \
   --name rg-functions-local \

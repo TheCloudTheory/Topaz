@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 10
 description: Test Terraform and Bicep infrastructure-as-code against Topaz — assert provisioned resources, SKUs, tags, and negative cases without a real Azure subscription.
 keywords: [terraform testing, bicep testing, iac testing, topaz iac, azure infrastructure testing, terraform test azure, bicep test azure, testcontainers iac]
 ---

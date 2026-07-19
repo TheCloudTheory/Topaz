@@ -1,5 +1,5 @@
 ---
-sidebar_position: 8
+sidebar_position: 11
 description: Test Azure Key Vault secrets and RBAC role assignments with Topaz — validate least-privilege access before deploying to real Azure. Includes positive and negative test cases.
 keywords: [azure rbac testing, key vault secrets testing, managed identity testing, topaz rbac, azure least privilege test, key vault emulator rbac, azure role assignment test]
 ---
@@ -27,17 +27,8 @@ A complete runnable example is available in [`Examples/Topaz.Example.SecretsRbac
 - Topaz cloud registered in Azure CLI (see [Azure CLI integration](../integrations/azure-cli-integration.md))
 - .NET 10 SDK installed
 
-## Step 1: Start Topaz
-
-```bash
-topaz-host \
-  --default-subscription 00000000-0000-0000-0000-000000000001 \
-  --log-level Information
-```
-
-Leave this terminal open for the rest of the tutorial.
-
-## Step 2: Set the active cloud to Topaz
+:::note[Before you start]
+Topaz must be running and the Azure CLI pointed at it. See [Getting started](../intro.md) and [Azure CLI integration](../integrations/azure-cli-integration.md), then activate:
 
 ```bash
 az cloud set -n Topaz
@@ -45,8 +36,9 @@ export AZURE_CORE_INSTANCE_DISCOVERY=false
 az login
 az account set --subscription 00000000-0000-0000-0000-000000000001
 ```
+:::
 
-## Step 3: Provision the infrastructure
+## Step 1: Provision the infrastructure
 
 Create a resource group, Key Vault, and Managed Identity:
 
@@ -71,7 +63,7 @@ az identity create \
   --location westeurope
 ```
 
-## Step 4: Assign the RBAC role
+## Step 2: Assign the RBAC role
 
 Retrieve the Managed Identity's principal ID and assign *Key Vault Secrets User* (built-in role `4633458b-17de-408a-b874-0445c86b69e6`):
 
@@ -95,7 +87,7 @@ az role assignment create \
   --scope "$KV_ID"
 ```
 
-## Step 5: Read the secret using the SDK
+## Step 3: Read the secret using the SDK
 
 Install the required packages:
 
@@ -123,7 +115,7 @@ KeyVaultSecret secret = await client.GetSecretAsync("DatabasePassword");
 Console.WriteLine(secret.Value); // super-secret-value
 ```
 
-## Step 6: Write the negative test
+## Step 4: Write the negative test
 
 An identity without a role assignment should receive a `403 Forbidden` response:
 
@@ -166,7 +158,7 @@ public class SecretsRbacTests
 }
 ```
 
-## Step 7: Test from the .NET SDK with role assignment via ARM
+## Step 5: Test from the .NET SDK with role assignment via ARM
 
 If you prefer to create the role assignment programmatically rather than via the CLI, use `Azure.ResourceManager.Authorization`:
 

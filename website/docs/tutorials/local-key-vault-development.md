@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 6
 description: Use Topaz for Azure Key Vault local development — create a vault, store and retrieve secrets, and connect the Azure SDK and Azure CLI without a real Azure subscription.
 keywords: [azure key vault local, key vault local development, local key vault emulator, topaz key vault, azure key vault emulator, key vault secrets local]
 ---
@@ -22,19 +22,8 @@ In this tutorial, we will create a local Key Vault on Topaz, store a secret in i
 - Azure CLI installed (`az --version`)
 - Topaz cloud registered in Azure CLI (see [Azure CLI integration](../integrations/azure-cli-integration.md))
 
-## Step 1: Start Topaz
-
-```bash
-topaz-host \
-  --default-subscription 00000000-0000-0000-0000-000000000001 \
-  --log-level Information
-```
-
-You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
-
-Leave this terminal open and Topaz running throughout the tutorial.
-
-## Step 2: Set the active cloud to Topaz
+:::note[Before you start]
+Topaz must be running and the Azure CLI pointed at it. See [Getting started](../intro.md) and [Azure CLI integration](../integrations/azure-cli-integration.md), then activate:
 
 ```bash
 az cloud set -n Topaz
@@ -42,8 +31,9 @@ export AZURE_CORE_INSTANCE_DISCOVERY=false
 az login
 az account set --subscription 00000000-0000-0000-0000-000000000001
 ```
+:::
 
-## Step 3: Create a resource group and Key Vault
+## Step 1: Create a resource group and Key Vault
 
 ```bash
 az group create \
@@ -58,7 +48,7 @@ az keyvault create \
 
 Topaz assigns the vault a local hostname: `myvault.vault.topaz.local.dev`, which resolves to `127.0.0.1` via the DNS setup you completed in the prerequisites.
 
-## Step 4: Store and retrieve secrets
+## Step 2: Store and retrieve secrets
 
 Set a secret:
 
@@ -87,7 +77,7 @@ List all secrets in the vault:
 az keyvault secret list --vault-name myvault --output table
 ```
 
-## Step 5: Connect with the Azure SDK (.NET)
+## Step 3: Connect with the Azure SDK (.NET)
 
 Install the Azure Key Vault secrets client:
 
@@ -115,7 +105,7 @@ The only difference from production is the URI. Replace `https://myvault.vault.t
 
 :::
 
-## Step 6: Soft-delete and recovery
+## Step 4: Soft-delete and recovery
 
 Topaz emulates soft-delete behaviour. Delete a secret:
 

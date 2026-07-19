@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 8
 description: Use Topaz for Azure Service Bus local development — create a namespace, send and receive messages via queues and topics, and connect the Azure SDK and MassTransit without a real Azure subscription.
 keywords: [azure service bus local, service bus local development, local service bus emulator, topaz service bus, azure service bus emulator, service bus testing local, masstransit local]
 ---
@@ -26,19 +26,8 @@ In this tutorial, we will create a local Service Bus namespace on Topaz, set up 
 - Azure CLI installed (`az --version`)
 - Topaz cloud registered in Azure CLI (see [Azure CLI integration](../integrations/azure-cli-integration.md))
 
-## Step 1: Start Topaz
-
-```bash
-topaz-host \
-  --default-subscription 00000000-0000-0000-0000-000000000001 \
-  --log-level Information
-```
-
-You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
-
-Leave this terminal open and Topaz running throughout the tutorial.
-
-## Step 2: Set the active cloud to Topaz
+:::note[Before you start]
+Topaz must be running and the Azure CLI pointed at it. See [Getting started](../intro.md) and [Azure CLI integration](../integrations/azure-cli-integration.md), then activate:
 
 ```bash
 az cloud set -n Topaz
@@ -46,8 +35,9 @@ export AZURE_CORE_INSTANCE_DISCOVERY=false
 az login
 az account set --subscription 00000000-0000-0000-0000-000000000001
 ```
+:::
 
-## Step 3: Create a resource group and Service Bus namespace
+## Step 1: Create a resource group and Service Bus namespace
 
 ```bash
 az group create \
@@ -63,7 +53,7 @@ az servicebus namespace create \
 
 Topaz assigns the namespace a local AMQP hostname: `sbns-local.servicebus.topaz.local.dev`.
 
-## Step 4: Create a queue
+## Step 2: Create a queue
 
 ```bash
 az servicebus queue create \
@@ -82,7 +72,7 @@ az servicebus queue show \
   --output table
 ```
 
-## Step 5: Create a topic and subscription
+## Step 3: Create a topic and subscription
 
 ```bash
 az servicebus topic create \
@@ -97,7 +87,7 @@ az servicebus topic subscription create \
   --resource-group rg-local
 ```
 
-## Step 6: Send and receive messages — Azure SDK
+## Step 4: Send and receive messages — Azure SDK
 
 <Tabs groupId="sdk-language">
 <TabItem value="dotnet" label=".NET">
@@ -188,7 +178,7 @@ Replace the connection string with the one from the Azure portal. The SDK code �
 
 :::
 
-## Step 7: Publish to a topic and receive from a subscription
+## Step 5: Publish to a topic and receive from a subscription
 
 <Tabs groupId="sdk-language">
 <TabItem value="dotnet" label=".NET">
@@ -230,7 +220,7 @@ with ServiceBusClient.from_connection_string(connection_string) as client:
 </TabItem>
 </Tabs>
 
-## Step 8: Using MassTransit
+## Step 6: Using MassTransit
 
 MassTransit communicates over AMQP with TLS (port 5671). Use the TLS connection string variant instead:
 
@@ -286,7 +276,7 @@ MassTransit uses the standard .NET TLS stack, so the Topaz certificate must be t
 
 :::
 
-## Step 9: Automate with Testcontainers
+## Step 7: Automate with Testcontainers
 
 When running tests, start Topaz automatically using [Testcontainers](../ecosystem/testcontainers.md):
 
