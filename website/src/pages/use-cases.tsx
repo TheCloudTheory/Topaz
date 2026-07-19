@@ -353,6 +353,12 @@ const SCENARIOS: Scenario[] = [
 
 const MORE_USE_CASES: UseCase[] = [
   {
+    icon: '🌍',
+    title: 'Geo-replication & disaster-recovery testing',
+    description:
+      'Validate how your application behaves when reading from an Azure secondary region — without provisioning RA-GRS storage accounts or waiting for real replication lag. Topaz emulates the full geo-replication lifecycle: secondary endpoints are read-only, dequeue is blocked, and a configurable watermark controls which writes are visible on secondary.',
+  },
+  {
     icon: '🔒',
     title: 'Security & RBAC testing',
     description:
