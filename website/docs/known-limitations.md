@@ -219,25 +219,24 @@ Callers that specifically test HSM key attestation (i.e. rely on `attributes.att
 Replicating real HSM attestation behaviour requires generating hardware-backed key material and signing certificate chains with an HSM root, which is outside the scope of a software emulator. The `attestation` field will remain `null` for all Topaz-managed keys.
 
 
-## Storage Account — secondary endpoint reads return primary data
+## Storage Account — secondary endpoint geo-replication behaviour
 
 **Affected services:** Blob Storage, Queue Storage, Table Storage (RA-GRS / RA-GZRS accounts)
 
-For accounts created with `Standard_RAGRS` or `Standard_RAGZRS` SKUs, Topaz routes all read operations on `{accountName}-secondary.*` endpoints to the same in-memory data store as the primary endpoint. The secondary endpoint is fully reachable and returns real data — no 404s — but there is no separate secondary data store. Reads on the secondary are always perfectly in sync with the primary, which does not model the real-world replication lag of geo-redundant storage.
+Topaz emulates the secondary read endpoints (`{accountName}-secondary.*`) for accounts created with `Standard_RAGRS` or `Standard_RAGZRS` SKUs. The following behaviour is implemented as of v1.10-preview:
 
-### `<LastSyncTime>` — fixed in v1.9-preview
+### What is implemented
 
-The `<LastSyncTime>` element returned by `GET ?restype=service&comp=stats` on secondary endpoints previously returned the current wall-clock time on every request. As of v1.9-preview, a `GeoReplicationSyncScheduler` background service runs every 30 seconds, updates a persisted `LastGeoSyncTime` field on each RA-GRS/RAGZRS account, and threads it through the blob, queue, and table service-stats XML responses. `<LastSyncTime>` now reflects a realistic scheduler tick — it starts ~30 seconds behind the account creation time and advances with each scheduler tick — rather than the instant of the request.
+- **Secondary endpoints are reachable** — `{accountName}-secondary.blob.*`, `*.queue.*`, and `*.table.*` all resolve and respond correctly.
+- **Read-only enforcement** — any mutating request (PUT, POST, DELETE, MERGE) to a secondary endpoint returns `403 WriteOperationNotSupportedOnSecondary`, matching real Azure behaviour.
+- **Dequeue blocked on secondary** — `GET /{queue}/messages` (dequeue) is rejected on secondary endpoints with `403 WriteOperationNotSupportedOnSecondary`, because dequeue mutates message visibility state. `PeekMessages` and `ListQueues` remain readable.
+- **`<LastSyncTime>` reflects scheduler ticks** — a `GeoReplicationSyncScheduler` background service runs every 30 seconds, updates a persisted `LastGeoSyncTime` field on each RA-GRS/RAGZRS account, and threads it through the blob, queue, and table service-stats XML responses. `<LastSyncTime>` starts ~30 seconds behind account creation and advances with each tick.
+- **Replication lag on secondary reads** — blob listing, queue listing, and table listing on secondary endpoints filter results by `LastGeoSyncTime`. Resources written to the primary after the last scheduler tick are not visible on secondary until the next tick. All three services share the same `LastGeoSyncTime` watermark per account.
+- **Table OData queries on secondary** — `$filter`, `$select`, and `$top` all work on the secondary table endpoint after the watermark has advanced past the write timestamp.
 
-### Impact
+### Remaining limitations
 
-Tests or applications that rely on observing eventual-consistency behaviour (stale reads on secondary) cannot be validated against Topaz. Secondary reads always reflect the latest primary state regardless of how long ago `<LastSyncTime>` was updated.
-
-**Workaround:** none. Use `<LastSyncTime>` from the stats endpoint to observe simulated replication lag; do not rely on secondary reads returning stale data.
-
-### Planned improvement — v1.10-preview
-
-Introduce a configurable replication lag on secondary reads: writes to the primary are journalled with a timestamp, and secondary reads return the data as it existed at `LastGeoSyncTime`, making secondary endpoints transiently stale until the next scheduler tick.
+- **No real separate secondary data store** — there is a single in-process data store. The replication lag is simulated by filtering list and query results by write timestamp, not by maintaining a separate snapshot.
 
 ---
 
