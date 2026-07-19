@@ -54,7 +54,9 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         return true;
     }
 
-    protected bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
+    protected bool TryGetStorageAccount(IHeaderDictionary headers, 
+        out StorageAccountResource? storageAccount,
+        out string? originalStorageAccountName)
     {
         Logger.LogDebug(nameof(TableDataPlaneEndpointBase), nameof(TryGetStorageAccount), "Executing {0}",
             nameof(TryGetStorageAccount));
@@ -64,16 +66,18 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
             Logger.LogError("`Host` header not found - it's required for storage account creation.");
 
             storageAccount = null;
+            originalStorageAccountName = null;
             return false;
         }
 
         var pathParts = host.ToString().Split('.');
         var accountName = pathParts[0];
+        originalStorageAccountName = accountName;
 
         Logger.LogDebug(nameof(TableDataPlaneEndpointBase), nameof(TryGetStorageAccount),
             "About to check if storage account '{0}' exists.", accountName);
 
-        var identifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, accountName!);
+        var identifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, accountName);
         if (identifiers != null)
         {
             storageAccount = _storageResourceProvider.GetAs<StorageAccountResource>(
@@ -85,7 +89,7 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         // Secondary endpoint fallback: strip "-secondary" suffix and resolve the primary account.
         // Only RA-GRS/RAGZRS accounts expose a readable secondary endpoint.
         const string secondarySuffix = "-secondary";
-        if (accountName!.EndsWith(secondarySuffix, StringComparison.OrdinalIgnoreCase))
+        if (accountName.EndsWith(secondarySuffix, StringComparison.OrdinalIgnoreCase))
         {
             var primaryName = accountName[..^secondarySuffix.Length];
             var primaryIdentifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, primaryName);

@@ -3,10 +3,10 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Xml.Serialization;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
-using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
@@ -16,7 +16,7 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class QueryTableEntitiesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : TableDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /{tableName}"];
 
@@ -24,14 +24,14 @@ internal sealed class QueryTableEntitiesEndpoint(Pipeline eventPipeline, ITopazL
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out var originalStorageAccountName))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
-        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+        var resourceGroupIdentifier = storageAccount.GetResourceGroup();
 
         if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context, response))
             return;
@@ -51,7 +51,7 @@ internal sealed class QueryTableEntitiesEndpoint(Pipeline eventPipeline, ITopazL
                 storageAccount.Name))
         {
             var result = DataPlane.QueryEntities(context.Request.QueryString, subscriptionIdentifier,
-                resourceGroupIdentifier, potentialTableName, storageAccount.Name);
+                resourceGroupIdentifier, potentialTableName, storageAccount.Name, originalStorageAccountName!);
 
             if (result.NextPartitionKey is not null)
             {
@@ -106,6 +106,6 @@ internal sealed class QueryTableEntitiesEndpoint(Pipeline eventPipeline, ITopazL
 
     private sealed class TableDataEndpointResponse(object?[] values)
     {
-        public object?[] Value { get; init; } = values;
+        [UsedImplicitly] public object?[] Value { get; init; } = values;
     }
 }

@@ -2,7 +2,6 @@ using Topaz.EventPipeline;
 using System.Net;
 using System.Text;
 using System.Web;
-using Azure.ResourceManager.Storage.Models;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -13,7 +12,7 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class GetTableServicePropertiesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : TableDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /"];
 
@@ -27,14 +26,14 @@ internal sealed class GetTableServicePropertiesEndpoint(Pipeline eventPipeline, 
             return;
         }
 
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
-        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+        var resourceGroupIdentifier = storageAccount.GetResourceGroup();
 
         if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context, response))
             return;

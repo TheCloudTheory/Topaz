@@ -10,7 +10,7 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class SetTableServicePropertiesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : TableDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["PUT /"];
 
@@ -19,14 +19,14 @@ internal sealed class SetTableServicePropertiesEndpoint(Pipeline eventPipeline, 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
-        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+        var resourceGroupIdentifier = storageAccount.GetResourceGroup();
 
         if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context, response))
             return;

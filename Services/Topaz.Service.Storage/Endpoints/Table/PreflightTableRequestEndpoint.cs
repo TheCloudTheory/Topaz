@@ -14,7 +14,7 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class PreflightTableRequestEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : TableDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["OPTIONS /..."];
 
@@ -31,14 +31,14 @@ internal sealed class PreflightTableRequestEndpoint(Pipeline eventPipeline, ITop
             return;
         }
 
-        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
-        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+        var resourceGroupIdentifier = storageAccount.GetResourceGroup();
 
         try
         {

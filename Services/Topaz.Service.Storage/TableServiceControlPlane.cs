@@ -17,7 +17,7 @@ namespace Topaz.Service.Storage;
 internal sealed class TableServiceControlPlane(TableResourceProvider provider, ITopazLogger logger)
 {
     public ControlPlaneOperationResult<TableProperties[]> GetTables(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string originalStorageAccountName)
     {
         var tables =
             provider.ListAs<TableItem>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, 10);

@@ -56,6 +56,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
 
     internal string GetEntity(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName,
+        string originalStorageAccountName,
         string partitionKey, string rowKey)
     {
         logger.LogDebug(nameof(TableServiceDataPlane), nameof(GetEntity), "Executing {0}: {1} {2}", nameof(GetEntity), tableName, storageAccountName);
@@ -78,7 +79,8 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
     }
 
     internal TableQueryResult QueryEntities(QueryString query, SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
+        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName,
+        string? originalStorageAccountName)
     {
         logger.LogDebug(nameof(TableServiceDataPlane), nameof(QueryEntities), "Executing {0}: {1} {2} {3}", nameof(QueryEntities), query, tableName, storageAccountName);
 
