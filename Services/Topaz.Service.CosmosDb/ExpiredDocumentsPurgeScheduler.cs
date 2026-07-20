@@ -37,6 +37,7 @@ internal sealed class ExpiredDocumentsPurgeScheduler : ITopazBackgroundService
     }
     
     public string Name => $"Cosmos DB — expired documents purge (interval: {_interval})";
+    public DateTimeOffset? ExecutedAt { get; private set; }
 
     public Task ScanAndUpdateAsync()
     {
@@ -120,6 +121,9 @@ internal sealed class ExpiredDocumentsPurgeScheduler : ITopazBackgroundService
                 }
             }
         }
+        
+        _logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "Expired documents purge completed");
+        ExecutedAt = DateTimeOffset.UtcNow;
         
         return Task.CompletedTask;
     }

@@ -12,6 +12,8 @@ internal sealed class KeyVaultSoftDeletePurgeScheduler(
     TimeSpan interval) : ITopazBackgroundService
 {
     public string Name => $"Key Vault — soft-deleted vault purge (interval: {interval})";
+    public DateTimeOffset? ExecutedAt { get; private set; }
+
     public Task ScanAndPurgeAsync()
     {
         try
@@ -47,10 +49,12 @@ internal sealed class KeyVaultSoftDeletePurgeScheduler(
                 }
             }
 
+            ExecutedAt = DateTimeOffset.UtcNow;
             return Task.CompletedTask;
         }
         catch (Exception exception)
         {
+            logger.LogError(nameof(KeyVaultSoftDeletePurgeScheduler), nameof(ScanAndPurgeAsync), exception.Message);
             return Task.FromException(exception);
         }
     }

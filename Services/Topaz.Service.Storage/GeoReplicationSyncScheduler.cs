@@ -11,6 +11,7 @@ internal sealed class GeoReplicationSyncScheduler(
     TimeSpan interval) : ITopazBackgroundService
 {
     public string Name => $"Storage — geo-replication sync scheduler (interval: {interval})";
+    public DateTimeOffset? ExecutedAt { get; private set; }
 
     public Task ScanAndUpdateAsync()
     {
@@ -43,6 +44,7 @@ internal sealed class GeoReplicationSyncScheduler(
                 }
             }
 
+            ExecutedAt = DateTimeOffset.UtcNow;
             return Task.CompletedTask;
         }
         catch (Exception exception)

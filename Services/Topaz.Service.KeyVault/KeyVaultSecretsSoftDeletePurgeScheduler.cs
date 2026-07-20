@@ -13,6 +13,7 @@ internal sealed class KeyVaultSecretsSoftDeletePurgeScheduler(
     TimeSpan interval) : ITopazBackgroundService
 {
     public string Name => $"Key Vault — soft-deleted secret purge (interval: {interval})";
+    public DateTimeOffset? ExecutedAt { get; private set; }
 
     public Task ScanAndPurgeAsync()
     {
@@ -58,6 +59,7 @@ internal sealed class KeyVaultSecretsSoftDeletePurgeScheduler(
                 }
             }
 
+            ExecutedAt = DateTimeOffset.UtcNow;
             return Task.CompletedTask;
         }
         catch (Exception exception)

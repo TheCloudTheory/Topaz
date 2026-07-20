@@ -18,6 +18,7 @@ internal sealed class ServiceBusMessageExpiryScheduler(
     TimeSpan interval) : ITopazBackgroundService
 {
     public string Name => $"Service Bus — message TTL expiry (interval: {interval})";
+    public DateTimeOffset? ExecutedAt { get; private set; }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -97,5 +98,8 @@ internal sealed class ServiceBusMessageExpiryScheduler(
             }
             OutgoingLinkEndpoint.NotifyMessageEnqueued();
         }
+        
+        ExecutedAt = DateTime.UtcNow;
+        logger.LogDebug(nameof(ServiceBusMessageExpiryScheduler), nameof(ScanAndExpire), "Expired messages purge completed");
     }
 }

@@ -5,10 +5,14 @@ namespace Topaz.Host;
 
 internal sealed class BackgroundServiceOrchestrator(ITopazBackgroundService[] services, ITopazLogger logger)
 {
+    public static ITopazBackgroundService[] Services = [];
+    
     public void StartAll(CancellationToken cancellationToken)
     {
         if (services.Length == 0) return;
 
+        Services = services;
+        
         var table = new Table()
             .Border(TableBorder.Rounded)
             .AddColumn("[bold]Background Service[/]");
