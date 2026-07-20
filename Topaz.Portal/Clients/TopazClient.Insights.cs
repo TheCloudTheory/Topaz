@@ -194,20 +194,35 @@ internal sealed partial class TopazClient
     }
 
     public async Task<ApplicationInsightsQueryResponse> QueryApplicationInsights(
-        string instrumentationKey,
+        string connectionString,
         string query,
         CancellationToken cancellationToken = default)
     {
         await EnsureInitializedAsync();
 
-        if (string.IsNullOrWhiteSpace(instrumentationKey))
-            throw new ArgumentException("Instrumentation key is required.", nameof(instrumentationKey));
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Connection string is required.", nameof(connectionString));
         if (string.IsNullOrWhiteSpace(query))
             throw new ArgumentException("Query is required.", nameof(query));
 
-        var url = $"/v1/apps/{instrumentationKey}/query";
+        var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Split('=', 2))
+            .Where(p => p.Length == 2)
+            .ToDictionary(p => p[0].Trim(), p => p[1].Trim(), StringComparer.OrdinalIgnoreCase);
+
+        if (!parts.TryGetValue("InstrumentationKey", out var ikey) || string.IsNullOrWhiteSpace(ikey))
+            throw new InvalidOperationException("InstrumentationKey not found in connection string.");
+        if (!parts.TryGetValue("IngestionEndpoint", out var ingestionEndpoint) || string.IsNullOrWhiteSpace(ingestionEndpoint))
+            throw new InvalidOperationException("IngestionEndpoint not found in connection string.");
+
+        var url = $"{ingestionEndpoint.TrimEnd('/')}/v1/apps/{ikey}/query";
         var payload = new { query };
-        using var resp = await _httpClient.PostAsJsonAsync(url, payload, cancellationToken);
+
+        using var client = _httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _session.Token);
+
+        using var resp = await client.PostAsJsonAsync(url, payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
         {

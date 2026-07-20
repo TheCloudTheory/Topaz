@@ -103,7 +103,7 @@
 
     private bool _loading = true;
     private string? _error;
-    private string? _instrumentationKey;
+    private string? _connectionString;
 
     private string _query = "";
     private bool _queryBusy;
@@ -115,9 +115,9 @@
         try
         {
             var component = await TopazClient.GetApplicationInsights(SubscriptionId, DecodedRg, DecodedName);
-            _instrumentationKey = component?.InstrumentationKey;
-            if (string.IsNullOrWhiteSpace(_instrumentationKey))
-                _error = "Instrumentation key not available for this component.";
+            _connectionString = component?.ConnectionString;
+            if (string.IsNullOrWhiteSpace(_connectionString))
+                _error = "Connection string not available for this component.";
         }
         catch (Exception ex)
         {
@@ -136,7 +136,7 @@
         _queryBusy = true;
         try
         {
-            _results = await TopazClient.QueryApplicationInsights(_instrumentationKey!, _query);
+            _results = await TopazClient.QueryApplicationInsights(_connectionString!, _query);
         }
         catch (Exception ex)
         {
