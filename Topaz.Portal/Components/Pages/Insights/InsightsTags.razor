@@ -1,0 +1,127 @@
+@page "/portal/insights/{SubscriptionId:guid}/{ResourceGroupName}/{ComponentName}/tags"
+@using System.Net
+@using Topaz.Portal.Models.Insights
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/insights">Application Insights</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/insights/{SubscriptionId:D}/{ResourceGroupName}/{ComponentName}")">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Tags</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<InsightsDetailsShell SubscriptionId="SubscriptionId"
+                      ResourceGroupName="@DecodedRg"
+                      ComponentName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_loadError
+        </div>
+    }
+    else
+    {
+        <TagsPanel Tags="_tags"
+                   OnAdd="AddTagAsync"
+                   OnRemove="RemoveTagAsync"
+                   OnEdit="EditTagAsync" />
+    }
+</InsightsDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string ComponentName { get; set; } = "";
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(ComponentName);
+
+    private bool _loading = true;
+    private string? _loadError;
+    private Dictionary<string, string> _tags = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadError = null;
+
+        try
+        {
+            var component = await TopazClient.GetApplicationInsights(SubscriptionId, DecodedRg, DecodedName);
+
+            if (component is null)
+            {
+                _tags = [];
+                _loadError = "Application Insights component not found.";
+                return;
+            }
+
+            _tags = new Dictionary<string, string>(component.Tags, StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _tags = [];
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<string?> AddTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateApplicationInsightsTag(SubscriptionId, DecodedRg, DecodedName, tag, value);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> RemoveTagAsync(string key)
+    {
+        try
+        {
+            await TopazClient.DeleteApplicationInsightsTag(SubscriptionId, DecodedRg, DecodedName, key);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> EditTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateApplicationInsightsTag(SubscriptionId, DecodedRg, DecodedName, tag, value);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+}

@@ -19,6 +19,7 @@ using Topaz.Portal.Models.VirtualMachines;
 using Topaz.Portal.Models.VirtualNetworks;
 using Topaz.Portal.Models.PublicIps;
 using Topaz.Portal.Models.ContainerRegistry;
+using Topaz.Portal.Models.Insights;
 
 namespace Topaz.Portal;
 
@@ -707,6 +708,45 @@ public interface ITopazClient
         Guid subscriptionId,
         string resourceGroupName,
         string pipName,
+        string tagName,
+        CancellationToken cancellationToken = default);
+
+    // Application Insights
+    Task<ListApplicationInsightsResponse> ListApplicationInsights();
+
+    Task<ApplicationInsightsDto?> GetApplicationInsights(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string componentName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateApplicationInsights(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string componentName,
+        string location,
+        string kind = "web",
+        string applicationType = "web",
+        CancellationToken cancellationToken = default);
+
+    Task DeleteApplicationInsights(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string componentName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdateApplicationInsightsTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string componentName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteApplicationInsightsTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string componentName,
         string tagName,
         CancellationToken cancellationToken = default);
 }

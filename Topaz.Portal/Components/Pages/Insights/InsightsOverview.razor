@@ -1,0 +1,161 @@
+@page "/portal/insights/{SubscriptionId:guid}/{ResourceGroupName}/{ComponentName}"
+@using System.Net
+@using Topaz.Portal.Models.Insights
+@inject ITopazClient TopazClient
+@inject NavigationManager Nav
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/insights">Application Insights</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">@DecodedName</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<InsightsDetailsShell SubscriptionId="SubscriptionId"
+                      ResourceGroupName="@DecodedRg"
+                      ComponentName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_error</div>
+    }
+    else if (_component is null)
+    {
+        <p class="mb-0">Application Insights component not found.</p>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <h5 class="card-title mb-0">Overview</h5>
+
+                    <button class="btn btn-sm btn-outline-danger"
+                            @onclick="() => _showDeleteConfirm = true"
+                            disabled="@_deleteBusy">
+                        Delete
+                    </button>
+                </div>
+
+                @if (_showDeleteConfirm)
+                {
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Delete Application Insights component?</strong> This action cannot be undone.
+                        <div class="mt-2 d-flex gap-2">
+                            <button class="btn btn-sm btn-danger"
+                                    @onclick="DeleteComponentAsync"
+                                    disabled="@_deleteBusy">
+                                Confirm delete
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => _showDeleteConfirm = false"
+                                    disabled="@_deleteBusy">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (_deleteError is not null)
+                {
+                    <div class="alert alert-danger" role="alert">@_deleteError</div>
+                }
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Name</dt>
+                    <dd class="col-sm-9">@(_component.Name ?? "-")</dd>
+
+                    <dt class="col-sm-3">Location</dt>
+                    <dd class="col-sm-9"><code>@(_component.Location ?? "-")</code></dd>
+
+                    <dt class="col-sm-3">Resource group</dt>
+                    <dd class="col-sm-9">@(_component.ResourceGroupName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription</dt>
+                    <dd class="col-sm-9">@(_component.SubscriptionName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription ID</dt>
+                    <dd class="col-sm-9">@(_component.SubscriptionId ?? "-")</dd>
+
+                    <dt class="col-sm-3">Kind</dt>
+                    <dd class="col-sm-9">@(_component.Kind ?? "-")</dd>
+
+                    <dt class="col-sm-3">Application type</dt>
+                    <dd class="col-sm-9">@(_component.ApplicationType ?? "-")</dd>
+
+                    <dt class="col-sm-3">Ingestion mode</dt>
+                    <dd class="col-sm-9">@(_component.IngestionMode ?? "-")</dd>
+
+                    <dt class="col-sm-3">Retention (days)</dt>
+                    <dd class="col-sm-9">@_component.RetentionInDays</dd>
+
+                    <dt class="col-sm-3">Instrumentation key</dt>
+                    <dd class="col-sm-9"><code class="text-muted small">@(_component.InstrumentationKey ?? "-")</code></dd>
+
+                    <dt class="col-sm-3">Connection string</dt>
+                    <dd class="col-sm-9"><small class="text-muted" style="word-break:break-all;">@(_component.ConnectionString ?? "-")</small></dd>
+
+                    <dt class="col-sm-3">Resource ID</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_component.Id ?? "-")</small></dd>
+                </dl>
+            </div>
+        </div>
+    }
+</InsightsDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string ComponentName { get; set; } = "";
+
+    private ApplicationInsightsDto? _component;
+    private bool _loading = true;
+    private string? _error;
+    private bool _showDeleteConfirm;
+    private bool _deleteBusy;
+    private string? _deleteError;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(ComponentName);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _component = await TopazClient.GetApplicationInsights(SubscriptionId, DecodedRg, DecodedName);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DeleteComponentAsync()
+    {
+        _deleteBusy = true;
+        _deleteError = null;
+
+        try
+        {
+            await TopazClient.DeleteApplicationInsights(SubscriptionId, DecodedRg, DecodedName);
+            Nav.NavigateTo("/portal/insights");
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+            _showDeleteConfirm = false;
+        }
+        finally
+        {
+            _deleteBusy = false;
+        }
+    }
+}
