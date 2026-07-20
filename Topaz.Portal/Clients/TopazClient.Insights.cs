@@ -193,6 +193,33 @@ internal sealed partial class TopazClient
         }
     }
 
+    public async Task<ApplicationInsightsQueryResponse> QueryApplicationInsights(
+        string instrumentationKey,
+        string query,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        if (string.IsNullOrWhiteSpace(instrumentationKey))
+            throw new ArgumentException("Instrumentation key is required.", nameof(instrumentationKey));
+        if (string.IsNullOrWhiteSpace(query))
+            throw new ArgumentException("Query is required.", nameof(query));
+
+        var url = $"/v1/apps/{instrumentationKey}/query";
+        var payload = new { query };
+        using var resp = await _httpClient.PostAsJsonAsync(url, payload, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException(
+                $"Query failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. {body}");
+        }
+
+        return await resp.Content.ReadFromJsonAsync<ApplicationInsightsQueryResponse>(cancellationToken: cancellationToken)
+               ?? new ApplicationInsightsQueryResponse();
+    }
+
     private static ApplicationInsightsDto MapToDto(
         AiData data,
         string? subscriptionId,

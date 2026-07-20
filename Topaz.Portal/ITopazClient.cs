@@ -749,4 +749,9 @@ public interface ITopazClient
         string componentName,
         string tagName,
         CancellationToken cancellationToken = default);
+
+    Task<ApplicationInsightsQueryResponse> QueryApplicationInsights(
+        string instrumentationKey,
+        string query,
+        CancellationToken cancellationToken = default);
 }

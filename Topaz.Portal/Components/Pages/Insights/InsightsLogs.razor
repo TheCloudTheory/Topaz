@@ -1,0 +1,150 @@
+@page "/portal/insights/{SubscriptionId:guid}/{ResourceGroupName}/{ComponentName}/logs"
+@using System.Net
+@using Topaz.Portal.Models.Insights
+@inject ITopazClient TopazClient
+@inject NavigationManager Nav
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/insights">Application Insights</BreadcrumbItem>
+    <BreadcrumbItem Href="@OverviewHref">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Logs</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<InsightsDetailsShell SubscriptionId="SubscriptionId"
+                      ResourceGroupName="@DecodedRg"
+                      ComponentName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_error</div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Logs</h5>
+
+                <div class="mb-2">
+                    <textarea class="form-control font-monospace"
+                              rows="5"
+                              @bind="_query"
+                              placeholder="Enter KQL query…"
+                              disabled="@_queryBusy"
+                              style="resize: vertical;"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <button class="btn btn-primary btn-sm"
+                            @onclick="RunQueryAsync"
+                            disabled="@(_queryBusy || string.IsNullOrWhiteSpace(_query))">
+                        @(_queryBusy ? "Running…" : "Run query")
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_queryError))
+                {
+                    <div class="alert alert-danger" role="alert">@_queryError</div>
+                }
+                else if (_results is not null)
+                {
+                    @foreach (var table in _results.Tables)
+                    {
+                        @if (table.Rows.Length == 0)
+                        {
+                            <p class="text-muted">No results.</p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle mb-0">
+                                    <thead>
+                                    <tr>
+                                        @foreach (var col in table.Columns)
+                                        {
+                                            <th>@col.Name</th>
+                                        }
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var row in table.Rows)
+                                    {
+                                        <tr>
+                                            @for (var i = 0; i < table.Columns.Length; i++)
+                                            {
+                                                <td>@(row.Length > i ? row[i]?.ToString() : "")</td>
+                                            }
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
+                }
+            </div>
+        </div>
+    }
+</InsightsDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string ComponentName { get; set; } = "";
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(ComponentName);
+    private string OverviewHref => $"/portal/insights/{SubscriptionId:D}/{ResourceGroupName}/{ComponentName}";
+
+    private bool _loading = true;
+    private string? _error;
+    private string? _instrumentationKey;
+
+    private string _query = "";
+    private bool _queryBusy;
+    private string? _queryError;
+    private ApplicationInsightsQueryResponse? _results;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var component = await TopazClient.GetApplicationInsights(SubscriptionId, DecodedRg, DecodedName);
+            _instrumentationKey = component?.InstrumentationKey;
+            if (string.IsNullOrWhiteSpace(_instrumentationKey))
+                _error = "Instrumentation key not available for this component.";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RunQueryAsync()
+    {
+        _queryError = null;
+        _results = null;
+        _queryBusy = true;
+        try
+        {
+            _results = await TopazClient.QueryApplicationInsights(_instrumentationKey!, _query);
+        }
+        catch (Exception ex)
+        {
+            _queryError = ex.Message;
+        }
+        finally
+        {
+            _queryBusy = false;
+        }
+    }
+}
