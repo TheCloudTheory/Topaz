@@ -1553,6 +1553,10 @@ public class StorageTests : TopazFixture
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={key};" +
             $"QueueEndpoint=https://{storageAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/";
+        
+        // Must wait for the queue to be created on the secondary by the background
+        // job. Until `lastSyncDate` is set, the queue will not be listed.
+        await Task.Delay(TimeSpan.FromSeconds(30));
 
         await RunAzureCliCommand(
             $"az storage queue list --connection-string \"{secondaryConnectionString}\"",
