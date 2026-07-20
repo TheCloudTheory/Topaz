@@ -19,7 +19,8 @@ public class TopazFixture
     "activeDirectoryResourceId": "https://topaz.local.dev:8899",
     "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
     "microsoft_graph_resource_id": "https://topaz.local.dev:8899",
-    "acr_login_server_endpoint": "https://topaz.local.dev:8899"
+    "acr_login_server_endpoint": "https://topaz.local.dev:8899",
+    "log_analytics_resource_id": "https://api.loganalytics.topaz.local.dev:8899"
   },
   "suffixes": {
     "keyvaultDns": ".vault.topaz.local.dev",
@@ -125,6 +126,7 @@ public class TopazFixture
             .WithExtraHost("cli-app-insights-query.applicationinsights.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("cli-app-insights-query-qry.applicationinsights.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("cli-app-insights-query-empty.applicationinsights.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("api.loganalytics.topaz.local.dev", _containerTopaz.IpAddress)
             .Build();
         
         // Act
@@ -139,7 +141,8 @@ public class TopazFixture
         
         Assert.That(appendCertResult.ExitCode, Is.EqualTo(0), 
             $"Appending a self-signed certificate failed. STDOUT: {appendCertResult.Stdout}, STDERR: {appendCertResult.Stderr}");
-
+        
+        await RunAzureCliCommand("az config set extension.dynamic_install_allow_preview=true");
         await RunAzureCliCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"");
         await RunAzureCliCommand("az cloud set -n Topaz");
         await RunAzureCliCommand("az login --username topazadmin@topaz.local.dev --password admin");
@@ -153,7 +156,7 @@ public class TopazFixture
         await _network!.DisposeAsync();
     }
 
-    protected async Task RunAzureCliCommand(string command, Action<JsonNode>? assertion = null, int exitCode = 0)
+    protected async Task RunAzureCliCommand(string command, Action<JsonNode>? assertion = null, int exitCode = 0, bool skipIfWarning = false)
     {
         if (_containerAzureCli != null && _containerTopaz != null)
         {
@@ -180,7 +183,16 @@ public class TopazFixture
         {
             await Console.Error.WriteLineAsync($"Command STDERR: {result.Stderr}");
         }
-        
+
+        if (skipIfWarning && result.Stderr.Contains("WARNING"))
+        {
+            // Extension was being installed on first run; retry now that it's available.
+            result = await _containerAzureCli!.ExecAsync(new List<string>
+            {
+                "/bin/sh", "-c", command
+            });
+        }
+
         Assert.That(result.ExitCode, Is.EqualTo(exitCode), 
             $"`{command}` command failed. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
  
@@ -196,6 +208,8 @@ public class TopazFixture
             await AppConfigurationHostMapper.EnsureAppConfigHostsMapped(_containerAzureCli, _containerTopaz, command);
         }
 
-        await _containerAzureCli!.ExecAsync(new List<string> { "/bin/sh", "-c", command });
+        var result = await _containerAzureCli!.ExecAsync(new List<string> { "/bin/sh", "-c", command });
+        
+        Assert.That(result.ExitCode, Is.EqualTo(0), $"`{command}` command failed. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
     }
 }

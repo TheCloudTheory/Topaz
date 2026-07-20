@@ -25,11 +25,7 @@ public class LogAnalyticsQueryTests : TopazFixture
         var ws = $"{WorkspaceName}{suffix}";
         var customerId = "";
         await RunAzureCliCommand(
-            $"az monitor log-analytics workspace show -n {ws} -g {rg} --query customerId -o tsv",
-            response =>
-            {
-                // tsv output is a plain string, not a JSON object — captured via stdout inspection below
-            }, 0);
+            $"az monitor log-analytics workspace show -n {ws} -g {rg} --query customerId -o tsv");
 
         // Use JSON output to extract customerId reliably
         await RunAzureCliCommand(
@@ -44,11 +40,22 @@ public class LogAnalyticsQueryTests : TopazFixture
 
     /// <summary>
     /// Ingests records into a workspace via the legacy Data Collector API (ODS endpoint).
-    /// Uses curl inside the CLI container so no extra tooling is needed.
+    /// Uses curl inside the CLI container, so no extra tooling is needed.
     /// </summary>
     private async Task IngestViaCurl(string customerId, string logType, string jsonBody)
     {
-        var endpoint = $"https://{customerId}.ods.opinsights.topaz.local.dev:8080/api/logs?api-version=2016-04-01";
+        var host = $"{customerId}.ods.opinsights.topaz.local.dev";
+        var mappingResult = await AzureCliContainer.ExecAsync(new List<string>
+        {
+            "/bin/sh",
+            "-c",
+            $"grep -qF '{host}' /etc/hosts || echo '{TopazContainerIpAddress} {host}' >> /etc/hosts"
+        });
+        
+        Assert.That(mappingResult.ExitCode, Is.EqualTo(0),
+            $"Failed to register host mapping for {host}. STDERR: {mappingResult.Stderr}");
+
+        var endpoint = $"https://{host}:8899/api/logs?api-version=2016-04-01";
         await TryRunAzureCliCommand(
             $"curl -k -s -o /dev/null -w '%{{http_code}}' -X POST \"{endpoint}\" " +
             $"-H 'Content-Type: application/json' " +
@@ -141,8 +148,8 @@ public class LogAnalyticsQueryTests : TopazFixture
             response =>
             {
                 var rows = response.AsArray()![0]!["rows"]!.AsArray();
-                Assert.That(rows!.Count, Is.EqualTo(2));
-            }, 0);
+                Assert.That(rows!, Has.Count.EqualTo(2));
+            }, 0, skipIfWarning: true);
     }
 
     [Test]

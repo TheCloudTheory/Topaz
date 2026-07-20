@@ -5,7 +5,8 @@
     "activeDirectoryResourceId": "https://topaz.local.dev:8899",
     "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
     "microsoft_graph_resource_id": "https://topaz.local.dev:8899",
-    "acr_login_server_endpoint": "https://topaz.local.dev:8899"
+    "acr_login_server_endpoint": "https://topaz.local.dev:8899",
+    "log_analytics_resource_id": "https://api.loganalytics.topaz.local.dev:8899"
   },
   "name": "Topaz",
   "suffixes": {
