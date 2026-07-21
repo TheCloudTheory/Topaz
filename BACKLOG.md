@@ -53,6 +53,38 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ## v1.10-preview
 
 <!--
+TODO: Blob Storage: WASB legacy SDK — fix Get Container Properties response headers
+  The legacy azure-storage 7.x SDK (used by Hadoop WASB connector) sends
+  GET /{container}?restype=container but the emulator response is missing required
+  headers, causing a NullPointerException in ExecutionEngine.executeWithRetry and a
+  spurious 404. The modern SDK (azure-storage-blob 12.x) works correctly.
+  Fix: add the missing response headers to GetContainerPropertiesEndpoint:
+    x-ms-lease-status: unlocked
+    x-ms-lease-state: available
+    x-ms-has-immutability-policy: false
+    x-ms-has-legal-hold: false
+  and verify the response format matches what the legacy SDK expects.
+  Also add *.dfs.storage.topaz.local.dev to the certificate SAN in certificate/generate.sh
+  (required for ABFS TLS hostname verification — see ADLS Gen2 backlog item).
+  See: https://github.com/TheCloudTheory/Topaz/discussions/298
+  milestone: v1.10-preview
+  labels: enhancement, blob-storage
+-->
+
+<!--
+TODO: Blob Storage: Support enabling Hierarchical Namespace (HNS) on storage accounts
+  Add an --enable-hierarchical-namespace / --hns flag to the
+  `topaz storage account create` CLI command and persist an isHnsEnabled boolean on
+  the StorageAccount resource model. When HNS is enabled the account type should be
+  StorageV2 with Data Lake Storage Gen2 capabilities.
+  This is a prerequisite for the ADLS Gen2 / ABFS DFS endpoint implementation
+  (see v1.11 backlog item).
+  See: https://github.com/TheCloudTheory/Topaz/discussions/298
+  milestone: v1.10-preview
+  labels: enhancement, blob-storage
+-->
+
+<!--
 TODO: App Configuration: Replicas companion endpoint
   The azurerm Terraform provider calls GET .../configurationStores/{name}/replicas after
   creation. Add a stub endpoint that returns {"value":[]} (Topaz does not emulate replicas).
@@ -355,6 +387,35 @@ TODO: Azure Redis Cache: MCP Server provisioning tool
 ---
 
 ## v1.11
+
+### Blob Storage — ADLS Gen2 / ABFS DFS protocol
+
+<!--
+TODO: Blob Storage: ADLS Gen2 DFS protocol endpoints for ABFS connector
+  The Hadoop ABFS connector (abfss://) speaks the ADLS Gen2 DFS REST API which Topaz
+  does not implement. All ?resource=filesystem and ?resource=directory requests currently
+  return EndpointNotFound.
+  Implement the DFS data-plane endpoint group:
+  - HEAD   /{filesystem}?resource=filesystem          – Get Filesystem Properties
+  - PUT    /{filesystem}?resource=filesystem          – Create Filesystem (maps to container create)
+  - DELETE /{filesystem}?resource=filesystem          – Delete Filesystem
+  - GET    /{filesystem}?resource=filesystem          – List Paths (root)
+  - PUT    /{filesystem}/{path}?resource=directory    – Create Directory
+  - PUT    /{filesystem}/{path}?resource=file         – Create File
+  - PATCH  /{filesystem}/{path}?action=append         – Append data
+  - PATCH  /{filesystem}/{path}?action=flush          – Flush (commit) data
+  - GET    /{filesystem}/{path}                       – Read File
+  - HEAD   /{filesystem}/{path}                       – Get Path Properties
+  - DELETE /{filesystem}/{path}                       – Delete Path
+  - GET    /{filesystem}?resource=filesystem&recursive=true – List Paths (recursive)
+  Register a new service on *.dfs.storage.topaz.local.dev (same port as blob, 8891).
+  Requires: HNS flag on storage accounts (v1.10-preview backlog item) and
+  *.dfs.storage.topaz.local.dev certificate SAN (v1.10-preview backlog item).
+  See: https://learn.microsoft.com/en-us/rest/api/storageservices/data-lake-storage-gen2
+  See: https://github.com/TheCloudTheory/Topaz/discussions/298
+  milestone: v1.11
+  labels: enhancement, blob-storage
+-->
 
 ### Azure OpenAI Service — stub endpoint
 
