@@ -72,19 +72,6 @@ TODO: Blob Storage: WASB legacy SDK — fix Get Container Properties response he
 -->
 
 <!--
-TODO: Blob Storage: Support enabling Hierarchical Namespace (HNS) on storage accounts
-  Add an --enable-hierarchical-namespace / --hns flag to the
-  `topaz storage account create` CLI command and persist an isHnsEnabled boolean on
-  the StorageAccount resource model. When HNS is enabled the account type should be
-  StorageV2 with Data Lake Storage Gen2 capabilities.
-  This is a prerequisite for the ADLS Gen2 / ABFS DFS endpoint implementation
-  (see v1.11 backlog item).
-  See: https://github.com/TheCloudTheory/Topaz/discussions/298
-  milestone: v1.10-preview
-  labels: enhancement, blob-storage
--->
-
-<!--
 TODO: App Configuration: Replicas companion endpoint
   The azurerm Terraform provider calls GET .../configurationStores/{name}/replicas after
   creation. Add a stub endpoint that returns {"value":[]} (Topaz does not emulate replicas).
