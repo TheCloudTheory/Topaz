@@ -38,6 +38,14 @@ This page tracks which Azure App Configuration REST API operations are implement
 | Delete Replica | ❌ | |
 | Get Replica | ❌ | |
 
+### Deleted Stores
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Get Deleted Store | ✅ | |
+| List Deleted Stores | ✅ | |
+| Purge Deleted Store | ✅ | |
+
 ---
 
 ## Data Plane

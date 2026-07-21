@@ -63,17 +63,6 @@ TODO: App Configuration: Replicas companion endpoint
 -->
 
 <!--
-TODO: App Configuration: Soft-delete companion endpoints
-  The azurerm Terraform provider calls soft-delete endpoints during destroy. Add stubs that
-  return 404 (Topaz does not emulate soft-delete / purge protection):
-  - GET /subscriptions/{sub}/providers/Microsoft.AppConfiguration/locations/{location}/deletedConfigurationStores/{name}
-  - GET /subscriptions/{sub}/providers/Microsoft.AppConfiguration/locations/{location}/deletedConfigurationStores
-  - POST .../deletedConfigurationStores/{name}/purge
-  milestone: v1.10-preview
-  labels: enhancement, app-configuration
--->
-
-<!--
 TODO: Azure API Management: New service project scaffold
   Create Topaz.Service.ApiManagement following existing service conventions:
   - ApiManagementServiceResourceProperties + ApiManagementServiceResource (ArmResource<T>)
