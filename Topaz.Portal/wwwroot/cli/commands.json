@@ -5543,12 +5543,21 @@
         "names": "-s, --subscription-id",
         "description": "(Required) Subscription ID.",
         "required": true
+      },
+      {
+        "names": "--enable-hierarchical-namespace",
+        "description": "Enable HNS.",
+        "required": false
       }
     ],
     "examples": [
       {
         "title": "Create a storage account",
         "command": "topaz storage account create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022salocal\u0022 \\\n    --location \u0022westeurope\u0022"
+      },
+      {
+        "title": "Create a storage account with hierarchical namespace (HNS)",
+        "command": "topaz storage account create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022salocal\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --enable-hierarchical-namespace"
       }
     ]
   },
