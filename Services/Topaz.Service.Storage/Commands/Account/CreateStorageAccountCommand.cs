@@ -4,11 +4,12 @@ using Spectre.Console.Cli;
 using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
 
-namespace Topaz.Service.Storage.Commands;
+namespace Topaz.Service.Storage.Commands.Account;
 
 [UsedImplicitly]
 [CommandDefinition("storage account create", "azure-storage/account", "Creates a new Azure Storage account.")]
 [CommandExample("Create a storage account", "topaz storage account create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\" \\\n    --location \"westeurope\"")]
+[CommandExample("Create a storage account with hierarchical namespace (HNS)", "topaz storage account create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\" \\\n    --location \"westeurope\" \\\n    --enable-hierarchical-namespace")]
 public sealed class CreateStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>(httpClient)
 {
     protected override async Task<int> ExecuteAsync(CommandContext context, CreateStorageAccountCommandSettings settings, CancellationToken cancellationToken)
@@ -16,7 +17,10 @@ public sealed class CreateStorageAccountCommand(HttpClient httpClient, DefaultsP
         AnsiConsole.WriteLine("Creating storage account...");
 
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.Name}";
-        var (success, body) = await PutAsync(url, new { location = settings.Location, kind = "StorageV2", sku = new { name = "Standard_LRS" }, properties = new { } });
+        var (success, body) = await PutAsync(url, new { location = settings.Location, kind = "StorageV2", sku = new { name = "Standard_LRS" }, properties = new
+        {
+            isHnsEnabled = settings.EnableHierarchicalNamespace
+        } }, cancellationToken);
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
         return 0;
@@ -69,5 +73,9 @@ public sealed class CreateStorageAccountCommand(HttpClient httpClient, DefaultsP
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string? SubscriptionId { get; set; }
+        
+        [CommandOptionDefinition("Enable HNS.", required: false)]
+        [CommandOption("--enable-hierarchical-namespace")]
+        public bool EnableHierarchicalNamespace { get; set; }
     }
 }

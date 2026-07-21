@@ -1,4 +1,7 @@
+using System.Text.Json;
 using Topaz.CLI;
+using Topaz.Service.Storage.Models;
+using Topaz.Shared;
 
 namespace Topaz.Tests.CLI
 {
@@ -9,6 +12,7 @@ namespace Topaz.Tests.CLI
         private const string SubscriptionName = "sub-test";
         private const string ResourceGroupName = "test";
         private const string StorageAccountName = "testsa";
+        private const string StorageAccountHnsName = "testsahns";
         
         [SetUp]
         public async Task SetUp()
@@ -50,7 +54,7 @@ namespace Topaz.Tests.CLI
                 "--subscription-id",
                 SubscriptionId.ToString()
             ]);
-
+            
             await Program.RunAsync([
                 "storage",
                 "account",
@@ -78,13 +82,74 @@ namespace Topaz.Tests.CLI
             ]);
         }
 
-        [Test]
-        public void StorageAccountTests_WhenNewStorageAccountIsRequested_ItShouldBeCreated()
+        [OneTimeTearDown]
+        public async Task TearDown()
         {
+            await Program.RunAsync([
+                "storage",
+                "account",
+                "delete",
+                "--name",
+                StorageAccountHnsName,
+                "--resource-group",
+                ResourceGroupName,
+                "--subscription-id",
+                SubscriptionId.ToString()
+            ]);
+        }
+
+        [Test]
+        public Task StorageAccountTests_WhenNewStorageAccountIsRequested_ItShouldBeCreated()
+        {
+            try
+            {
+                var accountDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+                    SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-storage", StorageAccountName, "metadata.json");
+
+                Assert.That(File.Exists(accountDirectoryPath), Is.True);
+                return Task.CompletedTask;
+            }
+            catch (Exception exception)
+            {
+                return Task.FromException(exception);
+            }
+        }
+        
+        [Test]
+        public async Task StorageAccountTests_WhenNewStorageAccountIsRequestedWithHns_HnsShouldBeEnabled()
+        {
+            var result = await Program.RunAsync([
+                "storage",
+                "account",
+                "create",
+                "--name",
+                StorageAccountHnsName,
+                "-g",
+                ResourceGroupName,
+                "--location",
+                "westeurope",
+                "--subscription-id",
+                SubscriptionId.ToString(),
+                "--enable-hierarchical-namespace"
+            ]);
+            
+            Assert.That(result, Is.Zero);
+            
             var accountDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
-                SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-storage", StorageAccountName, "metadata.json");
+                SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-storage", StorageAccountHnsName, "metadata.json");
 
             Assert.That(File.Exists(accountDirectoryPath), Is.True);
+            
+            var json = await File.ReadAllTextAsync(accountDirectoryPath);
+            var resource = JsonSerializer.Deserialize<StorageAccountResource>(json, GlobalSettings.JsonOptions);
+            
+            Assert.That(resource, Is.Not.Null);
+            
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(resource.Properties.IsHnsEnabled, Is.True);
+                Assert.That(resource.Kind, Is.EqualTo("StorageV2"));
+            }
         }
 
         [Test]
@@ -124,7 +189,7 @@ namespace Topaz.Tests.CLI
                 SubscriptionId.ToString()
             ]);
             
-            Assert.That(result, Is.EqualTo(0));
+            Assert.That(result, Is.Zero);
         }
         
         [Test]
@@ -142,7 +207,7 @@ namespace Topaz.Tests.CLI
                 SubscriptionId.ToString()
             ]);
             
-            Assert.That(result, Is.EqualTo(0));
+            Assert.That(result, Is.Zero);
         }
 
         [Test]
@@ -163,7 +228,7 @@ namespace Topaz.Tests.CLI
                 "key1"
             ]);
 
-            Assert.That(result, Is.EqualTo(0));
+            Assert.That(result, Is.Zero);
         }
 
         [Test]
@@ -189,7 +254,7 @@ namespace Topaz.Tests.CLI
                 DateTimeOffset.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ")
             ]);
 
-            Assert.That(result, Is.EqualTo(0));
+            Assert.That(result, Is.Zero);
         }
 
         [Test]
@@ -215,7 +280,7 @@ namespace Topaz.Tests.CLI
                 DateTimeOffset.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ")
             ]);
 
-            Assert.That(result, Is.EqualTo(0));
+            Assert.That(result, Is.Zero);
         }
     }
 }

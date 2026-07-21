@@ -1,5 +1,6 @@
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.Service.Storage.Commands.Account;
 using Topaz.Service.Storage.Commands.Blob;
 using Topaz.Service.Storage.Commands.Message;
 
