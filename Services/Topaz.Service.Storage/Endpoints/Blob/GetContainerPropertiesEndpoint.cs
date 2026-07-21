@@ -15,7 +15,11 @@ internal sealed class GetContainerPropertiesEndpoint(Pipeline eventPipeline, ITo
 
     public string? ProviderNamespace => "Microsoft.Storage";
 
-    public string[] Endpoints => ["GET /{containerName}?restype=container"];
+    public string[] Endpoints => [
+        "GET /{containerName}?restype=container",
+        // Legacy SDK (7.x) uses HEAD instead of GET
+        "HEAD /{containerName}?restype=container"
+    ];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/read"];
 

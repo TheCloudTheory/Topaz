@@ -540,6 +540,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         if (!File.Exists(fullPath))
         {
+            logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlobProperties), $"Blob `{blobPath}` not found");
             return new DataPlaneOperationResult<BlobProperties>(OperationResult.NotFound, null, null, null);
         }
 
