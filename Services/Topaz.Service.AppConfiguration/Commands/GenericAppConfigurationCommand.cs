@@ -17,6 +17,7 @@ public sealed class GenericAppConfigurationCommand : IEmulatorCommand
             appconfig.AddCommand<ListAppConfigurationStoresCommand>("list");
             appconfig.AddCommand<ListAppConfigurationKeysCommand>("list-keys");
             appconfig.AddCommand<RegenerateAppConfigurationKeyCommand>("regenerate-key");
+            appconfig.AddCommand<PurgeConfigurationStoreCommand>("purge");
 
             appconfig.AddBranch("kv", kv =>
             {

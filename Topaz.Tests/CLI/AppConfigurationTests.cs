@@ -60,12 +60,32 @@ public class AppConfigurationTests
     }
 
     [Test]
-    public async Task AppConfiguration_WhenStoreIsDeleted_MetadataFileShouldNotExist()
+    public async Task AppConfiguration_WhenStoreIsDeletedButNotPurged_MetadataFileShouldExist()
     {
         await Program.RunAsync([
             "appconfig", "delete",
             "--name", StoreName,
             "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(File.Exists(StoreMetadataPath), Is.True);
+    }
+    
+    [Test]
+    public async Task AppConfiguration_WhenStoreIsDeletedAndPurged_MetadataFileShouldNotExist()
+    {
+        await Program.RunAsync([
+            "appconfig", "delete",
+            "--name", StoreName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+        
+        await Program.RunAsync([
+            "appconfig", "purge",
+            "--name", StoreName,
+            "--location", "westeurope",
             "--subscription-id", SubscriptionId.ToString()
         ]);
 

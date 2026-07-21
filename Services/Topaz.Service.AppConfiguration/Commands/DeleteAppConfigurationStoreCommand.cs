@@ -16,7 +16,7 @@ internal sealed class DeleteAppConfigurationStoreCommand(HttpClient httpClient, 
     protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.AppConfiguration/configurationStores/{settings.Name}";
-        if (!await DeleteAsync(url)) return 1;
+        if (!await DeleteAsync(url, cancellationToken)) return 1;
         AnsiConsole.WriteLine($"App Configuration store '{settings.Name}' deleted.");
         return 0;
     }

@@ -21,7 +21,7 @@ internal sealed class CreateAppConfigurationStoreCommand(HttpClient httpClient, 
             location = settings.Location,
             sku = settings.Sku == null ? null : new { name = settings.Sku },
             properties = new { publicNetworkAccess = "Enabled" }
-        });
+        }, cancellationToken);
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
         return 0;
