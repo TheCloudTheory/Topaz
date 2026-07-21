@@ -128,6 +128,8 @@ jobs:
             - 'sdk/python/**'
           nodejs:
             - 'Topaz.Tests.NodeJS/**'
+          java:
+            - 'Topaz.Tests.Legacy.Java/**'
           managementgroup:
             - 'Services/Topaz.Service.ManagementGroup/**'
           sql:
@@ -154,6 +156,7 @@ jobs:
           echo "py_skip=false" >> "$GITHUB_OUTPUT"
           echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
           echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
+          echo "java_skip=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -180,6 +183,11 @@ jobs:
             echo "nodejs_skip=true" >> "$GITHUB_OUTPUT"
             echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
           fi
+          if [[ "${{ steps.changes.outputs.java }}" == "true" || "${{ steps.changes.outputs.storage }}" == "true" ]]; then
+            echo "java_skip=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "java_skip=true" >> "$GITHUB_OUTPUT"
+          fi
           exit 0
         fi
 
@@ -196,6 +204,7 @@ jobs:
           echo "py_skip=false" >> "$GITHUB_OUTPUT"
           echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
           echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
+          echo "java_skip=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -322,6 +331,13 @@ jobs:
 
         fi
 
+        # Java legacy tests: triggered by storage or java test file changes
+        if [[ "${{ steps.changes.outputs.java }}" == "true" || "${{ steps.changes.outputs.storage }}" == "true" ]]; then
+          echo "java_skip=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "java_skip=true" >> "$GITHUB_OUTPUT"
+        fi
+
         # Build NodeJS test filter
         NODEJS_PARTS=()
         [[ "${{ steps.changes.outputs.servicebus }}" == "true" ]] && NODEJS_PARTS+=("FullyQualifiedName~NodeJS_ServiceBus")
@@ -344,7 +360,7 @@ jobs:
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true'
       run: |
         FILTER="${{ steps.test_filter.outputs.filter }}"
-        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell&FullyQualifiedName!~Topaz.Tests.AzureCLI&FullyQualifiedName!~Topaz.Tests.Python&FullyQualifiedName!~Topaz.Tests.NodeJS&FullyQualifiedName!~Topaz.Example"
+        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell&FullyQualifiedName!~Topaz.Tests.AzureCLI&FullyQualifiedName!~Topaz.Tests.Python&FullyQualifiedName!~Topaz.Tests.NodeJS&FullyQualifiedName!~Topaz.Tests.Legacy.Java&FullyQualifiedName!~Topaz.Example"
         if [[ -n "$FILTER" ]]; then
           # Apply exclusions to each OR branch individually so that & (higher precedence
           # than |) correctly scopes every branch, not just the last one.
@@ -374,6 +390,9 @@ jobs:
     - name: Build NodeJS container
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.nodejs_skip != 'true'
       run: ./scripts/build-nodejs-container.sh
+    - name: Build Java legacy test container
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.java_skip != 'true'
+      run: docker build -f Topaz.Tests.Legacy.Java/docker/Dockerfile -t topaz-java-legacy-test .
     - name: Build PowerShell container
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.ps_skip != 'true'
       run: ./scripts/build-powershell-container.sh
@@ -401,6 +420,14 @@ jobs:
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
+    - name: Java Legacy Tests
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.java_skip != 'true'
+      env:
+        TOPAZ_JAVA_TEST_IMAGE: topaz-java-legacy-test
+      run: |
+        dotnet test Topaz.Tests.Legacy.Java/Topaz.Tests.Legacy.Java.csproj -m:1 --no-build --verbosity normal --logger trx \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ github.workspace }}/TestResults
     - name: NodeJS Tests
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.nodejs_skip != 'true'
       env:

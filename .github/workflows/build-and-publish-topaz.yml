@@ -51,8 +51,17 @@ jobs:
       run: ./scripts/build-python-container.sh
     - name: Build NodeJS container
       run: ./scripts/build-nodejs-container.sh
+    - name: Build Java legacy test container
+      run: docker build -f Topaz.Tests.Legacy.Java/docker/Dockerfile -t topaz-java-legacy-test .
     - name: Test
-      run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults --filter "FullyQualifiedName!~Topaz.Example"
+      run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults --filter "FullyQualifiedName!~Topaz.Example&FullyQualifiedName!~Topaz.Tests.Legacy.Java"
+    - name: Java Legacy Tests
+      env:
+        TOPAZ_JAVA_TEST_IMAGE: topaz-java-legacy-test
+      run: |
+        dotnet test Topaz.Tests.Legacy.Java/Topaz.Tests.Legacy.Java.csproj -m:1 --no-build --verbosity normal --logger trx \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ github.workspace }}/TestResults
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
