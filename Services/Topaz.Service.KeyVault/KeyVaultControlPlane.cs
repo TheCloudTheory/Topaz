@@ -1,4 +1,3 @@
-using Azure.Core;
 using Topaz.Dns;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
@@ -29,39 +28,6 @@ internal sealed class KeyVaultControlPlane(
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
             SubscriptionControlPlane.New(eventPipeline, logger), logger),
         SubscriptionControlPlane.New(eventPipeline, logger), logger);
-    
-    public ControlPlaneOperationResult<KeyVaultResource> Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, string keyVaultName)
-    {
-        var isNameValid = CheckIfKeyVaultNameIsValid(keyVaultName);
-        if (!isNameValid)
-        {
-            return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Failed, null,
-                string.Format(InvalidVaultNameMessageTemplate, keyVaultName),
-                "VaultNameNotValid");
-        }
-        
-        var subscriptionOperation = subscriptionControlPlane.Get(subscriptionIdentifier);
-        if (subscriptionOperation.Result == OperationResult.NotFound)
-        {
-            return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Failed, null,
-                subscriptionOperation.Reason,
-                subscriptionOperation.Code);
-        }
-
-        var resourceGroupOperation = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (resourceGroupOperation.Result == OperationResult.NotFound)
-        {
-            return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Failed, null,
-                resourceGroupOperation.Reason,
-                resourceGroupOperation.Code);
-        }
-        
-        var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, location, null, KeyVaultResourceProperties.Default(keyVaultName));
-
-        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
-
-        return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Created, resource, null, null);
-    }
 
     public ControlPlaneOperationResult<KeyVaultResource> CreateOrUpdate(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, CreateOrUpdateKeyVaultRequest request)

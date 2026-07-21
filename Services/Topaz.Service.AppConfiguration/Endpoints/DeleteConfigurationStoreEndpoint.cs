@@ -45,7 +45,14 @@ internal sealed class DeleteConfigurationStoreEndpoint(Pipeline eventPipeline, I
             return;
         }
 
-        _controlPlane.Delete(sub, rg, name);
+        var result = _controlPlane.Delete(sub, rg, name);
+        if (result.Result != OperationResult.Deleted)
+        {
+            logger.LogDebug(nameof(DeleteConfigurationStoreEndpoint), nameof(GetResponse), "Error deleting configuration store.");
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+        
         response.StatusCode = HttpStatusCode.NoContent;
         response.Content = new ByteArrayContent([]);
     }

@@ -11,5 +11,6 @@ public enum OperationResult
     BadRequest,
     Conflict,
     PreconditionFailed,
-    Accepted
+    Accepted,
+    Purged
 }

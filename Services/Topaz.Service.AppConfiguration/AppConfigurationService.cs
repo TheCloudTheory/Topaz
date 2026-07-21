@@ -9,8 +9,6 @@ namespace Topaz.Service.AppConfiguration;
 
 public sealed class AppConfigurationService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
-    private readonly Pipeline _eventPipeline = eventPipeline;
-    private readonly ITopazLogger _logger = logger;
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".app-configuration");
     public static IReadOnlyCollection<string>? Subresources => ["access-keys", "kv"];
@@ -20,27 +18,26 @@ public sealed class AppConfigurationService(Pipeline eventPipeline, ITopazLogger
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new CreateOrUpdateConfigurationStoreEndpoint(_eventPipeline, _logger),
-        new GetConfigurationStoreEndpoint(_eventPipeline, _logger),
-        new DeleteConfigurationStoreEndpoint(_eventPipeline, _logger),
-        new UpdateConfigurationStoreEndpoint(_eventPipeline, _logger),
-        new ListConfigurationStoresByResourceGroupEndpoint(_eventPipeline, _logger),
-        new ListConfigurationStoresBySubscriptionEndpoint(_eventPipeline, _logger),
-        new ListKeysConfigurationStoreEndpoint(_eventPipeline, _logger),
-        new RegenerateKeyConfigurationStoreEndpoint(_eventPipeline, _logger),
-        new ListConfigurationStoreReplicasEndpoint(_eventPipeline, _logger),
-        new GetDeletedConfigurationStoreEndpoint(),
-        // Data-plane
-        new ListKeyValuesEndpoint(_eventPipeline, _logger),
-        new GetKeyValueEndpoint(_eventPipeline, _logger),
-        new SetKeyValueEndpoint(_eventPipeline, _logger),
-        new DeleteKeyValueEndpoint(_eventPipeline, _logger),
-        new ListLabelsEndpoint(_eventPipeline, _logger),
-        new GetRevisionsEndpoint(_eventPipeline, _logger),
-        new LockKeyValueEndpoint(_eventPipeline, _logger),
-        new UnlockKeyValueEndpoint(_eventPipeline, _logger),
+        new CreateOrUpdateConfigurationStoreEndpoint(eventPipeline, logger),
+        new GetConfigurationStoreEndpoint(eventPipeline, logger),
+        new DeleteConfigurationStoreEndpoint(eventPipeline, logger),
+        new UpdateConfigurationStoreEndpoint(eventPipeline, logger),
+        new ListConfigurationStoresByResourceGroupEndpoint(eventPipeline, logger),
+        new ListConfigurationStoresBySubscriptionEndpoint(eventPipeline, logger),
+        new ListKeysConfigurationStoreEndpoint(eventPipeline, logger),
+        new RegenerateKeyConfigurationStoreEndpoint(eventPipeline, logger),
+        new ListConfigurationStoreReplicasEndpoint(eventPipeline, logger),
+        new PurgeConfigurationStoreEndpoint(eventPipeline, logger),
+        new ListDeletedStoresEndpoint(eventPipeline, logger),
+        new GetDeletedStoreEndpoint(eventPipeline, logger),
+        new ListKeyValuesEndpoint(eventPipeline, logger),
+        new GetKeyValueEndpoint(eventPipeline, logger),
+        new SetKeyValueEndpoint(eventPipeline, logger),
+        new DeleteKeyValueEndpoint(eventPipeline, logger),
+        new ListLabelsEndpoint(eventPipeline, logger),
+        new GetRevisionsEndpoint(eventPipeline, logger),
+        new LockKeyValueEndpoint(eventPipeline, logger),
+        new UnlockKeyValueEndpoint(eventPipeline, logger),
     ];
-
-    public void Bootstrap() { }
 }
 

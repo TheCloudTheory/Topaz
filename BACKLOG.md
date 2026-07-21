@@ -538,6 +538,27 @@ TODO: Azure Event Grid: MCP provisioning tool
 ### App Configuration — advanced data plane features
 
 <!--
+TODO: App Configuration: Retention period support
+  Honor the softDeleteRetentionInDays property (1–7 days) set on the store during CREATE or UPDATE.
+  Store the value in AppConfigurationResourceProperties and surface it in GET responses.
+  During soft-delete, use the configured retention period to set the scheduled purge date returned
+  in the deleted store resource (deletedDate + retentionInDays → scheduledPurgeDate).
+  milestone: future
+  labels: enhancement, app-configuration
+-->
+
+<!--
+TODO: App Configuration: Purge protection support
+  Implement enablePurgeProtection on the store resource. When true:
+  - Prevent immediate purge via POST .../deletedConfigurationStores/{name}/purge (return 409 Conflict).
+  - Prevent disabling soft-delete or shortening the retention period (return 400 Bad Request).
+  - Surface purgeProtectionEnabled in GET responses.
+  - Once enabled, purge protection cannot be disabled (match Azure behaviour).
+  milestone: future
+  labels: enhancement, app-configuration
+-->
+
+<!--
 TODO: App Configuration: Snapshots API
   Implement PUT/GET/DELETE /snapshots/{name} — capture a point-in-time copy of key-values matching
   a filter; archiveSnapshot and recoverSnapshot transitions; snapshot status (provisioning → ready /

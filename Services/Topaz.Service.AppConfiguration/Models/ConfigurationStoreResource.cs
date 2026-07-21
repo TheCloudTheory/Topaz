@@ -1,13 +1,10 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using Azure.Core;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.AppConfiguration.Models;
 
-public sealed class ConfigurationStoreResource : ArmResource<ConfigurationStoreResourceProperties>
+public class ConfigurationStoreResource : ArmResource<ConfigurationStoreResourceProperties>
 {
     [JsonConstructor]
 #pragma warning disable CS8618

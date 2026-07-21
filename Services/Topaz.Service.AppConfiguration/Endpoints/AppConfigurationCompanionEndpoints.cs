@@ -45,31 +45,10 @@ internal sealed class ListConfigurationStoreReplicasEndpoint(Pipeline eventPipel
     }
 }
 
-internal sealed class GetDeletedConfigurationStoreEndpoint : IEndpointDefinition
-{
-    public string? ProviderNamespace => "Microsoft.AppConfiguration";
-
-    public string[] Endpoints =>
-    [
-        "GET /subscriptions/{subscriptionId}/providers/Microsoft.AppConfiguration/locations/{location}/deletedConfigurationStores/{configStoreName}"
-    ];
-
-    public string[] Permissions => ["Microsoft.AppConfiguration/locations/deletedConfigurationStores/read"];
-
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
-
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
-    {
-        // Topaz does not emulate soft-delete — always return 404.
-        response.StatusCode = HttpStatusCode.NotFound;
-    }
-}
-
 internal sealed class EmptyListResponse
 {
     public object[] Value { get; set; } = [];
 
     public override string ToString() =>
-        JsonSerializer.Serialize(this, Topaz.Shared.GlobalSettings.JsonOptions);
+        JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
 }
