@@ -3,8 +3,8 @@ using Azure.Core;
 using Azure.Data.Tables;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Storage.Models;
-using DotNet.Testcontainers.Builders;
 using Microsoft.AspNetCore.Mvc;
+using Testcontainers.Topaz;
 using Topaz.AspNetCore.Extensions;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -16,19 +16,11 @@ var storageAccountName = builder.Configuration["Azure:StorageAccountName"]!;
 
 if (builder.Environment.IsDevelopment())
 {
-    var container = new ContainerBuilder("thecloudtheory/topaz-host:v1.0.468-alpha")
-        .WithPortBinding(8890)
-        .WithPortBinding(8899)
-        .WithPortBinding(8898)
-        .WithPortBinding(8897)
-        .WithPortBinding(8891)
-        .WithName("topaz.local.dev")
-        .WithCommand("start", "--log-level", "Debug")
-        .Build();
+    var container = new TopazBuilder().Build();
 
     await container.StartAsync()
         .ConfigureAwait(false);
-
+    
     await Task.Delay(5000);
 
     var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
