@@ -18,6 +18,7 @@ public class AppConfigurationReplicaTests
     private const string SubscriptionName = "sub-e2e-appconfig-replica";
     private const string ResourceGroupName = "rg-e2e-appconfig-replica";
     private const string StoreName = "e2e-appconfig-replica-store";
+    private const string StoreNameFree = "e2e-appconfig-replica-store-free";
 
     [SetUp]
     public async Task SetUp()
@@ -30,7 +31,7 @@ public class AppConfigurationReplicaTests
         var client = CreateClient();
         var rg = await GetResourceGroup(client);
         await rg.GetAppConfigurationStores()
-            .CreateOrUpdateAsync(WaitUntil.Completed, StoreName, new AppConfigurationStoreData(AzureLocation.WestEurope, new AppConfigurationSku("free")));
+            .CreateOrUpdateAsync(WaitUntil.Completed, StoreName, new AppConfigurationStoreData(AzureLocation.WestEurope, new AppConfigurationSku("Standard")));
     }
 
     [TearDown]
@@ -68,13 +69,13 @@ public class AppConfigurationReplicaTests
             .CreateOrUpdateAsync(WaitUntil.Completed, replicaName, ReplicaData());
 
         var replica = result.Value;
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(replica.Data.Name, Is.EqualTo(replicaName));
             Assert.That(replica.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.AppConfiguration/configurationStores/replicas")));
             Assert.That(replica.Data.Location.ToString(), Is.EqualTo("northeurope").IgnoreCase);
             Assert.That(replica.Data.ProvisioningState.ToString(), Is.EqualTo("Succeeded").IgnoreCase);
-        });
+        }
     }
 
     [Test]
@@ -125,10 +126,24 @@ public class AppConfigurationReplicaTests
         await foreach (var replica in store.GetAppConfigurationReplicas().GetAllAsync())
             replicas.Add(replica.Data.Name);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(replicas, Does.Contain("listreplicaa"));
             Assert.That(replicas, Does.Contain("listreplicab"));
-        });
+        }
+    }
+
+    [Test]
+    public async Task AppConfigurationReplica_Create_FailsWhenNonStandardSkuSelected()
+    {
+        var client = CreateClient();
+        var rg = await GetResourceGroup(client);
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, StoreNameFree, new AppConfigurationStoreData(AzureLocation.WestEurope, new AppConfigurationSku("Free")));
+        var store = (await rg.GetAppConfigurationStores().GetAsync(StoreNameFree)).Value;
+        const string replicaName = "freereplica";
+        
+        Assert.That(async () => await store.GetAppConfigurationReplicas()
+            .CreateOrUpdateAsync(WaitUntil.Completed, replicaName, ReplicaData()), Throws.InstanceOf<RequestFailedException>());
     }
 }
