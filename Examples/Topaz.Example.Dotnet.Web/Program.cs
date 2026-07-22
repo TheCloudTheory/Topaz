@@ -1,6 +1,8 @@
 using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
+using Azure.ResourceManager.AppConfiguration;
+using Azure.ResourceManager.AppConfiguration.Models;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Storage.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -27,21 +29,30 @@ if (builder.Environment.IsDevelopment())
     var subscriptionId = Guid.NewGuid();
     const string resourceGroupName = "rg-topaz-webapp-example";
 
+    var resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
+    const string storeName = "topazstore";
+    
     await builder.Configuration.AddTopaz(subscriptionId, Globals.GlobalAdminId)
         .AddSubscription(subscriptionId, "topaz-webapp-example", credentials)
         .AddResourceGroup(subscriptionId, resourceGroupName, AzureLocation.WestEurope)
-        .AddStorageAccount(ResourceGroupIdentifier.From(resourceGroupName), storageAccountName,
+        .AddStorageAccount(resourceGroupIdentifier, storageAccountName,
             new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs), StorageKind.StorageV2,
                 AzureLocation.WestEurope))
-        .AddKeyVault(ResourceGroupIdentifier.From(resourceGroupName), keyVaultName,
+        .AddKeyVault(resourceGroupIdentifier, keyVaultName,
             new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
                 new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))),
             secrets: new Dictionary<string, string>
             {
                 { "secrets-generic-secret", "This is just example secret!" }
             }, Globals.GlobalAdminId)
-        .AddStorageAccountConnectionStringAsSecret(ResourceGroupIdentifier.From(resourceGroupName), storageAccountName, keyVaultName,
-            "connectionstring-storageaccount", Globals.GlobalAdminId);
+        .AddStorageAccountConnectionStringAsSecret(resourceGroupIdentifier, storageAccountName, keyVaultName,
+            "connectionstring-storageaccount", Globals.GlobalAdminId)
+        .AddConfigurationStore(resourceGroupIdentifier, storeName,
+            new AppConfigurationStoreData(AzureLocation.WestEurope, new AppConfigurationSku("Standard")))
+        .AddConfigurationStoreReplica(resourceGroupIdentifier, storeName, "ne", new AppConfigurationReplicaData()
+        {
+            Location = AzureLocation.NorthEurope
+        });
 }
 
 builder.Services.AddEndpointsApiExplorer();
