@@ -17,7 +17,7 @@ internal sealed class DeleteReplicaEndpoint(Pipeline eventPipeline, ITopazLogger
     
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppConfiguration/configurationStores/{configStoreName}/replicas/{replicaName}"
+        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppConfiguration/configurationStores/{configStoreName}/replicas/{replicaName}"
     ];
 
     public string[] Permissions => ["Microsoft.AppConfiguration/configurationStores/replicas/delete"];

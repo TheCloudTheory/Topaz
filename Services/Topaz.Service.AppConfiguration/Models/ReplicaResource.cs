@@ -18,12 +18,13 @@ internal sealed partial class ReplicaResource : ArmResource<ReplicaResourcePrope
     public ReplicaResource(
         SubscriptionIdentifier subscriptionId,
         ResourceGroupIdentifier resourceGroup,
+        string storeName,
         string name,
         string location,
         IDictionary<string, string>? tags,
         ReplicaResourceProperties properties)
     {
-        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.AppConfiguration/configurationStores/{name}";
+        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.AppConfiguration/configurationStores/{storeName}/replicas/{name}";
         Name = name;
         Location = location;
         Tags = tags ?? new Dictionary<string, string>();
