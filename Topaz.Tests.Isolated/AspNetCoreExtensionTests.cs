@@ -3,6 +3,8 @@ using Azure.Core;
 using Azure.Data.Tables;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault.Models;
+using Azure.ResourceManager.AppConfiguration;
+using Azure.ResourceManager.AppConfiguration.Models;
 using Azure.ResourceManager.ServiceBus;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
@@ -32,6 +34,8 @@ public class AspNetCoreExtensionTests
     private const string ServiceBusNamespaceName = "sb-test";
     private const string ServiceBusQueueName = "sb-queue-test";
     private const string ServiceBusTopicName = "sb-topic-test";
+    private const string AppConfigStoreName = "appconfig-test";
+    private const string AppConfigReplicaName = "appconfigreplicatest";
 
     private IContainer? _container;
 
@@ -192,6 +196,64 @@ public class AspNetCoreExtensionTests
         Assert.That(topic.Value.Data.Name, Is.EqualTo(ServiceBusTopicName));
     }
     
+    [Test]
+    public async Task WhenAppConfigurationStoreIsCreated_ItMustBeAvailable()
+    {
+        // Arrange
+        var builder = new ConfigurationBuilder();
+        var objectId = Globals.GlobalAdminId;
+        var credentials = new AzureLocalCredential(objectId);
+        var subscriptionId = Guid.NewGuid();
+
+        // Act
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, SubscriptionName, credentials)
+            .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
+            .AddConfigurationStore(ResourceGroupIdentifier.From(ResourceGroupName), AppConfigStoreName,
+                new AppConfigurationStoreData(AzureLocation.WestEurope, new AppConfigurationSku("Standard")));
+
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var store = await resourceGroup.Value.GetAppConfigurationStoreAsync(AppConfigStoreName);
+
+        // Assert
+        Assert.That(store, Is.Not.Null);
+        Assert.That(store.Value, Is.Not.Null);
+        Assert.That(store.Value.Data.Name, Is.EqualTo(AppConfigStoreName));
+    }
+
+    [Test]
+    public async Task WhenAppConfigurationStoreReplicaIsCreated_ItMustBeAvailable()
+    {
+        // Arrange
+        const string storeName = "appconfigtest2";
+        var builder = new ConfigurationBuilder();
+        var objectId = Globals.GlobalAdminId;
+        var credentials = new AzureLocalCredential(objectId);
+        var subscriptionId = Guid.NewGuid();
+
+        // Act
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, SubscriptionName, credentials)
+            .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
+            .AddConfigurationStore(ResourceGroupIdentifier.From(ResourceGroupName), storeName,
+                new AppConfigurationStoreData(AzureLocation.WestEurope, new AppConfigurationSku("Standard")))
+            .AddConfigurationStoreReplica(ResourceGroupIdentifier.From(ResourceGroupName), storeName,
+                AppConfigReplicaName, new AppConfigurationReplicaData { Location = AzureLocation.NorthEurope });
+
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var store = await resourceGroup.Value.GetAppConfigurationStoreAsync(storeName);
+        var replica = await store.Value.GetAppConfigurationReplicaAsync(AppConfigReplicaName);
+
+        // Assert
+        Assert.That(replica, Is.Not.Null);
+        Assert.That(replica.Value, Is.Not.Null);
+        Assert.That(replica.Value.Data.Name, Is.EqualTo(AppConfigReplicaName));
+    }
+
     [Test]
     public async Task WhenStorageAccountIsCreated_TableCanBeCreatedAndIsAvailable()
     {
