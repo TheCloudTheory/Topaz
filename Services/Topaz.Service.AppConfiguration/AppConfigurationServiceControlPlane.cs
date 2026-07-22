@@ -22,6 +22,7 @@ internal sealed class AppConfigurationServiceControlPlane(
     private const string AccessKeysSubresource = "access-keys";
     private const string AccessKeysId = "keys";
     private const string KvSubresource = "kv";
+    private const string ReplicaSubresource = "replicas";
 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
@@ -370,5 +371,82 @@ internal sealed class AppConfigurationServiceControlPlane(
             .Where(store => GlobalDnsEntries.IsSoftDeleted(AppConfigurationService.UniqueName, store.Name)).ToArray();
         
         return new ControlPlaneOperationResult<ConfigurationStoreFullResource[]?>(OperationResult.Success, deletedStores, null, null);
+    }
+
+    public ControlPlaneOperationResult<ReplicaResource?> CreateReplica(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string replicaName, string location)
+    {
+        var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
+        if (store.Resource == null)
+        {
+            return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.NotFound, null, $"Store {storeName} not found", "StoreNotFound");
+        }
+        
+        logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(CreateReplica), "Creating replica {0} for store {1}", replicaName, storeName);
+        
+        var replica = new ReplicaResource(subscriptionIdentifier, resourceGroupIdentifier, replicaName, location, null, ReplicaResourceProperties.From(replicaName, store.Resource));
+        var (isValid, validationError) = replica.Validate();
+        if (!isValid)
+        {
+            return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Failed, null, validationError,
+                "InvalidReplicaName");
+        }
+        
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, replicaName, storeName, ReplicaSubresource, replica);
+        return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Created, replica, null, null);
+    }
+
+    public ControlPlaneOperationResult<ReplicaResource?> GetReplica(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string replicaName)
+    {
+        var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
+        if (store.Resource == null)
+        {
+            return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.NotFound, null,
+                $"Store {storeName} not found", "StoreNotFound");
+        }
+
+        var replica = provider.GetSubresourceAs<ReplicaResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            replicaName, storeName, ReplicaSubresource);
+        
+        logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(GetReplica), $"Loaded replica {replica?.Id} for store {storeName}");
+        
+        return replica == null
+            ? new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.NotFound, null,
+                $"Replica {replicaName} not found", "ReplicaNotFound")
+            : new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Success, replica, null, null);
+    }
+
+    public ControlPlaneOperationResult DeleteReplica(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string replicaName)
+    {
+        var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
+        if (store.Resource == null)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, $"Store {storeName} not found", "StoreNotFound");
+        }
+
+        var replica = provider.GetSubresourceAs<ReplicaResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            replicaName, storeName, ReplicaSubresource);
+        
+        logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(GetReplica), $"Loaded replica {replica?.Id} for store {storeName}");
+
+        if (replica == null)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, $"Replica {replicaName} not found", "ReplicaNotFound");
+        }
+        
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, replicaName, storeName, ReplicaSubresource);
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<ReplicaResource[]?> ListReplicas(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storeName)
+    {
+        var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
+        if (store.Resource == null)
+        {
+            return new ControlPlaneOperationResult<ReplicaResource[]?>(OperationResult.NotFound, null, $"Store {storeName} not found", "StoreNotFound");
+        }
+        
+        var replicas = provider.ListSubresourcesAs<ReplicaResource>(subscriptionIdentifier, resourceGroupIdentifier, storeName, ReplicaSubresource);
+        return new ControlPlaneOperationResult<ReplicaResource[]?>(OperationResult.Success, replicas, null, null);
     }
 }
