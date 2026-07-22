@@ -72,16 +72,6 @@ TODO: Blob Storage: WASB legacy SDK — fix Get Container Properties response he
 -->
 
 <!--
-TODO: App Configuration: Replicas companion endpoint
-  The azurerm Terraform provider calls GET .../configurationStores/{name}/replicas after
-  creation. Add a stub endpoint that returns {"value":[]} (Topaz does not emulate replicas).
-  Endpoint:
-  - GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores/{name}/replicas
-  milestone: v1.10-preview
-  labels: enhancement, app-configuration
--->
-
-<!--
 TODO: Azure API Management: New service project scaffold
   Create Topaz.Service.ApiManagement following existing service conventions:
   - ApiManagementServiceResourceProperties + ApiManagementServiceResource (ArmResource<T>)

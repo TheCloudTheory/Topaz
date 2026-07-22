@@ -33,10 +33,10 @@ This page tracks which Azure App Configuration REST API operations are implement
 | List Keys | ✅ | |
 | Regenerate Key | ✅ | |
 | Check Name Availability | ❌ | |
-| List Replicas | ❌ | |
-| Create Replica | ❌ | |
-| Delete Replica | ❌ | |
-| Get Replica | ❌ | |
+| List Replicas | ✅ | |
+| Create Replica | ✅ | |
+| Delete Replica | ✅ | |
+| Get Replica | ✅ | |
 
 ### Deleted Stores
 
