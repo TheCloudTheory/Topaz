@@ -33,7 +33,8 @@ public class AppConfigurationReplicaTests
             "--name", StoreName,
             "--resource-group", ResourceGroupName,
             "--location", "westeurope",
-            "--subscription-id", SubscriptionId.ToString()
+            "--subscription-id", SubscriptionId.ToString(),
+            "--sku", "Standard"
         ]);
     }
 
