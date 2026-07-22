@@ -18,7 +18,7 @@ var storageAccountName = builder.Configuration["Azure:StorageAccountName"]!;
 
 if (builder.Environment.IsDevelopment())
 {
-    var container = new TopazBuilder().Build();
+    var container = new TopazBuilder(useNightlyImage: true).Build();
 
     await container.StartAsync()
         .ConfigureAwait(false);
