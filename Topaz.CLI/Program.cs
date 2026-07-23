@@ -160,7 +160,8 @@ internal class Program
             typeof(GenericLoadBalancerCommand),
             typeof(GenericFinOpsCommand),
             typeof(GenericChaosCommand),
-            typeof(GenericInsightsCommand)
+            typeof(GenericInsightsCommand),
+            typeof(GenericPublicIpAddressCommand)
         };
 
         var commands = Assembly.GetExecutingAssembly()

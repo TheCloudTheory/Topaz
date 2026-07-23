@@ -1,5 +1,6 @@
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.Service.VirtualNetwork.Commands.PrivateEndpoints;
 using Topaz.Service.VirtualNetwork.Commands.Subnets;
 
 namespace Topaz.Service.VirtualNetwork.Commands;
@@ -21,6 +22,14 @@ public sealed class GenericVirtualNetworkCommand : IEmulatorCommand
                 subnet.AddCommand<GetSubnetCommand>("show");
                 subnet.AddCommand<ListSubnetsCommand>("list");
                 subnet.AddCommand<DeleteSubnetCommand>("delete");
+            });
+            vnet.AddBranch("private-endpoint", subnet =>
+            {
+                subnet.AddCommand<CreateOrUpdatePrivateEndpointCommand>("create");
+                subnet.AddCommand<GetPrivateEndpointCommand>("show");
+                subnet.AddCommand<ListPrivateEndpointsByResourceGroupCommand>("list");
+                subnet.AddCommand<ListPrivateEndpointsBySubscriptionCommand>("list-by-subscription");
+                subnet.AddCommand<DeletePrivateEndpointCommand>("delete");
             });
         });
     }
