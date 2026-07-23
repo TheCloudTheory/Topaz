@@ -216,8 +216,13 @@ public class AppConfigurationTests
             keys.Add(key);
 
         var connectionString = keys.Single(k => k.Id == "Primary").ConnectionString!;
-        var options = new ConfigurationClientOptions();
-        options.Retry.MaxRetries = 0;
+        var options = new ConfigurationClientOptions
+        {
+            Retry =
+            {
+                MaxRetries = 0
+            }
+        };
         return new ConfigurationClient(connectionString, options);
     }
 
@@ -236,11 +241,11 @@ public class AppConfigurationTests
 
         var retrieved = (await configClient.GetConfigurationSettingAsync("MyApp:FontSize")).Value;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(retrieved.Key, Is.EqualTo("MyApp:FontSize"));
             Assert.That(retrieved.Value, Is.EqualTo("16"));
-        });
+        }
     }
 
     [Test]

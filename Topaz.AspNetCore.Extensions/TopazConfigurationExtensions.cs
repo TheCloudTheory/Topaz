@@ -1,6 +1,8 @@
 using Azure;
 using Azure.Core;
+using Azure.Data.AppConfiguration;
 using Azure.ResourceManager.AppConfiguration;
+using Azure.ResourceManager.AppConfiguration.Models;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Resources;
@@ -276,6 +278,40 @@ public static class TopazConfigurationExtensions
             _ = await store.Value.GetAppConfigurationReplicas()
                 .CreateOrUpdateAsync(WaitUntil.Completed, replicaName, data);
             
+            return concrete;
+        }
+
+        /// <summary>
+        /// Adds or updates a key-value setting in the specified Azure App Configuration store.
+        /// </summary>
+        /// <param name="resourceGroupIdentifier">The resource group containing the App Configuration store.</param>
+        /// <param name="storeName">The name of the App Configuration store.</param>
+        /// <param name="keyName">The key of the configuration setting to add or update.</param>
+        /// <param name="value">The value of the configuration setting.</param>
+        /// <param name="label">An optional label to associate with the configuration setting.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
+        public async Task<TopazEnvironmentBuilder> AddKeyValuesToStore(
+            ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string keyName, string value, string? label = null)
+        {
+            var concrete = await builder;
+            var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
+            var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
+            var store = await resourceGroup.Value.GetAppConfigurationStoreAsync(storeName);
+            
+            var keys = new List<AppConfigurationStoreApiKey>();
+            await foreach (var key in store.Value.GetKeysAsync())
+                keys.Add(key);
+            var connectionString = keys.Single(k => k.Id == "Primary").ConnectionString!;
+            var options = new ConfigurationClientOptions
+            {
+                Retry =
+                {
+                    MaxRetries = 0
+                }
+            };
+            var configurationClient = new ConfigurationClient(connectionString, options);
+
+            _ = await configurationClient.SetConfigurationSettingAsync(keyName, value, label);
             return concrete;
         }
     }

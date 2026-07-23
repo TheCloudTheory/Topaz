@@ -1,5 +1,6 @@
 using System.Text;
 using Azure.Core;
+using Azure.Data.AppConfiguration;
 using Azure.Data.Tables;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault.Models;
@@ -49,6 +50,7 @@ public class AspNetCoreExtensionTests
             .WithPortBinding(8898)
             .WithPortBinding(8897)
             .WithPortBinding(8891)
+            .WithPortBinding(8893)
             .WithName("topaz.local.dev")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
@@ -252,6 +254,44 @@ public class AspNetCoreExtensionTests
         Assert.That(replica, Is.Not.Null);
         Assert.That(replica.Value, Is.Not.Null);
         Assert.That(replica.Value.Data.Name, Is.EqualTo(AppConfigReplicaName));
+    }
+
+    [Test]
+    public async Task WhenKeyValueIsAddedToAppConfigurationStore_ItMustBeAvailable()
+    {
+        // Arrange
+        const string storeName = "appconfigtest3";
+        const string keyName = "MyApp:Setting";
+        const string keyValue = "hello-topaz";
+        const string label = "test";
+        var builder = new ConfigurationBuilder();
+        var objectId = Globals.GlobalAdminId;
+        var credentials = new AzureLocalCredential(objectId);
+        var subscriptionId = Guid.NewGuid();
+
+        // Act
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, SubscriptionName, credentials)
+            .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
+            .AddConfigurationStore(ResourceGroupIdentifier.From(ResourceGroupName), storeName,
+                new AppConfigurationStoreData(AzureLocation.WestEurope, new AppConfigurationSku("Standard")))
+            .AddKeyValuesToStore(ResourceGroupIdentifier.From(ResourceGroupName), storeName, keyName, keyValue, label);
+
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var store = await resourceGroup.Value.GetAppConfigurationStoreAsync(storeName);
+        var keys = new List<AppConfigurationStoreApiKey>();
+        await foreach (var key in store.Value.GetKeysAsync())
+            keys.Add(key);
+        var connectionString = keys.Single(k => k.Id == "Primary").ConnectionString!;
+        var configClient = new ConfigurationClient(connectionString, new ConfigurationClientOptions { Retry = { MaxRetries = 0 } });
+        var setting = await configClient.GetConfigurationSettingAsync(keyName, label);
+
+        // Assert
+        Assert.That(setting, Is.Not.Null);
+        Assert.That(setting.Value, Is.Not.Null);
+        Assert.That(setting.Value.Value, Is.EqualTo(keyValue));
     }
 
     [Test]

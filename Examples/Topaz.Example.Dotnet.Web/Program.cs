@@ -1,6 +1,7 @@
 using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
+using Azure.Identity;
 using Azure.ResourceManager.AppConfiguration;
 using Azure.ResourceManager.AppConfiguration.Models;
 using Azure.ResourceManager.KeyVault.Models;
@@ -12,13 +13,17 @@ using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
 
+TopazContainer? container = null;
+
 var builder = WebApplication.CreateBuilder(args);
 var keyVaultName = builder.Configuration["Azure:KeyVaultName"]!;
 var storageAccountName = builder.Configuration["Azure:StorageAccountName"]!;
+var storeName = builder.Configuration["Azure:StoreName"]!;
+var appConfigEndpoint = TopazResourceHelpers.GetAppConfigurationStoreEndpoint(storeName);
 
 if (builder.Environment.IsDevelopment())
 {
-    var container = new TopazBuilder(useNightlyImage: true).Build();
+    container = new TopazBuilder(useNightlyImage: true).Build();
 
     await container.StartAsync()
         .ConfigureAwait(false);
@@ -30,7 +35,6 @@ if (builder.Environment.IsDevelopment())
     const string resourceGroupName = "rg-topaz-webapp-example";
 
     var resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
-    const string storeName = "topazstore";
     
     await builder.Configuration.AddTopaz(subscriptionId, Globals.GlobalAdminId)
         .AddSubscription(subscriptionId, "topaz-webapp-example", credentials)
@@ -55,11 +59,26 @@ if (builder.Environment.IsDevelopment())
         });
 }
 
+builder.Configuration.AddAzureAppConfiguration(options =>
+{
+    options.ReplicaDiscoveryEnabled = true;
+    options.LoadBalancingEnabled = true;
+    options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential())
+        .Select("Topaz:*")
+        .ConfigureRefresh(refreshOptions =>
+        {
+            refreshOptions.RegisterAll();
+        })
+        .UseFeatureFlags();
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Configuration.AddAzureKeyVault(
     TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName), new AzureLocalCredential(Globals.GlobalAdminId));
+
+builder.Services.AddAzureAppConfiguration();
 
 var app = builder.Build();
 
@@ -119,6 +138,11 @@ app.MapGet("/todoitem", async (IConfiguration configuration) =>
     .WithOpenApi();
 
 app.Run();
+
+if (container != null)
+{
+    await container.DisposeAsync();
+}
 
 internal record ToDoItem(string? Name, string? Description = null, bool IsCompleted = false, string? CreatedBy = null);
 
