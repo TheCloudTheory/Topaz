@@ -267,35 +267,6 @@ TODO: Virtual Networks: Private Endpoint IP tracking
   labels: enhancement, virtual-network, good first issue
 -->
 
-<!--
-TODO: Private Endpoints: New service control plane
-  Implement the ARM-level PrivateEndpoint resource surface
-  (Microsoft.Network/privateEndpoints) as an extension of the existing
-  Topaz.Service.VirtualNetwork project:
-  - PrivateEndpointResourceProperties + PrivateEndpointResource (ArmResource<T>) capturing:
-    subnet (sub-resource ID reference), privateLinkServiceConnections (array with
-    privateLinkServiceId, groupIds, privateLinkServiceConnectionState),
-    networkInterfaces (list of auto-created NIC sub-resource IDs), provisioningState (always Succeeded),
-    customDnsConfigs (array of {fqdn, ipAddresses}).
-  - PrivateEndpointResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
-  - Deploy() support; register "Microsoft.Network/privateEndpoints" in
-    TemplateDeploymentOrchestrator.RouteDeployment().
-  - On creation, register the endpoint's IP (resolved from the linked subnet CIDR via
-    IpAllocationRegistry) and unregister it on deletion — satisfying the Private Endpoint
-    IP tracking backlog item from v1.7-beta.
-  Endpoints:
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/privateEndpoints/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/privateEndpoints/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/privateEndpoints/{name}  – delete
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/privateEndpoints          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Network/privateEndpoints                              – list by subscription
-  privateLinkServiceConnectionState is always set to {status: "Approved", description: "Auto-approved by Topaz"}.
-  Includes E2E SDK tests, Azure CLI tests, and Terraform tests.
-  See: https://learn.microsoft.com/en-us/rest/api/virtualnetwork/private-endpoints?view=rest-virtualnetwork-2025-05-01
-  milestone: v1.10-preview
-  labels: enhancement, virtual-network
--->
-
 ### Azure Redis Cache — initial control plane
 
 <!--

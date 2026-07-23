@@ -13,6 +13,6 @@
     <!-- Pin to a version that resolves GHSA-7j59-v9qr-6fq9 (high severity vulnerability in 1.21.3 and earlier) -->
     <PackageReference Include="Microsoft.Kiota.Abstractions" Version="1.22.2" />
     <!-- Pin to a version that resolves GHSA-37gx-xxp4-5rgx (CVE-2026-33116, high severity DoS vulnerability in 10.0.5 and earlier) -->
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.8" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.10" />
   </ItemGroup>
 </Project>
