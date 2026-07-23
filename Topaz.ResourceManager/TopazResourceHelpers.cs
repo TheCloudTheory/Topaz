@@ -135,4 +135,21 @@ public static class TopazResourceHelpers
     /// <returns>A URI string for the local Application Insights ingestion endpoint.</returns>
     public static string GetApplicationInsightsIngestionEndpoint(string componentName) =>
         $"https://{componentName}.applicationinsights.topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}";
+
+    /// <summary>
+    /// Gets the App Configuration store endpoint URI for a specified store name.
+    /// </summary>
+    /// <param name="storeName">The name of the App Configuration store.</param>
+    /// <returns>A URI string for the local App Configuration store endpoint.</returns>
+    public static string GetAppConfigurationStoreEndpoint(string storeName) =>
+        $"{GlobalSettings.GetAppConfigurationEndpoint(storeName)}";
+    
+    /// <summary>
+    /// Gets the App Configuration store replica endpoint URI for a specified store and replica name.
+    /// </summary>
+    /// <param name="storeName">The name of the App Configuration store.</param>
+    /// <param name="replicaName">The name of the replica.</param>
+    /// <returns>A URI string for the local App Configuration store replica endpoint.</returns>
+    public static string GetAppConfigurationStoreReplicaEndpoint(string storeName, string replicaName) =>
+        $"{GlobalSettings.GetAppConfigurationEndpoint($"{storeName}-{replicaName}")}";
 }
