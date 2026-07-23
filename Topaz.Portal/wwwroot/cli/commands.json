@@ -7658,6 +7658,136 @@
     ]
   },
   {
+    "name": "vnet private-endpoint create",
+    "group": "virtual-network",
+    "description": "Creates or updates a private endpoint.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) private endpoint name",
+        "required": false
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) location",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a private endpoint",
+        "command": "topaz vnet private-endpoint create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-pe\u0022 \\\n    --location \u0022eastus\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet private-endpoint delete",
+    "group": "virtual-network",
+    "description": "Deletes a private endpoint.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) private endpoint name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a private endpoint",
+        "command": "topaz vnet private-endpoint delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-pe\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet private-endpoint list",
+    "group": "virtual-network",
+    "description": "Lists private endpoints in a resource group.",
+    "options": [
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists all private endpoints in a resource group",
+        "command": "topaz vnet private-endpoint list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet private-endpoint list-by-subscription",
+    "group": "virtual-network",
+    "description": "Lists private endpoints in a subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists all private endpoints in a subscription",
+        "command": "topaz vnet private-endpoint list-by-subscription --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae"
+      }
+    ]
+  },
+  {
+    "name": "vnet private-endpoint show",
+    "group": "virtual-network",
+    "description": "Gets a private endpoint.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) private endpoint name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a private endpoint",
+        "command": "topaz vnet private-endpoint show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-pe\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
     "name": "vnet show",
     "group": "virtual-network",
     "description": "Gets an Azure Virtual Network.",
