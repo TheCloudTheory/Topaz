@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using Topaz.Service.VirtualNetwork.Models.Requests;
-using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Models;
 

@@ -4,31 +4,31 @@ using Spectre.Console.Cli;
 using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
 
-namespace Topaz.Service.VirtualNetwork.Commands;
+namespace Topaz.Service.VirtualNetwork.Commands.PrivateEndpoints;
 
 [UsedImplicitly]
-[CommandDefinition("pip show", "public-ip-address", "Gets an Azure Public IP Address.")]
-[CommandExample("Gets a Public IP Address",
-    "topaz pip show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-pip\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class GetPublicIpAddressCommand(HttpClient httpClient, DefaultsProvider provider)
-    : TopazHttpCommand<GetPublicIpAddressCommand.GetPublicIpAddressCommandSettings>(httpClient)
+[CommandDefinition("vnet private-endpoint show", "virtual-network", "Gets a private endpoint.")]
+[CommandExample("Gets a private endpoint",
+    "topaz vnet private-endpoint show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-pe\" \\\n    --resource-group \"rg-local\"")]
+internal sealed class GetPrivateEndpointCommand(HttpClient httpClient, DefaultsProvider provider)
+    : TopazHttpCommand<GetPrivateEndpointCommand.GetPrivateEndpointCommandSettings>(httpClient)
 {
-    protected override async Task<int> ExecuteAsync(CommandContext context, GetPublicIpAddressCommandSettings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetPrivateEndpointCommandSettings settings, CancellationToken cancellationToken)
     {
-        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/publicIPAddresses/{settings.Name}";
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/privateEndpoints/{settings.Name}";
         var (success, body) = await GetAsync(url);
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
         return 0;
     }
 
-    protected override ValidationResult Validate(CommandContext context, GetPublicIpAddressCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GetPrivateEndpointCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;
         settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
-            return ValidationResult.Error("Public IP address name can't be null.");
+            return ValidationResult.Error("Private endpoint name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))
             return ValidationResult.Error("Resource group name can't be null.");
         if (string.IsNullOrEmpty(settings.SubscriptionId))
@@ -37,9 +37,9 @@ internal sealed class GetPublicIpAddressCommand(HttpClient httpClient, DefaultsP
     }
 
     [UsedImplicitly]
-    public sealed class GetPublicIpAddressCommandSettings : CommandSettings
+    public sealed class GetPrivateEndpointCommandSettings : CommandSettings
     {
-        [CommandOptionDefinition("(Required) public IP address name")]
+        [CommandOptionDefinition("(Required) private endpoint name")]
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
 
