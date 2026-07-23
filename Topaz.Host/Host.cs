@@ -139,7 +139,8 @@ public class Host
             new CosmosDbService(_eventPipeline, _logger),
             new FinOpsService(_logger),
             new ChaosService(_logger),
-            new ForwardProxyService()
+            new ForwardProxyService(),
+            new PrivateEndpointService(_eventPipeline, _logger)
         };
 
         _logger.ConfigureIdFactory(idFactory);

@@ -50,6 +50,7 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
     private readonly AzureStorageControlPlane _storageControlPlane = AzureStorageControlPlane.New(logger);
     private readonly VirtualNetworkControlPlane _vnetControlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
     private readonly NetworkInterfaceControlPlane _nicControlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
+    private readonly PrivateEndpointControlPlane _peControlPlane = PrivateEndpointControlPlane.New(eventPipeline, logger);
     private readonly PublicIpAddressControlPlane _pipControlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
     private readonly ResourceGroupControlPlane _rgControlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
 
@@ -110,6 +111,7 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
         "Microsoft.Storage/storageAccounts" => Map(_storageControlPlane.ListBySubscription(sub).Resource ?? []),
         "Microsoft.Network/virtualNetworks" => Map(_vnetControlPlane.ListBySubscription(sub).Resource ?? []),
         "Microsoft.Network/networkInterfaces" => Map(_nicControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.Network/privateEndpoints" => Map(_peControlPlane.ListBySubscription(sub).Resource ?? []),
         "Microsoft.Network/publicIPAddresses" => Map(_pipControlPlane.ListBySubscription(sub).Resource ?? []),
         "Microsoft.Resources/resourceGroups" => Map(_rgControlPlane.List(sub).resources),
         _ => []
@@ -134,6 +136,7 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
         results.AddRange(Map(_storageControlPlane.ListBySubscription(sub).Resource ?? []));
         results.AddRange(Map(_vnetControlPlane.ListBySubscription(sub).Resource ?? []));
         results.AddRange(Map(_nicControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_peControlPlane.ListBySubscription(sub).Resource ?? []));
         results.AddRange(Map(_pipControlPlane.ListBySubscription(sub).Resource ?? []));
         results.AddRange(Map(_rgControlPlane.List(sub).resources));
         return [.. results];

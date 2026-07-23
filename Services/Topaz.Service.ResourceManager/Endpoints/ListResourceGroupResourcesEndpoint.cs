@@ -44,6 +44,7 @@ internal sealed class ListResourceGroupResourcesEndpoint(Pipeline eventPipeline,
     private readonly LoadBalancerControlPlane _lbControlPlane = LoadBalancerControlPlane.New(eventPipeline, logger);
     private readonly ManagedIdentityControlPlane _managedIdentityControlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
     private readonly NetworkInterfaceControlPlane _nicControlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
+    private readonly PrivateEndpointControlPlane _peControlPlane = PrivateEndpointControlPlane.New(eventPipeline, logger);
     private readonly PublicIpAddressControlPlane _pipControlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
     private readonly ServiceBusServiceControlPlane _serviceBusControlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
     private readonly SqlServiceControlPlane _sqlControlPlane = SqlServiceControlPlane.New(eventPipeline, logger);
@@ -122,6 +123,8 @@ internal sealed class ListResourceGroupResourcesEndpoint(Pipeline eventPipeline,
             Add(_managedIdentityControlPlane.ListByResourceGroup(sub, rg).Resource);
         if (resourceType == null || resourceType == "Microsoft.Network/networkInterfaces")
             Add(_nicControlPlane.ListByResourceGroup(sub, rg).Resource);
+        if (resourceType == null || resourceType == "Microsoft.Network/privateEndpoints")
+            Add(_peControlPlane.ListByResourceGroup(sub, rg).Resource);
         if (resourceType == null || resourceType == "Microsoft.Network/publicIPAddresses")
             Add(_pipControlPlane.ListByResourceGroup(sub, rg).Resource);
         if (resourceType == null || resourceType == "Microsoft.ServiceBus/namespaces")

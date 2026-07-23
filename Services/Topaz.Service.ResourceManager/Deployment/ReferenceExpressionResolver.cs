@@ -20,6 +20,7 @@ internal static class ReferenceExpressionResolver
         ["microsoft.compute/disks"]                            = ".managed-disk",
         ["microsoft.network/virtualnetworks"]                  = ".azure-virtual-network",
         ["microsoft.network/networkinterfaces"]                = ".azure-nic",
+        ["microsoft.network/privateendpoints"]                 = ".private-endpoint",
         ["microsoft.network/networksecuritygroups"]            = ".azure-nsg",
         ["microsoft.network/publicipaddresses"]                = ".azure-pip",
         ["microsoft.network/loadbalancers"]                    = ".load-balancer",

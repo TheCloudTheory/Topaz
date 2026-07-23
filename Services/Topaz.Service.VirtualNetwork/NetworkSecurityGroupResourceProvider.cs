@@ -4,4 +4,4 @@ using Topaz.Shared;
 namespace Topaz.Service.VirtualNetwork;
 
 internal sealed class NetworkSecurityGroupResourceProvider(ITopazLogger logger)
-    : ResourceProviderBase<NetworkSecurityGroupService>(logger) { }
+    : ResourceProviderBase<NetworkSecurityGroupService>(logger);

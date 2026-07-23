@@ -345,6 +345,9 @@ public sealed class TemplateDeploymentOrchestrator(
                 case "microsoft.network/networkinterfaces":
                     controlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
                     break;
+                case "microsoft.network/privateendpoints":
+                    controlPlane = PrivateEndpointControlPlane.New(eventPipeline, logger);
+                    break;
                 case "microsoft.network/publicipaddresses":
                     controlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
                     break;
