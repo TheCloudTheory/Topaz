@@ -1,7 +1,8 @@
+extern alias AzureCore;
 using Azure;
-using Azure.Core;
 using Azure.Data.Tables;
-using Azure.Identity;
+using AzureLocation = AzureCore::Azure.Core.AzureLocation;
+using ETag = AzureCore::Azure.ETag;
 using Azure.ResourceManager.AppConfiguration;
 using Azure.ResourceManager.AppConfiguration.Models;
 using Azure.ResourceManager.KeyVault.Models;
@@ -56,14 +57,16 @@ if (builder.Environment.IsDevelopment())
         .AddConfigurationStoreReplica(resourceGroupIdentifier, storeName, "ne", new AppConfigurationReplicaData()
         {
             Location = AzureLocation.NorthEurope
-        });
+        })
+        .AddKeyValuesToStore(resourceGroupIdentifier, storeName, "Topaz:numericValue", "12345")
+        .AddKeyValuesToStore(resourceGroupIdentifier, storeName, "Topaz:randomValue", Guid.NewGuid().ToString());
 }
 
 builder.Configuration.AddAzureAppConfiguration(options =>
 {
     options.ReplicaDiscoveryEnabled = true;
     options.LoadBalancingEnabled = true;
-    options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential())
+    options.Connect(new Uri(appConfigEndpoint), new Azure.Identity.DefaultAzureCredential())
         .Select("Topaz:*")
         .ConfigureRefresh(refreshOptions =>
         {
@@ -94,6 +97,14 @@ app.MapGet("/secret", ([FromQuery] string key, IConfiguration configuration) =>
         return secret;
     })
     .WithName("GetSecretValue")
+    .WithOpenApi();
+
+app.MapGet("/config", (IConfiguration configuration) =>
+    {
+        var values = configuration.GetSection("Topaz").AsEnumerable();
+        return values;
+    })
+    .WithName("GetConfigValues")
     .WithOpenApi();
 
 app.MapPost("/todoitem", async ([FromBody] ToDoItem item, IConfiguration configuration) =>
