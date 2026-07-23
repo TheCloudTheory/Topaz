@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace Topaz.Service.VirtualNetwork.Models.Requests;
 
 internal record CreateOrUpdatePrivateEndpointRequest
@@ -10,8 +8,12 @@ internal record CreateOrUpdatePrivateEndpointRequest
 
     internal class CreateOrUpdatePrivateEndpointRequestProperties
     {
-        public JsonElement? Subnet { get; init; }
-        public JsonElement? PrivateLinkServiceConnections { get; init; }
-        public JsonElement? CustomDnsConfigs { get; init; }
+        public SubnetResource? Subnet { get; init; }
+        public List<PrivateLinkServiceConnection>? PrivateLinkServiceConnections { get; init; }
+        public List<PrivateLinkServiceConnection>? ManualPrivateLinkServiceConnections { get; init; }
+        public List<CustomDnsConfigPropertiesFormat>? CustomDnsConfigs { get; init; }
+        public List<PrivateEndpointIpConfiguration>? IpConfigurations { get; init; }
+        public string? CustomNetworkInterfaceName { get; init; }
+        public List<NetworkInterfaceResource>? NetworkInterfaces { get; set; }
     }
 }

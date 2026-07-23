@@ -84,7 +84,7 @@ internal sealed class IpAllocationRegistry(VirtualNetworkResourceProvider provid
             subscriptionIdentifier, resourceGroupIdentifier, subnetName, vnetName, "subnets");
         if (subnet == null) return null;
 
-        var cidr = subnet.Properties?.AddressPrefix
+        var cidr = subnet.Properties.AddressPrefix
             ?? subnet.Properties?.AddressPrefixes?.FirstOrDefault();
         if (cidr == null) return null;
 

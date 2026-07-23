@@ -22,6 +22,9 @@ internal sealed class PrivateEndpointControlPlane(
         new(new ResourceGroupResourceProvider(logger),
             SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
+    private readonly IpAllocationRegistry _ipAllocationRegistry =
+        new(new VirtualNetworkResourceProvider(logger));
+
     public static PrivateEndpointControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new PrivateEndpointResourceProvider(logger), logger);
 
@@ -95,6 +98,10 @@ internal sealed class PrivateEndpointControlPlane(
         properties.Subnet = request.Properties?.Subnet ?? properties.Subnet;
         properties.PrivateLinkServiceConnections = request.Properties?.PrivateLinkServiceConnections ?? properties.PrivateLinkServiceConnections;
         properties.CustomDnsConfigs = request.Properties?.CustomDnsConfigs ?? properties.CustomDnsConfigs;
+        properties.IpConfigurations = request.Properties?.IpConfigurations ?? properties.IpConfigurations;
+        properties.NetworkInterfaces = request.Properties?.NetworkInterfaces ?? properties.NetworkInterfaces;
+        properties.CustomNetworkInterfaceName =  request.Properties?.CustomNetworkInterfaceName ?? properties.CustomNetworkInterfaceName;
+        properties.ManualPrivateLinkServiceConnections =  request.Properties?.ManualPrivateLinkServiceConnections ?? properties.ManualPrivateLinkServiceConnections;
 
         var resource = new PrivateEndpointResource(
             subscriptionIdentifier,
@@ -105,6 +112,21 @@ internal sealed class PrivateEndpointControlPlane(
             properties);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, resource);
+
+        foreach (var ipConfig in request.Properties?.IpConfigurations!)
+        {
+            logger.LogDebug(nameof(PrivateEndpointControlPlane), nameof(CreateOrUpdate), "Attempting to allocate IP address for Private Endpoint {0}", name);
+            
+            if (_ipAllocationRegistry.IsAllocated(subscriptionIdentifier, resourceGroupIdentifier, resource.Properties.Subnet!.GetVirtualNetworkName(),
+                    ipConfig.Properties?.PrivateIPAddress!))
+            {
+                return new ControlPlaneOperationResult<PrivateEndpointResource>(OperationResult.Failed, null,
+                    $"IP address {ipConfig.Properties?.PrivateIPAddress} is already allocated.", "IpAllocationFailed");
+            }
+            
+            logger.LogDebug(nameof(PrivateEndpointControlPlane), nameof(CreateOrUpdate), "Attempting to allocate IP address {0} for private endpoint.", ipConfig.Properties?.PrivateIPAddress);
+            _ipAllocationRegistry.Register(properties.Subnet?.Id!, ipConfig.Properties?.PrivateIPAddress!, resource.Id);
+        }
 
         var operationResult = isUpdate ? OperationResult.Updated : OperationResult.Created;
         return new ControlPlaneOperationResult<PrivateEndpointResource>(operationResult, resource, null, null);
@@ -125,6 +147,12 @@ internal sealed class PrivateEndpointControlPlane(
         }
 
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, name);
+
+        foreach (var ipConfig in resource.Properties?.IpConfigurations!)
+        {
+            _ipAllocationRegistry.Unregister(resource.Properties.Subnet!.Id, ipConfig.Properties?.PrivateIPAddress!);
+        }
+        
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 

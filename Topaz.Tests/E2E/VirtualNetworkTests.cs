@@ -1,3 +1,4 @@
+using System.Net;
 using Topaz.CLI;
 using Azure;
 using Azure.Core;
@@ -115,7 +116,7 @@ public class VirtualNetworkTests
         const string virtualNetworkName = "vnet-subnet-test";
         await resourceGroup.Value.GetVirtualNetworks()
             .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName, vnetData, CancellationToken.None);
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
 
         // Act
         var subnetData = new SubnetData { AddressPrefixes = { "10.10.1.0/24" } };
@@ -145,7 +146,7 @@ public class VirtualNetworkTests
         const string virtualNetworkName = "vnet-get-subnet-test";
         await resourceGroup.Value.GetVirtualNetworks()
             .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName, vnetData, CancellationToken.None);
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
         await vnet.GetSubnets()
             .CreateOrUpdateAsync(WaitUntil.Completed, "get-subnet", new SubnetData { AddressPrefixes = { "10.20.1.0/24" } }, CancellationToken.None);
 
@@ -170,7 +171,7 @@ public class VirtualNetworkTests
         const string virtualNetworkName = "vnet-delete-subnet-test";
         await resourceGroup.Value.GetVirtualNetworks()
             .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName, vnetData, CancellationToken.None);
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
         await vnet.GetSubnets()
             .CreateOrUpdateAsync(WaitUntil.Completed, "del-subnet", new SubnetData { AddressPrefixes = { "10.30.1.0/24" } }, CancellationToken.None);
 
@@ -184,7 +185,7 @@ public class VirtualNetworkTests
         {
             await vnet.GetSubnetAsync("del-subnet");
         }
-        catch (Azure.RequestFailedException ex) when (ex.Status == 404)
+        catch (RequestFailedException ex) when (ex.Status == 404)
         {
             notFound = true;
         }
@@ -203,7 +204,7 @@ public class VirtualNetworkTests
         const string virtualNetworkName = "vnet-list-subnets-test";
         await resourceGroup.Value.GetVirtualNetworks()
             .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName, vnetData, CancellationToken.None);
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
         await vnet.GetSubnets().CreateOrUpdateAsync(WaitUntil.Completed, "subnet-a", new SubnetData { AddressPrefixes = { "10.40.1.0/24" } }, CancellationToken.None);
         await vnet.GetSubnets().CreateOrUpdateAsync(WaitUntil.Completed, "subnet-b", new SubnetData { AddressPrefixes = { "10.40.2.0/24" } }, CancellationToken.None);
 
@@ -266,7 +267,7 @@ public class VirtualNetworkTests
                     AddressPrefixes = { "10.50.0.0/16" },
                     Subnets = { new SubnetData { Name = "checkip-subnet", AddressPrefixes = { "10.50.1.0/24" } } }
                 }, CancellationToken.None);
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
 
         // Act
         var result = await vnet.CheckIPAddressAvailabilityAsync("10.50.1.5");
@@ -291,7 +292,7 @@ public class VirtualNetworkTests
                     AddressPrefixes = { "10.51.0.0/16" },
                     Subnets = { new SubnetData { Name = "checkip-subnet2", AddressPrefixes = { "10.51.1.0/24" } } }
                 }, CancellationToken.None);
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
 
         // Act
         var result = await vnet.CheckIPAddressAvailabilityAsync("192.168.0.1");
@@ -313,7 +314,7 @@ public class VirtualNetworkTests
             .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
                 new VirtualNetworkData { AddressPrefixes = { "10.60.0.0/16" } }, CancellationToken.None);
 
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
 
         // Act
         await vnet.DeleteAsync(WaitUntil.Completed);
@@ -386,7 +387,7 @@ public class VirtualNetworkTests
             .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
                 new VirtualNetworkData { AddressPrefixes = { "10.64.0.0/16" } }, CancellationToken.None);
 
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
 
         // Act
         var tagsObject = new NetworkTagsObject();
@@ -420,7 +421,7 @@ public class VirtualNetworkTests
             .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
                 new VirtualNetworkData
                 {
-                    Location = Azure.Core.AzureLocation.WestEurope,
+                    Location = AzureLocation.WestEurope,
                     AddressPrefixes = { "10.70.0.0/16" },
                     Subnets = { new SubnetData { Name = subnetName, AddressPrefixes = { "10.70.1.0/24" } } }
                 }, CancellationToken.None);
@@ -432,7 +433,7 @@ public class VirtualNetworkTests
             .CreateOrUpdateAsync(WaitUntil.Completed, "nic-alloc-test",
                 new NetworkInterfaceData
                 {
-                    Location = Azure.Core.AzureLocation.WestEurope,
+                    Location = AzureLocation.WestEurope,
                     IPConfigurations =
                     {
                         new NetworkInterfaceIPConfigurationData
@@ -445,7 +446,7 @@ public class VirtualNetworkTests
                     }
                 }, CancellationToken.None);
 
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
 
         // Act
         var result = await vnet.CheckIPAddressAvailabilityAsync(staticIp);
@@ -470,7 +471,7 @@ public class VirtualNetworkTests
             .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
                 new VirtualNetworkData
                 {
-                    Location = Azure.Core.AzureLocation.WestEurope,
+                    Location = AzureLocation.WestEurope,
                     AddressPrefixes = { "10.71.0.0/16" },
                     Subnets = { new SubnetData { Name = subnetName, AddressPrefixes = { "10.71.1.0/24" } } }
                 }, CancellationToken.None);
@@ -482,7 +483,7 @@ public class VirtualNetworkTests
             .CreateOrUpdateAsync(WaitUntil.Completed, "nic-availlist-test",
                 new NetworkInterfaceData
                 {
-                    Location = Azure.Core.AzureLocation.WestEurope,
+                    Location = AzureLocation.WestEurope,
                     IPConfigurations =
                     {
                         new NetworkInterfaceIPConfigurationData
@@ -495,7 +496,7 @@ public class VirtualNetworkTests
                     }
                 }, CancellationToken.None);
 
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
 
         // Act — check a different IP in the same subnet
         var result = await vnet.CheckIPAddressAvailabilityAsync("10.71.1.5");
@@ -524,7 +525,7 @@ public class VirtualNetworkTests
             .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
                 new VirtualNetworkData
                 {
-                    Location = Azure.Core.AzureLocation.WestEurope,
+                    Location = AzureLocation.WestEurope,
                     AddressPrefixes = { "10.72.0.0/16" },
                     Subnets = { new SubnetData { Name = subnetName, AddressPrefixes = { "10.72.1.0/24" } } }
                 }, CancellationToken.None);
@@ -537,7 +538,7 @@ public class VirtualNetworkTests
             .CreateOrUpdateAsync(WaitUntil.Completed, "nic-dynamic-test",
                 new NetworkInterfaceData
                 {
-                    Location = Azure.Core.AzureLocation.WestEurope,
+                    Location = AzureLocation.WestEurope,
                     IPConfigurations =
                     {
                         new NetworkInterfaceIPConfigurationData
@@ -554,9 +555,180 @@ public class VirtualNetworkTests
         // Assert — IP was assigned and is now unavailable
         Assert.That(assignedIp, Is.Not.Null.And.Not.Empty, "Dynamic NIC should have an assigned IP address");
 
-        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
         var availabilityResult = await vnet.CheckIPAddressAvailabilityAsync(assignedIp!);
         Assert.That(availabilityResult.Value.Available, Is.False,
             "Dynamically assigned IP should be recorded as unavailable");
+    }
+
+    [Test]
+    public async Task VirtualNetwork_CheckIPAddressAvailability_WhenIpIsAllocatedToPrivateEndpoint_ReturnsNotAvailable()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-pe-checkip-allocated";
+        const string subnetName = "subnet-pe-alloc";
+        const string staticIp = "10.80.1.10";
+
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData
+                {
+                    Location = AzureLocation.WestEurope,
+                    AddressPrefixes = { "10.80.0.0/16" },
+                    Subnets = { new SubnetData { Name = subnetName, AddressPrefixes = { "10.80.1.0/24" } } }
+                }, CancellationToken.None);
+
+        var subnetId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}");
+
+        await resourceGroup.Value.GetPrivateEndpoints()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "pe-alloc-test",
+                new PrivateEndpointData
+                {
+                    Location = AzureLocation.WestEurope,
+                    Subnet = new SubnetData { Id = subnetId },
+                    IPConfigurations =
+                    {
+                        new PrivateEndpointIPConfiguration
+                        {
+                            Name = "ipconfig1",
+                            PrivateIPAddress = IPAddress.Parse(staticIp)
+                        }
+                    }
+                }, CancellationToken.None);
+
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
+
+        // Act
+        var result = await vnet.CheckIPAddressAvailabilityAsync(staticIp);
+
+        // Assert
+        Assert.That(result.Value.Available, Is.False);
+    }
+
+    [Test]
+    public async Task VirtualNetwork_CheckIPAddressAvailability_AfterPrivateEndpointDeleted_IPIsReleasedAndAvailableAgain()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-pe-checkip-release";
+        const string subnetName = "subnet-pe-release";
+        const string staticIp = "10.81.1.20";
+
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData
+                {
+                    Location = AzureLocation.WestEurope,
+                    AddressPrefixes = { "10.81.0.0/16" },
+                    Subnets = { new SubnetData { Name = subnetName, AddressPrefixes = { "10.81.1.0/24" } } }
+                }, CancellationToken.None);
+
+        var subnetId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}");
+
+        await resourceGroup.Value.GetPrivateEndpoints()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "pe-release-test",
+                new PrivateEndpointData
+                {
+                    Location = AzureLocation.WestEurope,
+                    Subnet = new SubnetData { Id = subnetId },
+                    IPConfigurations =
+                    {
+                        new PrivateEndpointIPConfiguration
+                        {
+                            Name = "ipconfig1",
+                            PrivateIPAddress = IPAddress.Parse(staticIp)
+                        }
+                    }
+                }, CancellationToken.None);
+
+        var vnet = (await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName)).Value;
+        var beforeDelete = await vnet.CheckIPAddressAvailabilityAsync(staticIp);
+        Assert.That(beforeDelete.Value.Available, Is.False, "IP should be unavailable while PE exists");
+
+        // Act — delete the private endpoint
+        var pe = (await resourceGroup.Value.GetPrivateEndpointAsync("pe-release-test")).Value;
+        await pe.DeleteAsync(WaitUntil.Completed);
+
+        // Assert — IP is released
+        var afterDelete = await vnet.CheckIPAddressAvailabilityAsync(staticIp);
+        Assert.That(afterDelete.Value.Available, Is.True, "IP should be available after PE is deleted");
+    }
+
+    [Test]
+    public async Task VirtualNetwork_CheckIPAddressAvailability_DuplicatePrivateEndpointIP_ReturnsConflict()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-pe-checkip-dup";
+        const string subnetName = "subnet-pe-dup";
+        const string staticIp = "10.82.1.15";
+
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData
+                {
+                    Location = AzureLocation.WestEurope,
+                    AddressPrefixes = { "10.82.0.0/16" },
+                    Subnets = { new SubnetData { Name = subnetName, AddressPrefixes = { "10.82.1.0/24" } } }
+                }, CancellationToken.None);
+
+        var subnetId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}");
+
+        await resourceGroup.Value.GetPrivateEndpoints()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "pe-dup-first",
+                new PrivateEndpointData
+                {
+                    Location = AzureLocation.WestEurope,
+                    Subnet = new SubnetData { Id = subnetId },
+                    IPConfigurations =
+                    {
+                        new PrivateEndpointIPConfiguration
+                        {
+                            Name = "ipconfig1",
+                            PrivateIPAddress = IPAddress.Parse(staticIp)
+                        }
+                    }
+                }, CancellationToken.None);
+
+        // Act — attempt to create a second PE with the same IP
+        RequestFailedException? ex = null;
+        try
+        {
+            await resourceGroup.Value.GetPrivateEndpoints()
+                .CreateOrUpdateAsync(WaitUntil.Completed, "pe-dup-second",
+                    new PrivateEndpointData
+                    {
+                        Location = AzureLocation.WestEurope,
+                        Subnet = new SubnetData { Id = subnetId },
+                        IPConfigurations =
+                        {
+                            new PrivateEndpointIPConfiguration
+                            {
+                                Name = "ipconfig1",
+                                PrivateIPAddress = IPAddress.Parse(staticIp)
+                            }
+                        }
+                    }, CancellationToken.None);
+        }
+        catch (RequestFailedException e)
+        {
+            ex = e;
+        }
+
+        // Assert
+        Assert.That(ex, Is.Not.Null, "Expected a conflict error when reusing an allocated IP");
     }
 }

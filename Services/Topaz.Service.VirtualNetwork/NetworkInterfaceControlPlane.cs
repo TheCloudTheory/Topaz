@@ -215,13 +215,12 @@ internal sealed class NetworkInterfaceControlPlane(
             else
             {
                 var assignedIp = ipAllocationRegistry.FindNextAvailableIp(subnetId);
-                if (assignedIp != null && config.Properties != null)
-                {
-                    config.Properties.PrivateIPAddress = assignedIp;
-                    config.Properties.PrivateIPAllocationMethod ??= "Dynamic";
-                    ipAllocationRegistry.Register(subnetId, assignedIp, nicId);
-                    modified = true;
-                }
+                if (assignedIp == null || config.Properties == null) continue;
+                
+                config.Properties.PrivateIPAddress = assignedIp;
+                config.Properties.PrivateIPAllocationMethod ??= "Dynamic";
+                ipAllocationRegistry.Register(subnetId, assignedIp, nicId);
+                modified = true;
             }
         }
 

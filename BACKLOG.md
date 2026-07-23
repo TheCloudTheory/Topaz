@@ -254,19 +254,6 @@ TODO: Availability Sets: New service control plane
   labels: enhancement, virtual-machine, good first issue
 -->
 
-### Private Endpoints — initial control plane
-
-<!--
-TODO: Virtual Networks: Private Endpoint IP tracking
-  Extend the IP allocation registry (introduced in v1.5-beta for NICs) to also record
-  IP addresses assigned to Private Endpoints on creation. This requires implementing the
-  Private Endpoint control plane (PUT/GET/DELETE/LIST for Microsoft.Network/privateEndpoints)
-  and hooking it into IpAllocationRegistry.Register on create and IpAllocationRegistry.Unregister
-  on delete, using the same subnetId → vnet resolution already used for NICs.
-  milestone: v1.10-preview
-  labels: enhancement, virtual-network, good first issue
--->
-
 ### Azure Redis Cache — initial control plane
 
 <!--
