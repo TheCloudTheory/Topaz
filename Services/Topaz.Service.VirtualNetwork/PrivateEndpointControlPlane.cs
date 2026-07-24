@@ -110,8 +110,6 @@ internal sealed class PrivateEndpointControlPlane(
             request.Tags ?? existing?.Tags,
             properties);
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, resource);
-
         // If IP configurations are not provided for PE, a dynamically allocated IP
         // address must be found and assigned to a NIC
         var nicName = request.Properties!.CustomNetworkInterfaceName ?? $"{name}-{Guid.NewGuid()}";
@@ -127,6 +125,8 @@ internal sealed class PrivateEndpointControlPlane(
                 return new ControlPlaneOperationResult<PrivateEndpointResource>(OperationResult.Conflict, null,
                     nicOp.Reason, nicOp.Code);
             }
+
+            UpdatePrivateEndpointNetworkInterface(request, resource, nicOp);
         }
 
         // If IP configurations are provided, we'll statically allocate 
@@ -144,10 +144,27 @@ internal sealed class PrivateEndpointControlPlane(
                 return new ControlPlaneOperationResult<PrivateEndpointResource>(OperationResult.Conflict, null,
                     nicOp.Reason, nicOp.Code);
             }
+            
+            UpdatePrivateEndpointNetworkInterface(request, resource, nicOp);
         }
+        
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, resource);
 
         var operationResult = isUpdate ? OperationResult.Updated : OperationResult.Created;
         return new ControlPlaneOperationResult<PrivateEndpointResource>(operationResult, resource, null, null);
+    }
+
+    private static void UpdatePrivateEndpointNetworkInterface(CreateOrUpdatePrivateEndpointRequest request,
+        PrivateEndpointResource resource, ControlPlaneOperationResult<NetworkInterfaceResource> nicOp)
+    {
+        if (request.Properties!.NetworkInterfaces == null)
+        {
+            resource.Properties.NetworkInterfaces = [nicOp.Resource!];
+        }
+        else if (resource.Properties.NetworkInterfaces!.All(nic => nic.Id != nicOp.Resource!.Id))
+        {
+            resource.Properties.NetworkInterfaces!.Add(nicOp.Resource!);
+        }
     }
 
     public ControlPlaneOperationResult Delete(
@@ -167,13 +184,15 @@ internal sealed class PrivateEndpointControlPlane(
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, name);
 
         // As each PE has a corresponding NIC, we need to remove it as well
-        var nicName = resource.Properties.CustomNetworkInterfaceName ?? $"{name}-{Guid.NewGuid()}";
-        var nicOpResult =
-            _networkInterfaceControlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, nicName);
-        
-        return nicOpResult.Result != OperationResult.Deleted
-            ? new ControlPlaneOperationResult(OperationResult.Failed, nicOpResult.Reason, nicOpResult.Code)
-            : new ControlPlaneOperationResult(OperationResult.Deleted);
+        foreach (var nicOpResult in resource.Properties.NetworkInterfaces!
+                     .Select(nic =>
+                         _networkInterfaceControlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier,
+                             nic.Name)).Where(nicOpResult => nicOpResult.Result != OperationResult.Deleted))
+        {
+            return new ControlPlaneOperationResult(OperationResult.Failed, nicOpResult.Reason, nicOpResult.Code);
+        }
+
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
     public ControlPlaneOperationResult<PrivateEndpointResource[]> ListByResourceGroup(
