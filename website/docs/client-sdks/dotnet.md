@@ -13,8 +13,10 @@ This guide shows you how to install and use the two NuGet packages that connect 
 |---|---|
 | [`TheCloudTheory.Topaz.Identity`](#topazidentity) | `TokenCredential` and Graph auth-provider implementations that generate tokens accepted by Topaz |
 | [`TheCloudTheory.Topaz.ResourceManager`](#topazresourcemanager) | Pre-configured ARM client options, a management HTTP client for Topaz-specific operations, and connection-string / URI helpers for every emulated service |
+| [`TheCloudTheory.Topaz.AspNetCore.Extensions`](#topazaspnetcoreextensions) | Fluent `IConfigurationBuilder` extension methods for provisioning Azure infrastructure (subscriptions, resource groups, Key Vault, Storage, Service Bus, App Configuration) at application startup |
 
 `Topaz.ResourceManager` depends on `Topaz.Identity` — installing it brings `Topaz.Identity` along automatically.
+`Topaz.AspNetCore.Extensions` depends on both `Topaz.Identity` and `Topaz.ResourceManager`.
 
 ---
 
@@ -282,6 +284,89 @@ A static class that generates service endpoint URIs and connection strings for e
 | `GetLogAnalyticsQueryEndpoint()` | `string` | Returns the Log Analytics query endpoint URI (equivalent to `api.loganalytics.io` in Azure). |
 | `GetLogAnalyticsIngestionEndpoint(string workspaceCustomerId)` | `string` | Returns the Log Analytics data collection (ingestion) endpoint URI for a workspace. Pass the workspace Customer ID (GUID) from the workspace properties. |
 | `GetApplicationInsightsIngestionEndpoint(string componentName)` | `string` | Returns the Application Insights telemetry ingestion endpoint URI for a component. |
+
+---
+
+## Topaz.AspNetCore.Extensions
+
+### Installation
+
+```bash
+dotnet add package TheCloudTheory.Topaz.AspNetCore.Extensions
+```
+
+`Topaz.Identity` and `Topaz.ResourceManager` are included automatically as transitive dependencies.
+
+### `TopazEnvironmentBuilder`
+
+A fluent builder that lets you provision Azure infrastructure at application startup by chaining extension methods on `IConfigurationBuilder`. Internally it holds a pre-configured `ArmClient` pointed at the Topaz endpoint.
+
+```csharp
+using Microsoft.Extensions.Configuration;
+using Topaz.Identity;
+using Topaz.AspNetCore.Extensions;
+
+var subscriptionId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+var credential     = new AzureLocalCredential(Globals.GlobalAdminId);
+
+await builder.Configuration
+    .AddTopaz(subscriptionId, Globals.GlobalAdminId)
+    .AddSubscription(subscriptionId, "dev-subscription", credential)
+    .AddResourceGroup(subscriptionId, "rg-example", AzureLocation.EastUS)
+    .AddKeyVault(new ResourceGroupIdentifier("rg-example"), "kv-example", kvContent,
+        secrets: new Dictionary<string, string> { ["db-password"] = "hunter2" },
+        objectId: Globals.GlobalAdminId);
+```
+
+### Extension methods
+
+#### Entry point
+
+| Method | Returns | Description |
+|---|---|---|
+| `IConfigurationBuilder.AddTopaz(Guid defaultSubscriptionId, string objectId)` | `TopazEnvironmentBuilder` | Creates a `TopazEnvironmentBuilder` for the given subscription and principal. |
+
+#### Subscriptions
+
+| Method | Returns | Description |
+|---|---|---|
+| `AddSubscription(Guid subscriptionId, string subscriptionName, AzureLocalCredential credentials)` | `Task<TopazEnvironmentBuilder>` | Creates a new subscription in Topaz. |
+
+#### Resource Groups
+
+| Method | Returns | Description |
+|---|---|---|
+| `AddResourceGroup(Guid subscriptionId, string resourceGroupName, AzureLocation location)` | `Task<TopazEnvironmentBuilder>` | Creates or updates a resource group in the specified subscription. |
+
+#### Key Vault
+
+| Method | Returns | Description |
+|---|---|---|
+| `AddKeyVault(ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, KeyVaultCreateOrUpdateContent operation)` | `Task<TopazEnvironmentBuilder>` | Creates or updates a Key Vault. |
+| `AddKeyVault(ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, KeyVaultCreateOrUpdateContent operation, IDictionary<string, string> secrets, string objectId)` | `Task<TopazEnvironmentBuilder>` | Creates or updates a Key Vault and populates it with the provided secrets. |
+
+#### Storage
+
+| Method | Returns | Description |
+|---|---|---|
+| `AddStorageAccount(ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, StorageAccountCreateOrUpdateContent operation)` | `Task<TopazEnvironmentBuilder>` | Creates or updates a Storage Account. |
+| `AddStorageAccountConnectionStringAsSecret(ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string keyVaultName, string secretName, string objectId, ushort keyIndex = 0)` | `Task<TopazEnvironmentBuilder>` | Retrieves a Storage Account key and stores its connection string as a Key Vault secret. |
+
+#### Service Bus
+
+| Method | Returns | Description |
+|---|---|---|
+| `AddServiceBusNamespace(ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, ServiceBusNamespaceData data)` | `Task<TopazEnvironmentBuilder>` | Creates or updates a Service Bus namespace. |
+| `AddServiceBusQueue(ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName, ServiceBusQueueData data)` | `Task<TopazEnvironmentBuilder>` | Creates or updates a Service Bus queue. |
+| `AddServiceBusTopic(ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, ServiceBusTopicData data)` | `Task<TopazEnvironmentBuilder>` | Creates or updates a Service Bus topic. |
+
+#### App Configuration
+
+| Method | Returns | Description |
+|---|---|---|
+| `AddConfigurationStore(ResourceGroupIdentifier resourceGroupIdentifier, string storeName, AppConfigurationStoreData data)` | `Task<TopazEnvironmentBuilder>` | Creates or updates an App Configuration store. |
+| `AddConfigurationStoreReplica(ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string replicaName, AppConfigurationReplicaData data)` | `Task<TopazEnvironmentBuilder>` | Creates or updates a replica for an existing App Configuration store. |
+| `AddKeyValuesToStore(ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string keyName, string value, string? label = null)` | `Task<TopazEnvironmentBuilder>` | Adds or updates a key-value setting in an App Configuration store. |
 
 ---
 
