@@ -108,9 +108,6 @@ internal sealed class NetworkInterfaceControlPlane(
             properties = NetworkInterfaceResourceProperties.FromRequest(request);
         }
 
-        var nicId = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/Microsoft.Network/networkInterfaces/{name}";
-        ProcessIpAllocations(nicId, properties, existing);
-
         var resource = new NetworkInterfaceResource(
             subscriptionIdentifier,
             resourceGroupIdentifier,
@@ -118,7 +115,15 @@ internal sealed class NetworkInterfaceControlPlane(
             request.Location ?? existing?.Location ?? resourceGroupOperation.Resource!.Location!,
             request.Tags ?? existing?.Tags,
             properties);
-
+        
+        var result = ProcessIpAllocations(resource, isUpdate);
+        if (!result.success)
+        {
+            logger.LogError(nameof(NetworkInterfaceControlPlane), nameof(CreateOrUpdate), "Failed to process IP allocation because of {0}", result.error);
+            return new ControlPlaneOperationResult<NetworkInterfaceResource>(OperationResult.Conflict, null, result.error,
+                "IPAllocationFailed");
+        }
+        
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, resource);
 
         var operationResult = isUpdate ? OperationResult.Updated : OperationResult.Created;
@@ -182,15 +187,16 @@ internal sealed class NetworkInterfaceControlPlane(
         return new ControlPlaneOperationResult<NetworkInterfaceResource>(OperationResult.Updated, resource, null, null);
     }
 
-    private void ProcessIpAllocations(
-        string nicId,
-        NetworkInterfaceResourceProperties properties,
-        NetworkInterfaceResource? existingNic)
+    private (bool success, string? error) ProcessIpAllocations(
+        NetworkInterfaceResource nic,
+        bool isUpdate)
     {
-        if (existingNic != null)
-            UnregisterNicIps(existingNic.Properties);
+        if (isUpdate)
+        {
+            UnregisterNicIps(nic.Properties);
+        }
 
-        var configs = properties.IpConfigurations;
+        var configs = nic.Properties.IpConfigurations;
         var modified = false;
 
         foreach (var config in configs ?? [])
@@ -206,7 +212,16 @@ internal sealed class NetworkInterfaceControlPlane(
             {
                 var staticIp = config.Properties?.PrivateIPAddress;
                 if (!string.IsNullOrEmpty(staticIp))
-                    ipAllocationRegistry.Register(subnetId, staticIp, nicId);
+                {
+                    if (ipAllocationRegistry.IsAllocated(nic.GetSubscription(), nic.GetResourceGroup(),
+                            config.Properties?.Subnet?.GetVirtualNetworkName()!, staticIp))
+                    {
+                        return (false, $"IP address {staticIp} is already allocated.");
+                    }
+                    
+                    ipAllocationRegistry.Register(subnetId, staticIp, nic.Id);
+                }
+                    
             }
             else
             {
@@ -215,13 +230,17 @@ internal sealed class NetworkInterfaceControlPlane(
                 
                 config.Properties.PrivateIPAddress = assignedIp;
                 config.Properties.PrivateIPAllocationMethod ??= "Dynamic";
-                ipAllocationRegistry.Register(subnetId, assignedIp, nicId);
+                ipAllocationRegistry.Register(subnetId, assignedIp, nic.Id);
                 modified = true;
             }
         }
 
         if (modified)
-            properties.IpConfigurations = configs;
+        {
+            nic.Properties.IpConfigurations = configs;
+        }
+            
+        return (true, null);
     }
 
     private void UnregisterNicIps(NetworkInterfaceResourceProperties properties)

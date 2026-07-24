@@ -48,15 +48,19 @@ internal sealed class CreateOrUpdatePrivateEndpointEndpoint(Pipeline eventPipeli
 
             var operation = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, request);
 
-            if (operation.Result == OperationResult.NotFound)
+            switch (operation.Result)
             {
-                response.StatusCode = HttpStatusCode.NotFound;
-                response.CreateErrorResponse(operation.Code!, operation.Reason!, HttpStatusCode.NotFound);
-                return;
+                case OperationResult.NotFound:
+                    response.CreateErrorResponse(operation.Code!, operation.Reason!, HttpStatusCode.NotFound);
+                    return;
+                case OperationResult.Conflict:
+                    response.CreateErrorResponse(operation.Code!, operation.Reason!, HttpStatusCode.Conflict);
+                    return;
+                default:
+                    response.StatusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+                    response.CreateJsonContentResponse(operation.Resource!);
+                    break;
             }
-
-            response.StatusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
-            response.CreateJsonContentResponse(operation.Resource!);
         }
         catch (Exception ex)
         {

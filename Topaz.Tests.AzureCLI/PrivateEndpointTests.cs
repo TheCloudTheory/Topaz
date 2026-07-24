@@ -92,6 +92,62 @@ public class PrivateEndpointTests : TopazFixture
     }
 
     [Test]
+    public async Task PrivateEndpoint_Create_WithoutIpConfigurations_NicShouldHaveDynamicIp()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-pe-nic-dynamic");
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-pe-nic-dynamic --resource-group rg-pe-nic-dynamic --address-prefixes 10.65.0.0/16");
+        await RunAzureCliCommand("az network vnet subnet create --vnet-name vnet-pe-nic-dynamic --name subnet-pe-nic-dynamic --address-prefixes 10.65.1.0/24 --resource-group rg-pe-nic-dynamic");
+        await RunAzureCliCommand("az storage account create --name sapenicsadyn --resource-group rg-pe-nic-dynamic --location westeurope");
+        await RunAzureCliCommand(
+            "az network private-endpoint create --name pe-nic-dynamic --resource-group rg-pe-nic-dynamic --location westeurope --vnet-name vnet-pe-nic-dynamic --subnet subnet-pe-nic-dynamic --private-connection-resource-id /subscriptions/$(az account show --query id -o tsv)/resourceGroups/rg-pe-nic-dynamic/providers/Microsoft.Storage/storageAccounts/sapenicsadyn --connection-name conn-nic-dynamic --group-id blob --nic-name nic-pe-dynamic");
+        await RunAzureCliCommand(
+            "az network nic show --name nic-pe-dynamic --resource-group rg-pe-nic-dynamic",
+            response =>
+            {
+                var ipConfigs = response["ipConfigurations"]!.AsArray();
+                Assert.That(ipConfigs, Is.Not.Null.And.Not.Empty);
+                var ip = ipConfigs[0]!["properties"]?["privateIPAddress"]?.GetValue<string>()
+                      ?? ipConfigs[0]!["privateIPAddress"]?.GetValue<string>();
+                Assert.That(ip, Does.StartWith("10.65.1."));
+            });
+    }
+
+    [Test]
+    public async Task PrivateEndpoint_Create_WithIpConfigurations_NicShouldHaveStaticIp()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-pe-nic-static");
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-pe-nic-static --resource-group rg-pe-nic-static --address-prefixes 10.66.0.0/16");
+        await RunAzureCliCommand("az network vnet subnet create --vnet-name vnet-pe-nic-static --name subnet-pe-nic-static --address-prefixes 10.66.1.0/24 --resource-group rg-pe-nic-static");
+        await RunAzureCliCommand("az storage account create --name sapenicsasta --resource-group rg-pe-nic-static --location westeurope");
+        await RunAzureCliCommand(
+            "az network private-endpoint create --name pe-nic-static --resource-group rg-pe-nic-static --location westeurope --vnet-name vnet-pe-nic-static --subnet subnet-pe-nic-static --private-connection-resource-id /subscriptions/$(az account show --query id -o tsv)/resourceGroups/rg-pe-nic-static/providers/Microsoft.Storage/storageAccounts/sapenicsasta --connection-name conn-nic-static --group-id blob --nic-name nic-pe-static --ip-configs '[{\"name\":\"ipconfig1\",\"group-id\":\"blob\",\"member-name\":\"blob\",\"private-ip-address\":\"10.66.1.20\"}]'");
+        await RunAzureCliCommand(
+            "az network nic show --name nic-pe-static --resource-group rg-pe-nic-static",
+            response =>
+            {
+                var ipConfigs = response["ipConfigurations"]!.AsArray();
+                Assert.That(ipConfigs, Is.Not.Null.And.Not.Empty);
+                var ip = ipConfigs[0]!["properties"]?["privateIPAddress"]?.GetValue<string>()
+                      ?? ipConfigs[0]!["privateIPAddress"]?.GetValue<string>();
+                Assert.That(ip, Is.EqualTo("10.66.1.20"));
+            });
+    }
+
+    [Test]
+    public async Task PrivateEndpoint_Create_WithAlreadyAllocatedStaticIp_ShouldFail()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-pe-ip-conflict");
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-pe-ip-conflict --resource-group rg-pe-ip-conflict --address-prefixes 10.67.0.0/16");
+        await RunAzureCliCommand("az network vnet subnet create --vnet-name vnet-pe-ip-conflict --name subnet-pe-ip-conflict --address-prefixes 10.67.1.0/24 --resource-group rg-pe-ip-conflict");
+        await RunAzureCliCommand("az storage account create --name sapenicsaconf --resource-group rg-pe-ip-conflict --location westeurope");
+        await RunAzureCliCommand(
+            "az network private-endpoint create --name pe-ip-conflict-1 --resource-group rg-pe-ip-conflict --location westeurope --vnet-name vnet-pe-ip-conflict --subnet subnet-pe-ip-conflict --private-connection-resource-id /subscriptions/$(az account show --query id -o tsv)/resourceGroups/rg-pe-ip-conflict/providers/Microsoft.Storage/storageAccounts/sapenicsaconf --connection-name conn-ip-conflict-1 --group-id blob --nic-name nic-pe-conflict-1 --ip-configs '[{\"name\":\"ipconfig1\",\"group-id\":\"blob\",\"member-name\":\"blob\",\"private-ip-address\":\"10.67.1.30\"}]'");
+        await RunAzureCliCommand(
+            "az network private-endpoint create --name pe-ip-conflict-2 --resource-group rg-pe-ip-conflict --location westeurope --vnet-name vnet-pe-ip-conflict --subnet subnet-pe-ip-conflict --private-connection-resource-id /subscriptions/$(az account show --query id -o tsv)/resourceGroups/rg-pe-ip-conflict/providers/Microsoft.Storage/storageAccounts/sapenicsaconf --connection-name conn-ip-conflict-2 --group-id blob --nic-name nic-pe-conflict-2 --ip-configs '[{\"name\":\"ipconfig1\",\"group-id\":\"blob\",\"member-name\":\"blob\",\"private-ip-address\":\"10.67.1.30\"}]'",
+            null, 1);
+    }
+
+    [Test]
     public async Task PrivateEndpoint_Delete_ShouldSucceed()
     {
         await RunAzureCliCommand("az group create -l westeurope -n rg-pe-delete");

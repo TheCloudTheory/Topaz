@@ -119,8 +119,14 @@ internal sealed class PrivateEndpointControlPlane(
         {
             logger.LogDebug(nameof(PrivateEndpointControlPlane), nameof(CreateOrUpdate), "Attempting to create a private endpoint for Private Endpoint {0} using dynamic allocation.", name);
             
-            _networkInterfaceControlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, nicName,
+            var nicOp = _networkInterfaceControlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, nicName,
                 CreateOrUpdateNetworkInterfaceRequest.ForPrivateEndpointUsingDynamicIp(request.Location!, properties.Subnet?.Id!));
+
+            if (nicOp.Result == OperationResult.Conflict)
+            {
+                return new ControlPlaneOperationResult<PrivateEndpointResource>(OperationResult.Conflict, null,
+                    nicOp.Reason, nicOp.Code);
+            }
         }
 
         // If IP configurations are provided, we'll statically allocate 
@@ -128,10 +134,16 @@ internal sealed class PrivateEndpointControlPlane(
         {
             logger.LogDebug(nameof(PrivateEndpointControlPlane), nameof(CreateOrUpdate), "Attempting to create a private endpoint for Private Endpoint {0} using static allocation.", name);
             
-            _networkInterfaceControlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, nicName,
+            var nicOp = _networkInterfaceControlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, nicName,
                 CreateOrUpdateNetworkInterfaceRequest.ForPrivateEndpointUsingStaticIPs(
                     request.Properties?.IpConfigurations.Select(ip => ip.Properties!.PrivateIPAddress).ToArray()!,
                     request.Location!, properties.Subnet?.Id!));
+            
+            if (nicOp.Result == OperationResult.Conflict)
+            {
+                return new ControlPlaneOperationResult<PrivateEndpointResource>(OperationResult.Conflict, null,
+                    nicOp.Reason, nicOp.Code);
+            }
         }
 
         var operationResult = isUpdate ? OperationResult.Updated : OperationResult.Created;
