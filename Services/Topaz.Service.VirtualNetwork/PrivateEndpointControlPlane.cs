@@ -22,8 +22,7 @@ internal sealed class PrivateEndpointControlPlane(
         new(new ResourceGroupResourceProvider(logger),
             SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
-    private readonly IpAllocationRegistry _ipAllocationRegistry =
-        new(new VirtualNetworkResourceProvider(logger));
+    private readonly NetworkInterfaceControlPlane _networkInterfaceControlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
 
     public static PrivateEndpointControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new PrivateEndpointResourceProvider(logger), logger);
@@ -113,19 +112,26 @@ internal sealed class PrivateEndpointControlPlane(
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, resource);
 
-        foreach (var ipConfig in request.Properties?.IpConfigurations!)
+        // If IP configurations are not provided for PE, a dynamically allocated IP
+        // address must be found and assigned to a NIC
+        var nicName = request.Properties!.CustomNetworkInterfaceName ?? $"{name}-{Guid.NewGuid()}";
+        if (request.Properties?.IpConfigurations == null)
         {
-            logger.LogDebug(nameof(PrivateEndpointControlPlane), nameof(CreateOrUpdate), "Attempting to allocate IP address for Private Endpoint {0}", name);
+            logger.LogDebug(nameof(PrivateEndpointControlPlane), nameof(CreateOrUpdate), "Attempting to create a private endpoint for Private Endpoint {0} using dynamic allocation.", name);
             
-            if (_ipAllocationRegistry.IsAllocated(subscriptionIdentifier, resourceGroupIdentifier, resource.Properties.Subnet!.GetVirtualNetworkName(),
-                    ipConfig.Properties?.PrivateIPAddress!))
-            {
-                return new ControlPlaneOperationResult<PrivateEndpointResource>(OperationResult.Failed, null,
-                    $"IP address {ipConfig.Properties?.PrivateIPAddress} is already allocated.", "IpAllocationFailed");
-            }
+            _networkInterfaceControlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, nicName,
+                CreateOrUpdateNetworkInterfaceRequest.ForPrivateEndpointUsingDynamicIp(request.Location!, properties.Subnet?.Id!));
+        }
+
+        // If IP configurations are provided, we'll statically allocate 
+        if (request.Properties?.IpConfigurations != null)
+        {
+            logger.LogDebug(nameof(PrivateEndpointControlPlane), nameof(CreateOrUpdate), "Attempting to create a private endpoint for Private Endpoint {0} using static allocation.", name);
             
-            logger.LogDebug(nameof(PrivateEndpointControlPlane), nameof(CreateOrUpdate), "Attempting to allocate IP address {0} for private endpoint.", ipConfig.Properties?.PrivateIPAddress);
-            _ipAllocationRegistry.Register(properties.Subnet?.Id!, ipConfig.Properties?.PrivateIPAddress!, resource.Id);
+            _networkInterfaceControlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, nicName,
+                CreateOrUpdateNetworkInterfaceRequest.ForPrivateEndpointUsingStaticIPs(
+                    request.Properties?.IpConfigurations.Select(ip => ip.Properties!.PrivateIPAddress).ToArray()!,
+                    request.Location!, properties.Subnet?.Id!));
         }
 
         var operationResult = isUpdate ? OperationResult.Updated : OperationResult.Created;
@@ -148,12 +154,14 @@ internal sealed class PrivateEndpointControlPlane(
 
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, name);
 
-        foreach (var ipConfig in resource.Properties?.IpConfigurations!)
-        {
-            _ipAllocationRegistry.Unregister(resource.Properties.Subnet!.Id, ipConfig.Properties?.PrivateIPAddress!);
-        }
+        // As each PE has a corresponding NIC, we need to remove it as well
+        var nicName = resource.Properties.CustomNetworkInterfaceName ?? $"{name}-{Guid.NewGuid()}";
+        var nicOpResult =
+            _networkInterfaceControlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, nicName);
         
-        return new ControlPlaneOperationResult(OperationResult.Deleted);
+        return nicOpResult.Result != OperationResult.Deleted
+            ? new ControlPlaneOperationResult(OperationResult.Failed, nicOpResult.Reason, nicOpResult.Code)
+            : new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
     public ControlPlaneOperationResult<PrivateEndpointResource[]> ListByResourceGroup(

@@ -51,7 +51,7 @@ internal sealed class NetworkInterfaceControlPlane(
                         IpConfigurations = nic.Properties.IpConfigurations,
                         NetworkSecurityGroup = nic.Properties.NetworkSecurityGroup,
                         EnableAcceleratedNetworking = nic.Properties.EnableAcceleratedNetworking,
-                        EnableIPForwarding = nic.Properties.EnableIPForwarding
+                        EnableIpForwarding = nic.Properties.EnableIPForwarding
                     }
                 });
 
@@ -141,7 +141,7 @@ internal sealed class NetworkInterfaceControlPlane(
 
         UnregisterNicIps(resource.Properties);
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, name);
-        return new ControlPlaneOperationResult(OperationResult.Deleted, null, null);
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
     public ControlPlaneOperationResult<NetworkInterfaceResource[]> ListByResourceGroup(
@@ -190,14 +190,10 @@ internal sealed class NetworkInterfaceControlPlane(
         if (existingNic != null)
             UnregisterNicIps(existingNic.Properties);
 
-        if (!properties.IpConfigurations.HasValue) return;
-
-        var configs = JsonSerializer.Deserialize<List<NicIpConfiguration>>(
-            properties.IpConfigurations.Value.GetRawText(), GlobalSettings.JsonOptions) ?? [];
-
+        var configs = properties.IpConfigurations;
         var modified = false;
 
-        foreach (var config in configs)
+        foreach (var config in configs ?? [])
         {
             var subnetId = config.Properties?.Subnet?.Id;
             if (string.IsNullOrEmpty(subnetId)) continue;
@@ -225,17 +221,14 @@ internal sealed class NetworkInterfaceControlPlane(
         }
 
         if (modified)
-            properties.IpConfigurations = JsonSerializer.SerializeToElement(configs, GlobalSettings.JsonOptions);
+            properties.IpConfigurations = configs;
     }
 
     private void UnregisterNicIps(NetworkInterfaceResourceProperties properties)
     {
-        if (!properties.IpConfigurations.HasValue) return;
+        var configs = properties.IpConfigurations;
 
-        var configs = JsonSerializer.Deserialize<List<NicIpConfiguration>>(
-            properties.IpConfigurations.Value.GetRawText(), GlobalSettings.JsonOptions) ?? [];
-
-        foreach (var config in configs)
+        foreach (var config in configs ?? [])
         {
             var subnetId = config.Properties?.Subnet?.Id;
             var ipAddress = config.Properties?.PrivateIPAddress;

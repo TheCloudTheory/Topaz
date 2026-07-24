@@ -6,7 +6,7 @@ namespace Topaz.Service.VirtualNetwork.Models;
 
 public sealed class NetworkInterfaceResourceProperties
 {
-    public JsonElement? IpConfigurations { get; set; }
+    public List<PrivateEndpointIpConfiguration>? IpConfigurations { get; set; }
     public JsonElement? NetworkSecurityGroup { get; set; }
     public bool? EnableAcceleratedNetworking { get; set; }
     public bool? EnableIPForwarding { get; set; }
@@ -19,7 +19,7 @@ public sealed class NetworkInterfaceResourceProperties
             IpConfigurations = request.Properties?.IpConfigurations,
             NetworkSecurityGroup = request.Properties?.NetworkSecurityGroup,
             EnableAcceleratedNetworking = request.Properties?.EnableAcceleratedNetworking,
-            EnableIPForwarding = request.Properties?.EnableIPForwarding
+            EnableIPForwarding = request.Properties?.EnableIpForwarding
         };
     }
 
@@ -30,6 +30,6 @@ public sealed class NetworkInterfaceResourceProperties
         properties.IpConfigurations = request.Properties?.IpConfigurations ?? properties.IpConfigurations;
         properties.NetworkSecurityGroup = request.Properties?.NetworkSecurityGroup ?? properties.NetworkSecurityGroup;
         properties.EnableAcceleratedNetworking = request.Properties?.EnableAcceleratedNetworking ?? properties.EnableAcceleratedNetworking;
-        properties.EnableIPForwarding = request.Properties?.EnableIPForwarding ?? properties.EnableIPForwarding;
+        properties.EnableIPForwarding = request.Properties?.EnableIpForwarding ?? properties.EnableIPForwarding;
     }
 }
