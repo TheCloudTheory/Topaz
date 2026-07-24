@@ -124,6 +124,10 @@ Topaz is open-source. A commercial license with enterprise support is planned fo
 
 Questions, ideas, and feedback are welcome in [GitHub Discussions](https://github.com/TheCloudTheory/Topaz/discussions). For bugs, open an [issue](https://github.com/TheCloudTheory/Topaz/issues). Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
+## AI agents and LLMs
+
+Topaz publishes an [`llms.txt`](https://topaz.thecloudtheory.com/llms.txt) index so AI assistants and agents can discover and navigate the documentation efficiently. If you're using GitHub Copilot, ChatGPT, Claude, or a similar tool to set up a local Azure environment, point it at `https://topaz.thecloudtheory.com/llms.txt` for a curated map of all relevant docs and product pages.
+
 ## Alternatives
 
 If you need emulation for a single Azure service, these official Microsoft tools may be sufficient:
