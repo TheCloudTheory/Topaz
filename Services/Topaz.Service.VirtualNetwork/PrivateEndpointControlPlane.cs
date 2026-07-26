@@ -112,7 +112,7 @@ internal sealed class PrivateEndpointControlPlane(
 
         // If IP configurations are not provided for PE, a dynamically allocated IP
         // address must be found and assigned to a NIC
-        var nicName = request.Properties!.CustomNetworkInterfaceName ?? $"{name}-{Guid.NewGuid()}";
+        var nicName = request.Properties?.CustomNetworkInterfaceName ?? $"{name}-{Guid.NewGuid()}";
         if (request.Properties?.IpConfigurations == null)
         {
             logger.LogDebug(nameof(PrivateEndpointControlPlane), nameof(CreateOrUpdate), "Attempting to create a private endpoint for Private Endpoint {0} using dynamic allocation.", name);
@@ -157,7 +157,7 @@ internal sealed class PrivateEndpointControlPlane(
     private static void UpdatePrivateEndpointNetworkInterface(CreateOrUpdatePrivateEndpointRequest request,
         PrivateEndpointResource resource, ControlPlaneOperationResult<NetworkInterfaceResource> nicOp)
     {
-        if (request.Properties!.NetworkInterfaces == null)
+        if (request.Properties?.NetworkInterfaces == null)
         {
             resource.Properties.NetworkInterfaces = [nicOp.Resource!];
         }
