@@ -1,59 +1,52 @@
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 
 namespace Topaz.Service.Redis.Models;
 
 internal sealed class RedisResourceProperties
 {
     public string ProvisioningState { get; init; } = "Succeeded";
-    public string HostName { get; init; } = string.Empty;
-    public int Port { get; init; } = 6379;
-    public int SslPort { get; init; } = 6380;
-    public bool EnableNonSslPort { get; init; } = false;
-    public bool DisableAccessKeyAuthentication { get; init; } = false;
-    public string? MinimumTlsVersion { get; init; }
-    public string? PublicNetworkAccess { get; init; } = "Enabled";
-    public string? RedisVersion { get; init; } = "latest";
-    public int? ReplicasPerMaster { get; init; }
-    public int? ReplicasPerPrimary { get; init; }
-    public int? ShardCount { get; init; }
-    public string? StaticIP { get; init; }
-    public string? SubnetId { get; init; }
-    public string? UpdateChannel { get; init; }
-    public string? ZonalAllocationPolicy { get; init; }
-    public IDictionary<string, string>? TenantSettings { get; init; }
-    public RedisConfigurationProperties? RedisConfiguration { get; init; }
+    public string HostName { get; set; } = string.Empty;
+    public int Port { get; set; } = 6379;
+    public int SslPort { get; set; } = 6380;
+    public bool EnableNonSslPort { get; set; } = false;
+    public bool DisableAccessKeyAuthentication { get; set; } = false;
+    public string? MinimumTlsVersion { get; set; }
+    public string? PublicNetworkAccess { get; set; } = "Enabled";
+    public string? RedisVersion { get; set; } = "latest";
+    public int? ReplicasPerMaster { get; set; }
+    public int? ReplicasPerPrimary { get; set; }
+    public int? ShardCount { get; set; }
+    public string? StaticIP { get; set; }
+    public string? SubnetId { get; set; }
+    public string? UpdateChannel { get; set; }
+    public string? ZonalAllocationPolicy { get; set; }
+    public IDictionary<string, string>? TenantSettings { get; set; }
+    public RedisConfigurationProperties? RedisConfiguration { get; set; }
     public RedisAccessKeys? AccessKeys { get; init; }
     public IList<RedisInstanceDetails> Instances { get; init; } = [];
     public IList<RedisLinkedServer> LinkedServers { get; init; } = [];
 
-    public RedisResourceProperties UpdateFromRequest(RedisResourceProperties request)
+    public void UpdateFromRequest(RedisResourceProperties request)
     {
-        return new RedisResourceProperties
-        {
-            HostName = HostName,
-            Port = Port,
-            SslPort = SslPort,
-            EnableNonSslPort = request.EnableNonSslPort,
-            DisableAccessKeyAuthentication = request.DisableAccessKeyAuthentication,
-            MinimumTlsVersion = request.MinimumTlsVersion ?? MinimumTlsVersion,
-            PublicNetworkAccess = request.PublicNetworkAccess ?? PublicNetworkAccess,
-            RedisVersion = request.RedisVersion ?? RedisVersion,
-            ReplicasPerMaster = request.ReplicasPerMaster ?? ReplicasPerMaster,
-            ReplicasPerPrimary = request.ReplicasPerPrimary ?? ReplicasPerPrimary,
-            ShardCount = request.ShardCount ?? ShardCount,
-            StaticIP = request.StaticIP ?? StaticIP,
-            SubnetId = request.SubnetId ?? SubnetId,
-            UpdateChannel = request.UpdateChannel ?? UpdateChannel,
-            ZonalAllocationPolicy = request.ZonalAllocationPolicy ?? ZonalAllocationPolicy,
-            TenantSettings = request.TenantSettings ?? TenantSettings,
-            RedisConfiguration = request.RedisConfiguration ?? RedisConfiguration,
-            AccessKeys = AccessKeys,
-            Instances = Instances,
-            LinkedServers = LinkedServers
-        };
+        EnableNonSslPort = request.EnableNonSslPort;
+        DisableAccessKeyAuthentication = request.DisableAccessKeyAuthentication;
+        MinimumTlsVersion = request.MinimumTlsVersion ?? MinimumTlsVersion;
+        PublicNetworkAccess = request.PublicNetworkAccess ?? PublicNetworkAccess;
+        RedisVersion = request.RedisVersion ?? RedisVersion;
+        ReplicasPerMaster = request.ReplicasPerMaster ?? ReplicasPerMaster;
+        ReplicasPerPrimary = request.ReplicasPerPrimary ?? ReplicasPerPrimary;
+        ShardCount = request.ShardCount ?? ShardCount;
+        StaticIP = request.StaticIP ?? StaticIP;
+        SubnetId = request.SubnetId ?? SubnetId;
+        UpdateChannel = request.UpdateChannel ?? UpdateChannel;
+        ZonalAllocationPolicy = request.ZonalAllocationPolicy ?? ZonalAllocationPolicy;
+        TenantSettings = request.TenantSettings ?? TenantSettings;
+        RedisConfiguration = request.RedisConfiguration ?? RedisConfiguration;
     }
 }
 
+[UsedImplicitly]
 internal sealed class RedisConfigurationProperties
 {
     [JsonPropertyName("maxmemory-policy")]
@@ -81,12 +74,14 @@ internal sealed class RedisConfigurationProperties
     public string? NotifyKeyspaceEvents { get; init; }
 }
 
+[UsedImplicitly]
 internal sealed class RedisAccessKeys
 {
     public string? PrimaryKey { get; init; }
     public string? SecondaryKey { get; init; }
 }
 
+[UsedImplicitly]
 internal sealed class RedisInstanceDetails
 {
     public bool IsMaster { get; init; }
@@ -97,6 +92,7 @@ internal sealed class RedisInstanceDetails
     public string? Zone { get; init; }
 }
 
+[UsedImplicitly]
 internal sealed class RedisLinkedServer
 {
     public string Id { get; init; } = string.Empty;

@@ -26,6 +26,7 @@ using Topaz.Service.AppConfiguration;
 using Topaz.Service.Insights;
 using Topaz.Service.LogAnalytics;
 using Topaz.Service.LoadBalancer;
+using Topaz.Service.Redis;
 using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
@@ -399,6 +400,9 @@ public sealed class TemplateDeploymentOrchestrator(
                 case "microsoft.resources/resourcegroups":
                     controlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
                     break;
+                case "microsoft.cache/redis":
+                    controlPlane = RedisServiceControlPlane.New(eventPipeline, logger);
+                    break;
                 case "microsoft.resources/deployments":
                     HandleNestedDeployment(genericResource, templateDeployment, resource, ref hasProvisioningFailed);
                     break;
@@ -413,7 +417,7 @@ public sealed class TemplateDeploymentOrchestrator(
 
             if (controlPlane != null)
             {
-                var record = Models.OperationRecord.Create(
+                var record = OperationRecord.Create(
                     templateDeployment.Id,
                     genericResource.Id,
                     resourceType,
