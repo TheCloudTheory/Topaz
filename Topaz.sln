@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Shared", "Ser
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Shared", "Topaz.Shared\Topaz.Shared.csproj", "{9D4853A9-0F8D-46F0-A181-854F58430D1F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests", "Topaz.Tests\Topaz.Tests.csproj", "{8B8E3757-E43E-4CC9-A570-C431C45538D8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests", "Tests\Topaz.Tests\Topaz.Tests.csproj", "{8B8E3757-E43E-4CC9-A570-C431C45538D8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.KeyVault", "Services\Topaz.Service.KeyVault\Topaz.Service.KeyVault.csproj", "{E28806B1-AF0D-4940-BA51-F8261493D245}"
 EndProject
@@ -39,17 +39,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Example.Dotnet.Web", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.AspNetCore.Extensions", "Topaz.AspNetCore.Extensions\Topaz.AspNetCore.Extensions.csproj", "{EBEAF9D8-48B7-4D75-A404-56A3E10DA657}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Isolated", "Topaz.Tests.Isolated\Topaz.Tests.Isolated.csproj", "{973A0FFE-48A8-4374-940A-95F1B2C8E87A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Isolated", "Tests\Topaz.Tests.Isolated\Topaz.Tests.Isolated.csproj", "{973A0FFE-48A8-4374-940A-95F1B2C8E87A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.CloudEnvironment", "Topaz.CloudEnvironment\Topaz.CloudEnvironment.csproj", "{4CB7F990-FB00-49D8-B130-9AE539096486}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.AzureCLI", "Topaz.Tests.AzureCLI\Topaz.Tests.AzureCLI.csproj", "{8F85AFEB-935A-4AED-AE10-EC4907D94941}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.AzureCLI", "Tests\Topaz.Tests.AzureCLI\Topaz.Tests.AzureCLI.csproj", "{8F85AFEB-935A-4AED-AE10-EC4907D94941}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Python", "Topaz.Tests.Python\Topaz.Tests.Python.csproj", "{A2F8E1C4-D357-4B9A-8E0F-C3D2A1B5E6F7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Python", "Tests\Topaz.Tests.Python\Topaz.Tests.Python.csproj", "{A2F8E1C4-D357-4B9A-8E0F-C3D2A1B5E6F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Legacy.Java", "Topaz.Tests.Legacy.Java\Topaz.Tests.Legacy.Java.csproj", "{B3C5D7E9-F1A2-4B6C-8D0E-2A4B6C8D0E2A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Legacy.Java", "Tests\Topaz.Tests.Legacy.Java\Topaz.Tests.Legacy.Java.csproj", "{B3C5D7E9-F1A2-4B6C-8D0E-2A4B6C8D0E2A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Terraform", "Topaz.Tests.Terraform\Topaz.Tests.Terraform.csproj", "{D7E5C4B3-A291-4F8E-B6D3-0A1C9F2E7B4D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Terraform", "Tests\Topaz.Tests.Terraform\Topaz.Tests.Terraform.csproj", "{D7E5C4B3-A291-4F8E-B6D3-0A1C9F2E7B4D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ServiceBus", "Services\Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj", "{AAF64707-AB3D-42F1-A890-86C9082DE4F0}"
 EndProject
@@ -96,15 +96,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ContainerRegi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ManagementGroup", "Services\Topaz.Service.ManagementGroup\Topaz.Service.ManagementGroup.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Portal", "Topaz.Tests.Portal\Topaz.Tests.Portal.csproj", "{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Portal", "Tests\Topaz.Tests.Portal\Topaz.Tests.Portal.csproj", "{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.AzurePowerShell", "Topaz.Tests.AzurePowerShell\Topaz.Tests.AzurePowerShell.csproj", "{27C88772-A159-469C-A3CF-F17B18D5DCCA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.AzurePowerShell", "Tests\Topaz.Tests.AzurePowerShell\Topaz.Tests.AzurePowerShell.csproj", "{27C88772-A159-469C-A3CF-F17B18D5DCCA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.VirtualMachine", "Services\Topaz.Service.VirtualMachine\Topaz.Service.VirtualMachine.csproj", "{6D6C476A-C333-4A28-B4D8-FEA3659B3FB2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Sql", "Services\Topaz.Service.Sql\Topaz.Service.Sql.csproj", "{E4F52B3A-7C1D-4F2B-83A6-95E0D2F8C3B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.MCP", "Topaz.Tests.MCP\Topaz.Tests.MCP.csproj", "{2BB22730-FB64-460D-B37F-3D706F65DC91}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.MCP", "Tests\Topaz.Tests.MCP\Topaz.Tests.MCP.csproj", "{2BB22730-FB64-460D-B37F-3D706F65DC91}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TopazComposeApp", "Examples\Compose\app\TopazComposeApp.csproj", "{DF6F5CB6-BCCE-4D66-84DA-2BD7CE5082DE}"
 EndProject
@@ -114,7 +114,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Disk", "Servi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.FinOps", "Topaz.FinOps\Topaz.FinOps.csproj", "{40157531-0E75-4FA6-8184-E471CCA4F49B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.NodeJS", "Topaz.Tests.NodeJS\Topaz.Tests.NodeJS.csproj", "{CEA69EAE-1656-4E30-9C49-34E963BBF486}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.NodeJS", "Tests\Topaz.Tests.NodeJS\Topaz.Tests.NodeJS.csproj", "{CEA69EAE-1656-4E30-9C49-34E963BBF486}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Example.IaCTesting", "Examples\Topaz.Example.IaCTesting\Topaz.Example.IaCTesting.csproj", "{F2A511D4-47CD-486E-9471-5AA179E266A9}"
 EndProject
@@ -130,7 +130,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.ForwardProxy", "Topaz
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.AppConfiguration", "Services\Topaz.Service.AppConfiguration\Topaz.Service.AppConfiguration.csproj", "{9DC5C19C-DC79-49B4-B1B2-EA145F44DA4D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Unit", "Topaz.Tests.Unit\Topaz.Tests.Unit.csproj", "{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Unit", "Tests\Topaz.Tests.Unit\Topaz.Tests.Unit.csproj", "{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.LogAnalytics", "Services\Topaz.Service.LogAnalytics\Topaz.Service.LogAnalytics.csproj", "{FB436488-CCDF-4FF3-A835-1EE3F44B6D08}"
 EndProject
