@@ -30,6 +30,7 @@ using Topaz.Service.LogAnalytics.Commands;
 using Topaz.FinOps.Commands;
 using Topaz.Chaos.Commands;
 using Topaz.Service.Insights.Commands;
+using Topaz.Service.Redis.Commands;
 using Topaz.Shared;
 
 namespace Topaz.CLI;
@@ -161,7 +162,8 @@ internal class Program
             typeof(GenericFinOpsCommand),
             typeof(GenericChaosCommand),
             typeof(GenericInsightsCommand),
-            typeof(GenericPublicIpAddressCommand)
+            typeof(GenericPublicIpAddressCommand),
+            typeof(GenericRedisCommand)
         };
 
         var commands = Assembly.GetExecutingAssembly()

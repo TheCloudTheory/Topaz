@@ -10,7 +10,7 @@ public sealed class RedisService(Pipeline eventPipeline, ITopazLogger logger) : 
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".redis");
-    public static IReadOnlyCollection<string>? Subresources => null;
+    public static IReadOnlyCollection<string>? Subresources => ["access-keys"];
     public static string UniqueName => "redis";
 
     public string Name => "Redis";

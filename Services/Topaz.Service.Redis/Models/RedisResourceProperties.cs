@@ -9,8 +9,8 @@ internal sealed class RedisResourceProperties
     public string HostName { get; set; } = string.Empty;
     public int Port { get; set; } = 6379;
     public int SslPort { get; set; } = 6380;
-    public bool EnableNonSslPort { get; set; } = false;
-    public bool DisableAccessKeyAuthentication { get; set; } = false;
+    public bool EnableNonSslPort { get; set; }
+    public bool DisableAccessKeyAuthentication { get; set; }
     public string? MinimumTlsVersion { get; set; }
     public string? PublicNetworkAccess { get; set; } = "Enabled";
     public string? RedisVersion { get; set; } = "latest";
