@@ -1,7 +1,6 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using System.Net.Http;
 using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
 
@@ -17,7 +16,7 @@ internal sealed class GetComponentCommand(HttpClient httpClient, DefaultsProvide
     protected override async Task<int> ExecuteAsync(CommandContext context, GetComponentCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/microsoft.insights/components/{settings.Name}";
-        var (success, body) = await GetAsync(url);
+        var (success, body) = await GetAsync(url, cancellationToken);
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
         return 0;

@@ -73,6 +73,9 @@ public static class GlobalSettings
 
     public static string GetAppConfigurationEndpoint(string storeName) =>
         $"https://{storeName}.{AppConfigurationDnsSuffix}:{DefaultAppConfigurationPort}/";
+    
+    public static string GetApplicationInsightsEndpoint(string componentName) =>
+        $"https://{componentName}.{ApplicationInsightsDnsSuffix}:{DefaultResourceManagerPort}/";
 
     public static string GetWebSiteDefaultHostName(string siteName) => $"{siteName}.{AzureWebsitesDnsSuffix}";
     public static readonly string DefaultsPath = Path.Combine(MainEmulatorDirectory, "defaults.json");

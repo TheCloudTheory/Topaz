@@ -38,6 +38,9 @@ public abstract class TopazHttpCommand<TSettings>(HttpClient httpClient) : Async
     protected string AppConfigDataPlaneUrl(string storeName) =>
         $"https://{storeName}.azconfig.topaz.local.dev:{GlobalSettings.DefaultAppConfigurationPort}";
 
+    protected string ApplicationInsightsQueryUrl(string componentName, string ikey) =>
+        $"{GlobalSettings.GetApplicationInsightsEndpoint(componentName)}/v1/apps/{ikey}/query";
+
     /// <summary>Sends GET; returns (true, responseBody) on success or (false, body) on error.</summary>
     protected async Task<(bool Success, string Body)> GetAsync(
         string url, CancellationToken cancellationToken = default)

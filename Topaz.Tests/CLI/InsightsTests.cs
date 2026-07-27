@@ -56,7 +56,7 @@ public class InsightsTests
             "--subscription-id", SubscriptionId.ToString()
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -83,7 +83,7 @@ public class InsightsTests
             "--retention-in-days", "180"
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -95,7 +95,7 @@ public class InsightsTests
             "--subscription-id", SubscriptionId.ToString()
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -106,6 +106,20 @@ public class InsightsTests
             "--subscription-id", SubscriptionId.ToString()
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task Insights_WhenComponentIsQueried_CommandShouldSucceed()
+    {
+        var code = await Program.RunAsync([
+            "insights", "component", "query",
+            "--name", ComponentName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString(),
+            "--query", "traces | limit 10"
+        ]);
+
+        Assert.That(code, Is.Zero);
     }
 }

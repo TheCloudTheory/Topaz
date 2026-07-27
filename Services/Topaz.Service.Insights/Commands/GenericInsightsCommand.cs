@@ -16,6 +16,7 @@ public sealed class GenericInsightsCommand : IEmulatorCommand
                 component.AddCommand<DeleteComponentCommand>("delete");
                 component.AddCommand<ListComponentsCommand>("list");
                 component.AddCommand<UpdateComponentCommand>("update");
+                component.AddCommand<QueryComponentCommand>("query");
             });
         });
     }
