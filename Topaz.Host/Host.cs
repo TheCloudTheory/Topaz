@@ -43,6 +43,7 @@ using Topaz.FinOps;
 using Spectre.Console;
 using Topaz.Chaos;
 using Topaz.ForwardProxy;
+using Topaz.Service.Redis;
 using Topaz.Shared;
 
 namespace Topaz.Host;
@@ -140,7 +141,8 @@ public class Host
             new FinOpsService(_logger),
             new ChaosService(_logger),
             new ForwardProxyService(),
-            new PrivateEndpointService(_eventPipeline, _logger)
+            new PrivateEndpointService(_eventPipeline, _logger),
+            new RedisService(_eventPipeline, _logger)
         };
 
         _logger.ConfigureIdFactory(idFactory);

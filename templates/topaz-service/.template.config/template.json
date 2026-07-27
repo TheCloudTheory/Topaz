@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Topaz",
+  "classifications": ["Topaz", "Service"],
+  "identity": "Topaz.Service.Template",
+  "name": "Topaz Service",
+  "shortName": "topaz-service",
+  "description": "A new Topaz emulator service with control plane, resource provider, and service definition.",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "ServiceTemplate",
+  "preferNameDirectory": true,
+  "symbols": {
+    "ServiceDisplayName": {
+      "type": "parameter",
+      "description": "The human-readable name shown in Topaz UI (e.g. 'Azure Key Vault')",
+      "datatype": "string",
+      "defaultValue": "Azure ServiceTemplate",
+      "replaces": "Azure ServiceTemplate"
+    },
+    "UniqueName": {
+      "type": "parameter",
+      "description": "The short unique name used for routing and local directory (e.g. 'keyvault')",
+      "datatype": "string",
+      "defaultValue": "servicetemplate",
+      "replaces": "servicetemplate"
+    }
+  }
+}
