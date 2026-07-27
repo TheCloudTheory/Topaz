@@ -140,6 +140,14 @@ jobs:
             - 'Services/Topaz.Service.Disk/**'
           loadbalancer:
             - 'Services/Topaz.Service.LoadBalancer/**'
+          appconfiguration:
+            - 'Services/Topaz.Service.AppConfiguration/**'
+          insights:
+            - 'Services/Topaz.Service.Insights/**'
+          loganalytics:
+            - 'Services/Topaz.Service.LogAnalytics/**'
+          redis:
+            - 'Services/Topaz.Service.Redis/**'
     - name: Build test filter
       id: test_filter
       shell: bash
@@ -230,6 +238,10 @@ jobs:
         [[ "${{ steps.changes.outputs.cosmosdb }}"        == "true" ]] && PARTS+=("FullyQualifiedName~CosmosDb")
         [[ "${{ steps.changes.outputs.disk }}"            == "true" ]] && PARTS+=("FullyQualifiedName~Disk")
         [[ "${{ steps.changes.outputs.loadbalancer }}"    == "true" ]] && PARTS+=("FullyQualifiedName~LoadBalancer")
+        [[ "${{ steps.changes.outputs.appconfiguration }}" == "true" ]] && PARTS+=("FullyQualifiedName~AppConfiguration")
+        [[ "${{ steps.changes.outputs.insights }}"         == "true" ]] && PARTS+=("FullyQualifiedName~Insights")
+        [[ "${{ steps.changes.outputs.loganalytics }}"     == "true" ]] && PARTS+=("FullyQualifiedName~LogAnalytics")
+        [[ "${{ steps.changes.outputs.redis }}"            == "true" ]] && PARTS+=("FullyQualifiedName~Redis")
 
         if [[ ${#PARTS[@]} -eq 0 ]]; then
           # Untracked code path changed (e.g. Topaz.CLI): run all tests as safety fallback
@@ -251,6 +263,8 @@ jobs:
         [[ "${{ steps.changes.outputs.cosmosdb }}"         == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.CosmosDb")
         [[ "${{ steps.changes.outputs.disk }}"             == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.Disk")
         [[ "${{ steps.changes.outputs.loadbalancer }}"     == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.LoadBalancer")
+        [[ "${{ steps.changes.outputs.insights }}"          == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.ApplicationInsights")
+        [[ "${{ steps.changes.outputs.loganalytics }}"      == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.LogAnalytics")
 
         if [[ "${{ steps.changes.outputs.azurepowershell }}" == "true" ]]; then
           # PS test files themselves changed: run all PS tests
@@ -283,6 +297,10 @@ jobs:
         [[ "${{ steps.changes.outputs.cosmosdb }}"         == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.CosmosDb")
         [[ "${{ steps.changes.outputs.disk }}"             == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.Disk")
         [[ "${{ steps.changes.outputs.loadbalancer }}"     == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.LoadBalancer")
+        [[ "${{ steps.changes.outputs.appconfiguration }}"  == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.AppConfiguration")
+        [[ "${{ steps.changes.outputs.insights }}"          == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ApplicationInsights")
+        [[ "${{ steps.changes.outputs.loganalytics }}"      == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.LogAnalytics")
+        [[ "${{ steps.changes.outputs.redis }}"             == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.Redis")
         if [[ "${{ steps.changes.outputs.azurecli }}" == "true" ]]; then
           # CLI test files themselves changed: run all CLI tests
           echo "cli_skip=false" >> "$GITHUB_OUTPUT"
@@ -416,7 +434,7 @@ jobs:
         if [[ -z "$FILTER" ]]; then
           FILTER="FullyQualifiedName~Topaz.Tests.Python"
         fi
-        dotnet test Topaz.Tests.Python/Topaz.Tests.Python.csproj -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test Tests/Topaz.Tests.Python/Topaz.Tests.Python.csproj -m:1 --no-build --verbosity normal --logger trx \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
@@ -425,7 +443,7 @@ jobs:
       env:
         TOPAZ_JAVA_TEST_IMAGE: topaz-java-legacy-test
       run: |
-        dotnet test Topaz.Tests.Legacy.Java/Topaz.Tests.Legacy.Java.csproj -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test Tests/Topaz.Tests.Legacy.Java/Topaz.Tests.Legacy.Java.csproj -m:1 --no-build --verbosity normal --logger trx \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults
     - name: NodeJS Tests
@@ -437,7 +455,7 @@ jobs:
         if [[ -z "$FILTER" ]]; then
           FILTER="FullyQualifiedName~Topaz.Tests.NodeJS"
         fi
-        dotnet test Topaz.Tests.NodeJS/Topaz.Tests.NodeJS.csproj -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test Tests/Topaz.Tests.NodeJS/Topaz.Tests.NodeJS.csproj -m:1 --no-build --verbosity normal --logger trx \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
