@@ -48,17 +48,21 @@ Then open `https://localhost:8900`.
 
 ## Connecting to the emulator
 
-By default the Portal expects the emulator's ARM endpoint at `https://topaz.local.dev:8899`. This is the default address when you run Topaz with its built-in DNS and certificate setup.
+By default the Portal expects the emulator's ARM endpoint at `https://topaz.local.dev:8899`.
 
-If your emulator is running at a different address, override the `Topaz__ArmBaseUrl` environment variable:
+| How Topaz is running | Does `topaz.local.dev` resolve? | What to do |
+|---|---|---|
+| Standalone on the host | Yes — DNS/hosts setup points it at the host | Use the default URL |
+| Docker Compose with the DNS sidecar (e.g. the devcontainer setup) | Yes — the sidecar resolves `*.topaz.local.dev` to the Topaz container | Use the default URL |
+| Plain `docker run` without DNS | No | Not supported — see note below |
 
-```bash
-docker run -d \
-  --name topaz-portal \
-  -p 8900:8080 \
-  -e Topaz__ArmBaseUrl=https://topaz.local.dev:8899 \
-  thecloudtheory/topaz-portal:latest
-```
+:::warning[Plain `docker run` requires DNS]
+
+The Portal connects to the emulator over HTTPS and validates the TLS certificate, which is issued for `topaz.local.dev`. Simply using a container name (e.g. `https://topaz-host:8899`) will fail with a certificate name mismatch even if the network connection succeeds.
+
+To run both the emulator and the Portal as containers, use Docker Compose and add a DNS sidecar that resolves `*.topaz.local.dev` to the Topaz container's IP — as shown in the [Docker Compose example](#docker-compose-example) below.
+
+:::
 
 ## Available views
 
@@ -108,16 +112,29 @@ docker run -d --name topaz-portal -p 8900:8080 \
 
 ## Docker Compose example
 
-Running both services together with Docker Compose is the recommended approach for local development:
+Running both services together with Docker Compose is the recommended approach for local development. A DNS sidecar is required so that `topaz.local.dev` resolves inside the Portal container and TLS validation succeeds:
 
 ```yaml
 services:
+  dns-sidecar:
+    image: alpine:latest
+    command: >
+      sh -c "apk add --no-cache dnsmasq -q &&
+             echo 'address=/.topaz.local.dev/172.28.0.10' > /etc/dnsmasq.d/topaz.conf &&
+             dnsmasq --no-daemon --server=1.1.1.1"
+    networks:
+      topaz-net:
+        ipv4_address: "172.28.0.53"
+
   topaz-host:
     image: thecloudtheory/topaz-host:latest
     ports:
       - "8899:8899"   # ARM / Resource Manager
       - "8898:8898"   # Key Vault
       - "8891:8891"   # Blob Storage
+    networks:
+      topaz-net:
+        ipv4_address: "172.28.0.10"
 
   topaz-portal:
     image: thecloudtheory/topaz-portal:latest
@@ -125,6 +142,18 @@ services:
       - "8900:8080"
     environment:
       - Topaz__ArmBaseUrl=https://topaz.local.dev:8899
+    dns:
+      - 172.28.0.53
     depends_on:
       - topaz-host
+      - dns-sidecar
+    networks:
+      - topaz-net
+
+networks:
+  topaz-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.28.0.0/16"
 ```
