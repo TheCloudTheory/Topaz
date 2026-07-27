@@ -10,7 +10,7 @@ public sealed class ResourceGroupService(Pipeline eventPipeline, ITopazLogger lo
 {
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(SubscriptionService.LocalDirectoryPath, ".resource-group", "{resourceGroup}");
-    public static IReadOnlyCollection<string>? Subresources => null;
+    public static IReadOnlyCollection<string>? Subresources => ["access-keys"];
     public static string UniqueName => "resourcegroup";
 
     public string Name => "Resource Group";

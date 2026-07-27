@@ -1,9 +1,9 @@
-using System.Text.Json;
+using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Service.AppConfiguration.Models;
 
-public sealed class ConfigurationStoreAccessKey
+public sealed class ConfigurationStoreAccessKey : TopazApiModel
 {
     public string? Id { get; set; }
     public string? Name { get; set; }
@@ -33,6 +33,4 @@ public sealed class ConfigurationStoreAccessKey
         ConnectionString = $"Endpoint=https://{storeName}.azconfig.topaz.local.dev:{GlobalSettings.DefaultAppConfigurationPort}/;Id={Id};Secret={newValue}";
         LastModified = DateTime.UtcNow;
     }
-
-    public override string ToString() => JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
 }

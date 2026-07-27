@@ -17,6 +17,9 @@ internal sealed class RedisServiceControlPlane(
     private const string NotFoundCode = "ResourceNotFound";
     private const string NotFoundMessage = "Redis resource '{0}' could not be found.";
     
+    private const string AccessKeysSubresource = "access-keys";
+    private const string AccessKeysId = "keys";
+    
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
@@ -87,6 +90,9 @@ internal sealed class RedisServiceControlPlane(
         var resource = new RedisResource(sub, rg, name, location, request.Tags, request.Sku, request.Properties);
 
         provider.CreateOrUpdate(sub, rg, name, resource, createOperation: true);
+        
+        var keyStore = RedisAccessKeyStore.Generate(name);
+        provider.CreateOrUpdateSubresource(sub, rg, AccessKeysId, name, AccessKeysSubresource, keyStore);
 
         return new ControlPlaneOperationResult<RedisResource>(OperationResult.Created, resource, null, null);
     }

@@ -1,7 +1,8 @@
 using System.Text.Json;
+using Topaz.Service.AppConfiguration.Models;
 using Topaz.Shared;
 
-namespace Topaz.Service.AppConfiguration.Models;
+namespace Topaz.Service.AppConfiguration;
 
 internal sealed class AppConfigurationAccessKeyStore
 {
