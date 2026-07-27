@@ -2397,6 +2397,34 @@
     ]
   },
   {
+    "name": "insights component query",
+    "group": "application-insights",
+    "description": "Queries an Application Insights component.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) component name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "--query",
+        "description": "(Required) query to be executed",
+        "required": false
+      }
+    ],
+    "examples": []
+  },
+  {
     "name": "insights component show",
     "group": "application-insights",
     "description": "Gets an Application Insights component.",
