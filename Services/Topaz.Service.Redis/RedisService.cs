@@ -17,6 +17,13 @@ public sealed class RedisService(Pipeline eventPipeline, ITopazLogger logger) : 
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new CreateOrUpdateRedisEndpoint(eventPipeline, logger)
+        new CreateOrUpdateRedisEndpoint(eventPipeline, logger),
+        new GetRedisEndpoint(eventPipeline, logger),
+        new DeleteRedisEndpoint(eventPipeline, logger),
+        new UpdateRedisEndpoint(eventPipeline, logger),
+        new ListRedisByResourceGroupEndpoint(eventPipeline, logger),
+        new ListRedisBySubscriptionEndpoint(eventPipeline, logger),
+        new ListRedisKeysEndpoint(eventPipeline, logger),
+        new RegenerateRedisKeyEndpoint(eventPipeline, logger)
     ];
 }

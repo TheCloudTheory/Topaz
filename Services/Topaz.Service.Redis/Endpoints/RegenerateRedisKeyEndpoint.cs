@@ -10,7 +10,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Redis.Endpoints;
 
-internal sealed class CreateOrUpdateRedisEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class RegenerateRedisKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly RedisServiceControlPlane _controlPlane =
         RedisServiceControlPlane.New(eventPipeline, logger);
@@ -19,10 +19,10 @@ internal sealed class CreateOrUpdateRedisEndpoint(Pipeline eventPipeline, ITopaz
 
     public string[] Endpoints =>
     [
-        "PUT /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}"
+        "POST /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}/regenerateKey"
     ];
 
-    public string[] Permissions => ["Microsoft.Cache/redis/write"];
+    public string[] Permissions => ["Microsoft.Cache/redis/regenerateKey/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -33,28 +33,23 @@ internal sealed class CreateOrUpdateRedisEndpoint(Pipeline eventPipeline, ITopaz
         var rg = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         var name = context.Request.Path.Value.ExtractValueFromPath(8);
 
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            response.StatusCode = HttpStatusCode.BadRequest;
-            return;
-        }
-
         using var reader = new StreamReader(context.Request.Body);
-        var request = JsonSerializer.Deserialize<RedisResource>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
-        if (request == null)
+        var request = JsonSerializer.Deserialize<RegenerateRedisKeyRequest>(
+            reader.ReadToEnd(), GlobalSettings.JsonOptions);
+
+        if (string.IsNullOrWhiteSpace(request?.KeyType))
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdate(sub, rg, name, request);
-        if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
+        var result = _controlPlane.RegenerateKey(sub, rg, name!, request.KeyType);
+        if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
-            response.CreateErrorResponse(result.Code!, result.Reason!);
+            response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
             return;
         }
 
-        response.StatusCode = result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
         response.CreateJsonContentResponse(result.Resource);
     }
 }

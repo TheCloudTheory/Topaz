@@ -10,7 +10,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Redis.Endpoints;
 
-internal sealed class CreateOrUpdateRedisEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class UpdateRedisEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly RedisServiceControlPlane _controlPlane =
         RedisServiceControlPlane.New(eventPipeline, logger);
@@ -19,7 +19,7 @@ internal sealed class CreateOrUpdateRedisEndpoint(Pipeline eventPipeline, ITopaz
 
     public string[] Endpoints =>
     [
-        "PUT /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}"
+        "PATCH /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}"
     ];
 
     public string[] Permissions => ["Microsoft.Cache/redis/write"];
@@ -54,7 +54,7 @@ internal sealed class CreateOrUpdateRedisEndpoint(Pipeline eventPipeline, ITopaz
             return;
         }
 
-        response.StatusCode = result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+        response.StatusCode = HttpStatusCode.OK;
         response.CreateJsonContentResponse(result.Resource);
     }
 }

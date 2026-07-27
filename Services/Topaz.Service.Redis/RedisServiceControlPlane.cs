@@ -96,4 +96,98 @@ internal sealed class RedisServiceControlPlane(
 
         return new ControlPlaneOperationResult<RedisResource>(OperationResult.Created, resource, null, null);
     }
+
+    public ControlPlaneOperationResult<RedisResource> Get(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name)
+    {
+        var resource = provider.GetAs<RedisResource>(sub, rg, name);
+        return resource == null
+            ? new ControlPlaneOperationResult<RedisResource>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode)
+            : new ControlPlaneOperationResult<RedisResource>(OperationResult.Success, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult Delete(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name)
+    {
+        var resource = provider.GetAs<RedisResource>(sub, rg, name);
+        if (resource == null)
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, string.Format(NotFoundMessage, name), NotFoundCode);
+
+        provider.Delete(sub, rg, name);
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<RedisResource[]> ListByResourceGroup(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg)
+    {
+        var resources = provider.ListAs<RedisResource>(sub, rg, lookForNoOfSegments: 8)
+            .Where(r => r.IsInSubscription(sub) && r.IsInResourceGroup(rg))
+            .ToArray();
+        return new ControlPlaneOperationResult<RedisResource[]>(OperationResult.Success, resources, null, null);
+    }
+
+    public ControlPlaneOperationResult<RedisResource[]> ListBySubscription(SubscriptionIdentifier sub)
+    {
+        var resources = provider.ListAs<RedisResource>(sub, null, lookForNoOfSegments: 8)
+            .Where(r => r.IsInSubscription(sub))
+            .ToArray();
+        return new ControlPlaneOperationResult<RedisResource[]>(OperationResult.Success, resources, null, null);
+    }
+
+    public ControlPlaneOperationResult<RedisAccessKeysResponse> ListKeys(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name)
+    {
+        var resource = provider.GetAs<RedisResource>(sub, rg, name);
+        if (resource == null)
+            return new ControlPlaneOperationResult<RedisAccessKeysResponse>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode);
+
+        var keyStore = provider.GetSubresourceAs<RedisAccessKeyStore>(
+            sub, rg, AccessKeysId, name, AccessKeysSubresource);
+        var primary = keyStore?.Keys.FirstOrDefault(k => k.Name == "Primary")?.Value ?? string.Empty;
+        var secondary = keyStore?.Keys.FirstOrDefault(k => k.Name == "Secondary")?.Value ?? string.Empty;
+        return new ControlPlaneOperationResult<RedisAccessKeysResponse>(
+            OperationResult.Success, new RedisAccessKeysResponse(primary, secondary), null, null);
+    }
+
+    public ControlPlaneOperationResult<RedisAccessKeysResponse> RegenerateKey(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name,
+        string keyType)
+    {
+        var resource = provider.GetAs<RedisResource>(sub, rg, name);
+        if (resource == null)
+            return new ControlPlaneOperationResult<RedisAccessKeysResponse>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode);
+
+        var keyStore = provider.GetSubresourceAs<RedisAccessKeyStore>(
+            sub, rg, AccessKeysId, name, AccessKeysSubresource);
+        if (keyStore == null)
+            return new ControlPlaneOperationResult<RedisAccessKeysResponse>(
+                OperationResult.NotFound, null, $"Access keys not found for cache '{name}'.", NotFoundCode);
+
+        var key = keyStore.Keys.FirstOrDefault(
+            k => string.Equals(k.Name, keyType, StringComparison.OrdinalIgnoreCase));
+        if (key == null)
+            return new ControlPlaneOperationResult<RedisAccessKeysResponse>(
+                OperationResult.NotFound, null, $"Key type '{keyType}' not found.", NotFoundCode);
+
+        key.Value = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(44));
+        provider.CreateOrUpdateSubresource(sub, rg, AccessKeysId, name, AccessKeysSubresource, keyStore);
+
+        var primary = keyStore.Keys.FirstOrDefault(k => k.Name == "Primary")?.Value ?? string.Empty;
+        var secondary = keyStore.Keys.FirstOrDefault(k => k.Name == "Secondary")?.Value ?? string.Empty;
+        return new ControlPlaneOperationResult<RedisAccessKeysResponse>(
+            OperationResult.Success, new RedisAccessKeysResponse(primary, secondary), null, null);
+    }
 }

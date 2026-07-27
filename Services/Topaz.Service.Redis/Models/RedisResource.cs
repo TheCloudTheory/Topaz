@@ -22,7 +22,7 @@ internal sealed class RedisResource : ArmResource<RedisResourceProperties>
         ResourceSku? sku,
         RedisResourceProperties properties)
     {
-        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.AppConfiguration/configurationStores/{name}";
+        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Cache/redis/{name}";
         Name = name;
         Location = location;
         Tags = tags ?? new Dictionary<string, string>();
