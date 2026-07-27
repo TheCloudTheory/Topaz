@@ -12,7 +12,7 @@ internal sealed class RedisResourceProperties
     public bool DisableAccessKeyAuthentication { get; init; } = false;
     public string? MinimumTlsVersion { get; init; }
     public string? PublicNetworkAccess { get; init; } = "Enabled";
-    public string? RedisVersion { get; init; }
+    public string? RedisVersion { get; init; } = "latest";
     public int? ReplicasPerMaster { get; init; }
     public int? ReplicasPerPrimary { get; init; }
     public int? ShardCount { get; init; }
