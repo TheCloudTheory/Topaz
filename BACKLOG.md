@@ -257,28 +257,6 @@ TODO: Availability Sets: New service control plane
 ### Azure Redis Cache — initial control plane
 
 <!--
-TODO: Azure Redis Cache: New service project scaffold
-  Create Topaz.Service.Redis following existing service conventions:
-  - RedisResourceProperties + RedisResource (ArmResource<T>) capturing:
-    sku (name: Basic/Standard/Premium, family: C/P, capacity: 0–6),
-    redisVersion (default "6"), enableNonSslPort (default false),
-    minimumTlsVersion (default "1.2"), replicasPerMaster, shardCount,
-    hostName ({name}.redis.cache.topaz.local.dev), port (6379), sslPort (6380),
-    accessKeys (primaryKey, secondaryKey — 44-byte random base64 strings generated on creation),
-    provisioningState (always Succeeded), redisConfiguration.
-  - RedisResourceProvider (ResourceProviderBase<T>) for filesystem persistence
-    under .topaz/redis/{subscriptionId}/{resourceGroup}/{cacheName}/.
-  - RedisServiceControlPlane implementing IControlPlane with a working Deploy()
-    that maps GenericResource → RedisResource via resource.As<T,TProps>().
-  - IServiceDefinition registration and wiring in Topaz.Host.
-  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
-    case "Microsoft.Cache/redis": entry in TemplateDeploymentOrchestrator.RouteDeployment().
-  See: https://learn.microsoft.com/en-us/rest/api/redis/operation-groups?view=rest-redis-2024-11-01
-  milestone: v1.10-preview
-  labels: enhancement, redis, good first issue
--->
-
-<!--
 TODO: Azure Redis Cache: Control plane endpoints
   Implement the ARM-level Redis cache resource surface (Microsoft.Cache/redis):
   - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}  – create or update
