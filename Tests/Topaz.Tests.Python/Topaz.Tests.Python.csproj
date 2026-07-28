@@ -25,7 +25,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj"/>
+        <ProjectReference Include="../../Topaz.Shared/Topaz.Shared.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

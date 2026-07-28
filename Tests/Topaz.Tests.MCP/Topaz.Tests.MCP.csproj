@@ -31,10 +31,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Topaz.MCP/Topaz.MCP.csproj" />
-    <ProjectReference Include="../Topaz.Host/Topaz.Host.csproj" />
-    <ProjectReference Include="../Topaz.CLI/Topaz.CLI.csproj" />
-    <ProjectReference Include="../Topaz.ResourceManager/Topaz.ResourceManager.csproj" />
+    <ProjectReference Include="../../Topaz.MCP/Topaz.MCP.csproj" />
+    <ProjectReference Include="../../Topaz.Host/Topaz.Host.csproj" />
+    <ProjectReference Include="../../Topaz.CLI/Topaz.CLI.csproj" />
+    <ProjectReference Include="../../Topaz.ResourceManager/Topaz.ResourceManager.csproj" />
   </ItemGroup>
 
 </Project>

@@ -89,8 +89,16 @@ public record GlobalDnsEntries
             return new GlobalDnsEntries();
         }
 
-        var entries = JsonSerializer.Deserialize<GlobalDnsEntries>(file, GlobalSettings.JsonOptions);
-        return entries;
+        try
+        {
+            var entries = JsonSerializer.Deserialize<GlobalDnsEntries>(file, GlobalSettings.JsonOptions);
+            return entries;
+        }
+        catch (JsonException ex)
+        {
+            _logger?.LogError(nameof(GlobalDnsEntries), nameof(GetDnsEntriesFromFile), "Failed to deserialize DNS entries file. Reason: `{0}`, Content: `{1}`", ex.Message, file);
+            throw;
+        }
     }
 
     private static string GetHierarchyValue(Guid subscriptionIdentifier, string? resourceGroupIdentifier)

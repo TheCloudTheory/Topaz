@@ -692,6 +692,41 @@ output "appconfig_name"     { value = azurerm_app_configuration.appconfig.name }
 output "appconfig_endpoint" { value = azurerm_app_configuration.appconfig.endpoint }
 output "appconfig_sku"      { value = azurerm_app_configuration.appconfig.sku }
 
+# ── Redis Cache ───────────────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "redis_rg" {
+  name     = "tf-rm-redis-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_redis_cache" "redis_basic" {
+  name                = "tf-rm-redis-basic"
+  resource_group_name = azurerm_resource_group.redis_rg.name
+  location            = azurerm_resource_group.redis_rg.location
+  capacity            = 1
+  family              = "C"
+  sku_name            = "Basic"
+  minimum_tls_version = "1.2"
+}
+
+resource "azurerm_redis_cache" "redis_ssl_disabled" {
+  name                = "tf-rm-redis-no-ssl"
+  resource_group_name = azurerm_resource_group.redis_rg.name
+  location            = azurerm_resource_group.redis_rg.location
+  capacity            = 0
+  family              = "C"
+  sku_name            = "Basic"
+  non_ssl_port_enabled = true
+}
+
+output "redis_basic_name"         { value = azurerm_redis_cache.redis_basic.name }
+output "redis_basic_hostname"     { value = azurerm_redis_cache.redis_basic.hostname }
+output "redis_basic_ssl_port"     { value = azurerm_redis_cache.redis_basic.ssl_port }
+output "redis_basic_tls_version"  { value = azurerm_redis_cache.redis_basic.minimum_tls_version }
+output "redis_no_ssl_name"        { value = azurerm_redis_cache.redis_ssl_disabled.name }
+output "redis_no_ssl_port"        { value = azurerm_redis_cache.redis_ssl_disabled.port }
+output "redis_no_ssl_enabled"     { value = azurerm_redis_cache.redis_ssl_disabled.non_ssl_port_enabled }
+
 # ── Log Analytics ─────────────────────────────────────────────────────────────
 
 resource "azurerm_resource_group" "loganalytics_rg" {

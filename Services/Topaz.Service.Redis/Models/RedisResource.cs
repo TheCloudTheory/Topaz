@@ -28,6 +28,8 @@ internal sealed class RedisResource : ArmResource<RedisResourceProperties>
         Tags = tags ?? new Dictionary<string, string>();
         Sku = sku;
         Properties = properties;
+        
+        properties.ConfigureHostname(name);
     }
     
     public override string Id { get; init; }

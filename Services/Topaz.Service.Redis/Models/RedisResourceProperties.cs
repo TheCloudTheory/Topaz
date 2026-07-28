@@ -44,6 +44,11 @@ internal sealed class RedisResourceProperties
         TenantSettings = request.TenantSettings ?? TenantSettings;
         RedisConfiguration = request.RedisConfiguration ?? RedisConfiguration;
     }
+
+    internal void ConfigureHostname(string name)
+    {
+        HostName = $"{name}.redis.cache.topaz.local.dev";
+    }
 }
 
 [UsedImplicitly]

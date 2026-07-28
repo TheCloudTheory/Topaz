@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Topaz.Portal/Topaz.Portal.csproj" />
+    <ProjectReference Include="../../Topaz.Portal/Topaz.Portal.csproj" />
   </ItemGroup>
 
 </Project>
