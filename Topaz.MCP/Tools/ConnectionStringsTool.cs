@@ -5,6 +5,7 @@ using Azure.ResourceManager.ContainerRegistry;
 using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.EventHubs;
 using Azure.ResourceManager.KeyVault;
+using Azure.ResourceManager.Redis;
 using Azure.ResourceManager.ServiceBus;
 using Azure.ResourceManager.Storage;
 using JetBrains.Annotations;
@@ -41,6 +42,7 @@ public sealed class ConnectionStringsTool
         var registryEntries = new List<ContainerRegistryEntry>();
         var cosmosDbEntries = new List<CosmosDbEntry>();
         var appConfigurationEntries = new List<AppConfigurationEntry>();
+        var redisCacheEntries = new List<RedisCacheEntry>();
 
         await foreach (var resourceGroup in subscription.GetResourceGroups().GetAllAsync().ConfigureAwait(false))
         {
@@ -147,6 +149,22 @@ public sealed class ConnectionStringsTool
                     PrimaryReadWriteConnectionString = connectionString,
                 });
             }
+
+            // Redis caches
+            await foreach (var cache in resourceGroup.GetAllRedis().GetAllAsync().ConfigureAwait(false))
+            {
+                var keys = await cache.GetKeysAsync().ConfigureAwait(false);
+                var primaryKey = keys.Value.PrimaryKey ?? string.Empty;
+                var sslPort = cache.Data.SslPort ?? 6380;
+                redisCacheEntries.Add(new RedisCacheEntry
+                {
+                    ResourceGroup = resourceGroup.Data.Name,
+                    CacheName = cache.Data.Name ?? string.Empty,
+                    HostName = cache.Data.HostName ?? string.Empty,
+                    SslPort = sslPort,
+                    ConnectionString = TopazResourceHelpers.GetRedisConnectionString(cache.Data.Name ?? string.Empty, primaryKey, sslPort),
+                });
+            }
         }
 
         return new ConnectionStringsResult
@@ -158,6 +176,7 @@ public sealed class ConnectionStringsTool
             ContainerRegistries = registryEntries,
             CosmosDbAccounts = cosmosDbEntries,
             AppConfigurationStores = appConfigurationEntries,
+            RedisCaches = redisCacheEntries,
         };
     }
 
@@ -170,6 +189,7 @@ public sealed class ConnectionStringsTool
         public required List<ContainerRegistryEntry> ContainerRegistries { [UsedImplicitly] get; init; }
         public required List<CosmosDbEntry> CosmosDbAccounts { [UsedImplicitly] get; init; }
         public required List<AppConfigurationEntry> AppConfigurationStores { [UsedImplicitly] get; init; }
+        public required List<RedisCacheEntry> RedisCaches { [UsedImplicitly] get; init; }
     }
 
     public sealed record StorageConnectionStringEntry
@@ -225,5 +245,14 @@ public sealed class ConnectionStringsTool
         public required string? StoreName { [UsedImplicitly] get; init; }
         public required string Endpoint { [UsedImplicitly] get; init; }
         public required string PrimaryReadWriteConnectionString { [UsedImplicitly] get; init; }
+    }
+
+    public sealed record RedisCacheEntry
+    {
+        public required string ResourceGroup { [UsedImplicitly] get; init; }
+        public required string CacheName { [UsedImplicitly] get; init; }
+        public required string HostName { [UsedImplicitly] get; init; }
+        public required int SslPort { [UsedImplicitly] get; init; }
+        public required string ConnectionString { [UsedImplicitly] get; init; }
     }
 }

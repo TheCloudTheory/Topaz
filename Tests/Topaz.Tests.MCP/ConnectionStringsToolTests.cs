@@ -12,6 +12,8 @@ using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.ServiceBus;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
+using Azure.ResourceManager.Redis;
+using Azure.ResourceManager.Redis.Models;
 using NUnit.Framework;
 using Topaz.Identity;
 using Topaz.MCP.Tools;
@@ -30,6 +32,7 @@ public class ConnectionStringsToolTests
     private const string RegistryName = "mcptestreg";
     private const string CosmosDbAccountName = "mcp-test-cosmos";
     private const string AppConfigStoreName = "mcp-test-appconfig";
+    private const string RedisCacheName = "mcp-test-redis";
 
     [OneTimeSetUp]
     public async Task ProvisionResources()
@@ -90,6 +93,12 @@ public class ConnectionStringsToolTests
             WaitUntil.Completed,
             AppConfigStoreName,
             new AppConfigurationStoreData(McpTestFixture.Location, new AppConfigurationSku("free")));
+
+        // Redis cache
+        await rg.GetAllRedis().CreateOrUpdateAsync(
+            WaitUntil.Completed,
+            RedisCacheName,
+            new RedisCreateOrUpdateContent(McpTestFixture.Location, new RedisSku(RedisSkuName.Basic, RedisSkuFamily.BasicOrStandard, 0)));
     }
 
     [Test]
@@ -200,6 +209,25 @@ public class ConnectionStringsToolTests
             Assert.That(entry.PrimaryReadWriteConnectionString, Does.Contain("Id="));
             Assert.That(entry.PrimaryReadWriteConnectionString, Does.Contain("Secret="));
             Assert.That(entry.PrimaryReadWriteConnectionString, Does.Contain(AppConfigStoreName));
+        });
+    }
+
+    [Test]
+    public async Task GetConnectionStrings_RedisCache_ReturnsCorrectConnectionString()
+    {
+        var result = await ConnectionStringsTool.GetConnectionStrings(McpTestFixture.SubscriptionId, McpTestFixture.ObjectId);
+
+        var entry = result.RedisCaches.Single(r => r.CacheName == RedisCacheName);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(entry.HostName, Is.EqualTo($"{RedisCacheName}.redis.cache.topaz.local.dev"));
+            Assert.That(entry.SslPort, Is.EqualTo(6380));
+            Assert.That(entry.ConnectionString, Does.Contain(entry.HostName));
+            Assert.That(entry.ConnectionString, Does.Contain(":6380"));
+            Assert.That(entry.ConnectionString, Does.Contain("password="));
+            Assert.That(entry.ConnectionString, Does.Contain("ssl=True"));
+            Assert.That(entry.ConnectionString, Does.Contain("abortConnect=False"));
         });
     }
 }

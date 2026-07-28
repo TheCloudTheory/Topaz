@@ -151,5 +151,11 @@ public static class TopazResourceHelpers
     /// <param name="replicaName">The name of the replica.</param>
     /// <returns>A URI string for the local App Configuration store replica endpoint.</returns>
     public static string GetAppConfigurationStoreReplicaEndpoint(string storeName, string replicaName) =>
-        $"{GlobalSettings.GetAppConfigurationEndpoint($"{storeName}-{replicaName}")}";
+        $"{GlobalSettings.GetAppConfigurationEndpoint($"{storeName}-{replicaName}")}";  
+
+    /// <summary>
+    /// Gets the StackExchange.Redis compatible connection string for a Redis cache.
+    /// </summary>
+    public static string GetRedisConnectionString(string cacheName, string primaryKey, int sslPort = 6380) =>
+        $"{cacheName}.redis.cache.topaz.local.dev:{sslPort},password={primaryKey},ssl=True,abortConnect=False";
 }

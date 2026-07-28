@@ -254,21 +254,6 @@ TODO: Availability Sets: New service control plane
   labels: enhancement, virtual-machine, good first issue
 -->
 
-### Azure Redis Cache — initial control plane
-
-<!--
-TODO: Azure Redis Cache: MCP Server provisioning tool
-  Extend Topaz.MCP with a Redis Cache provisioning tool:
-  - CreateRedisCache — create a Redis cache in a resource group and return the
-    hostName, sslPort, and primary access key.
-  Extend GetConnectionStrings to include the Redis connection string for provisioned caches
-  in the format: {hostName}:{sslPort},password={primaryKey},ssl=True,abortConnect=False
-  milestone: v1.10-preview
-  labels: enhancement, redis, mcp
--->
-
----
-
 ## v1.11
 
 ### Blob Storage — ADLS Gen2 / ABFS DFS protocol

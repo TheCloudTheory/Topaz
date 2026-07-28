@@ -34,7 +34,8 @@ public class McpTestFixture
         var host = new TopazHost(new GlobalOptions
         {
             EnableLoggingToFile = true,
-            EmulatorIpAddress = "127.0.0.1"
+            EmulatorIpAddress = "127.0.0.1",
+            DefaultSubscription = SubscriptionId
         }, logger);
 
         _topaz = host.StartAsync(CancellationTokenSource.Token);
@@ -42,11 +43,9 @@ public class McpTestFixture
         await Task.Delay(1000);
 
         var credentials = new AzureLocalCredential(ObjectId);
-        using var topaz = new TopazArmClient(credentials);
-        await topaz.CreateSubscriptionAsync(SubscriptionId, "mcp-test-subscription");
-
         var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
+        
         await subscription.GetResourceGroups().CreateOrUpdateAsync(
             WaitUntil.Completed,
             ResourceGroupName,
