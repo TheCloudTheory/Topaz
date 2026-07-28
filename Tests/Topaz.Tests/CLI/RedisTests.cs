@@ -150,4 +150,99 @@ public class RedisTests
 
         Assert.That(code, Is.Zero);
     }
+
+    [Test]
+    public async Task Redis_WhenFirewallRuleIsCreated_MetadataFileShouldExist()
+    {
+        await Program.RunAsync([
+            "redis", "firewall-rule", "create",
+            "--name", CacheName,
+            "--rule-name", "allow-test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString(),
+            "--start-ip", "10.0.0.1",
+            "--end-ip", "10.0.0.100"
+        ]);
+
+        var path = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription", SubscriptionId.ToString(),
+            ".resource-group", ResourceGroupName, ".redis", CacheName, "firewall-rules", "allow-test", "metadata.json");
+
+        Assert.That(File.Exists(path), Is.True);
+    }
+
+    [Test]
+    public async Task Redis_WhenFirewallRuleIsRetrieved_CommandShouldSucceed()
+    {
+        await Program.RunAsync([
+            "redis", "firewall-rule", "create",
+            "--name", CacheName,
+            "--rule-name", "allow-test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString(),
+            "--start-ip", "10.0.0.1",
+            "--end-ip", "10.0.0.100"
+        ]);
+
+        var code = await Program.RunAsync([
+            "redis", "firewall-rule", "show",
+            "--name", CacheName,
+            "--rule-name", "allow-test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task Redis_WhenFirewallRulesAreListed_CommandShouldSucceed()
+    {
+        await Program.RunAsync([
+            "redis", "firewall-rule", "create",
+            "--name", CacheName,
+            "--rule-name", "allow-test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString(),
+            "--start-ip", "10.0.0.1",
+            "--end-ip", "10.0.0.100"
+        ]);
+
+        var code = await Program.RunAsync([
+            "redis", "firewall-rule", "list",
+            "--name", CacheName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task Redis_WhenFirewallRuleIsDeleted_MetadataFileShouldNotExist()
+    {
+        await Program.RunAsync([
+            "redis", "firewall-rule", "create",
+            "--name", CacheName,
+            "--rule-name", "allow-test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString(),
+            "--start-ip", "10.0.0.1",
+            "--end-ip", "10.0.0.100"
+        ]);
+
+        await Program.RunAsync([
+            "redis", "firewall-rule", "delete",
+            "--name", CacheName,
+            "--rule-name", "allow-test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var path = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription", SubscriptionId.ToString(),
+            ".resource-group", ResourceGroupName, ".redis", CacheName, "firewall-rules", "allow-test", "metadata.json");
+
+        Assert.That(File.Exists(path), Is.False);
+    }
 }

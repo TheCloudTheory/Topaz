@@ -16,6 +16,13 @@ public sealed class GenericRedisCommand : IEmulatorCommand
             redis.AddCommand<ListRedisCommand>("list");
             redis.AddCommand<ListRedisKeysCommand>("list-keys");
             redis.AddCommand<RegenerateRedisKeyCommand>("regenerate-key");
+            redis.AddBranch("firewall-rule", firewallRule =>
+            {
+                firewallRule.AddCommand<CreateOrUpdateFirewallRuleCommand>("create");
+                firewallRule.AddCommand<GetFirewallRuleCommand>("show");
+                firewallRule.AddCommand<DeleteFirewallRuleCommand>("delete");
+                firewallRule.AddCommand<ListFirewallRulesCommand>("list");
+            });
         });
     }
 }
