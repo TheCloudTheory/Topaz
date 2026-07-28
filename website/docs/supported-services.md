@@ -42,6 +42,8 @@ Public IP Address|✅|N/A
 Azure App Configuration|✅|🚧
 Log Analytics|✅|🚧
 Application Insights|✅|🚧
+Private Endpoints|✅|N/A
+Redis Cache|✅|🚧
 
 ✅ - fully supported (stable)
 

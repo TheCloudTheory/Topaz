@@ -45,6 +45,8 @@ const SERVICES: Service[] = [
   { abbr: 'AC',   bg: '#E8751A', name: 'Azure App Configuration',  description: 'Key-value store, feature flags, and access key management', preview: true },
   { abbr: 'LA',   bg: '#FF9900', name: 'Azure Log Analytics',      description: 'Log Analytics workspace and data collection', preview: true },
   { abbr: 'AI',   bg: '#FF9900', name: 'Azure Application Insights', description: 'Application Insights workspace, data collection, and query', preview: true },
+  { abbr: 'PE',   bg: '#1B63EB', name: 'Private Endpoint',         description: 'Private endpoint resources and DNS integration', preview: true },
+  { abbr: 'RC',   bg: '#0078D4', name: 'Azure Redis Cache', description: 'Redis cache control plane and data-plane emulation', preview: true},
 ];
 
 const TOOLING: Service[] = [
