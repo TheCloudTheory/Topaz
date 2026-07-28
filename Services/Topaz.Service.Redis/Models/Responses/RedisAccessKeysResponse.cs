@@ -2,7 +2,7 @@ using System.Text.Json;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
-namespace Topaz.Service.Redis.Models;
+namespace Topaz.Service.Redis.Models.Responses;
 
 internal sealed class RedisAccessKeysResponse(string primaryKey, string secondaryKey) : TopazApiModel
 {

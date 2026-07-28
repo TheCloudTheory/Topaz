@@ -2,6 +2,7 @@ using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.Redis.Models;
 using Topaz.Service.Redis.Models.Requests;
+using Topaz.Service.Redis.Models.Responses;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;

@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.Redis.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -45,6 +46,6 @@ internal sealed class ListFirewallRulesEndpoint(Pipeline eventPipeline, ITopazLo
         }
 
         response.StatusCode = HttpStatusCode.OK;
-        response.CreateJsonContentResponse(result.Resource);
+        response.CreateJsonContentResponse(ListFirewallRulesResponse.From(result.Resource));
     }
 }

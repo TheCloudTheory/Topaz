@@ -39,6 +39,12 @@ internal sealed class GetFirewallRuleEndpoint(Pipeline eventPipeline, ITopazLogg
         }
 
         var result = _controlPlane.GetFirewallRule(sub, rg, name, ruleName);
+        if (result.Result == OperationResult.NotFound)
+        {
+            response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
+            return;
+        }
+        
         if (result.Result != OperationResult.Success || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
