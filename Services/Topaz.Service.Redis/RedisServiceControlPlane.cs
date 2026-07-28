@@ -1,6 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.Redis.Models;
+using Topaz.Service.Redis.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -19,6 +20,7 @@ internal sealed class RedisServiceControlPlane(
     
     private const string AccessKeysSubresource = "access-keys";
     private const string AccessKeysId = "keys";
+    private const string FirewallRuleSubresource = "firewall-rules";
     
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
@@ -79,11 +81,11 @@ internal sealed class RedisServiceControlPlane(
                     sub, rg, name, existing.Location!, existing.Tags,
                     new ResourceSku { Name = request.Sku.Name }, existing.Properties);
                 provider.CreateOrUpdate(sub, rg, name, updated);
-                return new ControlPlaneOperationResult<RedisResource>(OperationResult.Updated, updated, null, null);
+                return new ControlPlaneOperationResult<RedisResource>(OperationResult.Updated, updated);
             }
 
             provider.CreateOrUpdate(sub, rg, name, existing);
-            return new ControlPlaneOperationResult<RedisResource>(OperationResult.Updated, existing, null, null);
+            return new ControlPlaneOperationResult<RedisResource>(OperationResult.Updated, existing);
         }
 
         var location = request.Location ?? rgOp.Resource!.Location!;
@@ -94,7 +96,7 @@ internal sealed class RedisServiceControlPlane(
         var keyStore = RedisAccessKeyStore.Generate(name);
         provider.CreateOrUpdateSubresource(sub, rg, AccessKeysId, name, AccessKeysSubresource, keyStore);
 
-        return new ControlPlaneOperationResult<RedisResource>(OperationResult.Created, resource, null, null);
+        return new ControlPlaneOperationResult<RedisResource>(OperationResult.Created, resource);
     }
 
     public ControlPlaneOperationResult<RedisResource> Get(
@@ -106,7 +108,7 @@ internal sealed class RedisServiceControlPlane(
         return resource == null
             ? new ControlPlaneOperationResult<RedisResource>(
                 OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode)
-            : new ControlPlaneOperationResult<RedisResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<RedisResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult Delete(
@@ -130,7 +132,7 @@ internal sealed class RedisServiceControlPlane(
         var resources = provider.ListAs<RedisResource>(sub, rg, lookForNoOfSegments: 8)
             .Where(r => r.IsInSubscription(sub) && r.IsInResourceGroup(rg))
             .ToArray();
-        return new ControlPlaneOperationResult<RedisResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<RedisResource[]>(OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<RedisResource[]> ListBySubscription(SubscriptionIdentifier sub)
@@ -138,7 +140,7 @@ internal sealed class RedisServiceControlPlane(
         var resources = provider.ListAs<RedisResource>(sub, null, lookForNoOfSegments: 8)
             .Where(r => r.IsInSubscription(sub))
             .ToArray();
-        return new ControlPlaneOperationResult<RedisResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<RedisResource[]>(OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<RedisAccessKeysResponse> ListKeys(
@@ -156,7 +158,7 @@ internal sealed class RedisServiceControlPlane(
         var primary = keyStore?.Keys.FirstOrDefault(k => k.Name == "Primary")?.Value ?? string.Empty;
         var secondary = keyStore?.Keys.FirstOrDefault(k => k.Name == "Secondary")?.Value ?? string.Empty;
         return new ControlPlaneOperationResult<RedisAccessKeysResponse>(
-            OperationResult.Success, new RedisAccessKeysResponse(primary, secondary), null, null);
+            OperationResult.Success, new RedisAccessKeysResponse(primary, secondary));
     }
 
     public ControlPlaneOperationResult<RedisAccessKeysResponse> RegenerateKey(
@@ -188,6 +190,129 @@ internal sealed class RedisServiceControlPlane(
         var primary = keyStore.Keys.FirstOrDefault(k => k.Name == "Primary")?.Value ?? string.Empty;
         var secondary = keyStore.Keys.FirstOrDefault(k => k.Name == "Secondary")?.Value ?? string.Empty;
         return new ControlPlaneOperationResult<RedisAccessKeysResponse>(
-            OperationResult.Success, new RedisAccessKeysResponse(primary, secondary), null, null);
+            OperationResult.Success, new RedisAccessKeysResponse(primary, secondary));
+    }
+
+    public ControlPlaneOperationResult<FirewallRule> CreateOrUpdateFirewallRule(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string cacheName,
+        string ruleName,
+        CreateOrUpdateFirewallRuleRequest request)
+    {
+        var existingCache = Get(subscriptionIdentifier, resourceGroupIdentifier, cacheName);
+        if (existingCache.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<FirewallRule>(OperationResult.NotFound, null, existingCache.Reason,
+                existingCache.Code);
+        }
+
+        if (existingCache.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<FirewallRule>(OperationResult.Failed, null, existingCache.Reason,
+                existingCache.Code);
+        }
+
+        var existingRule = GetFirewallRule(subscriptionIdentifier, resourceGroupIdentifier, cacheName, ruleName);
+        (bool IsValid, string? Error) validationResult;
+        if (existingRule.Result == OperationResult.NotFound)
+        {
+            var rule = FirewallRule.FromRequest(subscriptionIdentifier, resourceGroupIdentifier, cacheName, ruleName,
+                request);
+
+            validationResult = rule.Validate();
+            if (!validationResult.IsValid)
+            {
+                return new ControlPlaneOperationResult<FirewallRule>(OperationResult.BadRequest, null,
+                    validationResult.Error);
+            }
+
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, ruleName, cacheName,
+                FirewallRuleSubresource,
+                rule);
+
+            return new ControlPlaneOperationResult<FirewallRule>(OperationResult.Created, rule);
+        }
+
+        existingRule.Resource!.UpdateFromRequest(request);
+        validationResult = existingRule.Resource.Validate();
+        
+        return !validationResult.IsValid
+            ? new ControlPlaneOperationResult<FirewallRule>(OperationResult.BadRequest, null, validationResult.Error)
+            : new ControlPlaneOperationResult<FirewallRule>(OperationResult.Updated, existingRule.Resource!);
+    }
+
+    internal ControlPlaneOperationResult<FirewallRule> GetFirewallRule(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string cacheName, string ruleName)
+    {
+        var existingCache = Get(subscriptionIdentifier, resourceGroupIdentifier, cacheName);
+        if (existingCache.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<FirewallRule>(OperationResult.NotFound, null, existingCache.Reason,
+                existingCache.Code);
+        }
+
+        if (existingCache.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<FirewallRule>(OperationResult.Failed, null, existingCache.Reason,
+                existingCache.Code);
+        }
+
+        var rule = provider.GetSubresourceAs<FirewallRule>(subscriptionIdentifier, resourceGroupIdentifier, ruleName,
+            cacheName, FirewallRuleSubresource);
+        if (rule == null)
+        {
+            return new ControlPlaneOperationResult<FirewallRule>(OperationResult.NotFound, null, "Firewall rule not found",
+                "NotFound");
+        }
+
+        return new ControlPlaneOperationResult<FirewallRule>(OperationResult.Success, rule);
+    }
+
+    public ControlPlaneOperationResult<FirewallRule[]> ListFirewallRules(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string cacheName)
+    {
+        var existingCache = Get(subscriptionIdentifier, resourceGroupIdentifier, cacheName);
+        if (existingCache.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<FirewallRule[]>(OperationResult.NotFound, null, existingCache.Reason,
+                existingCache.Code);
+        }
+
+        if (existingCache.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<FirewallRule[]>(OperationResult.Failed, null, existingCache.Reason,
+                existingCache.Code);
+        }
+
+        var rules = provider.ListSubresourcesAs<FirewallRule>(subscriptionIdentifier, resourceGroupIdentifier,
+            cacheName, FirewallRuleSubresource);
+        
+        return new ControlPlaneOperationResult<FirewallRule[]>(OperationResult.Success, rules);
+    }
+
+    public ControlPlaneOperationResult DeleteRule(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string cacheName, string ruleName)
+    {
+        var existingCache = Get(subscriptionIdentifier, resourceGroupIdentifier, cacheName);
+        if (existingCache.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound,  existingCache.Reason,
+                existingCache.Code);
+        }
+
+        if (existingCache.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult(OperationResult.Failed,  existingCache.Reason,
+                existingCache.Code);
+        }
+
+        var rule = provider.GetSubresourceAs<FirewallRule>(subscriptionIdentifier, resourceGroupIdentifier, ruleName,
+            cacheName, FirewallRuleSubresource);
+        if (rule == null)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, "Firewall rule not found",
+                "NotFound");
+        }
+        
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, ruleName, cacheName, FirewallRuleSubresource);
+        
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 }

@@ -7,8 +7,8 @@ namespace Topaz.Service.Shared;
 public class ControlPlaneOperationResult<TResource>(
     OperationResult result,
     TResource? resource,
-    string? reason,
-    string? code)
+    string? reason = null,
+    string? code = null)
 {
     [JsonIgnore]
     public OperationResult Result { get; } = result;

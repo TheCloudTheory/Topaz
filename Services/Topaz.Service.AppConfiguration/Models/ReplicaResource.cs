@@ -2,11 +2,12 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Topaz.ResourceManager;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.AppConfiguration.Models;
 
-internal sealed partial class ReplicaResource : ArmResource<ReplicaResourceProperties>
+internal sealed partial class ReplicaResource : ArmResource<ReplicaResourceProperties>, IValidatable
 {
     [JsonConstructor]
 #pragma warning disable CS8618
@@ -41,14 +42,14 @@ internal sealed partial class ReplicaResource : ArmResource<ReplicaResourcePrope
     public override ReplicaResourceProperties Properties { get; init; }
     public ReplicaSystemData? SystemData { get; init; }
 
-    public (bool IsValid, string? Error) Validate(ConfigurationStoreFullResource store)
+    public (bool IsValid, string? Error) Validate()
     {
-        if(store.Sku?.Name == null)
+        if(Sku?.Name == null)
         {
             return (false, $"Replica '{Name}' is invalid. Sku must be specified.");
         }
         
-        if(store.Sku.Name.Equals("Free", StringComparison.OrdinalIgnoreCase) || store.Sku.Name.Equals("Developer", StringComparison.OrdinalIgnoreCase))
+        if(Sku.Name.Equals("Free", StringComparison.OrdinalIgnoreCase) || Sku.Name.Equals("Developer", StringComparison.OrdinalIgnoreCase))
         {
             return (false, $"Geo-replication is not supported for Free and Developer SKU.");
         }

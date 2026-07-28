@@ -257,24 +257,6 @@ TODO: Availability Sets: New service control plane
 ### Azure Redis Cache — initial control plane
 
 <!--
-TODO: Azure Redis Cache: Control plane endpoints
-  Implement the ARM-level Redis cache resource surface (Microsoft.Cache/redis):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}  – delete
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}  – update (tags, sku, enableNonSslPort, minimumTlsVersion, redisConfiguration)
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Cache/redis                              – list by subscription
-  - POST   .../redis/{name}/listKeys       – return primary and secondary access keys
-  - POST   .../redis/{name}/regenerateKey  – regenerate the specified key (keyType: Primary/Secondary)
-  Access keys are generated on first creation and persisted; regenerateKey replaces the specified key.
-  GET responses must not include accessKeys inline (keys are only returned via listKeys).
-  Includes E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests.
-  milestone: v1.10-preview
-  labels: enhancement, redis
--->
-
-<!--
 TODO: Azure Redis Cache: Firewall Rules CRUD
   Implement per-cache firewall rule endpoints (Microsoft.Cache/redis/firewallRules):
   - PUT    .../redis/{name}/firewallRules/{ruleName}  – create or update (startIP, endIP)
