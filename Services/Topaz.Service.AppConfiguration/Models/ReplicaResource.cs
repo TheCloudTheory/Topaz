@@ -42,14 +42,19 @@ internal sealed partial class ReplicaResource : ArmResource<ReplicaResourcePrope
     public override ReplicaResourceProperties Properties { get; init; }
     public ReplicaSystemData? SystemData { get; init; }
 
-    public (bool IsValid, string? Error) Validate()
+    public (bool IsValid, string? Error) Validate<TModel>(TModel? data = null) where TModel : class
     {
-        if(Sku?.Name == null)
+        if(data is not ConfigurationStoreResource store)
+        {
+            return (false, $"Replica '{Name}' is invalid. Data must be specified.");
+        }
+
+        if(store.Sku?.Name == null)
         {
             return (false, $"Replica '{Name}' is invalid. Sku must be specified.");
         }
         
-        if(Sku.Name.Equals("Free", StringComparison.OrdinalIgnoreCase) || Sku.Name.Equals("Developer", StringComparison.OrdinalIgnoreCase))
+        if(store.Sku.Name.Equals("Free", StringComparison.OrdinalIgnoreCase) || store.Sku.Name.Equals("Developer", StringComparison.OrdinalIgnoreCase))
         {
             return (false, $"Geo-replication is not supported for Free and Developer SKU.");
         }

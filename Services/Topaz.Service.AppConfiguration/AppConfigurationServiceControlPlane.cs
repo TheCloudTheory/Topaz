@@ -384,7 +384,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(CreateReplica), "Creating replica {0} for store {1}", replicaName, storeName);
         
         var replica = new ReplicaResource(subscriptionIdentifier, resourceGroupIdentifier, storeName, replicaName, location, null, ReplicaResourceProperties.From(replicaName, store.Resource));
-        var (isValid, validationError) = replica.Validate();
+        var (isValid, validationError) = replica.Validate(store.Resource);
         if (!isValid)
         {
             return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Failed, null, validationError,
@@ -392,8 +392,6 @@ internal sealed class AppConfigurationServiceControlPlane(
         }
         
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, replicaName, storeName, ReplicaSubresource, replica);
-        
-        // Create 
         
         return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Created, replica, null, null);
     }

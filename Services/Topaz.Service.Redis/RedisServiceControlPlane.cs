@@ -220,7 +220,7 @@ internal sealed class RedisServiceControlPlane(
             var rule = FirewallRule.FromRequest(subscriptionIdentifier, resourceGroupIdentifier, cacheName, ruleName,
                 request);
 
-            validationResult = rule.Validate();
+            validationResult = rule.Validate<FirewallRule>();
             if (!validationResult.IsValid)
             {
                 return new ControlPlaneOperationResult<FirewallRule>(OperationResult.BadRequest, null,
@@ -235,7 +235,7 @@ internal sealed class RedisServiceControlPlane(
         }
 
         existingRule.Resource!.UpdateFromRequest(request);
-        validationResult = existingRule.Resource.Validate();
+        validationResult = existingRule.Resource.Validate<FirewallRule>();
         
         return !validationResult.IsValid
             ? new ControlPlaneOperationResult<FirewallRule>(OperationResult.BadRequest, null, validationResult.Error)

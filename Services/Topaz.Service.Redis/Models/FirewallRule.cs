@@ -45,7 +45,7 @@ internal sealed class FirewallRule : TopazApiModel, IValidatable
         Properties!.EndIp = request.Properties?.EndIp;
     }
 
-    public (bool IsValid, string? Error) Validate()
+    public (bool IsValid, string? Error) Validate<TModel>(TModel? data = null) where TModel : class
     {
         if(Properties == null)
         {
