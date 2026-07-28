@@ -7,11 +7,11 @@ authors: kamilmrzyglod
 tags: [general, testing, application-insights]
 ---
 
-Application Insights bugs tend to fall into one of two categories. Either the SDK sends something and you never see it in the portal — wrong connection string, wrong environment variable, telemetry initializer stripping the data — or it sends something you did not intend, and you only find out a week later when billing shows an unexpected spike. Both categories share one root cause: there is no fast, local feedback loop.
+Application Insights bugs tend to fall into one of two categories. Either the SDK sends something and you never see it in the portal - wrong connection string, wrong environment variable, telemetry initializer stripping the data - or it sends something you did not intend, and you only find out a week later when billing shows an unexpected spike. Both categories share one root cause: there is no fast, local feedback loop.
 
 The standard debugging advice is to [enable `DiagnosticsTelemetryModule`](https://learn.microsoft.com/en-us/azure/azure-monitor/app/asp-net-troubleshoot-no-data#self-diagnostics), or to [tail the Fiddler capture](https://learn.microsoft.com/en-us/azure/azure-monitor/app/asp-net-troubleshoot-no-data#fiddler), or to deploy to a dev environment and wait for the [portal to ingest the data](https://learn.microsoft.com/en-us/azure/azure-monitor/app/data-retention-privacy#how-long-is-the-data-kept). All of those paths are slow. Some require a cloud subscription you might not have access to from the machine you are debugging on.
 
-Topaz emulates the Application Insights ingestion API (`/v2/track`) and the query API (`/v1/apps/{ikey}/query`) locally. The SDK points at localhost, sends telemetry as it normally would, and you can query the ingested data immediately — from code, from the Topaz Portal, or from a KQL query in your terminal.
+Topaz emulates the Application Insights ingestion API (`/v2/track`) and the query API (`/v1/apps/{ikey}/query`) locally. The SDK points at localhost, sends telemetry as it normally would, and you can query the ingested data immediately - from code, from the Topaz Portal, or from a KQL query in your terminal.
 
 {/* truncate */}
 
@@ -101,11 +101,11 @@ telemetry.TrackEvent("CheckoutCompleted", new Dictionary<string, string>
 // Metric
 telemetry.TrackMetric("PaymentLatencyMs", 87.4);
 
-// Dependency — the call to the payment gateway
+// Dependency - the call to the payment gateway
 telemetry.TrackDependency("HTTP", "POST /charge", "payment-gateway",
     DateTimeOffset.UtcNow, TimeSpan.FromMilliseconds(87), success: true);
 
-// Exception — this is the one that was missing
+// Exception - this is the one that was missing
 try
 {
     throw new InvalidOperationException("Payment gateway timeout");
@@ -143,7 +143,7 @@ var response = await httpClient.PostAsync(url, body);
 var json = await response.Content.ReadAsStringAsync();
 ```
 
-The response schema is the same as the real Azure Monitor query API — `tables`, `columns`, `rows`. Code that parses real query results will parse local ones too.
+The response schema is the same as the real Azure Monitor query API - `tables`, `columns`, `rows`. Code that parses real query results will parse local ones too.
 
 From the terminal, the Topaz CLI wraps the query API:
 
@@ -154,7 +154,7 @@ topaz insights query \
   --query "exceptions | order by timestamp desc | take 10"
 ```
 
-You get the tabular output immediately. If exceptions are missing here, the SDK is not sending them. If they are present, something downstream — a telemetry processor, a sampling configuration, a portal filter — is dropping them.
+You get the tabular output immediately. If exceptions are missing here, the SDK is not sending them. If they are present, something downstream - a telemetry processor, a sampling configuration, a portal filter - is dropping them.
 
 ## Using the Topaz Portal
 
@@ -168,7 +168,7 @@ exceptions
 | project timestamp, type, outerMessage, customDimensions
 ```
 
-The results appear in a table below the editor. This is useful when you want to cross-reference telemetry types — for example, checking whether the exception timestamp aligns with the dependency call that preceded it:
+The results appear in a table below the editor. This is useful when you want to cross-reference telemetry types - for example, checking whether the exception timestamp aligns with the dependency call that preceded it:
 
 ```kql
 union requests, dependencies, exceptions
@@ -182,7 +182,7 @@ No SDK, no credentials, no subscription needed. The portal talks to the same loc
 
 Back to the original scenario: exceptions were missing. With Topaz you can narrow it down in a few minutes.
 
-First, verify that the SDK is calling `/v2/track` at all. Topaz logs every ingestion request. If you see the POST but no data appears in the query results, a telemetry processor is filtering. If you do not see the POST, the SDK is not flushing — the most common cause is a missing `Flush()` call or a `TelemetryConfiguration` that is disposed before the flush completes.
+First, verify that the SDK is calling `/v2/track` at all. Topaz logs every ingestion request. If you see the POST but no data appears in the query results, a telemetry processor is filtering. If you do not see the POST, the SDK is not flushing - the most common cause is a missing `Flush()` call or a `TelemetryConfiguration` that is disposed before the flush completes.
 
 Second, check sampling. The `AdaptiveSamplingTelemetryProcessor` is enabled by default when you use the full Application Insights SDK. At low request volumes in a development loop it may decide to sample out exceptions entirely. Disabling it locally confirms whether sampling is the cause:
 
@@ -228,7 +228,7 @@ The `severityLevel` mapping follows the standard Application Insights convention
 
 ## Summary
 
-Topaz gives you a complete local Application Insights ingestion and query stack. The SDK configuration is identical to production — only the connection string endpoint changes. You can flush telemetry, query it immediately with KQL from code or from the terminal, and inspect it in the Portal Logs blade without waiting for cloud ingestion or holding a subscription.
+Topaz gives you a complete local Application Insights ingestion and query stack. The SDK configuration is identical to production - only the connection string endpoint changes. You can flush telemetry, query it immediately with KQL from code or from the terminal, and inspect it in the Portal Logs blade without waiting for cloud ingestion or holding a subscription.
 
 The feedback loop for "is this SDK call actually reaching the backend and storing the right data" goes from several minutes (deploy, trigger, wait, check portal) to a few seconds. That is the difference between debugging Application Insights problems and shipping them.
 
