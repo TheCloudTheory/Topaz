@@ -45,6 +45,8 @@ const SERVICES = [
   {name: 'Azure RBAC', sub: 'Roles · Assignments'},
   {name: 'Azure Log Analytics', sub: 'Workspaces · Data Collection'},
   {name: 'Azure Application Insights', sub: 'Workspaces · Data Collection · Query'},
+  {name: 'Private Endpoints', sub: 'Control Plane'},
+  {name: 'Redis Cache', sub: 'Control Plane'},
 ];
 
 const INTEGRATIONS = [
