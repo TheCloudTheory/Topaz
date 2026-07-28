@@ -257,18 +257,6 @@ TODO: Availability Sets: New service control plane
 ### Azure Redis Cache — initial control plane
 
 <!--
-TODO: Azure Redis Cache: Firewall Rules CRUD
-  Implement per-cache firewall rule endpoints (Microsoft.Cache/redis/firewallRules):
-  - PUT    .../redis/{name}/firewallRules/{ruleName}  – create or update (startIP, endIP)
-  - GET    .../redis/{name}/firewallRules/{ruleName}  – get
-  - DELETE .../redis/{name}/firewallRules/{ruleName}  – delete
-  - GET    .../redis/{name}/firewallRules              – list
-  Rules are persisted as subresources of the cache. No actual IP filtering is enforced in the emulator.
-  milestone: v1.10-preview
-  labels: enhancement, redis, good first issue
--->
-
-<!--
 TODO: Azure Redis Cache: MCP Server provisioning tool
   Extend Topaz.MCP with a Redis Cache provisioning tool:
   - CreateRedisCache — create a Redis cache in a resource group and return the
