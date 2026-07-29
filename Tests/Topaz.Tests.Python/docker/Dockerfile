@@ -7,7 +7,7 @@ FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Install the topaz-sdk from the monorepo source
-COPY sdk/python /sdk
+COPY sdk /sdk
 RUN pip install --no-cache-dir /sdk
 
 # Install test dependencies
@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir \
     azure-eventhub>=5.11.0
 
 # Copy Python test sources
-COPY Tests/Topaz.Tests.Python/tests /tests
+COPY tests /tests
 
 WORKDIR /tests
 

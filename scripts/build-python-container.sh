@@ -12,11 +12,17 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR/.."
 
+# Stage only the files the Dockerfile needs to avoid a multi-GB build context
+CTX=$(mktemp -d)
+trap 'rm -rf "$CTX"' EXIT
+cp -r "$ROOT_DIR/sdk/python" "$CTX/sdk"
+cp -r "$ROOT_DIR/Tests/Topaz.Tests.Python/tests" "$CTX/tests"
+
 echo "Building topaz-python-test image from $ROOT_DIR/Tests/Topaz.Tests.Python/docker/Dockerfile..."
 docker build \
     -f "$ROOT_DIR/Tests/Topaz.Tests.Python/docker/Dockerfile" \
     -t topaz-python-test \
-    "$ROOT_DIR"
+    "$CTX"
 
 echo "Build complete: topaz-python-test"
 docker inspect topaz-python-test --format 'Architecture: {{.Architecture}}/{{.Os}}'
