@@ -1,5 +1,6 @@
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.Service.VirtualMachine.Commands.AvailabilitySets;
 
 namespace Topaz.Service.VirtualMachine.Commands;
 
@@ -18,6 +19,16 @@ public sealed class GenericVirtualMachineCommand : IEmulatorCommand
             {
                 imageVersion.AddCommand<GetVirtualMachineImageVersionCommand>("get");
                 imageVersion.AddCommand<ListVirtualMachineImageVersionsCommand>("list");
+            });
+            vm.AddBranch("availability-set", availabilitySet =>
+            {
+                availabilitySet.AddCommand<CreateOrUpdateAvailabilitySetCommand>("create");
+                availabilitySet.AddCommand<GetAvailabilitySetCommand>("show");
+                availabilitySet.AddCommand<DeleteAvailabilitySetCommand>("delete");
+                availabilitySet.AddCommand<ListAvailabilitySetsCommand>("list");
+                availabilitySet.AddCommand<UpdateAvailabilitySetCommand>("update");
+                availabilitySet.AddCommand<ListAvailabilitySetsBySubscriptionCommand>("list-by-subscription");
+                availabilitySet.AddCommand<ListAvailableSizesCommand>("list-available-sizes");
             });
         });
     }

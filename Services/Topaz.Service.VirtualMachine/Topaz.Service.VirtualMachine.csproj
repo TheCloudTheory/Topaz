@@ -15,4 +15,8 @@
       <ProjectReference Include="..\..\Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Commands\AvailabilitySets\" />
+    </ItemGroup>
+
 </Project>
