@@ -3,3 +3,5 @@
 !publish/**
 !certificate/topaz.crt
 !Topaz.Tests.Legacy.Java/tests/**
+!sdk/python/**
+!Tests/Topaz.Tests.Python/tests/**
