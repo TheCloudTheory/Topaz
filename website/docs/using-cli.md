@@ -54,6 +54,21 @@ When running as a Docker container use the `topaz-host` image:
 docker run --rm -p 8899:8899 thecloudtheory/topaz-host:<tag>
 ```
 
+:::note[CLI inside Docker]
+
+If you run the `topaz` CLI **inside the same container** as `topaz-host`, the CLI still resolves the host via `*.topaz.local.dev`. Make sure that wildcard resolves to `127.0.0.1` within the container. The recommended approach is to configure dnsmasq so all current and future service subdomains are covered automatically:
+
+```bash
+apt-get install -y dnsmasq
+echo "address=/.topaz.local.dev/127.0.0.1" > /etc/dnsmasq.d/topaz.conf
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
+service dnsmasq start
+```
+
+Without this, the CLI will report that `topaz-host` is not running even when it is.
+
+:::
+
 ### Useful startup flags
 
 | Flag | Description |
