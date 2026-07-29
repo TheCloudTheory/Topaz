@@ -834,6 +834,212 @@
     ]
   },
   {
+    "name": "availability-set create",
+    "group": "virtual-machine",
+    "description": "Creates or updates an Azure Availability Set.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Availability set name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--fault-domain-count",
+        "description": "(Optional) Number of fault domains.",
+        "required": false
+      },
+      {
+        "names": "--update-domain-count",
+        "description": "(Optional) Number of update domains.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates an Availability Set",
+        "command": "topaz availability-set create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-avset\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --location \u0022westeurope\u0022"
+      }
+    ]
+  },
+  {
+    "name": "availability-set delete",
+    "group": "virtual-machine",
+    "description": "Deletes an Azure Availability Set.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Availability set name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes an Availability Set",
+        "command": "topaz availability-set delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-avset\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "availability-set list",
+    "group": "virtual-machine",
+    "description": "Lists Azure Availability Sets in a resource group.",
+    "options": [
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists Availability Sets in a resource group",
+        "command": "topaz availability-set list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "availability-set list-available-sizes",
+    "group": "virtual-machine",
+    "description": "Lists available VM sizes for an Azure Availability Set.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Availability set name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists available VM sizes for an Availability Set",
+        "command": "topaz availability-set list-available-sizes --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-avset\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "availability-set list-by-subscription",
+    "group": "virtual-machine",
+    "description": "Lists all Azure Availability Sets in a subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists Availability Sets in a subscription",
+        "command": "topaz availability-set list-by-subscription --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae"
+      }
+    ]
+  },
+  {
+    "name": "availability-set show",
+    "group": "virtual-machine",
+    "description": "Gets an Azure Availability Set.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Availability set name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets an Availability Set",
+        "command": "topaz availability-set show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-avset\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "availability-set update",
+    "group": "virtual-machine",
+    "description": "Updates an Azure Availability Set.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Availability set name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--fault-domain-count",
+        "description": "(Optional) Number of fault domains.",
+        "required": false
+      },
+      {
+        "names": "--update-domain-count",
+        "description": "(Optional) Number of update domains.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Updates an Availability Set",
+        "command": "topaz availability-set update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-avset\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --fault-domain-count 3"
+      }
+    ]
+  },
+  {
     "name": "chaos disable",
     "group": "chaos",
     "description": "Disables chaos mode in the Topaz host.",
