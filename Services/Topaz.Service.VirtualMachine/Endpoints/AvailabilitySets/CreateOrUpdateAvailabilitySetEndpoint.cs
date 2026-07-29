@@ -23,7 +23,7 @@ internal sealed class CreateOrUpdateAvailabilitySetEndpoint(Pipeline eventPipeli
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"
     ];
 
-    public string[] Permissions => ["Microsoft.Compute/virtualMachines/write"];
+    public string[] Permissions => ["Microsoft.Compute/availabilitySets/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

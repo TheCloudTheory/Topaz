@@ -16,6 +16,10 @@ public sealed class AvailabilitySetService(Pipeline eventPipeline, ITopazLogger 
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new CreateOrUpdateAvailabilitySetEndpoint(eventPipeline, logger)
+        new CreateOrUpdateAvailabilitySetEndpoint(eventPipeline, logger),
+        new GetAvailabilitySetEndpoint(eventPipeline, logger),
+        new DeleteAvailabilitySetEndpoint(eventPipeline, logger),
+        new ListAvailabilitySetsEndpoint(eventPipeline, logger),
+        new ListAvailableSizesEndpoint(eventPipeline, logger)
     ];
 }

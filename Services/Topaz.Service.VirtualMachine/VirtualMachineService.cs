@@ -27,6 +27,4 @@ public sealed class VirtualMachineService(Pipeline eventPipeline, ITopazLogger l
         new GetVirtualMachineImageVersionEndpoint(logger),
         new ListComputeResourceSkusEndpoint(logger)
     ];
-
-    public void Bootstrap() { }
 }
