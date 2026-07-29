@@ -93,16 +93,18 @@ internal class Program
             return 0;
 
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
             await Console.Error.WriteLineAsync(
-                "Topaz Host is not running. Please start it first using `topaz-host`.");
+                "Topaz Host is not running. Please start it first using `topaz-host`.\n" +
+                $"Error: {ex.Message}");
             return 1;
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException ex)
         {
             await Console.Error.WriteLineAsync(
-                "Topaz Host is not running. Please start it first using `topaz-host`.");
+                "Topaz Host is not running. Please start it first using `topaz-host`.\n" +
+                $"Error: {ex.Message}");
             return 1;
         }
     }
