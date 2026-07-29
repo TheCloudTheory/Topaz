@@ -10,7 +10,6 @@ internal sealed class AvailabilitySetResourceProperties
     public int? PlatformUpdateDomainCount { get; set; }
     public SubResource? ProximityPlacementGroup { get; set; }
     public SubResource[]? VirtualMachines { get; set; }
-    public VirtualMachineScaleSetSku? Sku { get; set; }
     public ScheduledEventsPolicyData? ScheduledEventsPolicy { get; set; }
     public InstanceViewStatus[]? Statuses { get; set; }
     
@@ -22,19 +21,8 @@ internal sealed class AvailabilitySetResourceProperties
             PlatformUpdateDomainCount = request.PlatformUpdateDomainCount,
             ProximityPlacementGroup = request.ProximityPlacementGroup,
             VirtualMachines = request.VirtualMachines,
-            Sku = request.Sku,
             ScheduledEventsPolicy = request.ScheduledEventsPolicy
         };
-    }
-    
-    public void UpdateFromRequest(CreateOrUpdateAvailabilitySetRequest request)
-    {
-        PlatformFaultDomainCount = request.PlatformFaultDomainCount ?? PlatformFaultDomainCount;
-        PlatformUpdateDomainCount = request.PlatformUpdateDomainCount ?? PlatformUpdateDomainCount;
-        ProximityPlacementGroup = request.ProximityPlacementGroup ?? ProximityPlacementGroup;
-        VirtualMachines = request.VirtualMachines ?? VirtualMachines;
-        Sku = request.Sku ?? Sku;
-        ScheduledEventsPolicy = request.ScheduledEventsPolicy ?? ScheduledEventsPolicy;
     }
     
     [UsedImplicitly]

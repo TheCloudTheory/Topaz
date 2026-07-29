@@ -29,7 +29,7 @@ public sealed class NetworkSecurityGroupResource : ArmResource<NetworkSecurityGr
     public override string Type { get; init; } = "Microsoft.Network/networkSecurityGroups";
     public sealed override string? Location { get; set; }
     public sealed override IDictionary<string, string>? Tags { get; set; }
-    public override ResourceSku? Sku { get; init; }
+    public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
     public sealed override NetworkSecurityGroupResourceProperties Properties { get; init; } = new();
 }

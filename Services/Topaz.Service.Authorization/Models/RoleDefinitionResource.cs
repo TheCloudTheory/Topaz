@@ -34,7 +34,7 @@ internal sealed class RoleDefinitionResource : ArmResource<RoleDefinitionResourc
     public override string Type { get; init; } = "Microsoft.Authorization/roleDefinitions";
     public override string? Location { get; set; }
     public override IDictionary<string, string>? Tags { get; set; }
-    public override ResourceSku? Sku { get; init; }
+    public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
     public override RoleDefinitionResourceProperties Properties { get; init; }
 }

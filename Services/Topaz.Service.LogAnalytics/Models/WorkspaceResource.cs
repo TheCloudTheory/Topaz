@@ -33,7 +33,7 @@ public sealed class WorkspaceResource : ArmResource<WorkspaceResourceProperties>
     public override string Type { get; init; } = "Microsoft.OperationalInsights/workspaces";
     public sealed override string? Location { get; set; }
     public sealed override IDictionary<string, string>? Tags { get; set; }
-    public sealed override ResourceSku? Sku { get; init; }
+    public sealed override ResourceSku? Sku { get; set; }
     public sealed override string? Kind { get; init; }
     public sealed override WorkspaceResourceProperties Properties { get; init; }
 }

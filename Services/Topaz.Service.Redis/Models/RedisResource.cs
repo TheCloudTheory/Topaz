@@ -37,7 +37,7 @@ internal sealed class RedisResource : ArmResource<RedisResourceProperties>
     public override string Type { get; init; } = "Microsoft.Cache/Redis";
     public override string? Location { get; set; }
     public override IDictionary<string, string>? Tags { get; set; }
-    public override ResourceSku? Sku { get; init; }
+    public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
     public override RedisResourceProperties Properties { get; init; }
 }

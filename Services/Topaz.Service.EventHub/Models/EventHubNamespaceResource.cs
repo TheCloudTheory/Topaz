@@ -34,7 +34,7 @@ internal sealed class EventHubNamespaceResource
     public override string Type { get; init; } = "Microsoft.EventHub/namespaces";
     public override string? Location { get; set; }
     public override IDictionary<string, string>? Tags { get; set; } = new Dictionary<string, string>();
-    public override ResourceSku? Sku { get; init; }
+    public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
     public override EventHubNamespaceResourceProperties Properties { get; init; }
 

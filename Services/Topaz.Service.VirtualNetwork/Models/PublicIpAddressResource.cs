@@ -31,7 +31,7 @@ public sealed class PublicIpAddressResource : ArmResource<PublicIpAddressResourc
     public override string Type { get; init; } = "Microsoft.Network/publicIPAddresses";
     public override string? Location { get; set; }
     public override IDictionary<string, string>? Tags { get; set; }
-    public override ResourceSku? Sku { get; init; }
+    public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
     public override PublicIpAddressResourceProperties Properties { get; init; } = new();
 }

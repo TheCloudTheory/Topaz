@@ -62,10 +62,7 @@ internal sealed class CreateOrUpdateAvailabilitySetEndpoint(Pipeline eventPipeli
             response.CreateErrorResponse(result.Code!, result.Reason!);
             return;
         }
-
-        var statusCode = result.Result == OperationResult.Created
-            ? HttpStatusCode.Created
-            : HttpStatusCode.OK;
-        response.CreateJsonContentResponse(result.Resource, statusCode);
+        
+        response.CreateJsonContentResponse(result.Resource);
     }
 }

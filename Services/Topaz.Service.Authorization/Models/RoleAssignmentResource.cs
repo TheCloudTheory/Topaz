@@ -33,7 +33,7 @@ internal sealed class RoleAssignmentResource : ArmResource<RoleAssignmentResourc
     public override string Type { get; init; } = "Microsoft.Authorization/roleAssignments";
     public override string? Location { get; set; }
     public override IDictionary<string, string>? Tags { get; set; }
-    public override ResourceSku? Sku { get; init; }
+    public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
     public override RoleAssignmentResourceProperties Properties { get; init; }
 }

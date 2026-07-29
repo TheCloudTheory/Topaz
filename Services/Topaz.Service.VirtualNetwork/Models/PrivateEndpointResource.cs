@@ -29,7 +29,7 @@ public sealed class PrivateEndpointResource : ArmResource<PrivateEndpointResourc
     public override string Type { get; init; } = "Microsoft.Network/privateEndpoints";
     public sealed override string? Location { get; set; }
     public sealed override IDictionary<string, string>? Tags { get; set; }
-    public override ResourceSku? Sku { get; init; }
+    public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
     public sealed override PrivateEndpointResourceProperties Properties { get; init; } = new();
 }

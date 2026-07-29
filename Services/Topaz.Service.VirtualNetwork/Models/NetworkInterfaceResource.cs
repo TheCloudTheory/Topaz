@@ -29,7 +29,7 @@ public sealed class NetworkInterfaceResource : ArmResource<NetworkInterfaceResou
     public override string Type { get; init; } = "Microsoft.Network/networkInterfaces";
     public sealed override string? Location { get; set; }
     public sealed override IDictionary<string, string>? Tags { get; set; }
-    public override ResourceSku? Sku { get; init; }
+    public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
     public sealed override NetworkInterfaceResourceProperties Properties { get; init; } = new();
 }

@@ -30,12 +30,23 @@ internal sealed class AvailabilitySetResource : ArmResource<AvailabilitySetResou
         Properties = properties;
     }
 
-    public sealed override string Id { get; init; }
-    public sealed override string Name { get; init; }
+    public override string Id { get; init; }
+    public override string Name { get; init; }
     public override string Type { get; init; } = "Microsoft.Compute/availabilitySets";
-    public sealed override string? Location { get; set; }
-    public sealed override IDictionary<string, string>? Tags { get; set; }
-    public override ResourceSku? Sku { get; init; }
+    public override string? Location { get; set; }
+    public override IDictionary<string, string>? Tags { get; set; }
+    public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
-    public sealed override AvailabilitySetResourceProperties Properties { get; init; }
+    public override AvailabilitySetResourceProperties Properties { get; init; }
+
+    public void UpdateFromRequest(CreateOrUpdateAvailabilitySetRequest request)
+    {
+        Tags = request.Tags ?? Tags;
+        Properties.PlatformFaultDomainCount = request.PlatformFaultDomainCount ?? Properties.PlatformFaultDomainCount;
+        Properties.PlatformUpdateDomainCount = request.PlatformUpdateDomainCount ?? Properties.PlatformUpdateDomainCount;
+        Properties.ProximityPlacementGroup = request.ProximityPlacementGroup ?? Properties.ProximityPlacementGroup;
+        Properties.VirtualMachines = request.VirtualMachines ?? Properties.VirtualMachines;
+        Sku = request.Sku?.Convert() ?? Sku;
+        Properties.ScheduledEventsPolicy = request.ScheduledEventsPolicy ?? Properties.ScheduledEventsPolicy;
+    }
 }

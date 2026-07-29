@@ -86,7 +86,7 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
                 availabilitySetName);
         if (existing.Result != OperationResult.NotFound)
         {
-            existing.Resource!.Properties.UpdateFromRequest(request);
+            existing.Resource!.UpdateFromRequest(request);
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName, existing);
 
             return new ControlPlaneOperationResult<AvailabilitySetResource>(
@@ -163,7 +163,7 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
                 resourceGroupOperation.Code);
         }
         
-        var existing = provider.ListAs<AvailabilitySetResource>(subscriptionIdentifier, resourceGroupIdentifier);
+        var existing = provider.ListAs<AvailabilitySetResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
         return new ControlPlaneOperationResult<AvailabilitySetResource[]>(OperationResult.Success, [.. existing]);
     }
 
@@ -253,7 +253,7 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
                 $"Availability set '{availabilitySetName}' not found.", "AvailabilitySetNotFound");
         }
         
-        existing.Resource!.Properties.UpdateFromRequest(request);
+        existing.Resource!.UpdateFromRequest(request);
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName, existing);
 
         return new ControlPlaneOperationResult<AvailabilitySetResource>(

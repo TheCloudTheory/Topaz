@@ -31,7 +31,7 @@ public sealed class ResourceGroupResource
     public override string Type { get; init; } = "Microsoft.Resources/resourceGroups";
     public override string? Location { get; set; }
     public override IDictionary<string, string>? Tags { get; set; } = new Dictionary<string, string>();
-    public override ResourceSku? Sku { get; init; }
+    public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
     public override ResourceGroupProperties Properties { get; init; }
     public string? ManagedBy { get; set; }

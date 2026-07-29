@@ -29,4 +29,14 @@ internal sealed class VirtualMachineScaleSetSku : IValidatable
             Tier = availabilitySetSku?.Tier
         };
     }
+
+    public ResourceSku Convert()
+    {
+        return new ResourceSku
+        {
+            Capacity = Capacity,
+            Name = Name,
+            Tier = Tier
+        };
+    }
 }

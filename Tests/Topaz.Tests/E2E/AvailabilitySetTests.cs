@@ -114,7 +114,7 @@ public class AvailabilitySetTests
             .CreateOrUpdateAsync(WaitUntil.Completed, name, MinimalAvailabilitySetData());
 
         // Act
-        var avSet = resourceGroup.Value.GetAvailabilitySet(name);
+        var avSet = await resourceGroup.Value.GetAvailabilitySetAsync(name);
         await avSet.Value.DeleteAsync(WaitUntil.Completed);
 
         // Assert

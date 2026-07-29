@@ -35,7 +35,7 @@ public class ConfigurationStoreResource : ArmResource<ConfigurationStoreResource
     public override string Type { get; init; } = "Microsoft.AppConfiguration/configurationStores";
     public sealed override string? Location { get; set; }
     public sealed override IDictionary<string, string>? Tags { get; set; }
-    public sealed override ResourceSku? Sku { get; init; }
+    public sealed override ResourceSku? Sku { get; set; }
     public sealed override string? Kind { get; init; }
     public sealed override ConfigurationStoreResourceProperties Properties { get; init; }
 }
