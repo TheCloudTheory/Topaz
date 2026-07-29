@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir \
     azure-eventhub>=5.11.0
 
 # Copy Python test sources
-COPY Topaz.Tests.Python/tests /tests
+COPY Tests/Topaz.Tests.Python/tests /tests
 
 WORKDIR /tests
 
