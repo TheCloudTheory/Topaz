@@ -12,9 +12,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR/.."
 
-echo "Building topaz-python-test image from $ROOT_DIR/Topaz.Tests.Python/docker/Dockerfile..."
+echo "Building topaz-python-test image from $ROOT_DIR/Tests/Topaz.Tests.Python/docker/Dockerfile..."
 docker build \
-    -f "$ROOT_DIR/Topaz.Tests.Python/docker/Dockerfile" \
+    -f "$ROOT_DIR/Tests/Topaz.Tests.Python/docker/Dockerfile" \
     -t topaz-python-test \
     "$ROOT_DIR"
 
