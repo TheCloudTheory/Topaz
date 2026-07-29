@@ -198,4 +198,9 @@ internal sealed class VirtualMachineServiceControlPlane(
         return new ControlPlaneOperationResult<VirtualMachineResource[]>(OperationResult.Success, resources, null,
             null);
     }
+
+    public ControlPlaneOperationResult<AvailabilitySetResource> CreateOrUpdateAvailabilitySet(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string availabilitySetName, CreateOrUpdateAvailabilitySetRequest request)
+    {
+        throw new NotImplementedException();
+    }
 }
