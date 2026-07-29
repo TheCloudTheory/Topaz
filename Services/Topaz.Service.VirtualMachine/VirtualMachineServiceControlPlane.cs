@@ -106,7 +106,7 @@ internal sealed class VirtualMachineServiceControlPlane(
 
         if (existing != null)
         {
-            existing.Location = request.Location?.ToString() ?? existing.Location;
+            existing.Location = request.Location ?? existing.Location;
             existing.Tags = request.Tags ?? existing.Tags;
             VirtualMachineResourceProperties.UpdateFromRequest(existing.Properties, request);
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, virtualMachineName, existing);
@@ -197,10 +197,5 @@ internal sealed class VirtualMachineServiceControlPlane(
 
         return new ControlPlaneOperationResult<VirtualMachineResource[]>(OperationResult.Success, resources, null,
             null);
-    }
-
-    public ControlPlaneOperationResult<AvailabilitySetResource> CreateOrUpdateAvailabilitySet(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string availabilitySetName, CreateOrUpdateAvailabilitySetRequest request)
-    {
-        throw new NotImplementedException();
     }
 }

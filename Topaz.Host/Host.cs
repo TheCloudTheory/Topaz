@@ -142,7 +142,8 @@ public class Host
             new ChaosService(_logger),
             new ForwardProxyService(),
             new PrivateEndpointService(_eventPipeline, _logger),
-            new RedisService(_eventPipeline, _logger)
+            new RedisService(_eventPipeline, _logger),
+            new AvailabilitySetService(_eventPipeline, _logger)
         };
 
         _logger.ConfigureIdFactory(idFactory);

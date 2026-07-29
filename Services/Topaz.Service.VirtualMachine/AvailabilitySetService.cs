@@ -1,9 +1,12 @@
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
+using Topaz.Service.VirtualMachine.Endpoints.AvailabilitySets;
+using Topaz.Shared;
 
 namespace Topaz.Service.VirtualMachine;
 
-internal sealed class AvailabilitySetService : IServiceDefinition
+public sealed class AvailabilitySetService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".availability-set");
@@ -13,5 +16,6 @@ internal sealed class AvailabilitySetService : IServiceDefinition
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
+        new CreateOrUpdateAvailabilitySetEndpoint(eventPipeline, logger)
     ];
 }

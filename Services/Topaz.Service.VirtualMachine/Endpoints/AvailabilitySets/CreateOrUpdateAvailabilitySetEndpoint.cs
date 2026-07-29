@@ -13,8 +13,8 @@ namespace Topaz.Service.VirtualMachine.Endpoints.AvailabilitySets;
 internal sealed class CreateOrUpdateAvailabilitySetEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
-    private readonly VirtualMachineServiceControlPlane _controlPlane =
-        VirtualMachineServiceControlPlane.New(eventPipeline, logger);
+    private readonly AvailabilitySetControlPlane _controlPlane =
+        AvailabilitySetControlPlane.New(eventPipeline, logger);
 
     public string? ProviderNamespace => "Microsoft.Compute";
 
@@ -58,7 +58,7 @@ internal sealed class CreateOrUpdateAvailabilitySetEndpoint(Pipeline eventPipeli
                 return;
             }
 
-            var result = _controlPlane.CreateOrUpdateAvailabilitySet(
+            var result = _controlPlane.CreateOrUpdate(
                 subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName, request);
 
             if ((result.Result != OperationResult.Created && result.Result != OperationResult.Updated)
