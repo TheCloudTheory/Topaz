@@ -16,6 +16,9 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
     
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
+    
+    private readonly SubscriptionControlPlane _subscriptionControlPlane =
+        SubscriptionControlPlane.New(eventPipeline, logger);
 
     private readonly VirtualMachineServiceControlPlane _virtualMachineControlPlane =
         VirtualMachineServiceControlPlane.New(eventPipeline, logger);
@@ -213,5 +216,48 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
         var rest = sizeName[prefix.Length..];
         var family = new string(rest.TakeWhile(char.IsLetter).ToArray());
         return family.Length > 0 ? family : null;
+    }
+
+    public ControlPlaneOperationResult<AvailabilitySetResource[]> ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var subscription = _subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<AvailabilitySetResource[]>(OperationResult.NotFound, null, subscription.Reason, subscription.Code);
+        }
+        
+        var resources = provider.ListAs<AvailabilitySetResource>(subscriptionIdentifier, null,
+                lookForNoOfSegments: 8)
+            .Where(r => r.IsInSubscription(subscriptionIdentifier))
+            .ToArray();
+
+        return new ControlPlaneOperationResult<AvailabilitySetResource[]>(OperationResult.Success, resources);
+    }
+
+    public ControlPlaneOperationResult<AvailabilitySetResource> Update(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string availabilitySetName, CreateOrUpdateAvailabilitySetRequest request)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<AvailabilitySetResource>(
+                OperationResult.NotFound,
+                null,
+                resourceGroupOperation.Reason,
+                resourceGroupOperation.Code);
+        }
+        
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<AvailabilitySetResource>(OperationResult.NotFound, null,
+                $"Availability set '{availabilitySetName}' not found.", "AvailabilitySetNotFound");
+        }
+        
+        existing.Resource!.Properties.UpdateFromRequest(request);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName, existing);
+
+        return new ControlPlaneOperationResult<AvailabilitySetResource>(
+            OperationResult.Updated,
+            existing.Resource);
     }
 }

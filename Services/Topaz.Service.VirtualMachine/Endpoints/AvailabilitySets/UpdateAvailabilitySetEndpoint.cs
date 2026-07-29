@@ -10,7 +10,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.VirtualMachine.Endpoints.AvailabilitySets;
 
-internal sealed class CreateOrUpdateAvailabilitySetEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class UpdateAvailabilitySetEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly AvailabilitySetControlPlane _controlPlane =
@@ -20,7 +20,7 @@ internal sealed class CreateOrUpdateAvailabilitySetEndpoint(Pipeline eventPipeli
 
     public string[] Endpoints =>
     [
-        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"
+        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"
     ];
 
     public string[] Permissions => ["Microsoft.Compute/availabilitySets/write"];
@@ -53,19 +53,15 @@ internal sealed class CreateOrUpdateAvailabilitySetEndpoint(Pipeline eventPipeli
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdate(
+        var result = _controlPlane.Update(
             subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName, request);
 
-        if ((result.Result != OperationResult.Created && result.Result != OperationResult.Updated)
-            || result.Resource == null)
+        if (result.Result != OperationResult.Updated || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
             return;
         }
-
-        var statusCode = result.Result == OperationResult.Created
-            ? HttpStatusCode.Created
-            : HttpStatusCode.OK;
-        response.CreateJsonContentResponse(result.Resource, statusCode);
+        
+        response.CreateJsonContentResponse(result.Resource);
     }
 }

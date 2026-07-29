@@ -195,7 +195,6 @@ internal sealed class VirtualMachineServiceControlPlane(
             .Where(r => r.IsInSubscription(subscriptionIdentifier))
             .ToArray();
 
-        return new ControlPlaneOperationResult<VirtualMachineResource[]>(OperationResult.Success, resources, null,
-            null);
+        return new ControlPlaneOperationResult<VirtualMachineResource[]>(OperationResult.Success, resources);
     }
 }

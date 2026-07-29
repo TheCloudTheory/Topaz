@@ -44,9 +44,11 @@ internal sealed class ListVirtualMachinesBySubscriptionEndpoint(Pipeline eventPi
 
         var result = new ListSubscriptionResourcesResponse
         {
-            Value = vms.Resource
-                .Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!)
-                .ToArray()
+            Value =
+            [
+                .. vms.Resource
+                    .Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!)
+            ]
         };
 
         response.CreateJsonContentResponse(result);

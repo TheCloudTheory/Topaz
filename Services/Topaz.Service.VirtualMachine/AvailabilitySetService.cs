@@ -20,6 +20,8 @@ public sealed class AvailabilitySetService(Pipeline eventPipeline, ITopazLogger 
         new GetAvailabilitySetEndpoint(eventPipeline, logger),
         new DeleteAvailabilitySetEndpoint(eventPipeline, logger),
         new ListAvailabilitySetsEndpoint(eventPipeline, logger),
-        new ListAvailableSizesEndpoint(eventPipeline, logger)
+        new ListAvailableSizesEndpoint(eventPipeline, logger),
+        new ListAvalabilitySetsBySubscriptionEndpoint(eventPipeline, logger),
+        new UpdateAvailabilitySetEndpoint(eventPipeline, logger)
     ];
 }
