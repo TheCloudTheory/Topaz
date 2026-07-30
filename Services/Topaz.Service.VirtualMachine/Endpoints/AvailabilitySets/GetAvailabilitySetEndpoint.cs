@@ -28,9 +28,6 @@ internal sealed class GetAvailabilitySetEndpoint(Pipeline eventPipeline, ITopazL
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(CreateOrUpdateVirtualMachineEndpoint), nameof(GetResponse),
-            "Executing {0}.", nameof(GetResponse));
-        
         var subscriptionIdentifier =
             SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
         var resourceGroupIdentifier =
@@ -43,15 +40,21 @@ internal sealed class GetAvailabilitySetEndpoint(Pipeline eventPipeline, ITopazL
             return;
         }
 
-        var result = _controlPlane.Get(
+        var operation = _controlPlane.Get(
             subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName);
 
-        if (result.Result != OperationResult.Success || result.Resource == null)
+        if (operation.Result == OperationResult.NotFound)
         {
-            response.CreateErrorResponse(result.Code!, result.Reason!);
+            response.CreateNotFoundResponse(operation.Code!, operation.Reason!);
             return;
         }
         
-        response.CreateJsonContentResponse(result.Resource);
+        if (operation.Result != OperationResult.Success || operation.Resource == null)
+        {
+            response.CreateErrorResponse(operation.Code!, operation.Reason!);
+            return;
+        }
+        
+        response.CreateJsonContentResponse(operation.Resource);
     }
 }

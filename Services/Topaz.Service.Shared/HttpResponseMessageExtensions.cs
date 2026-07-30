@@ -76,4 +76,12 @@ public static class HttpResponseMessageExtensions
         response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         response.StatusCode = code;
     }
+    
+    public static void CreateNotFoundResponse(this HttpResponseMessage response, string code, string message)
+    {
+        var error = new GenericErrorResponse(code, message);
+
+        response.StatusCode = HttpStatusCode.NotFound;
+        response.Content = JsonContent.Create(error);
+    }
 }
