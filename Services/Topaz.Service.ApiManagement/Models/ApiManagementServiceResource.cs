@@ -92,4 +92,9 @@ internal sealed class ApiManagementServiceResource : ArmResource<ApiManagementSe
 
         return Sku == null ? (false, "Sku cannot be null.") : (true, null);
     }
+    
+    public static bool CheckIfNameIsValid(string name)
+    {
+        return string.IsNullOrWhiteSpace(name) || name.Length < 1 || name.Length > 50 || !NamePattern.IsMatch(name);
+    }
 }

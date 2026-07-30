@@ -53,24 +53,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ## v1.10-preview
 
 <!--
-TODO: Azure API Management: New service project scaffold
-  Create Topaz.Service.ApiManagement following existing service conventions:
-  - ApiManagementServiceResourceProperties + ApiManagementServiceResource (ArmResource<T>)
-    capturing: sku (Developer/Basic/Standard/Premium/Consumption), publisherEmail,
-    publisherName, gatewayUrl (https://{name}.azure-api.topaz.local.dev:<ApiManagementPort>/),
-    portalUrl, managementApiUrl, provisioningState (always Succeeded).
-  - ApiManagementResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
-  - ApiManagementServiceControlPlane implementing IControlPlane with a working Deploy().
-  - IServiceDefinition registration and wiring in Topaz.Host.
-  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
-    case "Microsoft.ApiManagement/service": entry in TemplateDeploymentOrchestrator.RouteDeployment().
-  - Add GlobalSettings.DefaultApiManagementPort constant (8900).
-  See: https://learn.microsoft.com/en-us/rest/api/apimanagement/
-  milestone: v1.10-preview
-  labels: enhancement, api-management, good first issue
--->
-
-<!--
 TODO: Azure API Management: Service control plane endpoints
   Implement the ARM-level ApiManagementService resource surface
   (Microsoft.ApiManagement/service):

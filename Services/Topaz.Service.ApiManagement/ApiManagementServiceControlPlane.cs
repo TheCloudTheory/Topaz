@@ -20,8 +20,8 @@ internal sealed class ApiManagementServiceControlPlane(
     private const string NotFoundCode = "ResourceNotFound";
     private const string NotFoundMessage = "ApiManagement resource '{0}' could not be found.";
 
-    private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
-        new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
+    private readonly SubscriptionControlPlane _subscriptionControlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
+    private readonly ResourceGroupControlPlane _resourceGroupControlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
     
     public static ApiManagementServiceControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new ApiManagementResourceProvider(logger), logger);
@@ -104,5 +104,32 @@ internal sealed class ApiManagementServiceControlPlane(
             ? new ControlPlaneOperationResult<ApiManagementServiceResource>(
                 OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode)
             : new ControlPlaneOperationResult<ApiManagementServiceResource>(OperationResult.Success, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult> CheckNameAvailability(
+        SubscriptionIdentifier subscriptionIdentifier, CheckNameAvailabilityRequest request)
+    {
+        var subscriptionOperation = _subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscriptionOperation.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult>(
+                subscriptionOperation.Result, null, subscriptionOperation.Reason, subscriptionOperation.Code);
+        }
+        
+        var existingEntry = GlobalDnsEntries.GetEntry(ApiManagementService.UniqueName, request.Name!);
+        if (existingEntry != null)
+        {
+            return new ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult>(OperationResult.Failed,
+                ApiManagementServiceNameAvailabilityResult.ForAlreadyExists());
+        }
+
+        if(ApiManagementServiceResource.CheckIfNameIsValid(request.Name!))
+        {
+            return new ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult>(
+                OperationResult.Failed, ApiManagementServiceNameAvailabilityResult.ForInvalidName());
+        }
+
+        return new ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult>(
+            OperationResult.Success, ApiManagementServiceNameAvailabilityResult.ForValidName());
     }
 }
