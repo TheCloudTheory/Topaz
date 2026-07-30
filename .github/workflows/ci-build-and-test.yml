@@ -410,7 +410,7 @@ jobs:
       run: ./scripts/build-nodejs-container.sh
     - name: Build Java legacy test container
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.java_skip != 'true'
-      run: docker build -f Topaz.Tests.Legacy.Java/docker/Dockerfile -t topaz-java-legacy-test .
+      run: docker build -f Tests/Topaz.Tests.Legacy.Java/docker/Dockerfile -t topaz-java-legacy-test .
     - name: Build PowerShell container
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.ps_skip != 'true'
       run: ./scripts/build-powershell-container.sh
