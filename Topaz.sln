@@ -140,7 +140,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Example.ApplicationIn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Redis", "Services\Topaz.Service.Redis\Topaz.Service.Redis.csproj", "{607F0075-2022-4D74-88C6-95C12FABA78A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ApiManagement", "Services\Topaz.Service.ApiManagement\Topaz.Service.ApiManagement\Topaz.Service.ApiManagement.csproj", "{BD4C1523-CF48-4896-B7F1-159B905A7DEF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ApiManagement", "Services\Topaz.Service.ApiManagement\Topaz.Service.ApiManagement.csproj", "{BD4C1523-CF48-4896-B7F1-159B905A7DEF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
