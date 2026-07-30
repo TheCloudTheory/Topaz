@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Azure.Core;
 using Topaz.ResourceManager;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.VirtualMachine.Models.Requests;
 
@@ -42,11 +43,30 @@ internal sealed class AvailabilitySetResource : ArmResource<AvailabilitySetResou
     public void UpdateFromRequest(CreateOrUpdateAvailabilitySetRequest request)
     {
         Tags = request.Tags ?? Tags;
-        Properties.PlatformFaultDomainCount = request.PlatformFaultDomainCount ?? Properties.PlatformFaultDomainCount;
-        Properties.PlatformUpdateDomainCount = request.PlatformUpdateDomainCount ?? Properties.PlatformUpdateDomainCount;
-        Properties.ProximityPlacementGroup = request.ProximityPlacementGroup ?? Properties.ProximityPlacementGroup;
-        Properties.VirtualMachines = request.VirtualMachines ?? Properties.VirtualMachines;
+        Properties?.PlatformFaultDomainCount = request.PlatformFaultDomainCount ?? Properties.PlatformFaultDomainCount;
+        Properties?.PlatformUpdateDomainCount = request.PlatformUpdateDomainCount ?? Properties.PlatformUpdateDomainCount;
+        Properties?.ProximityPlacementGroup = request.ProximityPlacementGroup ?? Properties.ProximityPlacementGroup;
+        Properties?.VirtualMachines = request.VirtualMachines ?? Properties.VirtualMachines;
         Sku = request.Sku?.Convert() ?? Sku;
-        Properties.ScheduledEventsPolicy = request.ScheduledEventsPolicy ?? Properties.ScheduledEventsPolicy;
+        Properties?.ScheduledEventsPolicy = request.ScheduledEventsPolicy ?? Properties.ScheduledEventsPolicy;
+    }
+
+    public void AddVirtualMachine(string resourceId)
+    {
+        Properties.VirtualMachines ??=
+        [
+            new SubResource
+            {
+                Id = resourceId
+            }
+        ];
+        
+        var existingMachines = Properties.VirtualMachines.ToList();
+        existingMachines.Add(new SubResource
+        {
+            Id = resourceId
+        });
+        
+        Properties.VirtualMachines = [.. existingMachines];
     }
 }

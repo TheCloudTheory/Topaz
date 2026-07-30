@@ -1,0 +1,145 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-05-01",
+      "name": "avset-vnet",
+      "location": "westeurope",
+      "properties": {
+        "addressSpace": { "addressPrefixes": [ "10.30.0.0/16" ] },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": { "addressPrefix": "10.30.0.0/24" }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-05-01",
+      "name": "avset-nic-1",
+      "location": "westeurope",
+      "dependsOn": [ "[resourceId('Microsoft.Network/virtualNetworks', 'avset-vnet')]" ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'avset-vnet', 'default')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-05-01",
+      "name": "avset-nic-2",
+      "location": "westeurope",
+      "dependsOn": [ "[resourceId('Microsoft.Network/virtualNetworks', 'avset-vnet')]" ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'avset-vnet', 'default')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2023-03-01",
+      "name": "avset-with-vms",
+      "location": "westeurope",
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-03-01",
+      "name": "avset-vm-1",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', 'avset-with-vms')]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'avset-nic-1')]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'avset-with-vms')]"
+        },
+        "hardwareProfile": { "vmSize": "Standard_D2s_v3" },
+        "osProfile": {
+          "computerName": "avset-vm-1",
+          "adminUsername": "adminuser",
+          "adminPassword": "Admin1234!@#"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "0001-com-ubuntu-server-jammy",
+            "sku": "22_04-lts",
+            "version": "latest"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'avset-nic-1')]",
+              "properties": { "primary": true }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-03-01",
+      "name": "avset-vm-2",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', 'avset-with-vms')]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'avset-nic-2')]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'avset-with-vms')]"
+        },
+        "hardwareProfile": { "vmSize": "Standard_D2s_v3" },
+        "osProfile": {
+          "computerName": "avset-vm-2",
+          "adminUsername": "adminuser",
+          "adminPassword": "Admin1234!@#"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "0001-com-ubuntu-server-jammy",
+            "sku": "22_04-lts",
+            "version": "latest"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'avset-nic-2')]",
+              "properties": { "primary": true }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

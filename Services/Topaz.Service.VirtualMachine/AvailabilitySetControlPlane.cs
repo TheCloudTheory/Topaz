@@ -19,9 +19,6 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
     
     private readonly SubscriptionControlPlane _subscriptionControlPlane =
         SubscriptionControlPlane.New(eventPipeline, logger);
-
-    private readonly VirtualMachineServiceControlPlane _virtualMachineControlPlane =
-        VirtualMachineServiceControlPlane.New(eventPipeline, logger);
     
     public OperationResult Deploy(GenericResource resource)
     {
@@ -191,7 +188,7 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
             var vmSubscription = SubscriptionIdentifier.From(parts[1]);
             var vmResourceGroup = ResourceGroupIdentifier.From(parts[3]);
             var vmName = parts[7];
-            var vmResult = _virtualMachineControlPlane.Get(vmSubscription, vmResourceGroup, vmName);
+            var vmResult = GetVirtualMachine(vmSubscription, vmResourceGroup, vmName);
             if (vmResult.Result != OperationResult.Success) continue;
             var vmSize = vmResult.Resource?.Properties.HardwareProfile?.GetProperty("vmSize").GetString();
             if (vmSize == null) continue;
@@ -206,6 +203,24 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
 
         var filtered = allSizes.Where(s => s.Name != null && families.Contains(ExtractVmFamily(s.Name) ?? string.Empty)).ToArray();
         return new ControlPlaneOperationResult<VirtualMachineSize[]>(OperationResult.Success, filtered);
+    }
+    
+    /// <summary>
+    /// This method is a duplicate of <see cref="VirtualMachineServiceControlPlane.Get"/> and is used to avoid circular dependencies.
+    /// </summary>
+    private ControlPlaneOperationResult<VirtualMachineResource> GetVirtualMachine(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string virtualMachineName)
+    {
+        var resource = provider.GetAs<VirtualMachineResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            virtualMachineName);
+
+        return resource == null
+            ? new ControlPlaneOperationResult<VirtualMachineResource>(
+                OperationResult.NotFound,
+                null)
+            : new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.Success, resource);
     }
 
     private static string? ExtractVmFamily(string sizeName)
@@ -259,5 +274,34 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
         return new ControlPlaneOperationResult<AvailabilitySetResource>(
             OperationResult.Updated,
             existing.Resource);
+    }
+
+    public ControlPlaneOperationResult AddVirtualMachine(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string availabilitySetName, string resourceId)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound,
+                resourceGroupOperation.Reason,
+                resourceGroupOperation.Code);
+        }
+        
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound,
+                $"Availability set '{availabilitySetName}' not found.", "AvailabilitySetNotFound");
+        }
+        
+        existing.Resource!.AddVirtualMachine(resourceId);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName, existing.Resource);
+
+        logger.LogDebug(nameof(AvailabilitySetControlPlane), nameof(AddVirtualMachine),
+            "Added virtual machine '{0}' to availability set '{1}'", resourceId, availabilitySetName);
+
+        return new ControlPlaneOperationResult(OperationResult.Updated);
+
     }
 }

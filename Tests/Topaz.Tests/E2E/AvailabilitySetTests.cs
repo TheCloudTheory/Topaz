@@ -3,6 +3,8 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
+using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -223,5 +225,78 @@ public class AvailabilitySetTests
 
         // Assert
         Assert.That(sizes, Is.Not.Empty);
+    }
+
+    [Test]
+    public async Task AvailabilitySet_DeployViaArmTemplateWithVMs_VMsAreDeployed()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub-avset-vms-deployment";
+        const string resourceGroupName = "rg-avset-vms-deployment";
+        const string deploymentName = "deployment-avset-with-vms";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Act
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-availability-set-with-vms.json"))
+            }));
+
+        // Assert
+        var vms = rg.Value.GetVirtualMachines().GetAll().ToList();
+        var vmNames = vms.Select(v => v.Data.Name).ToList();
+        var avSet = await rg.Value.GetAvailabilitySetAsync("avset-with-vms");
+        var avSetVmIds = avSet.Value.Data.VirtualMachines.Select(v => v.Id?.ToString()).ToList();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(vmNames, Does.Contain("avset-vm-1"));
+            Assert.That(vmNames, Does.Contain("avset-vm-2"));
+            Assert.That(vms.All(v => v.Data.AvailabilitySetId?.Name != null), Is.True);
+            Assert.That(avSetVmIds, Does.Contain(vms.First(v => v.Data.Name == "avset-vm-1").Data.Id.ToString()));
+            Assert.That(avSetVmIds, Does.Contain(vms.First(v => v.Data.Name == "avset-vm-2").Data.Id.ToString()));
+        }
+    }
+
+    [Test]
+    public async Task AvailabilitySet_DeployViaArmTemplate_IsAvailable()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub-avset-deployment";
+        const string resourceGroupName = "rg-avset-deployment";
+        const string deploymentName = "deployment-avset";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Act
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-availability-set.json"))
+            }));
+
+        // Assert
+        var avSet = await rg.Value.GetAvailabilitySetAsync("arm-deployed-avset");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(avSet.Value.Data.Name, Is.EqualTo("arm-deployed-avset"));
+            Assert.That(avSet.Value.Data.PlatformFaultDomainCount, Is.EqualTo(2));
+            Assert.That(avSet.Value.Data.PlatformUpdateDomainCount, Is.EqualTo(5));
+        }
     }
 }

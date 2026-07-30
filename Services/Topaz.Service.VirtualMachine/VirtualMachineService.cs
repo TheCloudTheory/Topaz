@@ -8,7 +8,7 @@ namespace Topaz.Service.VirtualMachine;
 
 public sealed class VirtualMachineService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
-    public static bool IsGlobalService => true;
+    public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".virtual-machine");
     public static IReadOnlyCollection<string>? Subresources => null;
     public static string UniqueName => "virtual-machine";

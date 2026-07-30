@@ -21,6 +21,9 @@ internal sealed class VirtualMachineServiceControlPlane(
 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
+    
+    private readonly AvailabilitySetControlPlane _availabilitySetControlPlane =
+        AvailabilitySetControlPlane.New(eventPipeline, logger);
 
     public static VirtualMachineServiceControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new VirtualMachineResourceProvider(logger), logger);
@@ -50,13 +53,7 @@ internal sealed class VirtualMachineServiceControlPlane(
                 {
                     Location = vm.Location,
                     Tags = vm.Tags,
-                    Properties = new CreateOrUpdateVirtualMachineRequest.CreateOrUpdateVirtualMachineRequestProperties
-                    {
-                        HardwareProfile = vm.Properties.HardwareProfile,
-                        StorageProfile = vm.Properties.StorageProfile,
-                        OsProfile = vm.Properties.OsProfile,
-                        NetworkProfile = vm.Properties.NetworkProfile
-                    }
+                    Properties = CreateOrUpdateVirtualMachineRequest.CreateOrUpdateVirtualMachineRequestProperties.From(vm.Properties)
                 });
 
             return result.Result;
@@ -82,7 +79,7 @@ internal sealed class VirtualMachineServiceControlPlane(
                 null,
                 string.Format(VirtualMachineNotFoundMessageTemplate, virtualMachineName),
                 VirtualMachineNotFoundCode)
-            : new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<VirtualMachineResource> CreateOrUpdate(
@@ -111,8 +108,7 @@ internal sealed class VirtualMachineServiceControlPlane(
             VirtualMachineResourceProperties.UpdateFromRequest(existing.Properties, request);
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, virtualMachineName, existing);
 
-            return new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.Updated, existing, null,
-                null);
+            return new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.Updated, existing);
         }
 
         var location = request.Location ?? resourceGroupOperation.Resource!.Location!;
@@ -122,8 +118,33 @@ internal sealed class VirtualMachineServiceControlPlane(
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, virtualMachineName, resource,
             createOperation: true);
+        
+        // If a VM is part of an availability set, we must add it after creation
+        if (properties.AvailabilitySet != null)
+        {
+            var availabilitySetResourceIdParser = new ResourceIdParser(properties.AvailabilitySet.Id!);
+            var availabilitySetOperation = _availabilitySetControlPlane.Get(
+                availabilitySetResourceIdParser.SubscriptionIdentifier,
+                availabilitySetResourceIdParser.ResourceGroupIdentifier, availabilitySetResourceIdParser.ResourceName);
 
-        return new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.Created, resource, null, null);
+            if (availabilitySetOperation.Result == OperationResult.NotFound)
+            {
+                return new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.NotFound, null,
+                    availabilitySetOperation.Reason, availabilitySetOperation.Code);
+            }
+
+            var updateAvailabilitySetOperation = _availabilitySetControlPlane.AddVirtualMachine(availabilitySetResourceIdParser.SubscriptionIdentifier,
+                availabilitySetResourceIdParser.ResourceGroupIdentifier, availabilitySetResourceIdParser.ResourceName,
+                resource.Id);
+            
+            if (updateAvailabilitySetOperation.Result != OperationResult.Updated)
+            {
+                return new ControlPlaneOperationResult<VirtualMachineResource>(updateAvailabilitySetOperation.Result,
+                    null, updateAvailabilitySetOperation.Reason, updateAvailabilitySetOperation.Code);
+            }
+        }
+
+        return new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.Created, resource);
     }
 
     public ControlPlaneOperationResult Delete(
@@ -171,7 +192,7 @@ internal sealed class VirtualMachineServiceControlPlane(
         VirtualMachineResourceProperties.UpdateFromPatchRequest(existing.Properties, request);
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, virtualMachineName, existing);
 
-        return new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.Updated, existing, null, null);
+        return new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.Updated, existing);
     }
 
     public ControlPlaneOperationResult<VirtualMachineResource[]> ListByResourceGroup(
@@ -183,8 +204,7 @@ internal sealed class VirtualMachineServiceControlPlane(
             .Where(r => r.IsInSubscription(subscriptionIdentifier) && r.IsInResourceGroup(resourceGroupIdentifier))
             .ToArray();
 
-        return new ControlPlaneOperationResult<VirtualMachineResource[]>(OperationResult.Success, resources, null,
-            null);
+        return new ControlPlaneOperationResult<VirtualMachineResource[]>(OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<VirtualMachineResource[]> ListBySubscription(
