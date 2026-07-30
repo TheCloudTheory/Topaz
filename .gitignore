@@ -14,7 +14,7 @@ Topaz.sln.DotSettings.user
 **/.topaz/**
 **/._* 
 website/build/*
-Topaz.Tests.Terraform/TestResults/terraform-eventhub.trx
+**/*.trx
 GROWTH.md
 .plausible/*
 DEVELOPMENT.md
