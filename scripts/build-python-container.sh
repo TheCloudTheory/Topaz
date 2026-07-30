@@ -18,10 +18,11 @@ trap 'rm -rf "$CTX"' EXIT
 mkdir -p "$CTX/sdk" "$CTX/tests"
 cp -r "$ROOT_DIR/sdk/python/." "$CTX/sdk/"
 cp -r "$ROOT_DIR/Tests/Topaz.Tests.Python/tests/." "$CTX/tests/"
+# Dockerfile must be inside the context so BuildKit resolves COPY paths correctly
+cp "$ROOT_DIR/Tests/Topaz.Tests.Python/docker/Dockerfile" "$CTX/Dockerfile"
 
 echo "Building topaz-python-test image from $ROOT_DIR/Tests/Topaz.Tests.Python/docker/Dockerfile..."
 docker build \
-    -f "$ROOT_DIR/Tests/Topaz.Tests.Python/docker/Dockerfile" \
     -t topaz-python-test \
     "$CTX"
 
