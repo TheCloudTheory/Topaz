@@ -140,6 +140,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Example.ApplicationIn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Redis", "Services\Topaz.Service.Redis\Topaz.Service.Redis.csproj", "{607F0075-2022-4D74-88C6-95C12FABA78A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ApiManagement", "Services\Topaz.Service.ApiManagement\Topaz.Service.ApiManagement\Topaz.Service.ApiManagement.csproj", "{BD4C1523-CF48-4896-B7F1-159B905A7DEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -864,6 +866,18 @@ Global
 		{607F0075-2022-4D74-88C6-95C12FABA78A}.Release|x64.Build.0 = Release|Any CPU
 		{607F0075-2022-4D74-88C6-95C12FABA78A}.Release|x86.ActiveCfg = Release|Any CPU
 		{607F0075-2022-4D74-88C6-95C12FABA78A}.Release|x86.Build.0 = Release|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Debug|x64.Build.0 = Debug|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Debug|x86.Build.0 = Debug|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Release|x64.ActiveCfg = Release|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Release|x64.Build.0 = Release|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Release|x86.ActiveCfg = Release|Any CPU
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -916,6 +930,7 @@ Global
 		{CEA69EAE-1656-4E30-9C49-34E963BBF486} = {5DCFF73A-7D3A-4162-8264-447FA524DBA0}
 		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB} = {5DCFF73A-7D3A-4162-8264-447FA524DBA0}
 		{607F0075-2022-4D74-88C6-95C12FABA78A} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
+		{BD4C1523-CF48-4896-B7F1-159B905A7DEF} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {76B3D1AF-3328-49A8-BFD0-ED7FA3933EB0}

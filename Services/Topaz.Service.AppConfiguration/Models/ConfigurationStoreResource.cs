@@ -7,28 +7,28 @@ namespace Topaz.Service.AppConfiguration.Models;
 public class ConfigurationStoreResource : ArmResource<ConfigurationStoreResourceProperties>
 {
     [JsonConstructor]
-#pragma warning disable CS8618
-    public ConfigurationStoreResource()
-#pragma warning restore CS8618
-    {
-    }
-
-    public ConfigurationStoreResource(
-        SubscriptionIdentifier subscriptionId,
-        ResourceGroupIdentifier resourceGroup,
-        string name,
-        string location,
-        IDictionary<string, string>? tags,
-        ResourceSku? sku,
-        ConfigurationStoreResourceProperties properties)
-    {
-        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.AppConfiguration/configurationStores/{name}";
-        Name = name;
-        Location = location;
-        Tags = tags ?? new Dictionary<string, string>();
-        Sku = sku;
-        Properties = properties;
-    }
+     #pragma warning disable CS8618
+         public ConfigurationStoreResource()
+     #pragma warning restore CS8618
+         {
+         }
+     
+         public ConfigurationStoreResource(
+             SubscriptionIdentifier subscriptionId,
+             ResourceGroupIdentifier resourceGroup,
+             string name,
+             string location,
+             IDictionary<string, string>? tags,
+             ResourceSku? sku,
+             ConfigurationStoreResourceProperties properties)
+         {
+             Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.AppConfiguration/configurationStores/{name}";
+             Name = name;
+             Location = location;
+             Tags = tags ?? new Dictionary<string, string>();
+             Sku = sku;
+             Properties = properties;
+         }
 
     public sealed override string Id { get; init; }
     public sealed override string Name { get; init; }

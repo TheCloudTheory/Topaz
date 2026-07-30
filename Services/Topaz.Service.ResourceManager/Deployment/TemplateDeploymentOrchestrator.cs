@@ -7,6 +7,7 @@ using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
+using Topaz.Service.ApiManagement;
 using Topaz.Service.AppService;
 using Topaz.Service.ContainerRegistry;
 using Topaz.Service.EventHub;
@@ -402,6 +403,12 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
                 case "microsoft.cache/redis":
                     controlPlane = RedisServiceControlPlane.New(eventPipeline, logger);
+                    break;
+                case "microsoft.compute/availabilitysets":
+                    controlPlane = AvailabilitySetControlPlane.New(eventPipeline, logger);
+                    break;
+                case "microsoft.apimanagement/service":
+                    controlPlane = ApiManagementServiceControlPlane.New(eventPipeline, logger);
                     break;
                 case "microsoft.resources/deployments":
                     HandleNestedDeployment(genericResource, templateDeployment, resource, ref hasProvisioningFailed);

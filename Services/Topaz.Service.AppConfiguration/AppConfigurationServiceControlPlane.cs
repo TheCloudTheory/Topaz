@@ -85,11 +85,11 @@ internal sealed class AppConfigurationServiceControlPlane(
                     sub, rg, name, existing.Location!, existing.Tags,
                     new ResourceSku { Name = request.Sku.Name }, existing.Properties);
                 provider.CreateOrUpdate(sub, rg, name, updated);
-                return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, updated, null, null);
+                return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, updated);
             }
 
             provider.CreateOrUpdate(sub, rg, name, existing);
-            return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, existing, null, null);
+            return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, existing);
         }
 
         var location = request.Location ?? rgOp.Resource!.Location!;
@@ -101,7 +101,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         var keyStore = AppConfigurationAccessKeyStore.Generate(name);
         provider.CreateOrUpdateSubresource(sub, rg, AccessKeysId, name, AccessKeysSubresource, keyStore);
 
-        return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Created, resource, null, null);
+        return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Created, resource);
     }
 
     public ControlPlaneOperationResult<ConfigurationStoreFullResource> Get(
@@ -113,7 +113,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         return resource == null || GlobalDnsEntries.IsSoftDeleted(AppConfigurationService.UniqueName, name)
             ? new ControlPlaneOperationResult<ConfigurationStoreFullResource>(
                 OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode)
-            : new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult Delete(
@@ -152,11 +152,11 @@ internal sealed class AppConfigurationServiceControlPlane(
                 sub, rg, name, existing.Location!, existing.Tags,
                 new ResourceSku { Name = request.Sku.Name }, existing.Properties);
             provider.CreateOrUpdate(sub, rg, name, updated);
-            return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, updated, null, null);
+            return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, updated);
         }
 
         provider.CreateOrUpdate(sub, rg, name, existing);
-        return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, existing, null, null);
+        return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, existing);
     }
 
     public ControlPlaneOperationResult<ConfigurationStoreFullResource[]> ListByResourceGroup(
@@ -166,7 +166,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         var resources = provider.ListAs<ConfigurationStoreFullResource>(sub, rg, lookForNoOfSegments: 8)
             .Where(r => r.IsInSubscription(sub) && r.IsInResourceGroup(rg))
             .ToArray();
-        return new ControlPlaneOperationResult<ConfigurationStoreFullResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<ConfigurationStoreFullResource[]>(OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<ConfigurationStoreFullResource[]> ListBySubscription(
@@ -176,7 +176,7 @@ internal sealed class AppConfigurationServiceControlPlane(
             .Where(r => r.IsInSubscription(sub))
             .ToArray();
         
-        return new ControlPlaneOperationResult<ConfigurationStoreFullResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<ConfigurationStoreFullResource[]>(OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<List<ConfigurationStoreAccessKey>> ListKeys(
@@ -192,7 +192,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         var keyStore = provider.GetSubresourceAs<AppConfigurationAccessKeyStore>(
             sub, rg, AccessKeysId, name, AccessKeysSubresource);
         return new ControlPlaneOperationResult<List<ConfigurationStoreAccessKey>>(
-            OperationResult.Success, keyStore?.Keys ?? [], null, null);
+            OperationResult.Success, keyStore?.Keys ?? []);
     }
 
     public ControlPlaneOperationResult<ConfigurationStoreAccessKey> RegenerateKey(
@@ -222,7 +222,7 @@ internal sealed class AppConfigurationServiceControlPlane(
 
         provider.CreateOrUpdateSubresource(sub, rg, AccessKeysId, name, AccessKeysSubresource, keyStore);
 
-        return new ControlPlaneOperationResult<ConfigurationStoreAccessKey>(OperationResult.Success, key, null, null);
+        return new ControlPlaneOperationResult<ConfigurationStoreAccessKey>(OperationResult.Success, key);
     }
 
     public ControlPlaneOperationResult<ConfigurationStoreFullResource> FindByName(string storeName)
@@ -332,16 +332,15 @@ internal sealed class AppConfigurationServiceControlPlane(
         if (stores == null || stores.Length == 0)
         {
             logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(GetDeleted), $"No stores found for subscription {subscriptionIdentifier}");
-            return new ControlPlaneOperationResult<ConfigurationStoreFullResource?>(OperationResult.NotFound, null, null, null);
+            return new ControlPlaneOperationResult<ConfigurationStoreFullResource?>(OperationResult.NotFound, null);
         }
         
         var store = stores.SingleOrDefault(s => s.Name == storeName && GlobalDnsEntries.IsSoftDeleted(AppConfigurationService.UniqueName, storeName));
         if (store != null)
-            return new ControlPlaneOperationResult<ConfigurationStoreFullResource?>(OperationResult.Success, store, null,
-                null);
+            return new ControlPlaneOperationResult<ConfigurationStoreFullResource?>(OperationResult.Success, store);
         
         logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(GetDeleted), $"No soft-deleted store found with name {storeName} for subscription {subscriptionIdentifier}");
-        return new ControlPlaneOperationResult<ConfigurationStoreFullResource?>(OperationResult.NotFound, null, null, null);
+        return new ControlPlaneOperationResult<ConfigurationStoreFullResource?>(OperationResult.NotFound, null);
 
     }
 
@@ -364,13 +363,13 @@ internal sealed class AppConfigurationServiceControlPlane(
         if (stores == null)
         {
             logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListDeleted), $"No stores found for subscription {subscriptionIdentifier}");
-            return new ControlPlaneOperationResult<ConfigurationStoreFullResource[]?>(OperationResult.Success, null, null, null);
+            return new ControlPlaneOperationResult<ConfigurationStoreFullResource[]?>(OperationResult.Success, null);
         }
 
         var deletedStores = stores
             .Where(store => GlobalDnsEntries.IsSoftDeleted(AppConfigurationService.UniqueName, store.Name)).ToArray();
         
-        return new ControlPlaneOperationResult<ConfigurationStoreFullResource[]?>(OperationResult.Success, deletedStores, null, null);
+        return new ControlPlaneOperationResult<ConfigurationStoreFullResource[]?>(OperationResult.Success, deletedStores);
     }
 
     public ControlPlaneOperationResult<ReplicaResource?> CreateReplica(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string replicaName, string location)
@@ -393,7 +392,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, replicaName, storeName, ReplicaSubresource, replica);
         
-        return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Created, replica, null, null);
+        return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Created, replica);
     }
 
     public ControlPlaneOperationResult<ReplicaResource?> GetReplica(SubscriptionIdentifier subscriptionIdentifier,
@@ -414,7 +413,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         return replica == null
             ? new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.NotFound, null,
                 $"Replica {replicaName} not found", "ReplicaNotFound")
-            : new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Success, replica, null, null);
+            : new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Success, replica);
     }
 
     public ControlPlaneOperationResult DeleteReplica(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string replicaName)
@@ -448,6 +447,6 @@ internal sealed class AppConfigurationServiceControlPlane(
         }
         
         var replicas = provider.ListSubresourcesAs<ReplicaResource>(subscriptionIdentifier, resourceGroupIdentifier, storeName, ReplicaSubresource);
-        return new ControlPlaneOperationResult<ReplicaResource[]?>(OperationResult.Success, replicas, null, null);
+        return new ControlPlaneOperationResult<ReplicaResource[]?>(OperationResult.Success, replicas);
     }
 }

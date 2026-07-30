@@ -17,3 +17,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Topaz.Service.LogAnalytics")]
 [assembly: InternalsVisibleTo("Topaz.Service.Insights")]
 [assembly: InternalsVisibleTo("Topaz.Service.Redis")]
+[assembly: InternalsVisibleTo("Topaz.Service.ApiManagement")]
