@@ -304,4 +304,33 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
         return new ControlPlaneOperationResult(OperationResult.Updated);
 
     }
+
+    public ControlPlaneOperationResult RemoveVirtualMachine(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string availabilitySetName, string resourceId)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound,
+                resourceGroupOperation.Reason,
+                resourceGroupOperation.Code);
+        }
+
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound,
+                $"Availability set '{availabilitySetName}' not found.", "AvailabilitySetNotFound");
+        }
+
+        existing.Resource!.RemoveVirtualMachine(resourceId);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, availabilitySetName,
+            existing.Resource);
+
+        logger.LogDebug(nameof(AvailabilitySetControlPlane), nameof(AddVirtualMachine),
+            "Removed virtual machine '{0}' from availability set '{1}'", resourceId, availabilitySetName);
+
+        return new ControlPlaneOperationResult(OperationResult.Updated);
+    }
 }

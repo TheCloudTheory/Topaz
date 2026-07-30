@@ -3,6 +3,8 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
+using Azure.ResourceManager.Network;
+using Azure.ResourceManager.Network.Models;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Topaz.CLI;
@@ -298,5 +300,90 @@ public class AvailabilitySetTests
             Assert.That(avSet.Value.Data.PlatformFaultDomainCount, Is.EqualTo(2));
             Assert.That(avSet.Value.Data.PlatformUpdateDomainCount, Is.EqualTo(5));
         }
+    }
+
+    [Test]
+    public async Task AvailabilitySet_WhenVMIsDeleted_AvailabilitySetNoLongerContainsThatVM()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string avSetName = "test-avset-vm-removal";
+        const string vmName = "test-vm-avset-removal";
+
+        await resourceGroup.Value.GetAvailabilitySets()
+            .CreateOrUpdateAsync(WaitUntil.Completed, avSetName, MinimalAvailabilitySetData());
+
+        var avSetId = (await resourceGroup.Value.GetAvailabilitySetAsync(avSetName)).Value.Data.Id;
+
+        var vnetData = new VirtualNetworkData
+        {
+            Location = AzureLocation.WestEurope,
+            AddressPrefixes = { "10.40.0.0/16" },
+            Subnets = { new SubnetData { Name = "default", AddressPrefixes = { "10.40.0.0/24" } } }
+        };
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "vnet-avset-removal", vnetData);
+
+        var nicData = new NetworkInterfaceData
+        {
+            Location = AzureLocation.WestEurope,
+            IPConfigurations =
+            {
+                new NetworkInterfaceIPConfigurationData
+                {
+                    Name = "ipconfig1",
+                    PrivateIPAllocationMethod = NetworkIPAllocationMethod.Dynamic,
+                    Subnet = new SubnetData
+                    {
+                        Id = new ResourceIdentifier(
+                            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Network/virtualNetworks/vnet-avset-removal/subnets/default")
+                    }
+                }
+            }
+        };
+        var nic = await resourceGroup.Value.GetNetworkInterfaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "nic-avset-removal", nicData);
+
+        var vmData = new VirtualMachineData(AzureLocation.WestEurope)
+        {
+            AvailabilitySetId = avSetId,
+            HardwareProfile = new VirtualMachineHardwareProfile { VmSize = VirtualMachineSizeType.StandardD2SV3 },
+            OSProfile = new VirtualMachineOSProfile
+            {
+                ComputerName = vmName,
+                AdminUsername = "adminuser",
+                AdminPassword = "Admin1234!@#"
+            },
+            StorageProfile = new VirtualMachineStorageProfile
+            {
+                ImageReference = new ImageReference
+                {
+                    Publisher = "Canonical",
+                    Offer = "0001-com-ubuntu-server-jammy",
+                    Sku = "22_04-lts",
+                    Version = "latest"
+                }
+            },
+            NetworkProfile = new VirtualMachineNetworkProfile
+            {
+                NetworkInterfaces = { new VirtualMachineNetworkInterfaceReference { Primary = true, Id = nic.Value.Data.Id } }
+            }
+        };
+        await resourceGroup.Value.GetVirtualMachines()
+            .CreateOrUpdateAsync(WaitUntil.Completed, vmName, vmData);
+
+        var vmBeforeDelete = (await resourceGroup.Value.GetAvailabilitySetAsync(avSetName)).Value;
+        Assert.That(vmBeforeDelete.Data.VirtualMachines, Has.Count.EqualTo(1));
+
+        // Act
+        var vm = await resourceGroup.Value.GetVirtualMachineAsync(vmName);
+        await vm.Value.DeleteAsync(WaitUntil.Completed);
+
+        // Assert
+        var avSetAfterDelete = await resourceGroup.Value.GetAvailabilitySetAsync(avSetName);
+        Assert.That(avSetAfterDelete.Value.Data.VirtualMachines, Is.Empty);
     }
 }

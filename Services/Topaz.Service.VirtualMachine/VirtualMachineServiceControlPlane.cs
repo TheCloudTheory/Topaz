@@ -164,6 +164,31 @@ internal sealed class VirtualMachineServiceControlPlane(
         }
 
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, virtualMachineName);
+        
+        // If a VM is part of an availability set, we must remove it after deletion
+        if (resource.Properties.AvailabilitySet != null)
+        {
+            var availabilitySetResourceIdParser = new ResourceIdParser(resource.Properties.AvailabilitySet.Id!);
+            var availabilitySetOperation = _availabilitySetControlPlane.Get(
+                availabilitySetResourceIdParser.SubscriptionIdentifier,
+                availabilitySetResourceIdParser.ResourceGroupIdentifier, availabilitySetResourceIdParser.ResourceName);
+
+            if (availabilitySetOperation.Result == OperationResult.NotFound)
+            {
+                return new ControlPlaneOperationResult(OperationResult.NotFound, 
+                    availabilitySetOperation.Reason, availabilitySetOperation.Code);
+            }
+
+            var updateAvailabilitySetOperation = _availabilitySetControlPlane.RemoveVirtualMachine(availabilitySetResourceIdParser.SubscriptionIdentifier,
+                availabilitySetResourceIdParser.ResourceGroupIdentifier, availabilitySetResourceIdParser.ResourceName,
+                resource.Id);
+            
+            if (updateAvailabilitySetOperation.Result != OperationResult.Updated)
+            {
+                return new ControlPlaneOperationResult(updateAvailabilitySetOperation.Result,
+                    updateAvailabilitySetOperation.Reason, updateAvailabilitySetOperation.Code);
+            }
+        }
 
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }

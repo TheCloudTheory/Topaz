@@ -53,6 +53,7 @@ internal sealed class AvailabilitySetResource : ArmResource<AvailabilitySetResou
 
     public void AddVirtualMachine(string resourceId)
     {
+        
         Properties.VirtualMachines ??=
         [
             new SubResource
@@ -61,12 +62,28 @@ internal sealed class AvailabilitySetResource : ArmResource<AvailabilitySetResou
             }
         ];
         
-        var existingMachines = Properties.VirtualMachines.ToList();
+        var existingMachines = Properties.VirtualMachines.Where(vm => vm.Id != resourceId).ToList();
         existingMachines.Add(new SubResource
         {
             Id = resourceId
         });
         
+        Properties.VirtualMachines = [.. existingMachines];
+    }
+
+    public void RemoveVirtualMachine(string resourceId)
+    {
+        if (Properties.VirtualMachines == null)
+        {
+            // The reason why we're throwing an exception here instead of silently ignoring the request is because the request is invalid.
+            // The request is asking to remove a virtual machine from an availability set that does not have any virtual machines, and,
+            // what's even more important, the set of virtual machines has never been initialized.
+            // This can't happen because the set of virtual machines is initialized when the availability set is created.
+            throw new InvalidOperationException("Availability set does not have any virtual machines");
+        }
+        
+        var existingMachines = Properties.VirtualMachines.ToList();
+        existingMachines.Remove(existingMachines.First(x => x.Id == resourceId));
         Properties.VirtualMachines = [.. existingMachines];
     }
 }
