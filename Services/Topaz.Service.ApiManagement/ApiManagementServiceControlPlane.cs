@@ -70,6 +70,13 @@ internal sealed class ApiManagementServiceControlPlane(
         {
             var apim = new ApiManagementServiceResource(subscriptionIdentifier, resourceGroupIdentifier, name,
                 request.Location, request.Tags, request.Sku, ApiManagementServiceResourceProperties.From(request));
+
+            if (!apim.Validate<ApiManagementServiceResource>().IsValid)
+            {
+                return new ControlPlaneOperationResult<ApiManagementServiceResource>(
+                    OperationResult.BadRequest, null, apim.Validate<ApiManagementServiceResource>().Error, "InvalidRequest");
+            }
+            
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, apim);
             
             return new ControlPlaneOperationResult<ApiManagementServiceResource>(
@@ -77,6 +84,13 @@ internal sealed class ApiManagementServiceControlPlane(
         }
         
         existing.Resource!.UpdateFromRequest(request);
+        
+        if (!existing.Resource.Validate<ApiManagementServiceResource>().IsValid)
+        {
+            return new ControlPlaneOperationResult<ApiManagementServiceResource>(
+                OperationResult.BadRequest, null, existing.Resource.Validate<ApiManagementServiceResource>().Error, "InvalidRequest");
+        }
+        
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, existing.Resource);
         return new ControlPlaneOperationResult<ApiManagementServiceResource>(
             OperationResult.Updated, existing.Resource);

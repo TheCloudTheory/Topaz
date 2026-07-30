@@ -1,11 +1,12 @@
 using System.Text.Json.Serialization;
 using Topaz.ResourceManager;
 using Topaz.Service.ApiManagement.Models.Requests;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ApiManagement.Models;
 
-internal sealed class ApiManagementServiceResource : ArmResource<ApiManagementServiceResourceProperties>
+internal sealed class ApiManagementServiceResource : ArmResource<ApiManagementServiceResourceProperties>, IValidatable
 {
     [JsonConstructor]
 #pragma warning disable CS8618
@@ -51,5 +52,25 @@ internal sealed class ApiManagementServiceResource : ArmResource<ApiManagementSe
         Properties.NatGatewayState = request.Properties.NatGatewayState ?? Properties.NatGatewayState;
         Properties.DisableGateway = request.Properties.DisableGateway ?? Properties.DisableGateway;
         Properties.EnableClientCertificate = request.Properties.EnableClientCertificate ?? Properties.EnableClientCertificate;
+    }
+
+    public (bool IsValid, string? Error) Validate<TModel>(TModel? data = null) where TModel : class
+    {
+        if (string.IsNullOrWhiteSpace(Location))
+        {
+            return (false, "Location cannot be null or whitespace.");
+        }
+
+        if (string.IsNullOrWhiteSpace(Properties.PublisherEmail))
+        {
+            return (false, "Publisher email cannot be null or whitespace.");
+        }
+        
+        if (string.IsNullOrWhiteSpace(Properties.PublisherName))
+        {
+            return (false, "Publisher name cannot be null or whitespace.");
+        }
+
+        return Sku == null ? (false, "Sku cannot be null.") : (true, null);
     }
 }
