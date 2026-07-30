@@ -53,25 +53,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ## v1.10-preview
 
 <!--
-TODO: Blob Storage: WASB legacy SDK — fix Get Container Properties response headers
-  The legacy azure-storage 7.x SDK (used by Hadoop WASB connector) sends
-  GET /{container}?restype=container but the emulator response is missing required
-  headers, causing a NullPointerException in ExecutionEngine.executeWithRetry and a
-  spurious 404. The modern SDK (azure-storage-blob 12.x) works correctly.
-  Fix: add the missing response headers to GetContainerPropertiesEndpoint:
-    x-ms-lease-status: unlocked
-    x-ms-lease-state: available
-    x-ms-has-immutability-policy: false
-    x-ms-has-legal-hold: false
-  and verify the response format matches what the legacy SDK expects.
-  Also add *.dfs.storage.topaz.local.dev to the certificate SAN in certificate/generate.sh
-  (required for ABFS TLS hostname verification — see ADLS Gen2 backlog item).
-  See: https://github.com/TheCloudTheory/Topaz/discussions/298
-  milestone: v1.10-preview
-  labels: enhancement, blob-storage
--->
-
-<!--
 TODO: Azure API Management: New service project scaffold
   Create Topaz.Service.ApiManagement following existing service conventions:
   - ApiManagementServiceResourceProperties + ApiManagementServiceResource (ArmResource<T>)
@@ -224,34 +205,6 @@ TODO: Azure Container Instances: Containers data-plane endpoints (logs)
   This satisfies `az container logs` calls without running real containers.
   milestone: v1.10-preview
   labels: enhancement, container-instances, good first issue
--->
-
-### Availability Sets — initial control plane
-
-<!--
-TODO: Availability Sets: New service control plane
-  Implement the ARM-level AvailabilitySet resource surface
-  (Microsoft.Compute/availabilitySets) in the existing Topaz.Service.VirtualMachine project
-  (or a new Topaz.Service.AvailabilitySets project if separation is preferred):
-  - AvailabilitySetResourceProperties + AvailabilitySetResource (ArmResource<T>) capturing:
-    sku (name: Aligned/Classic), platformUpdateDomainCount (default 5),
-    platformFaultDomainCount (default 2), virtualMachines (list of sub-resource IDs),
-    provisioningState (always Succeeded).
-  - AvailabilitySetResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
-  - Deploy() support in the control plane; register "Microsoft.Compute/availabilitySets"
-    in TemplateDeploymentOrchestrator.RouteDeployment().
-  Endpoints:
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/availabilitySets/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/availabilitySets/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/availabilitySets/{name}  – delete
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/availabilitySets/{name}  – update (tags, platformFaultDomainCount)
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/availabilitySets          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Compute/availabilitySets                              – list by subscription
-  - GET    .../availabilitySets/{name}/vmSizes  – list available VM sizes (return the same stub catalogue as ListComputeResourceSkusEndpoint)
-  Includes E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests.
-  See: https://learn.microsoft.com/en-us/rest/api/compute/availability-sets?view=rest-compute-2025-11-01
-  milestone: v1.10-preview
-  labels: enhancement, virtual-machine, good first issue
 -->
 
 ## v1.11
