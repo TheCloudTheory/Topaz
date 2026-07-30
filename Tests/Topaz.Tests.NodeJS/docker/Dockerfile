@@ -8,11 +8,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     && rm -rf /var/lib/apt/lists/*
 
 # Copy package manifests and install dependencies
-COPY Topaz.Tests.NodeJS/package.json Topaz.Tests.NodeJS/package-lock.json /tests/
+COPY tests/package.json tests/package-lock.json /tests/
 RUN cd /tests && npm ci --omit=dev
 
 # Copy test scripts
-COPY Topaz.Tests.NodeJS/smoke-service-bus.mjs Topaz.Tests.NodeJS/smoke-event-hub.mjs /tests/
+COPY tests/smoke-service-bus.mjs tests/smoke-event-hub.mjs /tests/
 
 WORKDIR /tests
 
