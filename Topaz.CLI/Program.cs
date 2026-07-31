@@ -9,6 +9,7 @@ using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
 using Topaz.Service.Authorization.Commands;
 using Topaz.Service.ContainerRegistry.Commands;
+using Topaz.Service.ApiManagement.Commands;
 using Topaz.Service.VirtualNetwork.Commands;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
@@ -152,6 +153,7 @@ internal class Program
             typeof(GenericManagedIdentityCommand),
             typeof(GenericRoleCommand),
             typeof(GenericContainerRegistryCommand),
+            typeof(GenericApiManagementCommand),
             typeof(GenericVirtualNetworkCommand),
             typeof(GenericAppServiceCommand),
             typeof(GenericVirtualMachineCommand),

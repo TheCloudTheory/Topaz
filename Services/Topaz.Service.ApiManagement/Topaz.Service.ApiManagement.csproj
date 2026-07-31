@@ -16,4 +16,8 @@
       <PackageReference Include="MassTransit.Abstractions" Version="8.3.6" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Commands\" />
+    </ItemGroup>
+
 </Project>

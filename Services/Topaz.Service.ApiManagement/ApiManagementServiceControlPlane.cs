@@ -69,7 +69,7 @@ internal sealed class ApiManagementServiceControlPlane(
         if(existing.Result == OperationResult.NotFound)
         {
             var apim = new ApiManagementServiceResource(subscriptionIdentifier, resourceGroupIdentifier, name,
-                request.Location, request.Tags, request.Sku, ApiManagementServiceResourceProperties.From(request));
+                request.Location!, request.Tags, request.Sku, ApiManagementServiceResourceProperties.From(request));
 
             if (!apim.Validate<ApiManagementServiceResource>().IsValid)
             {

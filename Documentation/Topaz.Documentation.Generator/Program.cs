@@ -18,6 +18,7 @@ using Topaz.Service.ResourceManager.Commands;
 using Topaz.Service.ServiceBus.Commands;
 using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
+using Topaz.Service.ApiManagement.Commands;
 using Topaz.Service.VirtualNetwork.Commands;
 using Topaz.Service.VirtualMachine.Commands;
 using Topaz.Service.Disk.Commands;
@@ -49,6 +50,7 @@ _ = new[]
     typeof(GenericSubscriptionCommand),
     typeof(GenericManagedIdentityCommand),
     typeof(GenericManagementGroupCommand),
+    typeof(GenericApiManagementCommand),
     typeof(GenericVirtualNetworkCommand),
     typeof(GenericAppServiceCommand),
     typeof(GenericVirtualMachineCommand),

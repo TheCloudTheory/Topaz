@@ -36,15 +36,15 @@ internal sealed class ApiManagementServiceResourceProperties
         return new ApiManagementServiceResourceProperties
         {
             CreatedAtUtc = DateTimeOffset.UtcNow,
-            PublisherEmail = request.Properties.PublisherEmail,
-            PublisherName = request.Properties.PublisherName,
-            NotificationSenderEmail = request.Properties.NotificationSenderEmail,
-            VirtualNetworkType = request.Properties.VirtualNetworkType,
-            PublicNetworkAccess = request.Properties.PublicNetworkAccess,
-            NatGatewayState = request.Properties.NatGatewayState,
-            DisableGateway = request.Properties.DisableGateway,
-            EnableClientCertificate = request.Properties.EnableClientCertificate,
-            CustomProperties = request.Properties.CustomProperties
+            PublisherEmail = request.Properties?.PublisherEmail,
+            PublisherName = request.Properties?.PublisherName,
+            NotificationSenderEmail = request.Properties?.NotificationSenderEmail,
+            VirtualNetworkType = request.Properties?.VirtualNetworkType,
+            PublicNetworkAccess = request.Properties?.PublicNetworkAccess,
+            NatGatewayState = request.Properties?.NatGatewayState,
+            DisableGateway = request.Properties?.DisableGateway,
+            EnableClientCertificate = request.Properties?.EnableClientCertificate,
+            CustomProperties = request.Properties?.CustomProperties
         };
     }
 }

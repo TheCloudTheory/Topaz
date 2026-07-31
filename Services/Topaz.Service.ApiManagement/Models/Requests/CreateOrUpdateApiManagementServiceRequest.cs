@@ -4,9 +4,9 @@ namespace Topaz.Service.ApiManagement.Models.Requests;
 
 internal sealed class CreateOrUpdateApiManagementServiceRequest
 {
-    public required string Location { get; init; }
-    public required ResourceSku Sku { get; init; }
-    public required CreateOrUpdateApiManagementServiceRequestProperties Properties { get; init; }
+    public string? Location { get; init; }
+    public ResourceSku? Sku { get; init; }
+    public CreateOrUpdateApiManagementServiceRequestProperties? Properties { get; init; }
     public IDictionary<string, string>? Tags { get; init; }
     public string[]? Zones { get; init; }
 

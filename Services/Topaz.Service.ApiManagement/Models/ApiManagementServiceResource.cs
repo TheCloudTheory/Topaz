@@ -44,15 +44,15 @@ internal sealed class ApiManagementServiceResource : ArmResource<ApiManagementSe
 
     public void UpdateFromRequest(CreateOrUpdateApiManagementServiceRequest request)
     {
-        Sku = request.Sku;
-        Properties.PublisherEmail = request.Properties.PublisherEmail ?? Properties.PublisherEmail;
-        Properties.PublisherName = request.Properties.PublisherName ?? Properties.PublisherName;
-        Properties.NotificationSenderEmail = request.Properties.NotificationSenderEmail ?? Properties.NotificationSenderEmail;
-        Properties.VirtualNetworkType = request.Properties.VirtualNetworkType ?? Properties.VirtualNetworkType;
-        Properties.PublicNetworkAccess = request.Properties.PublicNetworkAccess ?? Properties.PublicNetworkAccess;
-        Properties.NatGatewayState = request.Properties.NatGatewayState ?? Properties.NatGatewayState;
-        Properties.DisableGateway = request.Properties.DisableGateway ?? Properties.DisableGateway;
-        Properties.EnableClientCertificate = request.Properties.EnableClientCertificate ?? Properties.EnableClientCertificate;
+        Sku = request.Sku ?? Sku;
+        Properties.PublisherEmail = request.Properties?.PublisherEmail ?? Properties.PublisherEmail;
+        Properties.PublisherName = request.Properties?.PublisherName ?? Properties.PublisherName;
+        Properties.NotificationSenderEmail = request.Properties?.NotificationSenderEmail ?? Properties.NotificationSenderEmail;
+        Properties.VirtualNetworkType = request.Properties?.VirtualNetworkType ?? Properties.VirtualNetworkType;
+        Properties.PublicNetworkAccess = request.Properties?.PublicNetworkAccess ?? Properties.PublicNetworkAccess;
+        Properties.NatGatewayState = request.Properties?.NatGatewayState ?? Properties.NatGatewayState;
+        Properties.DisableGateway = request.Properties?.DisableGateway ?? Properties.DisableGateway;
+        Properties.EnableClientCertificate = request.Properties?.EnableClientCertificate ?? Properties.EnableClientCertificate;
     }
 
     private static readonly Regex NamePattern = new(@"^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$", RegexOptions.Compiled);

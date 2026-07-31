@@ -23,6 +23,7 @@
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
     <ProjectReference Include="../Topaz.Identity/Topaz.Identity.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.EventHub/Topaz.Service.EventHub.csproj" />
+    <ProjectReference Include="../Services/Topaz.Service.ApiManagement/Topaz.Service.ApiManagement.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.VirtualNetwork/Topaz.Service.VirtualNetwork.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.AppService/Topaz.Service.AppService.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.VirtualMachine/Topaz.Service.VirtualMachine.csproj" />
