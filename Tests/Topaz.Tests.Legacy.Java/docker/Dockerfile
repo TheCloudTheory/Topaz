@@ -6,6 +6,6 @@ FROM maven:3.9-eclipse-temurin-11
 # Install CA tooling
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 
-COPY Topaz.Tests.Legacy.Java/tests /tests
+COPY tests /tests
 
 RUN cd /tests && mvn -q dependency:resolve
