@@ -53,22 +53,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ## v1.10-preview
 
 <!--
-TODO: Azure API Management: Service control plane endpoints
-  Implement the ARM-level ApiManagementService resource surface
-  (Microsoft.ApiManagement/service):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}  – delete
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}  – update (tags, sku, publisherEmail)
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.ApiManagement/service                              – list all
-  provisioningState is always Succeeded. gatewayUrl, portalUrl, and managementApiUrl
-  are derived from the service name and persisted on creation.
-  milestone: v1.10-preview
-  labels: enhancement, api-management
--->
-
-<!--
 TODO: Azure API Management: Data plane — APIs CRUD
   Implement ARM-level API resource endpoints under the service instance:
   - PUT    .../service/{name}/apis/{apiId}  – create or update an API definition
