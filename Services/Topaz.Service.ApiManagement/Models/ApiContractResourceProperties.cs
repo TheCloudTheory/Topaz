@@ -5,31 +5,31 @@ namespace Topaz.Service.ApiManagement.Models;
 
 internal sealed class ApiContractResourceProperties
 {
-    public string? ApiRevision { get; init; }
-    public string? ApiRevisionDescription { get; init; }
-    public string? ApiVersion { get; init; }
-    public string? ApiVersionDescription { get; init; }
-    public string? ApiVersionSetId { get; init; }
-    public AuthenticationSettingsContract? AuthenticationSettings { get; init; }
-    public ApiContactInformation? Contact { get; init; }
-    public string? Description { get; init; }
-    public bool? IsCurrent { get; init; }
-    public ApiLicenseInformation? License { get; init; }
-    public SubscriptionKeyParameterNamesContract? SubscriptionKeyParameterNames { get; init; }
-    public bool? SubscriptionRequired { get; init; }
-    public string? TermsOfServiceUrl { get; init; }
-    public string? Type { get; init; }
-    public string? Path { get; init; }
-    public string? ApiType { get; init; }
-    public ApiVersionSetContractDetails? ApiVersionSet { get; init; }
-    public string? DisplayName { get; init; }
-    public string? Format { get; init; }
-    public string[]? Protocols { get; init; }
-    public string? ServiceUrl { get; init; }
-    public string? SourceApiId { get; init; }
-    public string? TranslateRequiredQueryParameters { get; init; }
-    public string? Value { get; init; }
-    public WsdlSelector? WsdlSelector { get; init; }
+    public string? ApiRevision { get; set; }
+    public string? ApiRevisionDescription { get; set; }
+    public string? ApiVersion { get; set; }
+    public string? ApiVersionDescription { get; set; }
+    public string? ApiVersionSetId { get; set; }
+    public AuthenticationSettingsContract? AuthenticationSettings { get; set; }
+    public ApiContactInformation? Contact { get; set; }
+    public string? Description { get; set; }
+    public bool? IsCurrent { get; set; }
+    public ApiLicenseInformation? License { get; set; }
+    public SubscriptionKeyParameterNamesContract? SubscriptionKeyParameterNames { get; set; }
+    public bool? SubscriptionRequired { get; set; }
+    public string? TermsOfServiceUrl { get; set; }
+    public string? Type { get; set; }
+    public string? Path { get; set; }
+    public string? ApiType { get; set; }
+    public ApiVersionSetContractDetails? ApiVersionSet { get; set; }
+    public string? DisplayName { get; set; }
+    public string? Format { get; set; }
+    public string[]? Protocols { get; set; }
+    public string? ServiceUrl { get; set; }
+    public string? SourceApiId { get; set; }
+    public string? TranslateRequiredQueryParameters { get; set; }
+    public string? Value { get; set; }
+    public WsdlSelector? WsdlSelector { get; set; }
 
     public static ApiContractResourceProperties From(CreateOrUpdateApiRequest request)
     {

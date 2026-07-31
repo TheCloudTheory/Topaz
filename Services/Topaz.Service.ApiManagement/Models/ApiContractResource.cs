@@ -34,11 +34,58 @@ internal sealed class ApiContractResource : ArmSubresource<ApiContractResourcePr
 
     public (bool IsValid, string? Error) Validate<TModel>(TModel? data = null) where TModel : class
     {
-        return (true, null);
+        if (Properties.Path == null)
+            return (false, "properties.path is required");
+
+        if (Properties.Path.Length > 400)
+            return (false, "properties.path cannot exceed 400 characters");
+
+        if (Properties.ApiRevision is { Length: 0 or > 100 })
+            return (false, "apiRevision must be between 1 and 100 characters");
+
+        if (Properties.ApiRevisionDescription?.Length > 256)
+            return (false, "apiRevisionDescription cannot exceed 256 characters");
+
+        if (Properties.ApiVersion?.Length > 100)
+            return (false, "apiVersion cannot exceed 100 characters");
+
+        if (Properties.ApiVersionDescription?.Length > 256)
+            return (false, "apiVersionDescription cannot exceed 256 characters");
+
+        if (Properties.DisplayName is { Length: 0 or > 300 })
+            return (false, "properties.displayName must be between 1 and 300 characters");
+
+        return Properties.ServiceUrl?.Length > 2000
+            ? (false, "properties.serviceUrl cannot exceed 2000 characters")
+            : (true, null);
     }
 
     public void UpdateFromRequest(CreateOrUpdateApiRequest request)
     {
-        throw new NotImplementedException();
+        Properties.ApiRevision = request.ApiRevision ?? Properties.ApiRevision;
+        Properties.ApiRevisionDescription = request.ApiRevisionDescription ?? Properties.ApiRevisionDescription;
+        Properties.ApiVersion = request.ApiVersion ?? Properties.ApiVersion;
+        Properties.ApiVersionDescription = request.ApiVersionDescription ?? Properties.ApiVersionDescription;
+        Properties.ApiVersionSetId = request.ApiVersionSetId ?? Properties.ApiVersionSetId;
+        Properties.AuthenticationSettings = request.AuthenticationSettings ?? Properties.AuthenticationSettings;
+        Properties.Contact = request.Contact ?? Properties.Contact;
+        Properties.Description = request.Description ?? Properties.Description;
+        Properties.IsCurrent = request.IsCurrent ?? Properties.IsCurrent;
+        Properties.License = request.License ?? Properties.License;
+        Properties.SubscriptionKeyParameterNames = request.SubscriptionKeyParameterNames ?? Properties.SubscriptionKeyParameterNames;
+        Properties.SubscriptionRequired = request.SubscriptionRequired ?? Properties.SubscriptionRequired;
+        Properties.TermsOfServiceUrl = request.TermsOfServiceUrl ?? Properties.TermsOfServiceUrl;
+        Properties.Type = request.Type ?? Properties.Type;
+        Properties.Path = request.Properties?.Path ?? Properties.Path;
+        Properties.ApiType = request.Properties?.ApiType ?? Properties.ApiType;
+        Properties.ApiVersionSet = request.Properties?.ApiVersionSet ?? Properties.ApiVersionSet;
+        Properties.DisplayName = request.Properties?.DisplayName ?? Properties.DisplayName;
+        Properties.Format = request.Properties?.Format ?? Properties.Format;
+        Properties.Protocols = request.Properties?.Protocols ?? Properties.Protocols;
+        Properties.ServiceUrl = request.Properties?.ServiceUrl ?? Properties.ServiceUrl;
+        Properties.SourceApiId = request.Properties?.SourceApiId ?? Properties.SourceApiId;
+        Properties.TranslateRequiredQueryParameters = request.Properties?.TranslateRequiredQueryParameters ?? Properties.TranslateRequiredQueryParameters;
+        Properties.Value = request.Properties?.Value ?? Properties.Value;
+        Properties.WsdlSelector = request.Properties?.WsdlSelector ?? Properties.WsdlSelector;
     }
 }
