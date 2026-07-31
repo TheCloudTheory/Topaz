@@ -61,7 +61,8 @@ _ = new[]
     typeof(HealthCommand),
     typeof(GenericChaosCommand),
     typeof(GenericLogAnalyticsCommand),
-    typeof(GenericInsightsCommand)
+    typeof(GenericInsightsCommand),
+    typeof(GenericApiManagementCommand)
 };
 
 Console.WriteLine("Looking for commands...");
@@ -220,6 +221,20 @@ foreach (var group in groups)
         if (!Directory.Exists(directoryTemplate))
         {
             Directory.CreateDirectory(directoryTemplate);
+            
+            // Also, create _category.json so that the command group shows up in the left navigation
+            var categoryJsonTemplate = Path.Combine(directoryTemplate, "_category.json");
+            var category = new
+            {
+                label = definition.CommandGroup,
+                position = index,
+                link = new
+                {
+                    type = "generated-index"
+                }
+            };
+            
+            File.WriteAllText(categoryJsonTemplate, JsonSerializer.Serialize(category));
         }
 
         var commandNameAsFilename = string.Join("-", definition.CommandName.Split(" "));

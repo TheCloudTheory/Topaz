@@ -20,7 +20,7 @@ internal sealed class CheckApiManagementServiceNameAvailabilityCommand(HttpClien
         {
             name = settings.Name,
             type = "Microsoft.ApiManagement/service"
-        });
+        }, cancellationToken);
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
         return 0;
