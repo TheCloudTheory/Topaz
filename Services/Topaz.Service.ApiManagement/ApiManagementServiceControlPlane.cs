@@ -183,4 +183,34 @@ internal sealed class ApiManagementServiceControlPlane(
         
         return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(OperationResult.Success, resources);
     }
+
+    public ControlPlaneOperationResult<ApiManagementServiceResource> Update(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string name,
+        CreateOrUpdateApiManagementServiceRequest request)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ApiManagementServiceResource>(
+                OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
+        }
+            
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+        if(existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ApiManagementServiceResource>(OperationResult.NotFound, null, existing.Reason, existing.Code);
+        }
+        
+        existing.Resource!.UpdateFromRequest(request);
+        
+        if (!existing.Resource.Validate<ApiManagementServiceResource>().IsValid)
+        {
+            return new ControlPlaneOperationResult<ApiManagementServiceResource>(
+                OperationResult.BadRequest, null, existing.Resource.Validate<ApiManagementServiceResource>().Error, "InvalidRequest");
+        }
+        
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, existing.Resource);
+        return new ControlPlaneOperationResult<ApiManagementServiceResource>(
+            OperationResult.Updated, existing.Resource);
+    }
 }
