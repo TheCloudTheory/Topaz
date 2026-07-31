@@ -68,6 +68,24 @@ public static class HttpResponseMessageExtensions
         response.StatusCode = codeToReturn;
         response.Content = JsonContent.Create(error);
     }
+    
+    public static void CreateErrorResponse(this HttpResponseMessage response, ControlPlaneOperationResult result,
+        HttpStatusCode codeToReturn = HttpStatusCode.InternalServerError)
+    {
+        var error = new GenericErrorResponse(result.Code!, result.Reason!);
+
+        response.StatusCode = codeToReturn;
+        response.Content = JsonContent.Create(error);
+    }
+    
+    public static void CreateErrorResponse<TResult>(this HttpResponseMessage response, ControlPlaneOperationResult<TResult> result,
+        HttpStatusCode codeToReturn = HttpStatusCode.InternalServerError)
+    {
+        var error = new GenericErrorResponse(result.Code!, result.Reason!);
+
+        response.StatusCode = codeToReturn;
+        response.Content = JsonContent.Create(error);
+    }
 
     public static void CreateJsonContentResponse(this HttpResponseMessage response, object resource,
         HttpStatusCode code = HttpStatusCode.OK)
@@ -77,11 +95,17 @@ public static class HttpResponseMessageExtensions
         response.StatusCode = code;
     }
     
-    public static void CreateNotFoundResponse(this HttpResponseMessage response, string code, string message)
+    public static void CreateNotFoundResponse<TResult>(this HttpResponseMessage response, ControlPlaneOperationResult<TResult> result)
     {
-        var error = new GenericErrorResponse(code, message);
+        var error = new GenericErrorResponse(result.Code!, result.Reason!);
 
         response.StatusCode = HttpStatusCode.NotFound;
         response.Content = JsonContent.Create(error);
+    }
+    
+    public static void CreateNoContentResponse(this HttpResponseMessage response)
+    {
+        response.StatusCode = HttpStatusCode.NoContent;
+        response.Content = new ByteArrayContent([]);
     }
 }

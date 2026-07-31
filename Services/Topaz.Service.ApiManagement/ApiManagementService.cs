@@ -19,6 +19,10 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new CreateOrUpdateApiManagementServiceEndpoint(eventPipeline, logger)
+        new CreateOrUpdateApiManagementServiceEndpoint(eventPipeline, logger),
+        new DeleteApiManagementServiceEndpoint(eventPipeline, logger),
+        new CheckApiManagementServiceNameAvailabilityEndpoint(eventPipeline, logger),
+        new GetApiManagementServiceEndpoint(eventPipeline, logger),
+        new ListApiManagementServicesEndpoint(eventPipeline, logger),
     ];
 }

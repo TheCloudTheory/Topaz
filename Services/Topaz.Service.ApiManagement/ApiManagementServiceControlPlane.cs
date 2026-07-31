@@ -96,14 +96,14 @@ internal sealed class ApiManagementServiceControlPlane(
             OperationResult.Updated, existing.Resource);
     }
 
-    private ControlPlaneOperationResult<ApiManagementServiceResource> Get(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<ApiManagementServiceResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string name)
     {
         var resource = provider.GetAs<ApiManagementServiceResource>(subscriptionIdentifier, resourceGroupIdentifier, name);
         return resource == null || GlobalDnsEntries.IsSoftDeleted(ApiManagementService.UniqueName, name)
             ? new ControlPlaneOperationResult<ApiManagementServiceResource>(
                 OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode)
-            : new ControlPlaneOperationResult<ApiManagementServiceResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<ApiManagementServiceResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult> CheckNameAvailability(
@@ -131,5 +131,40 @@ internal sealed class ApiManagementServiceControlPlane(
 
         return new ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult>(
             OperationResult.Success, ApiManagementServiceNameAvailabilityResult.ForValidName());
+    }
+
+    public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string name)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, resourceGroupOperation.Reason, resourceGroupOperation.Code);
+        }
+            
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+        if(existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, existing.Reason, existing.Code);
+        }
+        
+        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, name);
+
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<ApiManagementServiceResource[]> List(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(
+                OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
+        }
+        
+        var existing = provider.ListAs<ApiManagementServiceResource>(subscriptionIdentifier, resourceGroupIdentifier);
+
+        return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(OperationResult.Success, [.. existing]);
     }
 }

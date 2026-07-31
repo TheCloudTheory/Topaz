@@ -45,13 +45,13 @@ internal sealed class GetAvailabilitySetEndpoint(Pipeline eventPipeline, ITopazL
 
         if (operation.Result == OperationResult.NotFound)
         {
-            response.CreateNotFoundResponse(operation.Code!, operation.Reason!);
+            response.CreateNotFoundResponse(operation);
             return;
         }
         
         if (operation.Result != OperationResult.Success || operation.Resource == null)
         {
-            response.CreateErrorResponse(operation.Code!, operation.Reason!);
+            response.CreateErrorResponse(operation);
             return;
         }
         

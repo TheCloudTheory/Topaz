@@ -10,20 +10,20 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ApiManagement.Endpoints;
 
-internal sealed class CheckNameAvailabilityEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class CheckApiManagementServiceNameAvailabilityEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly ApiManagementServiceControlPlane _controlPlane =
         ApiManagementServiceControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.AppConfiguration";
+    public string? ProviderNamespace => "Microsoft.ApiManagement";
 
     public string[] Endpoints =>
     [
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.ApiManagement/checkNameAvailability"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/write"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

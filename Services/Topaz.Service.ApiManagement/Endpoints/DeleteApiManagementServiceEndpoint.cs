@@ -6,22 +6,22 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.AppConfiguration.Endpoints;
+namespace Topaz.Service.ApiManagement.Endpoints;
 
-internal sealed class DeleteConfigurationStoreEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class DeleteApiManagementServiceEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
-    private readonly AppConfigurationServiceControlPlane _controlPlane =
-        AppConfigurationServiceControlPlane.New(eventPipeline, logger);
+    private readonly ApiManagementServiceControlPlane _controlPlane =
+        ApiManagementServiceControlPlane.New(eventPipeline, logger);
 
     public string? ProviderNamespace => "Microsoft.AppConfiguration";
 
     public string[] Endpoints =>
     [
-        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppConfiguration/configurationStores/{configStoreName}"
+        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}"
     ];
 
-    public string[] Permissions => ["Microsoft.AppConfiguration/configurationStores/delete"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/delete"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -41,14 +41,13 @@ internal sealed class DeleteConfigurationStoreEndpoint(Pipeline eventPipeline, I
         var existing = _controlPlane.Get(sub, rg, name);
         if (existing.Result == OperationResult.NotFound)
         {
-            response.StatusCode = HttpStatusCode.NotFound;
+            response.CreateNotFoundResponse(existing);
             return;
         }
 
         var result = _controlPlane.Delete(sub, rg, name);
         if (result.Result != OperationResult.Deleted)
         {
-            logger.LogDebug(nameof(DeleteConfigurationStoreEndpoint), nameof(GetResponse), "Error deleting configuration store.");
             response.CreateErrorResponse(result);
             return;
         }

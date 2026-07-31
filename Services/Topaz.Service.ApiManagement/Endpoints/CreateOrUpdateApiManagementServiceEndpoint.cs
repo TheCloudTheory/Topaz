@@ -16,7 +16,7 @@ internal sealed class CreateOrUpdateApiManagementServiceEndpoint(Pipeline eventP
     private readonly ApiManagementServiceControlPlane _controlPlane =
         ApiManagementServiceControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.AppConfiguration";
+    public string? ProviderNamespace => "Microsoft.ApiManagement";
 
     public string[] Endpoints =>
     [
