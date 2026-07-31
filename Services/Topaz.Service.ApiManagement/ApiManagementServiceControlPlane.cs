@@ -77,7 +77,7 @@ internal sealed class ApiManagementServiceControlPlane(
                     OperationResult.BadRequest, null, apim.Validate<ApiManagementServiceResource>().Error, "InvalidRequest");
             }
             
-            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, apim);
+            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, apim, createOperation: true);
             
             return new ControlPlaneOperationResult<ApiManagementServiceResource>(
                 OperationResult.Created, apim);
@@ -91,7 +91,7 @@ internal sealed class ApiManagementServiceControlPlane(
                 OperationResult.BadRequest, null, existing.Resource.Validate<ApiManagementServiceResource>().Error, "InvalidRequest");
         }
         
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, existing.Resource);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, existing.Resource, createOperation: false);
         return new ControlPlaneOperationResult<ApiManagementServiceResource>(
             OperationResult.Updated, existing.Resource);
     }
@@ -119,14 +119,14 @@ internal sealed class ApiManagementServiceControlPlane(
         var existingEntry = GlobalDnsEntries.GetEntry(ApiManagementService.UniqueName, request.Name!);
         if (existingEntry != null)
         {
-            return new ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult>(OperationResult.Failed,
+            return new ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult>(OperationResult.Success,
                 ApiManagementServiceNameAvailabilityResult.ForAlreadyExists());
         }
 
         if(ApiManagementServiceResource.CheckIfNameIsValid(request.Name!))
         {
             return new ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult>(
-                OperationResult.Failed, ApiManagementServiceNameAvailabilityResult.ForInvalidName());
+                OperationResult.Success, ApiManagementServiceNameAvailabilityResult.ForInvalidName());
         }
 
         return new ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult>(
@@ -163,7 +163,7 @@ internal sealed class ApiManagementServiceControlPlane(
                 OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
         }
         
-        var existing = provider.ListAs<ApiManagementServiceResource>(subscriptionIdentifier, resourceGroupIdentifier);
+        var existing = provider.ListAs<ApiManagementServiceResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
 
         return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(OperationResult.Success, [.. existing]);
     }

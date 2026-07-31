@@ -45,6 +45,7 @@ internal sealed class ApiManagementServiceResource : ArmResource<ApiManagementSe
     public void UpdateFromRequest(CreateOrUpdateApiManagementServiceRequest request)
     {
         Sku = request.Sku ?? Sku;
+        Tags = request.Tags ?? Tags;
         Properties.PublisherEmail = request.Properties?.PublisherEmail ?? Properties.PublisherEmail;
         Properties.PublisherName = request.Properties?.PublisherName ?? Properties.PublisherName;
         Properties.NotificationSenderEmail = request.Properties?.NotificationSenderEmail ?? Properties.NotificationSenderEmail;

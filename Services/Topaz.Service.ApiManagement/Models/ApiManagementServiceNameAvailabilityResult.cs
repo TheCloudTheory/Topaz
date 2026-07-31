@@ -1,8 +1,9 @@
 using System.Text.Json.Serialization;
+using Topaz.Service.Shared;
 
 namespace Topaz.Service.ApiManagement.Models;
 
-internal sealed class ApiManagementServiceNameAvailabilityResult
+internal sealed class ApiManagementServiceNameAvailabilityResult : TopazApiModel
 {
     public string? Message { get; init; }
     public bool NameAvailable { get; init; }
