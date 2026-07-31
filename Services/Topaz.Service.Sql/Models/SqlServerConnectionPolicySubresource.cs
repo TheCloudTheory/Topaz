@@ -29,7 +29,7 @@ public sealed class SqlServerConnectionPolicySubresource
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.Sql/servers/connectionPolicies";
+    public override string Type { get; init; } = "Microsoft.Sql/servers/connectionPolicies";
     public override SqlServerConnectionPolicySubresourceProperties Properties { get; init; }
 
     public string GetServer() => Id.Split("/")[8];

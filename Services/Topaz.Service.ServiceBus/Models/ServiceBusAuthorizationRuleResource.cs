@@ -26,14 +26,12 @@ internal sealed class ServiceBusAuthorizationRuleResource
         Id = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/Microsoft.ServiceBus/{armIdSuffix}/authorizationRules/{ruleName}";
         Name = ruleName;
         Properties = properties;
-        _type = $"Microsoft.ServiceBus/{armIdSuffix.Split('/')[^2]}/authorizationRules";
+        Type = $"Microsoft.ServiceBus/{armIdSuffix.Split('/')[^2]}/authorizationRules";
     }
-
-    private readonly string _type = "Microsoft.ServiceBus/namespaces/authorizationRules";
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => _type;
+    public override string Type { get; init; } = "Microsoft.ServiceBus/namespaces/authorizationRules";
     public override ServiceBusAuthorizationRuleResourceProperties Properties { get; init; }
 
     public override string ToString() => JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);

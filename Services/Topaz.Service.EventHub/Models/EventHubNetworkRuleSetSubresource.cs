@@ -27,7 +27,7 @@ internal sealed class EventHubNetworkRuleSetSubresource : ArmSubresource<EventHu
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.EventHub/namespaces/networkRuleSets";
+    public override string Type { get; init; } = "Microsoft.EventHub/namespaces/networkRuleSets";
     public override EventHubNetworkRuleSetSubresourceProperties Properties { get; init; }
 
     public EventHubNamespaceIdentifier GetNamespace()

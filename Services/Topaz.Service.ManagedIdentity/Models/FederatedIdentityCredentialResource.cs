@@ -28,6 +28,6 @@ public sealed class FederatedIdentityCredentialResource
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials";
+    public override string Type { get; init; } = "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials";
     public override FederatedIdentityCredentialResourceProperties Properties { get; init; }
 }

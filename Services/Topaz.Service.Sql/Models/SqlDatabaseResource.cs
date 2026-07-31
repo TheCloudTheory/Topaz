@@ -34,7 +34,7 @@ public sealed class SqlDatabaseResource : ArmSubresource<SqlDatabaseResourceProp
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.Sql/servers/databases";
+    public override string Type { get; init; } = "Microsoft.Sql/servers/databases";
     public override SqlDatabaseResourceProperties Properties { get; init; }
     public string? Location { get; set; }
     public IDictionary<string, string>? Tags { get; set; }

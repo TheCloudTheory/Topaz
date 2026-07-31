@@ -27,7 +27,7 @@ internal sealed class EventHubResource
     
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.EventHub/namespaces/eventhubs";
+    public override string Type { get; init; } = "Microsoft.EventHub/namespaces/eventhubs";
     public override EventHubResourceProperties Properties { get; init; }
     
     public void UpdateProperties(EventHubResourceProperties properties)

@@ -9,7 +9,7 @@ public abstract class ArmSubresource<T>
 {
     public abstract string Id { get; init; }
     public abstract string Name { get; init; }
-    public abstract string Type { get; }
+    public abstract string Type { get; init; }
     public abstract T Properties { get; init; }
     
     public SubscriptionIdentifier GetSubscription()

@@ -27,6 +27,6 @@ internal sealed class AcrRunResource : ArmSubresource<AcrRunResourceProperties>
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.ContainerRegistry/registries/runs";
+    public override string Type { get; init; } = "Microsoft.ContainerRegistry/registries/runs";
     public override AcrRunResourceProperties Properties { get; init; }
 }

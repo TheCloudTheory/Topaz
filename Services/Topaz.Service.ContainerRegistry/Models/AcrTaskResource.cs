@@ -34,7 +34,7 @@ internal sealed class AcrTaskResource : ArmSubresource<AcrTaskResourceProperties
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.ContainerRegistry/registries/tasks";
+    public override string Type { get; init; } = "Microsoft.ContainerRegistry/registries/tasks";
     public override AcrTaskResourceProperties Properties { get; init; }
     public string? Location { get; init; }
     public IDictionary<string, string>? Tags { get; set; }

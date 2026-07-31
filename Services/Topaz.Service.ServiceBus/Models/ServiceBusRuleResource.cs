@@ -34,7 +34,7 @@ internal sealed class ServiceBusRuleResource : ArmSubresource<ServiceBusRuleReso
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.ServiceBus/namespaces/topics/subscriptions/rules";
+    public override string Type { get; init; } = "Microsoft.ServiceBus/namespaces/topics/subscriptions/rules";
     public override ServiceBusRuleResourceProperties Properties { get; init; }
 
     public XElement ToEntryElement()

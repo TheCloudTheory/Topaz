@@ -32,7 +32,7 @@ internal sealed class ServiceBusSubscriptionResource
     
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.ServiceBus/namespaces/topics/subscriptions";
+    public override string Type { get; init; } = "Microsoft.ServiceBus/namespaces/topics/subscriptions";
     public override ServiceBusSubscriptionResourceProperties Properties { get; init; }
 
     /// <summary>

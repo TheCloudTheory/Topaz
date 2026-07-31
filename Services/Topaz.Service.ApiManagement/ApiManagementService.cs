@@ -12,7 +12,7 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".apim");
-    public static IReadOnlyCollection<string>? Subresources => null;
+    public static IReadOnlyCollection<string>? Subresources => ["apis"];
     public static string UniqueName => "apim";
 
     public string Name => "API Management";

@@ -27,7 +27,7 @@ public sealed class SubnetResource : ArmSubresource<SubnetResourceProperties>
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.Network/virtualNetworks/subnets";
+    public override string Type { get; init; } = "Microsoft.Network/virtualNetworks/subnets";
     public override SubnetResourceProperties Properties { get; init; }
 
     public string GetVirtualNetworkName() => Id.Split("/")[8];

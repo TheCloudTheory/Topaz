@@ -29,7 +29,7 @@ internal sealed class ServiceBusTopicResource
     
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.ServiceBus/namespaces/topics";
+    public override string Type { get; init; } = "Microsoft.ServiceBus/namespaces/topics";
     public override ServiceBusTopicResourceProperties Properties { get; init; }
 
     /// <summary>

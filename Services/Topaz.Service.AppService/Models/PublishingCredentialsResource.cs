@@ -29,7 +29,7 @@ internal sealed class PublishingCredentialsResource : ArmSubresource<PublishingC
     
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.Web/sites/config/publishingcredentials";
+    public override string Type { get; init; } = "Microsoft.Web/sites/config/publishingcredentials";
     public override PublishingCredentialsResourceProperties Properties { get; init; }
     
     public static PublishingCredentialsResource Create(

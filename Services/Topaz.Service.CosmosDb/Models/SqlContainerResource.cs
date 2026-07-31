@@ -28,7 +28,7 @@ public sealed class SqlContainerResource : ArmSubresource<SqlContainerResourcePr
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers";
+    public override string Type { get; init; } = "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers";
     public override SqlContainerResourceProperties Properties { get; init; }
 
     public string GetAccountName() => Id.Split("/")[8];

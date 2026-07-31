@@ -27,7 +27,7 @@ public sealed class SqlDatabaseResource : ArmSubresource<SqlDatabaseResourceProp
 
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.DocumentDB/databaseAccounts/sqlDatabases";
+    public override string Type { get; init; } = "Microsoft.DocumentDB/databaseAccounts/sqlDatabases";
     public override SqlDatabaseResourceProperties Properties { get; init; }
 
     public string GetAccountName() => Id.Split("/")[8];
