@@ -1,4 +1,3 @@
-using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.ApiManagement.Models.Responses;
@@ -15,11 +14,11 @@ internal sealed class ListApiManagementServicesEndpoint(Pipeline eventPipeline, 
     private readonly ApiManagementServiceControlPlane _controlPlane =
         ApiManagementServiceControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.AppConfiguration";
+    public string? ProviderNamespace => "Microsoft.ApiManagement";
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service"
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.ApiManagement/service"
     ];
 
     public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
@@ -30,9 +29,8 @@ internal sealed class ListApiManagementServicesEndpoint(Pipeline eventPipeline, 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var sub = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
-        var rg = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
 
-        var existing = _controlPlane.List(sub, rg);
+        var existing = _controlPlane.List(sub);
         if (existing.Result == OperationResult.NotFound)
         {
             response.CreateNotFoundResponse(existing);

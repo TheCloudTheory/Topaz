@@ -154,7 +154,7 @@ internal sealed class ApiManagementServiceControlPlane(
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
-    public ControlPlaneOperationResult<ApiManagementServiceResource[]> List(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    public ControlPlaneOperationResult<ApiManagementServiceResource[]> ListByResourceGroup(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
         var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound)
@@ -166,5 +166,21 @@ internal sealed class ApiManagementServiceControlPlane(
         var existing = provider.ListAs<ApiManagementServiceResource>(subscriptionIdentifier, resourceGroupIdentifier);
 
         return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(OperationResult.Success, [.. existing]);
+    }
+
+    public ControlPlaneOperationResult<ApiManagementServiceResource[]> List(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var subscriptionOperation = _subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscriptionOperation.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(
+                subscriptionOperation.Result, null, subscriptionOperation.Reason, subscriptionOperation.Code);
+        }
+        
+        var resources = provider.ListAs<ApiManagementServiceResource>(subscriptionIdentifier, null, lookForNoOfSegments: 8)
+            .Where(r => r.IsInSubscription(subscriptionIdentifier))
+            .ToArray();
+        
+        return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(OperationResult.Success, resources);
     }
 }

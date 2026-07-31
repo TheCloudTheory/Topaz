@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.ApiManagement.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,7 +9,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ApiManagement.Endpoints;
 
-internal sealed class GetApiManagementServiceEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class ListApiManagementServicesByResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly ApiManagementServiceControlPlane _controlPlane =
@@ -18,7 +19,7 @@ internal sealed class GetApiManagementServiceEndpoint(Pipeline eventPipeline, IT
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service"
     ];
 
     public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
@@ -30,21 +31,14 @@ internal sealed class GetApiManagementServiceEndpoint(Pipeline eventPipeline, IT
     {
         var sub = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
         var rg = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
-        var name = context.Request.Path.Value.ExtractValueFromPath(8);
 
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            response.StatusCode = HttpStatusCode.BadRequest;
-            return;
-        }
-
-        var existing = _controlPlane.Get(sub, rg, name);
+        var existing = _controlPlane.ListByResourceGroup(sub, rg);
         if (existing.Result == OperationResult.NotFound)
         {
             response.CreateNotFoundResponse(existing);
             return;
         }
 
-        response.CreateJsonContentResponse(existing.Resource!);
+        response.CreateJsonContentResponse(ApiManagementServiceListResultResponse.From(existing.Resource!));
     }
 }

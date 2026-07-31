@@ -23,6 +23,7 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
         new DeleteApiManagementServiceEndpoint(eventPipeline, logger),
         new CheckApiManagementServiceNameAvailabilityEndpoint(eventPipeline, logger),
         new GetApiManagementServiceEndpoint(eventPipeline, logger),
+        new ListApiManagementServicesByResourceGroupEndpoint(eventPipeline, logger),
         new ListApiManagementServicesEndpoint(eventPipeline, logger),
     ];
 }
