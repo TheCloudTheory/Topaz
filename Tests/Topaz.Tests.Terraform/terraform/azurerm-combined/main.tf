@@ -785,3 +785,39 @@ output "avset_name"                         { value = azurerm_availability_set.a
 output "avset_location"                     { value = azurerm_availability_set.avset.location }
 output "avset_platform_fault_domain_count"  { value = azurerm_availability_set.avset.platform_fault_domain_count }
 output "avset_platform_update_domain_count" { value = azurerm_availability_set.avset.platform_update_domain_count }
+
+# ── API Management ─────────────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "apim_rg" {
+  name     = "tf-rm-apim-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_api_management" "apim_basic" {
+  name                = "tf-rm-apim"
+  location            = azurerm_resource_group.apim_rg.location
+  resource_group_name = azurerm_resource_group.apim_rg.name
+  publisher_name      = "Topaz Tests"
+  publisher_email     = "admin@topaz.local.dev"
+  sku_name            = "Developer_1"
+}
+
+resource "azurerm_api_management" "apim_tagged" {
+  name                = "tf-rm-apim-tagged"
+  location            = azurerm_resource_group.apim_rg.location
+  resource_group_name = azurerm_resource_group.apim_rg.name
+  publisher_name      = "Topaz Tests Tagged"
+  publisher_email     = "tagged@topaz.local.dev"
+  sku_name            = "Developer_1"
+  tags = {
+    environment = "test"
+    team        = "platform"
+  }
+}
+
+output "apim_basic_name"           { value = azurerm_api_management.apim_basic.name }
+output "apim_basic_publisher_name" { value = azurerm_api_management.apim_basic.publisher_name }
+output "apim_basic_publisher_email" { value = azurerm_api_management.apim_basic.publisher_email }
+output "apim_tagged_name"          { value = azurerm_api_management.apim_tagged.name }
+output "apim_tagged_env"           { value = azurerm_api_management.apim_tagged.tags["environment"] }
+output "apim_tagged_team"          { value = azurerm_api_management.apim_tagged.tags["team"] }
