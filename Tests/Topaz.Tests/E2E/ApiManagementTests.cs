@@ -133,6 +133,33 @@ public class ApiManagementTests
     }
 
     [Test]
+    public async Task ApiManagementService_WhenDeleted_CanBeRetrievedAsDeletedService()
+    {
+        const string serviceName = "apim-get-deleted-test";
+        var armClient = CreateArmClient();
+        var resourceGroup = await GetResourceGroupAsync(armClient);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+
+        var created = (await resourceGroup.GetApiManagementServices()
+            .CreateOrUpdateAsync(WaitUntil.Completed, serviceName, MinimalServiceData())).Value;
+        await created.DeleteAsync(WaitUntil.Completed);
+
+        var deleted = (await subscription.GetApiManagementDeletedServiceAsync(AzureLocation.WestEurope, serviceName)).Value;
+
+        Assert.That(deleted.Data.Name, Is.EqualTo(serviceName));
+    }
+
+    [Test]
+    public async Task ApiManagementService_GetDeletedByName_WhenNotFound_Throws404()
+    {
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+
+        Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await subscription.GetApiManagementDeletedServiceAsync(AzureLocation.WestEurope, "nonexistent-apim"));
+    }
+
+    [Test]
     public async Task ApiManagementService_ListByResourceGroup_ContainsCreatedService()
     {
         const string serviceName = "apim-list-rg-test";
