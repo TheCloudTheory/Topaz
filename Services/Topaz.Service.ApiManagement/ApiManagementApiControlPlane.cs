@@ -54,7 +54,7 @@ internal sealed class ApiManagementApiControlPlane(
             }
             
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
-                ApiSubresourceId, request);
+                ApiSubresourceId, api);
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
                 ApiEtagSubresourceId, api.ETag);
 
@@ -79,6 +79,8 @@ internal sealed class ApiManagementApiControlPlane(
 
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
             ApiSubresourceId, request);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
+            ApiEtagSubresourceId, existing.Resource.ETag);
 
         return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Updated, existing.Resource);
     }
