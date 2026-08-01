@@ -50,8 +50,8 @@ internal sealed class UpdateApiEndpoint(Pipeline eventPipeline, ITopazLogger log
             return;
         }
 
-        var ifMatch = context.Request.Headers.ContainsKey("If-Match")
-            ? context.Request.Headers["If-Match"].ToString()
+        var ifMatch = context.Request.Headers.TryGetValue("If-Match", out var value)
+            ? value.ToString()
             : null;
 
         var result = _controlPlane.Update(sub, rg, name, apiId, request, ifMatch);
@@ -62,6 +62,9 @@ internal sealed class UpdateApiEndpoint(Pipeline eventPipeline, ITopazLogger log
                 return;
             case OperationResult.BadRequest:
                 response.CreateErrorResponse(result, HttpStatusCode.BadRequest);
+                return;
+            case OperationResult.Conflict:
+                response.CreateErrorResponse(result, HttpStatusCode.Conflict);
                 return;
         }
 

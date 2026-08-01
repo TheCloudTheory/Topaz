@@ -162,7 +162,7 @@ internal sealed class ApiManagementApiControlPlane(
                 "InvalidStateError");
         }
 
-        if (ifMatch != "*" && ifMatch != etag.Value)
+        if (ifMatch != "*" && !etag.IsEqualToETag(ifMatch))
         {
             return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Conflict, null,
                 "If-Match does not match ETag value", "ConcurrentOperationFailed");
@@ -182,5 +182,27 @@ internal sealed class ApiManagementApiControlPlane(
             ApiEtagSubresourceId, existing.Resource.ETag);
 
         return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Updated, existing.Resource);
+    }
+
+    public ControlPlaneOperationResult<string> GetEntityTag(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName, string apiId)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<string>(OperationResult.NotFound, null,
+                apimOperation.Reason, apimOperation.Code);
+        }
+
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, apimName, apiId);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<string>(OperationResult.NotFound, null, existing.Reason, existing.Code);
+        }
+
+        var etag = provider.GetSubresourceAs<ApiContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,
+            apimName, ApiEtagSubresourceId);
+
+        return new ControlPlaneOperationResult<string>(OperationResult.Success, etag?.Value);
     }
 }

@@ -86,6 +86,81 @@ public class ApiManagementApiTests
     }
 
     [Test]
+    public async Task Api_WhenUpdatedWithMatchingETag_Succeeds()
+    {
+        const string apiId = "api-update-etag-match";
+        var armClient = CreateArmClient();
+        var service = await CreateServiceAsync(armClient);
+
+        var created = (await service.GetApis()
+            .CreateOrUpdateAsync(WaitUntil.Completed, apiId, MinimalApiContent("etag-path"))).Value;
+
+        var etagResponse = await created.GetEntityTagAsync();
+        var eTag = etagResponse.GetRawResponse().Headers.ETag.GetValueOrDefault();
+        var updated = await created.UpdateAsync(eTag, new ApiPatch { DisplayName = "Etag Updated" });
+
+        Assert.That(updated.Value.Data.DisplayName, Is.EqualTo("Etag Updated"));
+    }
+
+    [Test]
+    public async Task Api_WhenUpdatedWithWildcardETag_Succeeds()
+    {
+        const string apiId = "api-update-wildcard-etag";
+        var armClient = CreateArmClient();
+        var service = await CreateServiceAsync(armClient);
+
+        var created = (await service.GetApis()
+            .CreateOrUpdateAsync(WaitUntil.Completed, apiId, MinimalApiContent("wildcard-path"))).Value;
+
+        var updated = await created.UpdateAsync(ETag.All, new ApiPatch { DisplayName = "Wildcard Updated" });
+
+        Assert.That(updated.Value.Data.DisplayName, Is.EqualTo("Wildcard Updated"));
+    }
+
+    [Test]
+    public async Task Api_WhenUpdatedWithWrongETag_Throws409()
+    {
+        const string apiId = "api-update-wrong-etag";
+        var armClient = CreateArmClient();
+        var service = await CreateServiceAsync(armClient);
+
+        var created = (await service.GetApis()
+            .CreateOrUpdateAsync(WaitUntil.Completed, apiId, MinimalApiContent("wrong-etag-path"))).Value;
+
+        var ex = Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await created.UpdateAsync(new ETag("\"wrong-etag-value\""), new ApiPatch { DisplayName = "Should Fail" }));
+
+        Assert.That(ex!.Status, Is.EqualTo(409));
+    }
+
+    [Test]
+    public async Task Api_WhenUpdatedAndNotFound_Throws404()
+    {
+        var armClient = CreateArmClient();
+        var service = await CreateServiceAsync(armClient);
+
+        var fakeApi = armClient.GetApiResource(
+            ApiResource.CreateResourceIdentifier(
+                SubscriptionId.ToString(), ResourceGroupName, ServiceName, "nonexistent-api"));
+
+        Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await fakeApi.UpdateAsync(ETag.All, new ApiPatch { DisplayName = "Ghost" }));
+    }
+
+    [Test]
+    public async Task Api_WhenUpdatedAndParentServiceNotFound_Throws404()
+    {
+        var armClient = CreateArmClient();
+
+        var fakeApi = armClient.GetApiResource(
+            ApiResource.CreateResourceIdentifier(
+                SubscriptionId.ToString(), ResourceGroupName, "nonexistent-service", "any-api"));
+
+        Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await fakeApi.UpdateAsync(ETag.All, new ApiPatch { DisplayName = "Ghost" }));
+    }
+
+    [Test]
     public async Task Api_WhenRetrieved_ReturnsCorrectApi()
     {
         const string apiId = "api-get-test";

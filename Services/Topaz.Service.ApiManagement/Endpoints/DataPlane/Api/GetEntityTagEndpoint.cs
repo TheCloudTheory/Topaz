@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
@@ -8,7 +9,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ApiManagement.Endpoints.DataPlane.Api;
 
-internal sealed class GetApiEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class GetEntityTagEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly ApiManagementApiControlPlane _controlPlane =
@@ -18,7 +19,7 @@ internal sealed class GetApiEndpoint(Pipeline eventPipeline, ITopazLogger logger
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}"
+        "HEAD /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}"
     ];
 
     public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
@@ -39,7 +40,7 @@ internal sealed class GetApiEndpoint(Pipeline eventPipeline, ITopazLogger logger
             return;
         }
 
-        var result = _controlPlane.Get(sub, rg, name, apiId);
+        var result = _controlPlane.GetEntityTag(sub, rg, name, apiId);
         if (result.Result == OperationResult.NotFound)
         {
             response.CreateNotFoundResponse(result);
@@ -52,6 +53,7 @@ internal sealed class GetApiEndpoint(Pipeline eventPipeline, ITopazLogger logger
             return;
         }
 
-        response.CreateJsonContentResponse(result.Resource);
+        response.StatusCode = HttpStatusCode.OK;
+        response.Headers.ETag = new EntityTagHeaderValue($"\"{result.Resource}\"");
     }
 }

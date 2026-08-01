@@ -13,4 +13,9 @@ internal sealed class ApiContractEtag
             Value = new ETag(DateTimeOffset.Now.Ticks.ToString()).ToString()
         };
     }
+
+    public bool IsEqualToETag(string etag)
+    {
+        return $"\"{Value}\"" == etag;
+    }
 }
