@@ -28,7 +28,7 @@ internal sealed class ApiManagementApiControlPlane(
 
     public ControlPlaneOperationResult<ApiContractResource> CreateOrUpdate(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName,
-        string apiId, CreateOrUpdateApiRequest request)
+        string apiId, CreateOrUpdateApiRequest request, string? ifMatch)
     {
         var apimOperation =
             _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
@@ -56,6 +56,14 @@ internal sealed class ApiManagementApiControlPlane(
                 ApiSubresourceId, request);
 
             return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Success, null);
+        }
+
+        // As per API docs, If-Match is required for CreateOrUpdate operation
+        // when it's an update operation
+        if (string.IsNullOrWhiteSpace(ifMatch))
+        {
+            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.BadRequest, null,
+                "If-Match is required for update requests.", "MissingIfMatchHeader");
         }
         
         existing.Resource!.UpdateFromRequest(request);

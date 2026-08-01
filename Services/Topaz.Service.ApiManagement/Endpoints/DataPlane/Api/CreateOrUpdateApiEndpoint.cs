@@ -49,7 +49,11 @@ internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLo
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdate(sub, rg, name, apiId, request);
+        var ifMatch = context.Request.Headers.ContainsKey("If-Match")
+            ? context.Request.Headers["If-Match"].ToString()
+            : null;
+
+        var result = _controlPlane.CreateOrUpdate(sub, rg, name, apiId, request, ifMatch);
         if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
