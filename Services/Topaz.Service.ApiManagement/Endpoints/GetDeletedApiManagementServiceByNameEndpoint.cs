@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.ApiManagement.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,7 +9,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ApiManagement.Endpoints;
 
-internal sealed class DeleteApiManagementServiceEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class GetDeletedApiManagementServiceByNameEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly ApiManagementServiceControlPlane _controlPlane =
@@ -18,10 +19,10 @@ internal sealed class DeleteApiManagementServiceEndpoint(Pipeline eventPipeline,
 
     public string[] Endpoints =>
     [
-        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}"
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.ApiManagement/locations/{location}/deletedservices/{serviceName}"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/delete"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -29,29 +30,21 @@ internal sealed class DeleteApiManagementServiceEndpoint(Pipeline eventPipeline,
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var sub = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
-        var rg = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
-        var name = context.Request.Path.Value.ExtractValueFromPath(8);
+        var apimName = context.Request.Path.Value.ExtractValueFromPath(8);
 
-        if (string.IsNullOrWhiteSpace(name))
+        if (string.IsNullOrEmpty(apimName))
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
 
-        var existing = _controlPlane.Get(sub, rg, name);
+        var existing = _controlPlane.GetDeletedService(sub, apimName);
         if (existing.Result == OperationResult.NotFound)
         {
             response.CreateNotFoundResponse(existing);
             return;
         }
 
-        var result = _controlPlane.Delete(sub, rg, name);
-        if (result.Result != OperationResult.Deleted)
-        {
-            response.CreateErrorResponse(result);
-            return;
-        }
-        
-        response.CreateNoContentResponse();
+        response.CreateJsonContentResponse(DeletedServiceContractResponse.From(existing.Resource!));
     }
 }

@@ -55,55 +55,55 @@ internal sealed class ApiManagementServiceControlPlane(
         }
     }
 
-    public ControlPlaneOperationResult<ApiManagementServiceResource> CreateOrUpdate(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<ApiManagementServiceFullResource> CreateOrUpdate(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string name, CreateOrUpdateApiManagementServiceRequest request)
     {
         var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound)
         {
-            return new ControlPlaneOperationResult<ApiManagementServiceResource>(
+            return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
                 OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
         }
             
         var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
         if(existing.Result == OperationResult.NotFound)
         {
-            var apim = new ApiManagementServiceResource(subscriptionIdentifier, resourceGroupIdentifier, name,
+            var apim = new ApiManagementServiceFullResource(subscriptionIdentifier, resourceGroupIdentifier, name,
                 request.Location!, request.Tags, request.Sku, ApiManagementServiceResourceProperties.From(request));
 
-            if (!apim.Validate<ApiManagementServiceResource>().IsValid)
+            if (!apim.Validate<ApiManagementServiceFullResource>().IsValid)
             {
-                return new ControlPlaneOperationResult<ApiManagementServiceResource>(
-                    OperationResult.BadRequest, null, apim.Validate<ApiManagementServiceResource>().Error, "InvalidRequest");
+                return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
+                    OperationResult.BadRequest, null, apim.Validate<ApiManagementServiceFullResource>().Error, "InvalidRequest");
             }
             
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, apim, createOperation: true);
             
-            return new ControlPlaneOperationResult<ApiManagementServiceResource>(
+            return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
                 OperationResult.Created, apim);
         }
         
         existing.Resource!.UpdateFromRequest(request);
         
-        if (!existing.Resource.Validate<ApiManagementServiceResource>().IsValid)
+        if (!existing.Resource.Validate<ApiManagementServiceFullResource>().IsValid)
         {
-            return new ControlPlaneOperationResult<ApiManagementServiceResource>(
-                OperationResult.BadRequest, null, existing.Resource.Validate<ApiManagementServiceResource>().Error, "InvalidRequest");
+            return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
+                OperationResult.BadRequest, null, existing.Resource.Validate<ApiManagementServiceFullResource>().Error, "InvalidRequest");
         }
         
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, existing.Resource, createOperation: false);
-        return new ControlPlaneOperationResult<ApiManagementServiceResource>(
+        return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
             OperationResult.Updated, existing.Resource);
     }
 
-    public ControlPlaneOperationResult<ApiManagementServiceResource> Get(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string name)
+    public ControlPlaneOperationResult<ApiManagementServiceFullResource> Get(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string name, bool ignoreSoftDeleted = false)
     {
-        var resource = provider.GetAs<ApiManagementServiceResource>(subscriptionIdentifier, resourceGroupIdentifier, name);
-        return resource == null || GlobalDnsEntries.IsSoftDeleted(ApiManagementService.UniqueName, name)
-            ? new ControlPlaneOperationResult<ApiManagementServiceResource>(
+        var resource = provider.GetAs<ApiManagementServiceFullResource>(subscriptionIdentifier, resourceGroupIdentifier, name);
+        return resource == null || (GlobalDnsEntries.IsSoftDeleted(ApiManagementService.UniqueName, name) && !ignoreSoftDeleted)
+            ? new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
                 OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode)
-            : new ControlPlaneOperationResult<ApiManagementServiceResource>(OperationResult.Success, resource);
+            : new ControlPlaneOperationResult<ApiManagementServiceFullResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<ApiManagementServiceNameAvailabilityResult> CheckNameAvailability(
@@ -149,68 +149,107 @@ internal sealed class ApiManagementServiceControlPlane(
                 OperationResult.NotFound, existing.Reason, existing.Code);
         }
         
-        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, name);
+        existing.Resource!.DeletionDate =  DateTime.UtcNow;
+        
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, existing.Resource);
+        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, name, softDelete: true);
 
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
-    public ControlPlaneOperationResult<ApiManagementServiceResource[]> ListByResourceGroup(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    public ControlPlaneOperationResult<ApiManagementServiceFullResource[]> ListByResourceGroup(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
         var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound)
         {
-            return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(
+            return new ControlPlaneOperationResult<ApiManagementServiceFullResource[]>(
                 OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
         }
         
-        var existing = provider.ListAs<ApiManagementServiceResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
+        var existing = provider.ListAs<ApiManagementServiceFullResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
 
-        return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(OperationResult.Success, [.. existing]);
+        return new ControlPlaneOperationResult<ApiManagementServiceFullResource[]>(OperationResult.Success, [.. existing]);
     }
 
-    public ControlPlaneOperationResult<ApiManagementServiceResource[]> List(SubscriptionIdentifier subscriptionIdentifier)
+    public ControlPlaneOperationResult<ApiManagementServiceFullResource[]> List(SubscriptionIdentifier subscriptionIdentifier)
     {
         var subscriptionOperation = _subscriptionControlPlane.Get(subscriptionIdentifier);
         if (subscriptionOperation.Result != OperationResult.Success)
         {
-            return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(
+            return new ControlPlaneOperationResult<ApiManagementServiceFullResource[]>(
                 subscriptionOperation.Result, null, subscriptionOperation.Reason, subscriptionOperation.Code);
         }
         
-        var resources = provider.ListAs<ApiManagementServiceResource>(subscriptionIdentifier, null, lookForNoOfSegments: 8)
+        var resources = provider.ListAs<ApiManagementServiceFullResource>(subscriptionIdentifier, null, lookForNoOfSegments: 8)
             .Where(r => r.IsInSubscription(subscriptionIdentifier))
             .ToArray();
         
-        return new ControlPlaneOperationResult<ApiManagementServiceResource[]>(OperationResult.Success, resources);
+        return new ControlPlaneOperationResult<ApiManagementServiceFullResource[]>(OperationResult.Success, resources);
     }
 
-    public ControlPlaneOperationResult<ApiManagementServiceResource> Update(
+    public ControlPlaneOperationResult<ApiManagementServiceFullResource> Update(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string name,
         CreateOrUpdateApiManagementServiceRequest request)
     {
         var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound)
         {
-            return new ControlPlaneOperationResult<ApiManagementServiceResource>(
+            return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
                 OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
         }
             
         var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
         if(existing.Result == OperationResult.NotFound)
         {
-            return new ControlPlaneOperationResult<ApiManagementServiceResource>(OperationResult.NotFound, null, existing.Reason, existing.Code);
+            return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(OperationResult.NotFound, null, existing.Reason, existing.Code);
         }
         
         existing.Resource!.UpdateFromRequest(request);
         
-        if (!existing.Resource.Validate<ApiManagementServiceResource>().IsValid)
+        if (!existing.Resource.Validate<ApiManagementServiceFullResource>().IsValid)
         {
-            return new ControlPlaneOperationResult<ApiManagementServiceResource>(
-                OperationResult.BadRequest, null, existing.Resource.Validate<ApiManagementServiceResource>().Error, "InvalidRequest");
+            return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
+                OperationResult.BadRequest, null, existing.Resource.Validate<ApiManagementServiceFullResource>().Error, "InvalidRequest");
         }
         
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, existing.Resource);
-        return new ControlPlaneOperationResult<ApiManagementServiceResource>(
+        return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
             OperationResult.Updated, existing.Resource);
+    }
+
+    public ControlPlaneOperationResult<ApiManagementServiceFullResource> GetDeletedService(SubscriptionIdentifier subscriptionIdentifier, string apimName)
+    {
+        var subscriptionOperation = _subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscriptionOperation.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
+                subscriptionOperation.Result, null, subscriptionOperation.Reason, subscriptionOperation.Code);
+        }
+
+        var deleted = ListDeletedBySubscription(subscriptionIdentifier);
+        var apim = deleted.Resource!.SingleOrDefault(apim => apim.Name == apimName);
+
+        return apim == null
+            ? new ControlPlaneOperationResult<ApiManagementServiceFullResource>(OperationResult.NotFound, null)
+            : new ControlPlaneOperationResult<ApiManagementServiceFullResource>(OperationResult.Success, apim);
+    }
+    
+    private ControlPlaneOperationResult<ApiManagementServiceFullResource[]> ListDeletedBySubscription(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var apims = ListBySubscription(subscriptionIdentifier);
+        var filteredResources = apims.Resource!.Where(apim =>
+            GlobalDnsEntries.IsSoftDeleted(ApiManagementService.UniqueName, apim.Name));
+
+        return new ControlPlaneOperationResult<ApiManagementServiceFullResource[]>(OperationResult.Success,
+            [.. filteredResources]);
+    }
+    
+    private ControlPlaneOperationResult<ApiManagementServiceFullResource[]> ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var resources = provider.ListAs<ApiManagementServiceFullResource>(subscriptionIdentifier, null, null, 8);
+        var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
+        
+        return new ControlPlaneOperationResult<ApiManagementServiceFullResource[]>(OperationResult.Success,
+            [.. filteredResources]);
     }
 }

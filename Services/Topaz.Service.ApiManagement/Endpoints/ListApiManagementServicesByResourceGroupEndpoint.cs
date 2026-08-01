@@ -15,7 +15,7 @@ internal sealed class ListApiManagementServicesByResourceGroupEndpoint(Pipeline 
     private readonly ApiManagementServiceControlPlane _controlPlane =
         ApiManagementServiceControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.ApiManagement";
+    public string ProviderNamespace => "Microsoft.ApiManagement";
 
     public string[] Endpoints =>
     [

@@ -166,7 +166,7 @@ internal sealed class KeyVaultControlPlane(
         var filteredResources = keyVaults.Resource!.Where(keyVault =>
             GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVault.Name));
         
-        return (OperationResult.Success, filteredResources.ToArray());
+        return (OperationResult.Success, [.. filteredResources]);
     }
 
     public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,

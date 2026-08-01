@@ -7,7 +7,7 @@ using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ApiManagement.Models;
 
-internal sealed class ApiManagementServiceResource : ArmResource<ApiManagementServiceResourceProperties>, IValidatable
+internal class ApiManagementServiceResource : ArmResource<ApiManagementServiceResourceProperties>, IValidatable
 {
     [JsonConstructor]
 #pragma warning disable CS8618
@@ -33,14 +33,14 @@ internal sealed class ApiManagementServiceResource : ArmResource<ApiManagementSe
         Properties = properties;
     }
     
-    public override string Id { get; init; }
-    public override string Name { get; init; }
-    public override string Type { get; init; } = "Microsoft.ApiManagement/service";
-    public override string? Location { get; set; }
-    public override IDictionary<string, string>? Tags { get; set; }
-    public override ResourceSku? Sku { get; set; }
+    public sealed override string Id { get; init; }
+    public sealed override string Name { get; init; }
+    public sealed override string Type { get; init; } = "Microsoft.ApiManagement/service";
+    public sealed override string? Location { get; set; }
+    public sealed override IDictionary<string, string>? Tags { get; set; }
+    public sealed override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
-    public override ApiManagementServiceResourceProperties Properties { get; init; }
+    public sealed override ApiManagementServiceResourceProperties Properties { get; init; }
 
     public void UpdateFromRequest(CreateOrUpdateApiManagementServiceRequest request)
     {

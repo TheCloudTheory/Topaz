@@ -14,7 +14,7 @@ internal sealed class GetApiManagementServiceEndpoint(Pipeline eventPipeline, IT
     private readonly ApiManagementServiceControlPlane _controlPlane =
         ApiManagementServiceControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.ApiManagement";
+    public string ProviderNamespace => "Microsoft.ApiManagement";
 
     public string[] Endpoints =>
     [
