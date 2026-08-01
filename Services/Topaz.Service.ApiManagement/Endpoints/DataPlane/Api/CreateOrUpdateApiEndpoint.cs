@@ -21,7 +21,7 @@ internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLo
 
     public string[] Endpoints =>
     [
-        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}"
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}"
     ];
 
     public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
@@ -56,6 +56,16 @@ internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLo
             : null;
 
         var result = _controlPlane.CreateOrUpdate(sub, rg, name, apiId, request, ifMatch);
+        switch (result.Result)
+        {
+            case OperationResult.NotFound:
+                response.CreateNotFoundResponse(result);
+                return;
+            case OperationResult.BadRequest:
+                response.CreateErrorResponse(result, HttpStatusCode.BadRequest);
+                return;
+        }
+
         if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
@@ -63,7 +73,7 @@ internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLo
         }
 
         response.StatusCode = result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
-        response.Headers.ETag = new EntityTagHeaderValue(result.Resource.ETag?.Value!);
+        response.Headers.ETag = new EntityTagHeaderValue($"\"{result.Resource.ETag?.Value!}\"");
         response.Headers.Location = new Uri(
             $"https://{GlobalSettings.TopazHostname}:{GlobalSettings.DefaultResourceManagerPort}/subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}/apis/{apiId}?asyncCode=200=asyncId={Guid.NewGuid()}");
         response.CreateJsonContentResponse(result.Resource);

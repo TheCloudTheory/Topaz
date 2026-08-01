@@ -17,7 +17,7 @@ internal sealed class ApiManagementApiControlPlane(
         new(eventPipeline, new ApiManagementResourceProvider(logger), logger);
 
     private static readonly string ApiSubresourceId = nameof(Subresources.Apis).ToLowerInvariant();
-    private static readonly string ApiEtagSubresourceId = "api-etag";
+    private static readonly string ApiEtagSubresourceId = "apis-etag";
 
     private readonly ApiManagementServiceControlPlane _apiManagementServiceControlPlane =
         ApiManagementServiceControlPlane.New(eventPipeline, logger);
@@ -58,7 +58,7 @@ internal sealed class ApiManagementApiControlPlane(
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
                 ApiEtagSubresourceId, api.ETag);
 
-            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Success, api);
+            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Created, api);
         }
 
         // As per API docs, If-Match is required for CreateOrUpdate operation
@@ -80,7 +80,7 @@ internal sealed class ApiManagementApiControlPlane(
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
             ApiSubresourceId, request);
 
-        return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Success, existing.Resource);
+        return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Updated, existing.Resource);
     }
 
     public ControlPlaneOperationResult<ApiContractResource> Get(SubscriptionIdentifier subscriptionIdentifier,
