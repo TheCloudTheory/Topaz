@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Topaz.ResourceManager;
 using Topaz.Service.ApiManagement.Models.Requests;
 using Topaz.Service.Shared;
@@ -31,9 +32,21 @@ internal sealed class ApiContractResource : ArmSubresource<ApiContractResourcePr
     public override string Name { get; init; }
     public override string Type { get; init; } = "Microsoft.ApiManagement/service/apis";
     public override ApiContractResourceProperties Properties { get; init; }
+    
+    private static readonly Regex NamePattern = new(@"^[^*#&+:<>?]+$", RegexOptions.Compiled);
 
     public (bool IsValid, string? Error) Validate<TModel>(TModel? data = null) where TModel : class
     {
+        if (Name.Length is < 1 or > 256)
+        {
+            return (false, "Name must be between 1 and 256 characters");
+        }
+
+        if (!NamePattern.IsMatch(Name))
+        {
+            return (false, "Name cannot contain special characters such as ^*#&+:<>?");
+        }
+        
         if (Properties.Path == null)
             return (false, "properties.path is required");
 
