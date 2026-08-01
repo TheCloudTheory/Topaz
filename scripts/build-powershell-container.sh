@@ -10,7 +10,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$SCRIPT_DIR/../Topaz.Tests.AzurePowerShell"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../Tests/Topaz.Tests.AzurePowerShell" && pwd)"
 
 echo "Building topaz/powershell image from $PROJECT_DIR/Dockerfile.powershell..."
 docker build \
