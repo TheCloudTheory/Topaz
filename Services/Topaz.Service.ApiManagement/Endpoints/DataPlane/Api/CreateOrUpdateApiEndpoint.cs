@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
@@ -42,7 +43,8 @@ internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLo
         }
 
         using var reader = new StreamReader(context.Request.Body);
-        var request = JsonSerializer.Deserialize<CreateOrUpdateApiRequest>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+        var request =
+            JsonSerializer.Deserialize<CreateOrUpdateApiRequest>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
         if (request == null)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
@@ -61,6 +63,9 @@ internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLo
         }
 
         response.StatusCode = result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+        response.Headers.ETag = new EntityTagHeaderValue(result.Resource.ETag?.Value!);
+        response.Headers.Location = new Uri(
+            $"https://{GlobalSettings.TopazHostname}:{GlobalSettings.DefaultResourceManagerPort}/subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}/apis/{apiId}?asyncCode=200=asyncId={Guid.NewGuid()}");
         response.CreateJsonContentResponse(result.Resource);
     }
 }
