@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
@@ -11,7 +10,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ApiManagement.Endpoints.DataPlane.Api;
 
-internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class UpdateApiEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly ApiManagementApiControlPlane _controlPlane =
@@ -21,7 +20,7 @@ internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLo
 
     public string[] Endpoints =>
     [
-        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}"
+        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}"
     ];
 
     public string[] Permissions => ["Microsoft.ApiManagement/service/write"];
@@ -55,7 +54,7 @@ internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLo
             ? context.Request.Headers["If-Match"].ToString()
             : null;
 
-        var result = _controlPlane.CreateOrUpdate(sub, rg, name, apiId, request, ifMatch);
+        var result = _controlPlane.Update(sub, rg, name, apiId, request, ifMatch);
         switch (result.Result)
         {
             case OperationResult.NotFound:
@@ -66,16 +65,12 @@ internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLo
                 return;
         }
 
-        if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
+        if (result.Result != OperationResult.Updated || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
             return;
         }
-
-        response.StatusCode = result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
-        response.Headers.ETag = new EntityTagHeaderValue($"\"{result.Resource.ETag?.Value!}\"");
-        response.Headers.Location = new Uri(
-            $"https://{GlobalSettings.TopazHostname}:{GlobalSettings.DefaultResourceManagerPort}/subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}/apis/{apiId}?asyncCode=200=asyncId={Guid.NewGuid()}");
+        
         response.CreateJsonContentResponse(result.Resource);
     }
 }

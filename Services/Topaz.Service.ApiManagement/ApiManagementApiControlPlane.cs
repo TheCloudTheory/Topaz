@@ -109,4 +109,78 @@ internal sealed class ApiManagementApiControlPlane(
         return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Success, existing);
     }
 
+    public ControlPlaneOperationResult<ApiContractResource[]> ListByService(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ApiContractResource[]>(OperationResult.NotFound, null,
+                apimOperation.Reason, apimOperation.Code);
+        }
+
+        var existing = provider.ListSubresourcesAs<ApiContractResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            apimName, ApiSubresourceId);
+
+        return new ControlPlaneOperationResult<ApiContractResource[]>(OperationResult.Success, existing);
+    }
+
+    public ControlPlaneOperationResult<ApiContractResource> Update(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string apimName, string apiId, CreateOrUpdateApiRequest request,
+        string? ifMatch)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.NotFound, null,
+                apimOperation.Reason, apimOperation.Code);
+        }
+
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, apimName, apiId);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.NotFound, null, existing.Reason, existing.Code);
+        }
+
+        // As per API docs, If-Match is required for Update operation,
+        // and it must match the current ETag (unless it's unconditional update with "*")
+        if (string.IsNullOrWhiteSpace(ifMatch))
+        {
+            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.BadRequest, null,
+                "If-Match is required for update requests.", "MissingIfMatchHeader");
+        }
+
+        var etag = provider.GetSubresourceAs<ApiContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,
+            apimName, ApiEtagSubresourceId);
+
+        if (etag == null)
+        {
+            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Update), "API Management API is missing ETag value");
+            
+            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Failed, null, "ETag not found",
+                "InvalidStateError");
+        }
+
+        if (ifMatch != "*" && ifMatch != etag.Value)
+        {
+            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Conflict, null,
+                "If-Match does not match ETag value", "ConcurrentOperationFailed");
+        }
+        
+        existing.Resource!.UpdateFromRequest(request);
+        var validationResult = existing.Resource!.Validate<ApiContractResource>();
+        if (!validationResult.IsValid)
+        {
+            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.BadRequest, null,
+                validationResult.Error, "InvalidRequest");
+        }
+
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
+            ApiSubresourceId, request);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
+            ApiEtagSubresourceId, existing.Resource.ETag);
+
+        return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Updated, existing.Resource);
+    }
 }
