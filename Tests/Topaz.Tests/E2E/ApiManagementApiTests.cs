@@ -137,7 +137,7 @@ public class ApiManagementApiTests
     public async Task Api_WhenUpdatedAndNotFound_Throws404()
     {
         var armClient = CreateArmClient();
-        var service = await CreateServiceAsync(armClient);
+        _ = await CreateServiceAsync(armClient);
 
         var fakeApi = armClient.GetApiResource(
             ApiResource.CreateResourceIdentifier(
@@ -211,5 +211,59 @@ public class ApiManagementApiTests
 
         Assert.That(apis, Does.Contain("api-list-1"));
         Assert.That(apis, Does.Contain("api-list-2"));
+    }
+
+    [Test]
+    public async Task Api_WhenDeletedWithSingleRevision_NoRevisionsRemain()
+    {
+        const string apiId = "api-delete-single-rev";
+        var armClient = CreateArmClient();
+        var service = await CreateServiceAsync(armClient);
+
+        var api = (await service.GetApis()
+            .CreateOrUpdateAsync(WaitUntil.Completed, apiId, MinimalApiContent("single-rev-path"))).Value;
+
+        await api.DeleteAsync(WaitUntil.Completed, ETag.All);
+
+        Assert.ThrowsAsync<RequestFailedException>(async () => await service.GetApiAsync(apiId));
+    }
+
+    [Test]
+    public async Task Api_WhenDeletedWithDeleteRevisionsFalse_RemainingRevisionIsReturned()
+    {
+        const string apiId = "api-delete-keep-rev";
+        const string revisionApiId = "api-delete-keep-rev;rev=2";
+        var armClient = CreateArmClient();
+        var service = await CreateServiceAsync(armClient);
+
+        await service.GetApis().CreateOrUpdateAsync(WaitUntil.Completed, apiId, MinimalApiContent("keep-rev-path"));
+        var revision2 = (await service.GetApis().CreateOrUpdateAsync(WaitUntil.Completed, revisionApiId,
+            new ApiCreateOrUpdateContent { Path = "keep-rev-path", DisplayName = "Test API", ApiRevision = "2" })).Value;
+
+        var api = (await service.GetApiAsync(apiId)).Value;
+        await api.DeleteAsync(WaitUntil.Completed, ETag.All, deleteRevisions: false);
+
+        var remainingRevisions = revision2.GetApiRevisionsByService().ToList();
+        Assert.That(remainingRevisions, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public async Task Api_WhenDeletedWithDeleteRevisionsTrue_AllRevisionsAreDeleted()
+    {
+        const string apiId = "api-delete-all-revs";
+        const string revisionApiId = "api-delete-all-revs;rev=2";
+        var armClient = CreateArmClient();
+        var service = await CreateServiceAsync(armClient);
+
+        await service.GetApis().CreateOrUpdateAsync(WaitUntil.Completed, apiId, MinimalApiContent("all-revs-path"));
+        var revision2 = (await service.GetApis().CreateOrUpdateAsync(WaitUntil.Completed, revisionApiId,
+            new ApiCreateOrUpdateContent { Path = "all-revs-path", DisplayName = "Test API", ApiRevision = "2" })).Value;
+
+        var api = (await service.GetApiAsync(apiId)).Value;
+        await api.DeleteAsync(WaitUntil.Completed, ETag.All, deleteRevisions: true);
+
+        Assert.ThrowsAsync<RequestFailedException>(async () => await service.GetApiAsync(apiId));
+        var remainingRevisions = revision2.GetApiRevisionsByService().ToList();
+        Assert.That(remainingRevisions, Is.Empty);
     }
 }
