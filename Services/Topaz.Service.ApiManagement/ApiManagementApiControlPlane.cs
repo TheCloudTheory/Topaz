@@ -18,6 +18,7 @@ internal sealed class ApiManagementApiControlPlane(
 
     private static readonly string ApiSubresourceId = nameof(Subresources.Apis).ToLowerInvariant();
     private static readonly string ApiEtagSubresourceId = "apis-etag";
+    private static readonly string ApiRevisionSubresourceId = "apis-revision";
 
     private readonly ApiManagementServiceControlPlane _apiManagementServiceControlPlane =
         ApiManagementServiceControlPlane.New(eventPipeline, logger);
@@ -58,6 +59,9 @@ internal sealed class ApiManagementApiControlPlane(
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
                 ApiEtagSubresourceId, api.ETag);
 
+            var revision = ApiRevisionData.From(subscriptionIdentifier, resourceGroupIdentifier, apimName, apiId, request);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName, ApiRevisionSubresourceId, revision);
+
             return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Created, api);
         }
 
@@ -81,6 +85,21 @@ internal sealed class ApiManagementApiControlPlane(
             ApiSubresourceId, request);
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
             ApiEtagSubresourceId, existing.Resource.ETag);
+
+        var existingRevision = provider.GetSubresourceAs<ApiRevisionData>(subscriptionIdentifier,
+            resourceGroupIdentifier, apiId, apimName, ApiRevisionSubresourceId);
+        if (existingRevision == null)
+        {
+            var revision = ApiRevisionData.From(subscriptionIdentifier, resourceGroupIdentifier, apimName, apiId, request);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
+                ApiRevisionSubresourceId, revision);
+        }
+        else
+        {
+            existingRevision.Update(request);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName,
+                ApiRevisionSubresourceId, existingRevision);
+        }
 
         return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Updated, existing.Resource);
     }
@@ -204,5 +223,92 @@ internal sealed class ApiManagementApiControlPlane(
             apimName, ApiEtagSubresourceId);
 
         return new ControlPlaneOperationResult<string>(OperationResult.Success, etag?.Value);
+    }
+
+    public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string apimName, string apiId, string? ifMatch,
+        bool deleteRevisions)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound,
+                apimOperation.Reason, apimOperation.Code);
+        }
+        
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, apimName, apiId);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, existing.Reason, existing.Code);
+        }
+        
+        // As per docs, If-Match header must be present for delete operation
+        if (string.IsNullOrWhiteSpace(ifMatch))
+        {
+            return new ControlPlaneOperationResult(OperationResult.BadRequest,
+                "If-Match is required for update requests.", "MissingIfMatchHeader");
+        }
+        
+        var etag = provider.GetSubresourceAs<ApiContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,
+            apimName, ApiEtagSubresourceId);
+
+        if (etag == null)
+        {
+            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Update), "API Management API is missing ETag value");
+            
+            return new ControlPlaneOperationResult(OperationResult.Failed, "ETag not found",
+                "InvalidStateError");
+        }
+
+        if (ifMatch != "*" && !etag.IsEqualToETag(ifMatch))
+        {
+            return new ControlPlaneOperationResult(OperationResult.Conflict,
+                "If-Match does not match ETag value", "ConcurrentOperationFailed");
+        }
+        
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName, ApiSubresourceId);
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName, ApiEtagSubresourceId);
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, apiId, apimName, ApiRevisionSubresourceId);
+
+        if (!deleteRevisions) return new ControlPlaneOperationResult(OperationResult.Deleted);
+        
+        logger.LogDebug(nameof(ApiManagementApiControlPlane), nameof(Delete), "Deleting all revisions.");
+        
+        var revisionsToDelete = provider.ListSubresourcesAs<ApiRevisionData>(subscriptionIdentifier,
+            resourceGroupIdentifier, apimName, ApiRevisionSubresourceId).Where(revision =>
+            revision.ApiId!.Contains(apiId.Split(';')[0]));
+
+        foreach (var revision in revisionsToDelete)
+        {
+            provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, revision.GetApiId(),
+                apimName, ApiRevisionSubresourceId);
+        }
+
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<ApiRevisionData[]> ListRevisionsByService(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName,
+        string apiId)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ApiRevisionData[]>(OperationResult.NotFound, null,
+                apimOperation.Reason, apimOperation.Code);
+        }
+        
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, apimName, apiId);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ApiRevisionData[]>(OperationResult.NotFound, null, existing.Reason, existing.Code);
+        }
+
+        var revisions = provider.ListSubresourcesAs<ApiRevisionData>(subscriptionIdentifier, resourceGroupIdentifier,
+            apimName, ApiRevisionSubresourceId);
+
+        return new ControlPlaneOperationResult<ApiRevisionData[]>(OperationResult.Success, revisions);
     }
 }

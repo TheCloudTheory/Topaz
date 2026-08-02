@@ -103,6 +103,14 @@ public static class HttpResponseMessageExtensions
         response.Content = JsonContent.Create(error);
     }
     
+    public static void CreateNotFoundResponse(this HttpResponseMessage response, ControlPlaneOperationResult result)
+    {
+        var error = new GenericErrorResponse(result.Code!, result.Reason!);
+
+        response.StatusCode = HttpStatusCode.NotFound;
+        response.Content = JsonContent.Create(error);
+    }
+    
     public static void CreateNoContentResponse(this HttpResponseMessage response)
     {
         response.StatusCode = HttpStatusCode.NoContent;
