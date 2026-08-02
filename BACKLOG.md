@@ -53,20 +53,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ## v1.10-preview
 
 <!--
-TODO: Azure API Management: Data plane — APIs CRUD
-  Implement ARM-level API resource endpoints under the service instance:
-  - PUT    .../service/{name}/apis/{apiId}  – create or update an API definition
-  - GET    .../service/{name}/apis/{apiId}  – get
-  - DELETE .../service/{name}/apis/{apiId}  – delete
-  - GET    .../service/{name}/apis          – list APIs
-  An API definition includes: displayName, description, serviceUrl (backend target),
-  path, protocols (http/https), apiType (http/soap/websocket/graphql).
-  Persist API definitions as subresources. Includes E2E SDK tests and Azure CLI tests.
-  milestone: v1.10-preview
-  labels: enhancement, api-management
--->
-
-<!--
 TODO: Azure API Management: Data plane — Products CRUD
   Implement ARM-level Product resource endpoints:
   - PUT    .../service/{name}/products/{productId}  – create or update
