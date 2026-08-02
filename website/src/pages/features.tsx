@@ -47,6 +47,7 @@ const SERVICES: Service[] = [
   { abbr: 'AI',   bg: '#FF9900', name: 'Azure Application Insights', description: 'Application Insights workspace, data collection, and query', preview: true },
   { abbr: 'PE',   bg: '#1B63EB', name: 'Private Endpoint',         description: 'Private endpoint resources and DNS integration', preview: true },
   { abbr: 'RC',   bg: '#0078D4', name: 'Azure Redis Cache', description: 'Redis cache control plane and data-plane emulation', preview: true},
+  { abbr: 'APM',  bg: '#E8751A', name: 'Azure API Management', description: 'API Management service control plane and API gateway emulation', preview: true},
 ];
 
 const TOOLING: Service[] = [

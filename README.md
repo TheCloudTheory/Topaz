@@ -84,6 +84,7 @@ See the [roadmap](https://topaz.thecloudtheory.com/roadmap/) for what's coming n
 | Public IP Address | ✅ | — | Preview |
 | Private Endpoints | ✅ | — | Preview |
 | Azure Redis Cache | ✅ | — | Preview |
+| Azure API Management | ✅ | ✅ | Preview |
 
 See the [API coverage docs](https://topaz.thecloudtheory.com/docs/category/api-coverage/) for the full operation-level breakdown per service.
 

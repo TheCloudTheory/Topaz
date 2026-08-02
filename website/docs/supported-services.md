@@ -44,6 +44,7 @@ Log Analytics|✅|🚧
 Application Insights|✅|🚧
 Private Endpoints|✅|N/A
 Redis Cache|✅|🚧
+API Management|🚧|🚧
 
 ✅ - fully supported (stable)
 
