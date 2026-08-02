@@ -49,6 +49,18 @@ internal sealed class CreateOrUpdateApiManagementServiceEndpoint(Pipeline eventP
         }
 
         var result = _controlPlane.CreateOrUpdate(sub, rg, name, request);
+        if (result.Result == OperationResult.NotFound)
+        {
+            response.CreateNotFoundResponse(result);
+            return;
+        }
+
+        if (result.Result == OperationResult.BadRequest)
+        {
+            response.CreateBadRequestResponse(result);
+            return;
+        }
+        
         if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);

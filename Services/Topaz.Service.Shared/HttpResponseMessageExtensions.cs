@@ -116,4 +116,12 @@ public static class HttpResponseMessageExtensions
         response.StatusCode = HttpStatusCode.NoContent;
         response.Content = new ByteArrayContent([]);
     }
+    
+    public static void CreateBadRequestResponse<TResult>(this HttpResponseMessage response, ControlPlaneOperationResult<TResult> result)
+    {
+        var error = new GenericErrorResponse(result.Code!, result.Reason!);
+
+        response.StatusCode = HttpStatusCode.BadRequest;
+        response.Content = JsonContent.Create(error);
+    }
 }

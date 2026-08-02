@@ -344,7 +344,7 @@ public class TopazFixture
         }
     }
 
-    private static string ReadDockerLogs(string containerName, int tailLines)
+    private static string ReadDockerLogs(string containerName)
     {
         try
         {
@@ -393,8 +393,8 @@ public class TopazFixture
     // Each scenario name maps to terraform/{provider}/{scenario}/ on disk.
     // -------------------------------------------------------------------------
 
-    protected Task RunTerraformWithAzureRm(string scenario, Action<JsonNode>? assertOutputs = null)
-        => RunTerraform("providers/azurerm.tf", $"azurerm/{scenario}", assertOutputs);
+    protected Task RunTerraformWithAzureRm(string scenario, Action<JsonNode>? assertOutputs = null, int expectedExitCode = 0)
+        => RunTerraform("providers/azurerm.tf", $"azurerm/{scenario}", assertOutputs, expectedExitCode);
 
     protected Task RunTerraformWithAzureApi(string scenario, Action<JsonNode>? assertOutputs = null)
         => RunTerraform("providers/azapi.tf", $"azapi/{scenario}", assertOutputs);
@@ -406,9 +406,12 @@ public class TopazFixture
     // Core Terraform lifecycle runner: init → apply → (assert) → destroy
     // -------------------------------------------------------------------------
 
-    private async Task RunTerraform(string providerRelPath, string scenarioRelPath, Action<JsonNode>? assertOutputs)
+    private async Task RunTerraform(string providerRelPath, string scenarioRelPath, Action<JsonNode>? assertOutputs,
+        int expectedExitCode = 0)
     {
-        var (outputs, workDir) = await ApplyTerraformRetaining(providerRelPath, scenarioRelPath);
+        var (outputs, workDir) = await ApplyTerraformRetaining(providerRelPath, scenarioRelPath, expectedExitCode);
+        if (expectedExitCode != 0)
+            return;
         assertOutputs?.Invoke(outputs);
         await ExecTerraform($"terraform -chdir={workDir} destroy -auto-approve");
     }
@@ -416,7 +419,7 @@ public class TopazFixture
     // Applies a scenario and returns (all outputs, workDir) WITHOUT destroying.
     // Used by AzureRmBatchFixture to apply once for all tests.
     protected async Task<(JsonNode Outputs, string WorkDir)> ApplyTerraformRetaining(
-        string providerRelPath, string scenarioRelPath)
+        string providerRelPath, string scenarioRelPath, int expectedExitCode = 0)
     {
         var workDir = $"/workspace/{Guid.NewGuid():N}";
         var terraformDir = Path.Combine(AppContext.BaseDirectory, "terraform");
@@ -440,7 +443,7 @@ public class TopazFixture
 
         try
         {
-            await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve");
+            await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve", expectedExitCode);
         }
         catch (AssertionException ex) when (IsRecoverableProviderStartupError(ex.Message))
         {
@@ -463,10 +466,13 @@ public class TopazFixture
                 $"cp -a {templateDir}/.terraform {workDir}/.terraform && " +
                 $"(cp {templateDir}/.terraform.lock.hcl {workDir}/.terraform.lock.hcl 2>/dev/null || true)");
 
-            await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve");
+            await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve", expectedExitCode);
         }
 
-        var (stdout, _) = await ExecTerraformWithOutput($"terraform -chdir={workDir} output -json");
+        if (expectedExitCode != 0)
+            return (new System.Text.Json.Nodes.JsonObject(), workDir);
+
+        var (stdout, _) = await ExecTerraformWithOutput($"terraform -chdir={workDir} output -json", 0);
         return (JsonNode.Parse(stdout)!, workDir);
     }
 
@@ -477,14 +483,15 @@ public class TopazFixture
         await ExecTerraform($"echo '{base64}' | base64 -d > {workDir}/{fileName}");
     }
 
-    private Task ExecTerraform(string command) =>
-        ExecTerraformWithOutput(command).ContinueWith(t => { _ = t.Result; });
+    private async Task ExecTerraform(string command, int expectedExitCode = 0) =>
+        await ExecTerraformWithOutput(command, expectedExitCode);
 
     private async Task ExecTerraformWithRetry(
         string command,
         int maxAttempts,
         Func<string, string, bool> shouldRetry,
-        Func<Task>? onRetry = null)
+        Func<Task>? onRetry = null,
+        int expectedExitCode = 0)
     {
         Exception? lastError = null;
 
@@ -492,7 +499,7 @@ public class TopazFixture
         {
             try
             {
-                await ExecTerraformWithOutput(command);
+                await ExecTerraformWithOutput(command, expectedExitCode);
                 return;
             }
             catch (AssertionException ex)
@@ -525,7 +532,7 @@ public class TopazFixture
             || message.Contains("Failed to install provider", StringComparison.OrdinalIgnoreCase);
     }
 
-    private async Task<(string Stdout, string Stderr)> ExecTerraformWithOutput(string command)
+    private async Task<(string Stdout, string Stderr)> ExecTerraformWithOutput(string command, int expectedExitCode)
     {
         // SSL_CERT_FILE causes Go's TLS stack (Terraform provider binaries) to trust the combined CA bundle
         var wrappedCommand = $"SSL_CERT_FILE=/tmp/combined.pem {command}";
@@ -540,30 +547,28 @@ public class TopazFixture
         if (result.Stdout.Length > 0)
             Console.WriteLine(TruncateForOutput(result.Stdout));
 
+        var topazLogs = string.Empty;
         if (result.ExitCode != 0)
         {
             await Console.Error.WriteLineAsync(TruncateForOutput(result.Stderr));
 
-            var topazLogs = ReadDockerLogs("topaz.local.dev", 400);
+            topazLogs = ReadDockerLogs("topaz.local.dev");
             if (!string.IsNullOrWhiteSpace(topazLogs))
                 await Console.Error.WriteLineAsync($"[docker logs topaz.local.dev]\n{topazLogs}");
 
             // Extract relevant lines from the TF_LOG debug log (Authorization header, SharedKey, table/entity paths)
-            var tfLogResult = await _containerTerraform!.ExecAsync(new List<string>
+            var tfLogResult = await _containerTerraform.ExecAsync(new List<string>
             {
                 "/bin/sh", "-c",
                 "grep -iE 'SharedKey|Authorization|table|entity|PartitionKey|RowKey|listKeys|table.storage|x-ms-date|content-type|content-md5|StringToSign|accountKey' /tmp/tf-debug.log 2>/dev/null | tail -200 || echo '[no tf-debug.log]'"
             });
             if (!string.IsNullOrWhiteSpace(tfLogResult.Stdout))
                 await Console.Error.WriteLineAsync($"[TF debug log (filtered)]\n{TruncateForOutput(tfLogResult.Stdout, 20_000)}");
-
-            Assert.That(result.ExitCode, Is.EqualTo(0),
-                $"`{command}` failed.\nSTDOUT: {TruncateForOutput(result.Stdout)}\nSTDERR: {TruncateForOutput(result.Stderr)}" +
-                (string.IsNullOrWhiteSpace(topazLogs) ? "" : $"\n[Topaz Docker logs]\n{topazLogs}"));
         }
 
-        Assert.That(result.ExitCode, Is.EqualTo(0),
-            $"`{command}` failed.\nSTDOUT: {TruncateForOutput(result.Stdout)}\nSTDERR: {TruncateForOutput(result.Stderr)}");
+        Assert.That(result.ExitCode, Is.EqualTo(expectedExitCode),
+            $"`{command}` failed.\nSTDOUT: {TruncateForOutput(result.Stdout)}\nSTDERR: {TruncateForOutput(result.Stderr)}" +
+            (string.IsNullOrWhiteSpace(topazLogs) ? "" : $"\n[Topaz Docker logs]\n{topazLogs}"));
 
         return (result.Stdout, result.Stderr);
     }
@@ -601,7 +606,7 @@ public class TopazFixture
             await Task.Delay(TimeSpan.FromSeconds(1));
         }
 
-        var topazLogs = ReadDockerLogs("topaz.local.dev", 400);
+        var topazLogs = ReadDockerLogs("topaz.local.dev");
         Assert.Fail($"Topaz endpoint did not become ready in time. Recent logs:\n{topazLogs}");
     }
 
