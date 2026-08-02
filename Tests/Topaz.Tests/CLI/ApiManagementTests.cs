@@ -122,7 +122,7 @@ public class ApiManagementTests
     }
 
     [Test]
-    public async Task ApiManagement_Delete_RemovesResourceFromDisk()
+    public async Task ApiManagement_Delete_SoftDeletes()
     {
         var code = await Program.RunAsync([
             "apim", "delete",
@@ -131,11 +131,11 @@ public class ApiManagementTests
             "--subscription-id", SubscriptionId.ToString()
         ]);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(code, Is.Zero);
-            Assert.That(File.Exists(MetadataPath), Is.False);
-        });
+            Assert.That(File.Exists(MetadataPath), Is.True);
+        }
     }
 
     [Test]
