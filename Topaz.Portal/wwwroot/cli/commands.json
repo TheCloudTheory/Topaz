@@ -402,6 +402,302 @@
     ]
   },
   {
+    "name": "apim api create",
+    "group": "api-management",
+    "description": "Creates or updates an API in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--api-id",
+        "description": "(Required) API identifier",
+        "required": false
+      },
+      {
+        "names": "--display-name",
+        "description": "(Optional) display name of the API",
+        "required": false
+      },
+      {
+        "names": "--path",
+        "description": "(Optional) relative URL path for the API",
+        "required": false
+      },
+      {
+        "names": "--protocols",
+        "description": "(Optional) comma-separated protocols (e.g. http,https)",
+        "required": false
+      },
+      {
+        "names": "--service-url",
+        "description": "(Optional) backend service URL",
+        "required": false
+      },
+      {
+        "names": "--description",
+        "description": "(Optional) description of the API",
+        "required": false
+      },
+      {
+        "names": "--api-type",
+        "description": "(Optional) API type (http, soap, websocket, graphql)",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional update",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new API in an API Management service",
+        "command": "topaz apim api create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --api-id \u0022my-api\u0022 \\\n    --display-name \u0022My API\u0022 \\\n    --path \u0022/myapi\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim api delete",
+    "group": "api-management",
+    "description": "Deletes an API in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--api-id",
+        "description": "(Required) API identifier",
+        "required": false
+      },
+      {
+        "names": "--delete-revisions",
+        "description": "(Optional) delete all revisions of the API",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional delete",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes an API in an API Management service",
+        "command": "topaz apim api delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --api-id \u0022my-api\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim api get-entity-tag",
+    "group": "api-management",
+    "description": "Gets the entity tag (ETag) for an API in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--api-id",
+        "description": "(Required) API identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets the ETag for an API",
+        "command": "topaz apim api get-entity-tag --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --api-id \u0022my-api\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim api list",
+    "group": "api-management",
+    "description": "Lists APIs in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists APIs in an API Management service",
+        "command": "topaz apim api list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim api list-revisions",
+    "group": "api-management",
+    "description": "Lists revisions of an API in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--api-id",
+        "description": "(Required) API identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists revisions of an API",
+        "command": "topaz apim api list-revisions --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --api-id \u0022my-api\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim api show",
+    "group": "api-management",
+    "description": "Gets an API in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--api-id",
+        "description": "(Required) API identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets an API in an API Management service",
+        "command": "topaz apim api show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --api-id \u0022my-api\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim api update",
+    "group": "api-management",
+    "description": "Updates an API in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--api-id",
+        "description": "(Required) API identifier",
+        "required": false
+      },
+      {
+        "names": "--display-name",
+        "description": "(Optional) new display name",
+        "required": false
+      },
+      {
+        "names": "--path",
+        "description": "(Optional) relative URL path",
+        "required": false
+      },
+      {
+        "names": "--service-url",
+        "description": "(Optional) backend service URL",
+        "required": false
+      },
+      {
+        "names": "--description",
+        "description": "(Optional) description",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional update",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Updates an API display name",
+        "command": "topaz apim api update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --api-id \u0022my-api\u0022 \\\n    --display-name \u0022Updated API\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
     "name": "apim check-name",
     "group": "api-management",
     "description": "Checks whether an API Management service name is available.",
@@ -525,6 +821,431 @@
       {
         "title": "Lists API Management services in a resource group",
         "command": "topaz apim list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim product add-api",
+    "group": "api-management",
+    "description": "Assigns an API to a product in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--product-id",
+        "description": "(Required) product identifier",
+        "required": false
+      },
+      {
+        "names": "--api-id",
+        "description": "(Required) API identifier",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional update",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Assigns an API to a product",
+        "command": "topaz apim product add-api --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --product-id \u0022my-product\u0022 \\\n    --api-id \u0022my-api\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim product check-api",
+    "group": "api-management",
+    "description": "Checks whether an API is assigned to a product in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--product-id",
+        "description": "(Required) product identifier",
+        "required": false
+      },
+      {
+        "names": "--api-id",
+        "description": "(Required) API identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Checks if an API is assigned to a product",
+        "command": "topaz apim product check-api --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --product-id \u0022my-product\u0022 \\\n    --api-id \u0022my-api\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim product create",
+    "group": "api-management",
+    "description": "Creates or updates a product in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--product-id",
+        "description": "(Required) product identifier",
+        "required": false
+      },
+      {
+        "names": "--display-name",
+        "description": "(Required) display name of the product",
+        "required": false
+      },
+      {
+        "names": "--description",
+        "description": "(Optional) description of the product",
+        "required": false
+      },
+      {
+        "names": "--terms",
+        "description": "(Optional) terms of use",
+        "required": false
+      },
+      {
+        "names": "--subscription-required",
+        "description": "(Optional) whether a subscription is required to access the product",
+        "required": false
+      },
+      {
+        "names": "--approval-needed",
+        "description": "(Optional) whether approval is needed to subscribe",
+        "required": false
+      },
+      {
+        "names": "--state",
+        "description": "(Optional) product state (notPublished or published)",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional update",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new product in an API Management service",
+        "command": "topaz apim product create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --product-id \u0022my-product\u0022 \\\n    --display-name \u0022My Product\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim product delete",
+    "group": "api-management",
+    "description": "Deletes a product in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--product-id",
+        "description": "(Required) product identifier",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional delete",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a product in an API Management service",
+        "command": "topaz apim product delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --product-id \u0022my-product\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim product get-entity-tag",
+    "group": "api-management",
+    "description": "Gets the entity tag (ETag) for a product in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--product-id",
+        "description": "(Required) product identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets the ETag for a product",
+        "command": "topaz apim product get-entity-tag --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --product-id \u0022my-product\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim product list",
+    "group": "api-management",
+    "description": "Lists products in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists products in an API Management service",
+        "command": "topaz apim product list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim product list-apis",
+    "group": "api-management",
+    "description": "Lists APIs assigned to a product in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--product-id",
+        "description": "(Required) product identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists APIs assigned to a product",
+        "command": "topaz apim product list-apis --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --product-id \u0022my-product\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim product remove-api",
+    "group": "api-management",
+    "description": "Removes an API from a product in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--product-id",
+        "description": "(Required) product identifier",
+        "required": false
+      },
+      {
+        "names": "--api-id",
+        "description": "(Required) API identifier",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional delete",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Removes an API from a product",
+        "command": "topaz apim product remove-api --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --product-id \u0022my-product\u0022 \\\n    --api-id \u0022my-api\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim product show",
+    "group": "api-management",
+    "description": "Gets a product in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--product-id",
+        "description": "(Required) product identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a product in an API Management service",
+        "command": "topaz apim product show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --product-id \u0022my-product\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim product update",
+    "group": "api-management",
+    "description": "Updates a product in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--product-id",
+        "description": "(Required) product identifier",
+        "required": false
+      },
+      {
+        "names": "--display-name",
+        "description": "(Optional) new display name",
+        "required": false
+      },
+      {
+        "names": "--description",
+        "description": "(Optional) description",
+        "required": false
+      },
+      {
+        "names": "--terms",
+        "description": "(Optional) terms of use",
+        "required": false
+      },
+      {
+        "names": "--subscription-required",
+        "description": "(Optional) whether a subscription is required to access the product",
+        "required": false
+      },
+      {
+        "names": "--approval-needed",
+        "description": "(Optional) whether approval is needed to subscribe",
+        "required": false
+      },
+      {
+        "names": "--state",
+        "description": "(Optional) product state (notPublished or published)",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional update",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Updates a product display name",
+        "command": "topaz apim product update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --product-id \u0022my-product\u0022 \\\n    --display-name \u0022Updated Product\u0022 \\\n    --resource-group \u0022rg-local\u0022"
       }
     ]
   },
