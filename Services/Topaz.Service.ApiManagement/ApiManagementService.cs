@@ -31,12 +31,14 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
         new GetDeletedApiManagementServiceByNameEndpoint(eventPipeline, logger),
         new CreateOrUpdateApiEndpoint(eventPipeline, logger),
         new GetApiEndpoint(eventPipeline, logger),
-        new ListByServiceEndpoint(eventPipeline, logger),
+        new ListApiByServiceEndpoint(eventPipeline, logger),
+        new GetApiEntityTagEndpoint(eventPipeline, logger),
         new UpdateApiEndpoint(eventPipeline, logger),
-        new GetEntityTagEndpoint(eventPipeline, logger),
         new DeleteApiEndpoint(eventPipeline, logger),
-        new ListByRevisionsByService(eventPipeline, logger),
+        new ListApiByRevisionsByService(eventPipeline, logger),
         new CreateOrUpdateProductEndpoint(eventPipeline, logger),
         new GetProductEndpoint(eventPipeline, logger),
+        new GetProductEntityTagEndpoint(eventPipeline, logger),
+        new ListProductByServiceEndpoint(eventPipeline, logger),
     ];
 }

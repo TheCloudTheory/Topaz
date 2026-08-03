@@ -9,7 +9,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ApiManagement.Endpoints.DataPlane.Api;
 
-internal sealed class ListByRevisionsByService(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class ListApiByServiceEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly ApiManagementApiControlPlane _controlPlane =
@@ -19,7 +19,7 @@ internal sealed class ListByRevisionsByService(Pipeline eventPipeline, ITopazLog
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}/revisions"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis"
     ];
 
     public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
@@ -32,15 +32,14 @@ internal sealed class ListByRevisionsByService(Pipeline eventPipeline, ITopazLog
         var sub = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
         var rg = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         var name = context.Request.Path.Value.ExtractValueFromPath(8);
-        var apiId = context.Request.Path.Value.ExtractValueFromPath(10);
 
-        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(apiId))
+        if (string.IsNullOrWhiteSpace(name))
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
 
-        var result = _controlPlane.ListRevisionsByService(sub, rg, name, apiId);
+        var result = _controlPlane.ListByService(sub, rg, name);
         if (result.Result == OperationResult.NotFound)
         {
             response.CreateNotFoundResponse(result);
@@ -53,6 +52,6 @@ internal sealed class ListByRevisionsByService(Pipeline eventPipeline, ITopazLog
             return;
         }
 
-        response.CreateJsonContentResponse(ApiManagementListApiRevisionsResponse.From(result.Resource));
+        response.CreateJsonContentResponse(ApiManagementListApisResponse.From(result.Resource));
     }
 }
