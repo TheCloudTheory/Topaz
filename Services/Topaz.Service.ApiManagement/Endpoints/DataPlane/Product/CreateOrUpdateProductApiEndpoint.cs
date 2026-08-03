@@ -1,9 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
-using Topaz.Service.ApiManagement.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -11,7 +9,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ApiManagement.Endpoints.DataPlane.Product;
 
-internal sealed class CreateOrUpdateProductEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class CreateOrUpdateProductApiEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly ApiManagementProductControlPlane _controlPlane =
@@ -21,7 +19,7 @@ internal sealed class CreateOrUpdateProductEndpoint(Pipeline eventPipeline, ITop
 
     public string[] Endpoints =>
     [
-        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{productId}"
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{productId}/apis/{apiId}"
     ];
 
     public string[] Permissions => ["Microsoft.ApiManagement/service/write"];
@@ -35,27 +33,15 @@ internal sealed class CreateOrUpdateProductEndpoint(Pipeline eventPipeline, ITop
         var rg = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         var name = context.Request.Path.Value.ExtractValueFromPath(8);
         var productId = context.Request.Path.Value.ExtractValueFromPath(10);
+        var apiId = context.Request.Path.Value.ExtractValueFromPath(12);
 
-        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(productId))
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(productId) || string.IsNullOrWhiteSpace(apiId))
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
 
-        using var reader = new StreamReader(context.Request.Body);
-        var request =
-            JsonSerializer.Deserialize<CreateOrUpdateProductRequest>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
-        if (request == null)
-        {
-            response.StatusCode = HttpStatusCode.BadRequest;
-            return;
-        }
-
-        var ifMatch = context.Request.Headers.ContainsKey("If-Match")
-            ? context.Request.Headers["If-Match"].ToString()
-            : null;
-
-        var result = _controlPlane.CreateOrUpdate(sub, rg, name, productId, request, ifMatch);
+        var result = _controlPlane.CreateOrUpdateProductApi(sub, rg, name, productId, apiId);
         switch (result.Result)
         {
             case OperationResult.NotFound:
