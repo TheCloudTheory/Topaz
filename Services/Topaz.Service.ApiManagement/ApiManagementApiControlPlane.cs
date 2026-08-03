@@ -170,7 +170,7 @@ internal sealed class ApiManagementApiControlPlane(
                 "If-Match is required for update requests.", "MissingIfMatchHeader");
         }
 
-        var etag = provider.GetSubresourceAs<ApiContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,
+        var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,
             apimName, ApiEtagSubresourceId);
 
         if (etag == null)
@@ -219,7 +219,7 @@ internal sealed class ApiManagementApiControlPlane(
             return new ControlPlaneOperationResult<string>(OperationResult.NotFound, null, existing.Reason, existing.Code);
         }
 
-        var etag = provider.GetSubresourceAs<ApiContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,
+        var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,
             apimName, ApiEtagSubresourceId);
 
         return new ControlPlaneOperationResult<string>(OperationResult.Success, etag?.Value);
@@ -250,7 +250,7 @@ internal sealed class ApiManagementApiControlPlane(
                 "If-Match is required for update requests.", "MissingIfMatchHeader");
         }
         
-        var etag = provider.GetSubresourceAs<ApiContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,
+        var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,
             apimName, ApiEtagSubresourceId);
 
         if (etag == null)

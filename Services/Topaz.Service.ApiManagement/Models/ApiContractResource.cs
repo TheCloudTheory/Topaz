@@ -26,7 +26,7 @@ internal sealed class ApiContractResource : ArmSubresource<ApiContractResourcePr
         Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.ApiManagement/service/{parentName}/apis/{name}";
         Name = name;
         Properties = properties;
-        ETag = ApiContractEtag.New();
+        ETag = ContractEtag.New();
     }
     
     public override string Id { get; init; }
@@ -35,7 +35,7 @@ internal sealed class ApiContractResource : ArmSubresource<ApiContractResourcePr
     public override ApiContractResourceProperties Properties { get; init; }
     
     [JsonIgnore]
-    public ApiContractEtag? ETag { get; set; }
+    public ContractEtag? ETag { get; set; }
     
     private static readonly Regex NamePattern = new(@"^[^*#&+:<>?]+$", RegexOptions.Compiled);
 
@@ -105,6 +105,6 @@ internal sealed class ApiContractResource : ArmSubresource<ApiContractResourcePr
         Properties.Value = request.Properties?.Value ?? Properties.Value;
         Properties.WsdlSelector = request.Properties?.WsdlSelector ?? Properties.WsdlSelector;
 
-        ETag = ApiContractEtag.New();
+        ETag = ContractEtag.New();
     }
 }

@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Topaz.EventPipeline;
 using Topaz.Service.ApiManagement.Endpoints;
 using Topaz.Service.ApiManagement.Endpoints.DataPlane.Api;
+using Topaz.Service.ApiManagement.Endpoints.DataPlane.Product;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -13,7 +14,7 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".apim");
-    public static IReadOnlyCollection<string>? Subresources => ["apis", "apis-etag", "apis-revision"];
+    public static IReadOnlyCollection<string>? Subresources => ["apis", "apis-etag", "apis-revision", "products", "products-etag", "products-subscriptions"];
     public static string UniqueName => "apim";
 
     public string Name => "API Management";
@@ -34,6 +35,8 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
         new UpdateApiEndpoint(eventPipeline, logger),
         new GetEntityTagEndpoint(eventPipeline, logger),
         new DeleteApiEndpoint(eventPipeline, logger),
-        new ListByRevisionsByService(eventPipeline, logger)
+        new ListByRevisionsByService(eventPipeline, logger),
+        new CreateOrUpdateProductEndpoint(eventPipeline, logger),
+        new GetProductEndpoint(eventPipeline, logger),
     ];
 }

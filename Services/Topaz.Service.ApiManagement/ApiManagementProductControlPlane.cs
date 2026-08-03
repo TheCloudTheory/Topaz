@@ -1,0 +1,171 @@
+using Topaz.EventPipeline;
+using Topaz.ResourceManager;
+using Topaz.Service.ApiManagement.Models;
+using Topaz.Service.ApiManagement.Models.Requests;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
+
+namespace Topaz.Service.ApiManagement;
+
+internal sealed class ApiManagementProductControlPlane(Pipeline eventPipeline, ApiManagementResourceProvider provider, ITopazLogger logger) : IControlPlane
+{
+    private static readonly string ProductSubresourceId = nameof(Subresources.Products).ToLowerInvariant();
+    private static readonly string ProductEtagSubresourceId = "products-etag";
+    private static readonly string ApiSubscriptionSubresourceId = "products-subscriptions";
+    
+    public static ApiManagementProductControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
+        new(eventPipeline, new ApiManagementResourceProvider(logger), logger);
+    
+    private readonly ApiManagementServiceControlPlane _apiManagementServiceControlPlane =
+        ApiManagementServiceControlPlane.New(eventPipeline, logger);
+    
+    public OperationResult Deploy(GenericResource resource)
+    {
+        throw new NotImplementedException();
+    }
+
+    public ControlPlaneOperationResult<ProductContractResource> CreateOrUpdate(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string apimName, string productId,
+        CreateOrUpdateProductRequest request, string? ifMatch)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ProductContractResource>(OperationResult.NotFound, null,
+                apimOperation.Reason, apimOperation.Code);
+        }
+
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, apimName, productId);
+        (bool IsValid, string? Error) validationResult;
+        if (existing.Result == OperationResult.NotFound)
+        {
+            var product = new ProductContractResource(subscriptionIdentifier, resourceGroupIdentifier, apimName, productId,
+                ProductContractResourceProperties.From(request));
+            
+            validationResult = product.Validate<ApiContractResource>();
+            if (!validationResult.IsValid)
+            {
+                return new ControlPlaneOperationResult<ProductContractResource>(OperationResult.BadRequest, null,
+                    validationResult.Error, "InvalidRequest");
+            }
+            
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, productId, apimName,
+                ProductSubresourceId, product);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, productId, apimName,
+                ProductEtagSubresourceId, product.ETag);
+
+            return new ControlPlaneOperationResult<ProductContractResource>(OperationResult.Created, product);
+        }
+
+        // As per API docs, If-Match is required for CreateOrUpdate operation
+        // when it's an update operation
+        if (string.IsNullOrWhiteSpace(ifMatch))
+        {
+            return new ControlPlaneOperationResult<ProductContractResource>(OperationResult.BadRequest, null,
+                "If-Match is required for update requests.", "MissingIfMatchHeader");
+        }
+        
+        existing.Resource!.UpdateFromRequest(request);
+        validationResult = existing.Resource!.Validate<ProductContractResource>();
+        if (!validationResult.IsValid)
+        {
+            return new ControlPlaneOperationResult<ProductContractResource>(OperationResult.BadRequest, null,
+                validationResult.Error, "InvalidRequest");
+        }
+
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, productId, apimName,
+            ProductSubresourceId, request);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, productId, apimName,
+            ProductEtagSubresourceId, existing.Resource.ETag);
+
+        return new ControlPlaneOperationResult<ProductContractResource>(OperationResult.Updated, existing.Resource);
+    }
+    
+    public ControlPlaneOperationResult<ProductContractResource> Get(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string apimName,
+        string productId)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ProductContractResource>(OperationResult.NotFound, null,
+                apimOperation.Reason, apimOperation.Code);
+        }
+
+        var existing = provider.GetSubresourceAs<ProductContractResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            productId, apimName, ProductSubresourceId);
+
+        if (existing == null)
+        {
+            return new ControlPlaneOperationResult<ProductContractResource>(OperationResult.NotFound, null,
+                $"Product {productId} not found", "ProductNotFound");
+        }
+        
+        return new ControlPlaneOperationResult<ProductContractResource>(OperationResult.Success, existing);
+    }
+    
+    public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string apimName, string productId, string? ifMatch,
+        bool deleteSubscriptions)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound,
+                apimOperation.Reason, apimOperation.Code);
+        }
+        
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, apimName, productId);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, existing.Reason, existing.Code);
+        }
+        
+        // As per docs, If-Match header must be present for delete operation
+        if (string.IsNullOrWhiteSpace(ifMatch))
+        {
+            return new ControlPlaneOperationResult(OperationResult.BadRequest,
+                "If-Match is required for update requests.", "MissingIfMatchHeader");
+        }
+        
+        var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, productId,
+            apimName, ProductEtagSubresourceId);
+
+        if (etag == null)
+        {
+            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Delete), "API Management API is missing ETag value");
+            
+            return new ControlPlaneOperationResult(OperationResult.Failed, "ETag not found",
+                "InvalidStateError");
+        }
+
+        if (ifMatch != "*" && !etag.IsEqualToETag(ifMatch))
+        {
+            return new ControlPlaneOperationResult(OperationResult.Conflict,
+                "If-Match does not match ETag value", "ConcurrentOperationFailed");
+        }
+        
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, productId, apimName, ProductSubresourceId);
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, productId, apimName, ProductEtagSubresourceId);
+
+        if (!deleteSubscriptions) return new ControlPlaneOperationResult(OperationResult.Deleted);
+        
+        logger.LogDebug(nameof(ApiManagementApiControlPlane), nameof(Delete), "Deleting all revisions.");
+        
+        var subscriptionsToDelete = provider.ListSubresourcesAs<SubscriptionContractResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, apimName, ApiSubscriptionSubresourceId).Where(subscription =>
+            subscription.Id!.Contains(productId));
+
+        foreach (var subscription in subscriptionsToDelete)
+        {
+            provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscription.GetOwnerId(),
+                apimName, ApiSubscriptionSubresourceId);
+        }
+
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+}

@@ -2,13 +2,13 @@ using Azure;
 
 namespace Topaz.Service.ApiManagement.Models;
 
-internal sealed class ApiContractEtag
+internal sealed class ContractEtag
 {
     public string? Value { get; init; }
 
-    public static ApiContractEtag New()
+    public static ContractEtag New()
     {
-        return new ApiContractEtag
+        return new ContractEtag
         {
             Value = new ETag(DateTimeOffset.Now.Ticks.ToString()).ToString()
         };
