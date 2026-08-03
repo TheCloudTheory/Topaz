@@ -35,7 +35,7 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
         new GetApiEntityTagEndpoint(eventPipeline, logger),
         new UpdateApiEndpoint(eventPipeline, logger),
         new DeleteApiEndpoint(eventPipeline, logger),
-        new ListApiByRevisionsByService(eventPipeline, logger),
+        new ListApiRevisionsByService(eventPipeline, logger),
         new CreateOrUpdateProductEndpoint(eventPipeline, logger),
         new GetProductEndpoint(eventPipeline, logger),
         new GetProductEntityTagEndpoint(eventPipeline, logger),

@@ -9,7 +9,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ApiManagement.Endpoints.DataPlane.Api;
 
-internal sealed class ListApiByRevisionsByService(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class ListApiRevisionsByService(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly ApiManagementApiControlPlane _controlPlane =
