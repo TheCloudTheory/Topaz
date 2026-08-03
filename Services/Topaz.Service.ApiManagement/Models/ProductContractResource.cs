@@ -53,13 +53,13 @@ internal sealed class ProductContractResource : ArmSubresource<ProductContractRe
 
     public void UpdateFromRequest(CreateOrUpdateProductRequest request)
     {
-        Properties.DisplayName = request.DisplayName ?? Properties.DisplayName;
-        Properties.ApprovalNeeded = request.ApprovalNeeded ?? Properties.ApprovalNeeded;
-        Properties.Description = request.Description ?? Properties.Description;
-        Properties.SubscriptionRequired = request.SubscriptionRequired ?? Properties.SubscriptionRequired;
-        Properties.SubscriptionLimits = request.SubscriptionLimits ?? Properties.SubscriptionLimits;
-        Properties.Terms = request.Terms ?? Properties.Terms;
-        Properties.State = request.State ?? Properties.State;
+        Properties.DisplayName = request.Properties?.DisplayName ?? Properties.DisplayName;
+        Properties.ApprovalNeeded = request.Properties?.ApprovalNeeded ?? Properties.ApprovalNeeded;
+        Properties.Description = request.Properties?.Description ?? Properties.Description;
+        Properties.SubscriptionRequired = request.Properties?.SubscriptionRequired ?? Properties.SubscriptionRequired;
+        Properties.SubscriptionLimits = request.Properties?.SubscriptionLimits ?? Properties.SubscriptionLimits;
+        Properties.Terms = request.Properties?.Terms ?? Properties.Terms;
+        Properties.State = request.Properties?.State ?? Properties.State;
 
         ETag = ContractEtag.New();
     }

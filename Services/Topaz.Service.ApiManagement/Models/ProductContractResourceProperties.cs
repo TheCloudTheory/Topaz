@@ -25,13 +25,13 @@ internal sealed class ProductContractResourceProperties
     {
         return new ProductContractResourceProperties
         {
-            ApprovalNeeded = request.ApprovalNeeded ?? false,
-            Description = request.Description,
-            DisplayName = request.DisplayName,
-            Terms = request.Terms,
+            ApprovalNeeded = request.Properties?.ApprovalNeeded ?? false,
+            Description = request.Properties?.Description,
+            DisplayName = request.Properties?.DisplayName,
+            Terms = request.Properties?.Terms,
             State = ProductState.NotPublished,
-            SubscriptionRequired = request.SubscriptionRequired ?? false,
-            SubscriptionLimits = request.SubscriptionLimits ?? 0
+            SubscriptionRequired = request.Properties?.SubscriptionRequired ?? false,
+            SubscriptionLimits = request.Properties?.SubscriptionLimits ?? 0
         };
     }
 }
