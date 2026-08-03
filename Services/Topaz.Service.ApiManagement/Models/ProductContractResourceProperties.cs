@@ -23,6 +23,15 @@ internal sealed class ProductContractResourceProperties
 
     public static ProductContractResourceProperties From(CreateOrUpdateProductRequest request)
     {
-        throw new NotImplementedException();
+        return new ProductContractResourceProperties
+        {
+            ApprovalNeeded = request.ApprovalNeeded ?? false,
+            Description = request.Description,
+            DisplayName = request.DisplayName,
+            Terms = request.Terms,
+            State = ProductState.NotPublished,
+            SubscriptionRequired = request.SubscriptionRequired ?? false,
+            SubscriptionLimits = request.SubscriptionLimits ?? 0
+        };
     }
 }

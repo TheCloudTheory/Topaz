@@ -293,10 +293,10 @@ internal sealed class ApiManagementProductControlPlane(Pipeline eventPipeline, A
             ProductApiAssignment.GetId(productId, apiId),
             apimName, ProductApiAssignmentSubresourceId);
 
-        if (existing != null)
+        if (existing == null)
         {
             var assignment = ProductApiAssignment
-                .New(existing.ApiId!, existing.ProductId!, apimName);
+                .New(apiId, productId, apimName);
             
             provider.CreateOrUpdateSubresource(subscriptionIdentifier,
                 resourceGroupIdentifier,
@@ -306,7 +306,7 @@ internal sealed class ApiManagementProductControlPlane(Pipeline eventPipeline, A
             return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Created, apiOperation.Resource);
         }
 
-        existing!.UpdateFrom(productId, apiId);
+        existing.UpdateFrom(productId, apiId);
         
         provider.CreateOrUpdateSubresource(subscriptionIdentifier,
             resourceGroupIdentifier,

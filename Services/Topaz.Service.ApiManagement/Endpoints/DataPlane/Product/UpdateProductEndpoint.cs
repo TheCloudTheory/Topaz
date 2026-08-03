@@ -20,7 +20,7 @@ internal sealed class UpdateProductEndpoint(Pipeline eventPipeline, ITopazLogger
 
     public string[] Endpoints =>
     [
-        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{apiId}"
+        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{productId}"
     ];
 
     public string[] Permissions => ["Microsoft.ApiManagement/service/write"];

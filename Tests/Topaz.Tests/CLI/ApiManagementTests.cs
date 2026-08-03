@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Topaz.CLI;
 
 namespace Topaz.Tests.CLI;
@@ -149,6 +150,507 @@ public class ApiManagementTests
             "--subscription-id", SubscriptionId.ToString(),
             "--publisher-email", "updated@example.com",
             "--publisher-name", "Updated Publisher"
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    // --- API DataPlane ---
+
+    [Test]
+    public async Task ApiManagement_Api_Create_CommandSucceeds()
+    {
+        var code = await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--protocols", "https",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Api_Show_ReturnsExistingApi()
+    {
+        await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "api", "show",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Api_List_ReturnsApis()
+    {
+        await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "api", "list",
+            "--service-name", ServiceName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Api_Update_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+        
+        var etagFile = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".apim", ServiceName, "apis-etag", "test-api", "metadata.json");
+        
+        Assert.That(File.Exists(etagFile), Is.True);
+        
+        var etag = JsonNode.Parse(await File.ReadAllTextAsync(etagFile))!["value"];
+
+        var code = await Program.RunAsync([
+            "apim", "api", "update",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--if-match", $"\"{etag!}\"",
+            "--display-name", "Updated API",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Api_GetEntityTag_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "api", "get-entity-tag",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Api_ListRevisions_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "api", "list-revisions",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Api_Delete_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+        
+        await Program.RunAsync([
+            "apim", "api", "get-entity-tag",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var etagFile = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".apim", ServiceName, "apis-etag", "test-api", "metadata.json");
+        
+        Assert.That(File.Exists(etagFile), Is.True);
+        
+        var etag = JsonNode.Parse(await File.ReadAllTextAsync(etagFile))!["value"];
+
+        var code = await Program.RunAsync([
+            "apim", "api", "delete",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--if-match", $"\"{etag!}\"",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    // --- Product DataPlane ---
+
+    [Test]
+    public async Task ApiManagement_Product_Create_CommandSucceeds()
+    {
+        var code = await Program.RunAsync([
+            "apim", "product", "create",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Test Product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Product_Show_ReturnsExistingProduct()
+    {
+        await Program.RunAsync([
+            "apim", "product", "create",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Test Product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "product", "show",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Product_List_ReturnsProducts()
+    {
+        await Program.RunAsync([
+            "apim", "product", "create",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Test Product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "product", "list",
+            "--service-name", ServiceName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Product_Update_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "product", "create",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Test Product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+        
+        var etagFile = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".apim", ServiceName, "products-etag", "test-product", "metadata.json");
+        
+        Assert.That(File.Exists(etagFile), Is.True);
+        
+        var etag = JsonNode.Parse(await File.ReadAllTextAsync(etagFile))!["value"];
+
+        var code = await Program.RunAsync([
+            "apim", "product", "update",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Updated Product",
+            "--if-match", $"\"{etag}\"",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Product_GetEntityTag_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "product", "create",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Test Product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "product", "get-entity-tag",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Product_AddApi_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "apim", "product", "create",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Test Product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "product", "add-api",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--api-id", "test-api",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Product_CheckApi_WhenAssigned_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "apim", "product", "create",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Test Product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "apim", "product", "add-api",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--api-id", "test-api",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "product", "check-api",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--api-id", "test-api",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Product_ListApis_ReturnsAssignedApis()
+    {
+        await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "apim", "product", "create",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Test Product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "apim", "product", "add-api",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--api-id", "test-api",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "product", "list-apis",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Product_RemoveApi_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "api", "create",
+            "--service-name", ServiceName,
+            "--api-id", "test-api",
+            "--display-name", "Test API",
+            "--path", "/test",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "apim", "product", "create",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Test Product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "apim", "product", "add-api",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--api-id", "test-api",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "product", "remove-api",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--api-id", "test-api",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Product_Delete_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "product", "create",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--display-name", "Test Product",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+        
+        var etagFile = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".apim", ServiceName, "products-etag", "test-product", "metadata.json");
+        
+        Assert.That(File.Exists(etagFile), Is.True);
+        
+        var etag = JsonNode.Parse(await File.ReadAllTextAsync(etagFile))!["value"];
+
+        var code = await Program.RunAsync([
+            "apim", "product", "delete",
+            "--service-name", ServiceName,
+            "--product-id", "test-product",
+            "--if-match", $"\"{etag}\"",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
         ]);
 
         Assert.That(code, Is.Zero);

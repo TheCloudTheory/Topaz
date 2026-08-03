@@ -247,7 +247,7 @@ internal sealed class ApiManagementApiControlPlane(
         if (string.IsNullOrWhiteSpace(ifMatch))
         {
             return new ControlPlaneOperationResult(OperationResult.BadRequest,
-                "If-Match is required for update requests.", "MissingIfMatchHeader");
+                "If-Match is required for delete requests.", "MissingIfMatchHeader");
         }
         
         var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,

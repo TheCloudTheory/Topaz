@@ -14,7 +14,7 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".apim");
-    public static IReadOnlyCollection<string>? Subresources => ["apis", "apis-etag", "apis-revision", "products", "products-etag", "products-subscriptions"];
+    public static IReadOnlyCollection<string>? Subresources => ["apis", "apis-etag", "apis-revision", "products", "products-etag", "products-subscriptions", "productapiassignment"];
     public static string UniqueName => "apim";
 
     public string Name => "API Management";
@@ -44,6 +44,7 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
         new CreateOrUpdateProductApiEndpoint(eventPipeline, logger),
         new CheckProductApiAssignmentExistEndpoint(eventPipeline, logger),
         new DeleteProductApiEndpoint(eventPipeline, logger),
-        new ListApiAssignmentsByProductEndpoint(eventPipeline, logger)
+        new ListApiAssignmentsByProductEndpoint(eventPipeline, logger),
+        new UpdateProductEndpoint(eventPipeline, logger)
     ];
 }

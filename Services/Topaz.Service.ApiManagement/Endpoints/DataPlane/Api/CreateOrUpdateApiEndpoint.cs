@@ -51,8 +51,8 @@ internal sealed class CreateOrUpdateApiEndpoint(Pipeline eventPipeline, ITopazLo
             return;
         }
 
-        var ifMatch = context.Request.Headers.ContainsKey("If-Match")
-            ? context.Request.Headers["If-Match"].ToString()
+        var ifMatch = context.Request.Headers.TryGetValue("If-Match", out var value)
+            ? value.ToString()
             : null;
 
         var result = _controlPlane.CreateOrUpdate(sub, rg, name, apiId, request, ifMatch);
