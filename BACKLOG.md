@@ -53,20 +53,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ## v1.10-preview
 
 <!--
-TODO: Azure API Management: Data plane — Products CRUD
-  Implement ARM-level Product resource endpoints:
-  - PUT    .../service/{name}/products/{productId}  – create or update
-  - GET    .../service/{name}/products/{productId}  – get
-  - DELETE .../service/{name}/products/{productId}  – delete
-  - GET    .../service/{name}/products              – list
-  Products group APIs and are the unit of subscription. Fields: displayName, description,
-  state (published/notPublished), subscriptionRequired, approvalRequired.
-  Also implement product-API association: PUT/DELETE/GET .../products/{productId}/apis/{apiId}.
-  milestone: v1.10-preview
-  labels: enhancement, api-management
--->
-
-<!--
 TODO: Azure API Management: Data plane — Backends CRUD
   Implement ARM-level Backend resource endpoints:
   - PUT    .../service/{name}/backends/{backendId}  – create or update
