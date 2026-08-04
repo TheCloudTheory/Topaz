@@ -698,6 +698,307 @@
     ]
   },
   {
+    "name": "apim backend create",
+    "group": "api-management",
+    "description": "Creates or updates a backend in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--backend-id",
+        "description": "(Required) backend identifier",
+        "required": false
+      },
+      {
+        "names": "--url",
+        "description": "(Optional) runtime URL of the backend",
+        "required": false
+      },
+      {
+        "names": "--protocol",
+        "description": "(Optional) backend communication protocol (http or soap)",
+        "required": false
+      },
+      {
+        "names": "--description",
+        "description": "(Optional) backend description",
+        "required": false
+      },
+      {
+        "names": "--title",
+        "description": "(Optional) backend title",
+        "required": false
+      },
+      {
+        "names": "--resource-id",
+        "description": "(Optional) management URI of the backend in external system",
+        "required": false
+      },
+      {
+        "names": "--type",
+        "description": "(Optional) type of the backend (Single or Pool)",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional update",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new backend in an API Management service",
+        "command": "topaz apim backend create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --backend-id \u0022my-backend\u0022 \\\n    --url \u0022https://backend.example.com\u0022 \\\n    --protocol \u0022http\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim backend delete",
+    "group": "api-management",
+    "description": "Deletes a backend in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--backend-id",
+        "description": "(Required) backend identifier",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional delete",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a backend in an API Management service",
+        "command": "topaz apim backend delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --backend-id \u0022my-backend\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim backend get-entity-tag",
+    "group": "api-management",
+    "description": "Gets the entity tag (ETag) for a backend in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--backend-id",
+        "description": "(Required) backend identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets the ETag for a backend",
+        "command": "topaz apim backend get-entity-tag --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --backend-id \u0022my-backend\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim backend list",
+    "group": "api-management",
+    "description": "Lists backends in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists backends in an API Management service",
+        "command": "topaz apim backend list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim backend reconnect",
+    "group": "api-management",
+    "description": "Notifies API Management to create a new connection to the backend after the specified timeout.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--backend-id",
+        "description": "(Required) backend identifier",
+        "required": false
+      },
+      {
+        "names": "--after",
+        "description": "(Optional) duration after which reconnect is initiated (ISO 8601 duration, e.g. PT3S)",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Triggers reconnect for a backend",
+        "command": "topaz apim backend reconnect --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --backend-id \u0022my-backend\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim backend show",
+    "group": "api-management",
+    "description": "Gets a backend in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--backend-id",
+        "description": "(Required) backend identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a backend in an API Management service",
+        "command": "topaz apim backend show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --backend-id \u0022my-backend\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim backend update",
+    "group": "api-management",
+    "description": "Updates a backend in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--backend-id",
+        "description": "(Required) backend identifier",
+        "required": false
+      },
+      {
+        "names": "--url",
+        "description": "(Optional) runtime URL of the backend",
+        "required": false
+      },
+      {
+        "names": "--protocol",
+        "description": "(Optional) backend communication protocol (http or soap)",
+        "required": false
+      },
+      {
+        "names": "--description",
+        "description": "(Optional) backend description",
+        "required": false
+      },
+      {
+        "names": "--title",
+        "description": "(Optional) backend title",
+        "required": false
+      },
+      {
+        "names": "--resource-id",
+        "description": "(Optional) management URI of the backend in external system",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for conditional update",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Updates a backend URL",
+        "command": "topaz apim backend update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --backend-id \u0022my-backend\u0022 \\\n    --url \u0022https://new-backend.example.com\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
     "name": "apim check-name",
     "group": "api-management",
     "description": "Checks whether an API Management service name is available.",
