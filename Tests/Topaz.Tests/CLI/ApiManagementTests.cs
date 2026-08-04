@@ -655,4 +655,184 @@ public class ApiManagementTests
 
         Assert.That(code, Is.Zero);
     }
+
+    // --- Backend DataPlane ---
+
+    [Test]
+    public async Task ApiManagement_Backend_Create_CommandSucceeds()
+    {
+        var code = await Program.RunAsync([
+            "apim", "backend", "create",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--url", "https://backend.example.com",
+            "--protocol", "http",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Backend_Show_ReturnsExistingBackend()
+    {
+        await Program.RunAsync([
+            "apim", "backend", "create",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--url", "https://backend.example.com",
+            "--protocol", "http",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "backend", "show",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Backend_List_ReturnsBackends()
+    {
+        await Program.RunAsync([
+            "apim", "backend", "create",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--url", "https://backend.example.com",
+            "--protocol", "http",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "backend", "list",
+            "--service-name", ServiceName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Backend_Update_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "backend", "create",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--url", "https://backend.example.com",
+            "--protocol", "http",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var etagFile = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".apim", ServiceName, "backends-etag", "test-backend", "metadata.json");
+
+        Assert.That(File.Exists(etagFile), Is.True);
+
+        var etag = JsonNode.Parse(await File.ReadAllTextAsync(etagFile))!["value"];
+
+        var code = await Program.RunAsync([
+            "apim", "backend", "update",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--url", "https://new-backend.example.com",
+            "--if-match", $"\"{etag}\"",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Backend_GetEntityTag_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "backend", "create",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--url", "https://backend.example.com",
+            "--protocol", "http",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "backend", "get-entity-tag",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Backend_Reconnect_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "backend", "create",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--url", "https://backend.example.com",
+            "--protocol", "http",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "backend", "reconnect",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Backend_Delete_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "backend", "create",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--url", "https://backend.example.com",
+            "--protocol", "http",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var etagFile = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".apim", ServiceName, "backends-etag", "test-backend", "metadata.json");
+
+        Assert.That(File.Exists(etagFile), Is.True);
+
+        var etag = JsonNode.Parse(await File.ReadAllTextAsync(etagFile))!["value"];
+
+        var code = await Program.RunAsync([
+            "apim", "backend", "delete",
+            "--service-name", ServiceName,
+            "--backend-id", "test-backend",
+            "--if-match", $"\"{etag}\"",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
 }

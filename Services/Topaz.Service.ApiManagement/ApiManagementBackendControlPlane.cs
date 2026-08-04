@@ -98,7 +98,7 @@ internal sealed class ApiManagementBackendControlPlane(
         }
 
         var existing = provider.GetSubresourceAs<BackendContractResource>(subscriptionIdentifier, resourceGroupIdentifier,
-            backendId, apimName, BackendEtagSubresourceId);
+            backendId, apimName, BackendSubresourceId);
 
         if (existing == null)
         {
