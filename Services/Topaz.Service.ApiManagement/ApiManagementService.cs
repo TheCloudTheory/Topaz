@@ -54,5 +54,10 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
         new UpdateProductEndpoint(eventPipeline, logger),
         new CreateOrUpdateBackendEndpoint(eventPipeline, logger),
         new GetBackendEndpoint(eventPipeline, logger),
+        new DeleteBackendEndpoint(eventPipeline, logger),
+        new GetBackendEntityTagEndpoint(eventPipeline, logger),
+        new ListBackendByServiceEndpoint(eventPipeline, logger),
+        new ReconnectBackendEndpoint(),
+        new UpdateBackendEndpoint(eventPipeline, logger)
     ];
 }

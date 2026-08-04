@@ -255,7 +255,7 @@ internal sealed class ApiManagementApiControlPlane(
 
         if (etag == null)
         {
-            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Update), "API Management API is missing ETag value");
+            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Delete), "API Management API is missing ETag value");
             
             return new ControlPlaneOperationResult(OperationResult.Failed, "ETag not found",
                 "InvalidStateError");
