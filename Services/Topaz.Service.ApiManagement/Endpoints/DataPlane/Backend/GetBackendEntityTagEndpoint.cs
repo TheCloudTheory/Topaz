@@ -22,7 +22,7 @@ internal sealed class GetBackendEntityTagEndpoint(Pipeline eventPipeline, ITopaz
         "HEAD /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/backends/{backendId}"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/backends/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

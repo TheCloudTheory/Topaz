@@ -22,7 +22,7 @@ internal sealed class ReconnectBackendEndpoint()
         "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/backends/{backendId}/reconnect"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/write"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/backends/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

@@ -21,7 +21,7 @@ internal sealed class GetApiEndpoint(Pipeline eventPipeline, ITopazLogger logger
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/apis/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

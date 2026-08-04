@@ -21,7 +21,7 @@ internal sealed class DeleteBackendEndpoint(Pipeline eventPipeline, ITopazLogger
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/backends/{backendId}"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/delete"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/backends/delete"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

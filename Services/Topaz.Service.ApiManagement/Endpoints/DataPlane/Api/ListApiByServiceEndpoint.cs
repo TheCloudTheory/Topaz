@@ -22,7 +22,7 @@ internal sealed class ListApiByServiceEndpoint(Pipeline eventPipeline, ITopazLog
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/apis/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

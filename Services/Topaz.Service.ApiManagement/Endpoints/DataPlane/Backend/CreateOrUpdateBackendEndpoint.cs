@@ -24,7 +24,7 @@ internal sealed class CreateOrUpdateBackendEndpoint(Pipeline eventPipeline, ITop
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/backends/{backendId}"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/write"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/backends/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

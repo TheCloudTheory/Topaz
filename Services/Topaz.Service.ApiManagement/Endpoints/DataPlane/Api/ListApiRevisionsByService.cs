@@ -22,7 +22,7 @@ internal sealed class ListApiRevisionsByService(Pipeline eventPipeline, ITopazLo
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}/revisions"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/apis/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
