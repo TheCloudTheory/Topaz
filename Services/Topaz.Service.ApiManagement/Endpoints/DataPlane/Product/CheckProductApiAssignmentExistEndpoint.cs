@@ -21,7 +21,7 @@ internal sealed class CheckProductApiAssignmentExistEndpoint(Pipeline eventPipel
         "HEAD /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{productId}/apis/{apiId}"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/read"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/products/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

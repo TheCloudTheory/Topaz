@@ -23,7 +23,7 @@ internal sealed class UpdateProductEndpoint(Pipeline eventPipeline, ITopazLogger
         "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{productId}"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/write"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/products/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

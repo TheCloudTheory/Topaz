@@ -21,7 +21,7 @@ internal sealed class DeleteProductEndpoint(Pipeline eventPipeline, ITopazLogger
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{apiId}"
     ];
 
-    public string[] Permissions => ["Microsoft.ApiManagement/service/delete"];
+    public string[] Permissions => ["Microsoft.ApiManagement/service/products/delete"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
