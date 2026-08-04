@@ -53,20 +53,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ## v1.10-preview
 
 <!--
-TODO: Azure API Management: Data plane — Backends CRUD
-  Implement ARM-level Backend resource endpoints:
-  - PUT    .../service/{name}/backends/{backendId}  – create or update
-  - GET    .../service/{name}/backends/{backendId}  – get
-  - DELETE .../service/{name}/backends/{backendId}  – delete
-  - GET    .../service/{name}/backends              – list
-  A backend defines a target service URL and optional credentials/TLS settings.
-  Fields: url, protocol (http/soap), description, title, resourceId.
-  Backends are referenced by policy expressions and persisted as subresources.
-  milestone: v1.10-preview
-  labels: enhancement, api-management
--->
-
-<!--
 TODO: Azure API Management: Data plane — Policies CRUD
   Implement ARM-level Policy resource endpoints at service, API, and operation scope:
   - PUT    .../service/{name}/policies/policy         – service-level policy
