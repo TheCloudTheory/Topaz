@@ -8,17 +8,17 @@ using Topaz.Shared;
 
 namespace Topaz.Service.ApiManagement;
 
-internal sealed class ApiManagementBackendControlPlane(
+internal sealed class ApiManagementPolicyControlPlane(
     Pipeline eventPipeline,
     ApiManagementResourceProvider provider,
     ITopazLogger logger) : IControlPlane
 {
-    public static ApiManagementBackendControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
+    public static ApiManagementPolicyControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new ApiManagementResourceProvider(logger), logger);
     
-    private static readonly string BackendSubresourceId = nameof(Subresources.Backends).ToLowerInvariant();
-    private static readonly string BackendEtagSubresourceId = "backends-etag";
-
+    private static readonly string PolicySubresourceId = nameof(Subresources.Policies).ToLowerInvariant();
+    private static readonly string PolicyEtagSubresourceId = "policies-etag";
+    
     private readonly ApiManagementServiceControlPlane _apiManagementServiceControlPlane =
         ApiManagementServiceControlPlane.New(eventPipeline, logger);
     
@@ -27,15 +27,15 @@ internal sealed class ApiManagementBackendControlPlane(
         throw new NotImplementedException();
     }
     
-    public ControlPlaneOperationResult<BackendContractResource> CreateOrUpdate(
+    public ControlPlaneOperationResult<PolicyContractResource> CreateOrUpdate(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName,
-        string backendId, CreateOrUpdateBackendRequest request, string? ifMatch)
+        string backendId, CreateOrUpdatePolicyRequest request, string? ifMatch)
     {
         var apimOperation =
             _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
         if (apimOperation.Result == OperationResult.NotFound)
         {
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.NotFound, null,
+            return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.NotFound, null,
                 apimOperation.Reason, apimOperation.Code);
         }
 
@@ -43,49 +43,49 @@ internal sealed class ApiManagementBackendControlPlane(
         (bool IsValid, string? Error) validationResult;
         if (existing.Result == OperationResult.NotFound)
         {
-            var api = new BackendContractResource(subscriptionIdentifier, resourceGroupIdentifier, apimName, backendId,
-                BackendContractResourceProperties.From(request));
+            var api = new PolicyContractResource(subscriptionIdentifier, resourceGroupIdentifier, apimName, backendId,
+                PolicyContractResourceProperties.From(request));
             
             validationResult = api.Validate<ApiContractResource>();
             if (!validationResult.IsValid)
             {
-                return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.BadRequest, null,
+                return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.BadRequest, null,
                     validationResult.Error, "InvalidRequest");
             }
             
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName,
-                BackendSubresourceId, api);
+                PolicySubresourceId, api);
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName,
-                BackendEtagSubresourceId, api.ETag);
+                PolicyEtagSubresourceId, api.ETag);
 
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.Created, api);
+            return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.Created, api);
         }
 
         // As per API docs, If-Match is required for CreateOrUpdate operation
         // when it's an update operation
         if (string.IsNullOrWhiteSpace(ifMatch))
         {
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.BadRequest, null,
+            return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.BadRequest, null,
                 "If-Match is required for update requests.", "MissingIfMatchHeader");
         }
         
         existing.Resource!.UpdateFromRequest(request);
-        validationResult = existing.Resource!.Validate<ApiContractResource>();
+        validationResult = existing.Resource!.Validate<PolicyContractResource>();
         if (!validationResult.IsValid)
         {
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.BadRequest, null,
+            return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.BadRequest, null,
                 validationResult.Error, "InvalidRequest");
         }
 
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName,
-            BackendSubresourceId, request);
+            PolicySubresourceId, request);
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName,
-            BackendEtagSubresourceId, existing.Resource.ETag);
+            PolicyEtagSubresourceId, existing.Resource.ETag);
 
-        return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.Updated, existing.Resource);
+        return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.Updated, existing.Resource);
     }
 
-    public ControlPlaneOperationResult<BackendContractResource> Get(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<PolicyContractResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string apimName,
         string backendId)
     {
@@ -93,20 +93,20 @@ internal sealed class ApiManagementBackendControlPlane(
             _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
         if (apimOperation.Result == OperationResult.NotFound)
         {
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.NotFound, null,
+            return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.NotFound, null,
                 apimOperation.Reason, apimOperation.Code);
         }
 
-        var existing = provider.GetSubresourceAs<BackendContractResource>(subscriptionIdentifier, resourceGroupIdentifier,
-            backendId, apimName, BackendSubresourceId);
+        var existing = provider.GetSubresourceAs<PolicyContractResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            backendId, apimName, PolicySubresourceId);
 
         if (existing == null)
         {
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.NotFound, null,
+            return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.NotFound, null,
                 $"Backend {backendId} not found", "BackendNotFound");
         }
         
-        return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.Success, existing);
+        return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.Success, existing);
     }
     
     public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier,
@@ -134,7 +134,7 @@ internal sealed class ApiManagementBackendControlPlane(
         }
         
         var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, backendId,
-            apimName, BackendEtagSubresourceId);
+            apimName, PolicyEtagSubresourceId);
 
         if (etag == null)
         {
@@ -150,8 +150,8 @@ internal sealed class ApiManagementBackendControlPlane(
                 "If-Match does not match ETag value", "ConcurrentOperationFailed");
         }
         
-        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName, BackendSubresourceId);
-        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName, BackendEtagSubresourceId);
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName, PolicySubresourceId);
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName, PolicyEtagSubresourceId);
 
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
@@ -173,83 +173,24 @@ internal sealed class ApiManagementBackendControlPlane(
         }
 
         var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, backendId,
-            apimName, BackendEtagSubresourceId);
+            apimName, PolicyEtagSubresourceId);
 
         return new ControlPlaneOperationResult<string>(OperationResult.Success, etag?.Value);
     }
     
-    public ControlPlaneOperationResult<BackendContractResource[]> ListByService(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName)
+    public ControlPlaneOperationResult<PolicyContractResource[]> ListByService(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName)
     {
         var apimOperation =
             _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
         if (apimOperation.Result == OperationResult.NotFound)
         {
-            return new ControlPlaneOperationResult<BackendContractResource[]>(OperationResult.NotFound, null,
+            return new ControlPlaneOperationResult<PolicyContractResource[]>(OperationResult.NotFound, null,
                 apimOperation.Reason, apimOperation.Code);
         }
 
-        var existing = provider.ListSubresourcesAs<BackendContractResource>(subscriptionIdentifier, resourceGroupIdentifier,
-            apimName, BackendSubresourceId);
+        var existing = provider.ListSubresourcesAs<PolicyContractResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            apimName, PolicySubresourceId);
 
-        return new ControlPlaneOperationResult<BackendContractResource[]>(OperationResult.Success, existing);
-    }
-    
-    public ControlPlaneOperationResult<BackendContractResource> Update(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string apimName, string backendId, CreateOrUpdateBackendRequest request,
-        string? ifMatch)
-    {
-        var apimOperation =
-            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
-        if (apimOperation.Result == OperationResult.NotFound)
-        {
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.NotFound, null,
-                apimOperation.Reason, apimOperation.Code);
-        }
-
-        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, apimName, backendId);
-        if (existing.Result == OperationResult.NotFound)
-        {
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.NotFound, null, existing.Reason, existing.Code);
-        }
-
-        // As per API docs, If-Match is required for Update operation,
-        // and it must match the current ETag (unless it's unconditional update with "*")
-        if (string.IsNullOrWhiteSpace(ifMatch))
-        {
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.BadRequest, null,
-                "If-Match is required for update requests.", "MissingIfMatchHeader");
-        }
-
-        var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, backendId,
-            apimName, BackendEtagSubresourceId);
-
-        if (etag == null)
-        {
-            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Update), "API Management backend is missing ETag value");
-            
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.Failed, null, "ETag not found",
-                "InvalidStateError");
-        }
-
-        if (ifMatch != "*" && !etag.IsEqualToETag(ifMatch))
-        {
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.Conflict, null,
-                "If-Match does not match ETag value", "ConcurrentOperationFailed");
-        }
-        
-        existing.Resource!.UpdateFromRequest(request);
-        var validationResult = existing.Resource!.Validate<BackendContractResource>();
-        if (!validationResult.IsValid)
-        {
-            return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.BadRequest, null,
-                validationResult.Error, "InvalidRequest");
-        }
-
-        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName,
-            BackendSubresourceId, request);
-        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName,
-            BackendEtagSubresourceId, existing.Resource.ETag);
-
-        return new ControlPlaneOperationResult<BackendContractResource>(OperationResult.Updated, existing.Resource);
+        return new ControlPlaneOperationResult<PolicyContractResource[]>(OperationResult.Success, existing);
     }
 }

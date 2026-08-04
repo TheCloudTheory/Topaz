@@ -3,10 +3,12 @@ using Topaz.EventPipeline;
 using Topaz.Service.ApiManagement.Endpoints;
 using Topaz.Service.ApiManagement.Endpoints.DataPlane.Api;
 using Topaz.Service.ApiManagement.Endpoints.DataPlane.Backend;
+using Topaz.Service.ApiManagement.Endpoints.DataPlane.Policy;
 using Topaz.Service.ApiManagement.Endpoints.DataPlane.Product;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
+using GetBackendEntityTagEndpoint = Topaz.Service.ApiManagement.Endpoints.DataPlane.Backend.GetBackendEntityTagEndpoint;
 
 namespace Topaz.Service.ApiManagement;
 
@@ -19,7 +21,8 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
     public static IReadOnlyCollection<string>? Subresources =>
     [
         "apis", "apis-etag", "apis-revision", "products", "products-etag", "products-subscriptions",
-        "productapiassignment", "backends", "backends-etag"
+        "productapiassignment", "backends", "backends-etag", 
+        "policies", "policies-etag"
     ];
     public static string UniqueName => "apim";
 
@@ -58,6 +61,11 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
         new GetBackendEntityTagEndpoint(eventPipeline, logger),
         new ListBackendByServiceEndpoint(eventPipeline, logger),
         new ReconnectBackendEndpoint(),
-        new UpdateBackendEndpoint(eventPipeline, logger)
+        new UpdateBackendEndpoint(eventPipeline, logger),
+        new CreateOrUpdatePolicyEndpoint(eventPipeline, logger),
+        new DeletePolicyEndpoint(eventPipeline, logger),
+        new GetPolicyEndpoint(eventPipeline, logger),
+        new ListPolicyByServiceEndpoint(eventPipeline, logger),
+        new GetPolicyEntityTagEndpoint(eventPipeline, logger)
     ];
 }

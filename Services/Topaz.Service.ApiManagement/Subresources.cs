@@ -5,5 +5,6 @@ internal enum Subresources
     Apis,
     Products,
     ProductApiAssignment,
-    Backends
+    Backends,
+    Policies
 }
