@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 420" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">
+
+  <!-- Cluster outer border -->
+  <rect x="10" y="10" width="660" height="400" rx="10" ry="10"
+        fill="#f0f4ff" stroke="#1B63EB" stroke-width="2"/>
+  <text x="26" y="32" font-size="12" fill="#1B63EB" font-weight="bold">k3d cluster</text>
+
+  <!-- topaz-system namespace -->
+  <rect x="30" y="44" width="260" height="120" rx="8" ry="8"
+        fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="46" y="64" font-size="11" fill="#1d4ed8" font-weight="bold">topaz-system namespace</text>
+
+  <!-- Topaz pod box -->
+  <rect x="55" y="76" width="180" height="68" rx="6" ry="6"
+        fill="#ffffff" stroke="#1B63EB" stroke-width="1.5"/>
+  <text x="145" y="104" text-anchor="middle" font-weight="bold" fill="#1B63EB">Topaz Pod</text>
+  <text x="145" y="122" text-anchor="middle" font-size="11" fill="#6b7280">(shared emulator)</text>
+
+  <!-- apps namespace -->
+  <rect x="30" y="186" width="260" height="174" rx="8" ry="8"
+        fill="#dcfce7" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="46" y="206" font-size="11" fill="#15803d" font-weight="bold">apps namespace</text>
+
+  <!-- order-service box -->
+  <rect x="55" y="218" width="180" height="44" rx="6" ry="6"
+        fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="145" y="245" text-anchor="middle" font-weight="bold" fill="#15803d">order-service</text>
+
+  <!-- inventory-service box -->
+  <rect x="55" y="284" width="180" height="44" rx="6" ry="6"
+        fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="145" y="311" text-anchor="middle" font-weight="bold" fill="#15803d">inventory-service</text>
+
+  <!-- CoreDNS box -->
+  <rect x="350" y="44" width="290" height="100" rx="8" ry="8"
+        fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+  <text x="495" y="68" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">CoreDNS rewrite rules</text>
+  <text x="366" y="92" font-size="11" fill="#78350f">rewrite name exact</text>
+  <text x="366" y="108" font-size="11" fill="#78350f">  topaz.local.dev →</text>
+  <text x="366" y="124" font-size="11" fill="#78350f">  topaz.topaz-system.svc.cluster.local</text>
+
+  <!-- Second rule -->
+  <rect x="350" y="158" width="290" height="84" rx="8" ry="8"
+        fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+  <text x="366" y="180" font-size="11" fill="#78350f">rewrite name regex</text>
+  <text x="366" y="196" font-size="11" fill="#78350f">  (.+)\.topaz\.local\.dev →</text>
+  <text x="366" y="212" font-size="11" fill="#78350f">  topaz.topaz-system.svc.cluster.local</text>
+  <text x="366" y="232" font-size="10" fill="#a16207">(data-plane SDK hostnames)</text>
+
+  <!-- Arrow: order-service → CoreDNS -->
+  <line x1="236" y1="240" x2="348" y2="196" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+
+  <!-- Arrow: inventory-service → CoreDNS -->
+  <line x1="236" y1="306" x2="348" y2="220" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+
+  <!-- Arrow: CoreDNS → Topaz pod (resolves to) -->
+  <line x1="350" y1="100" x2="236" y2="108" stroke="#1B63EB" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <!-- Subscription isolation label -->
+  <rect x="350" y="262" width="290" height="128" rx="8" ry="8"
+        fill="#f3e8ff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="495" y="284" text-anchor="middle" font-size="12" font-weight="bold" fill="#6b21a8">Subscription isolation</text>
+  <text x="366" y="306" font-size="11" fill="#581c87">order-service</text>
+  <text x="510" y="306" font-size="11" fill="#581c87">sub-…0001</text>
+  <line x1="365" y1="314" x2="625" y2="314" stroke="#c4b5fd" stroke-width="1"/>
+  <text x="366" y="330" font-size="11" fill="#581c87">inventory-service</text>
+  <text x="510" y="330" font-size="11" fill="#581c87">sub-…0002</text>
+  <line x1="365" y1="338" x2="625" y2="338" stroke="#c4b5fd" stroke-width="1"/>
+  <text x="366" y="356" font-size="10" fill="#7c3aed">Each app's resources are fully isolated</text>
+  <text x="366" y="370" font-size="10" fill="#7c3aed">inside the shared emulator process.</text>
+
+  <!-- Arrowhead markers -->
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#6b7280"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#1B63EB"/>
+    </marker>
+  </defs>
+</svg>

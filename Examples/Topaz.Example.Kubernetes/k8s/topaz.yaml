@@ -40,9 +40,7 @@ spec:
               name: arm
             - containerPort: 8898   # Key Vault
               name: keyvault
-            - containerPort: 8891   # Blob Storage
-              name: blob
-            - containerPort: 8890   # Storage Tables / Queues
+            - containerPort: 8891   # Blob Storage, Queue Storage, Table Storage
               name: storage
             - containerPort: 8892   # Container Registry
               name: registry
@@ -83,12 +81,9 @@ spec:
     - name: keyvault
       port: 8898
       targetPort: 8898
-    - name: blob
-      port: 8891
-      targetPort: 8891
     - name: storage
-      port: 8890
-      targetPort: 8890
+      port: 8891
+      targetPort: 8891   # Blob Storage, Queue Storage, Table Storage
     - name: registry
       port: 8892
       targetPort: 8892
