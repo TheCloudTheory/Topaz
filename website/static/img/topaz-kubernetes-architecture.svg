@@ -1,35 +1,57 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 420" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 510" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">
 
   <!-- Cluster outer border -->
-  <rect x="10" y="10" width="660" height="400" rx="10" ry="10"
+  <rect x="10" y="10" width="660" height="490" rx="10" ry="10"
         fill="#f0f4ff" stroke="#1B63EB" stroke-width="2"/>
   <text x="26" y="32" font-size="12" fill="#1B63EB" font-weight="bold">k3d cluster</text>
 
   <!-- topaz-system namespace -->
-  <rect x="30" y="44" width="260" height="120" rx="8" ry="8"
+  <rect x="30" y="44" width="260" height="218" rx="8" ry="8"
         fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,3"/>
   <text x="46" y="64" font-size="11" fill="#1d4ed8" font-weight="bold">topaz-system namespace</text>
 
   <!-- Topaz pod box -->
-  <rect x="55" y="76" width="180" height="68" rx="6" ry="6"
+  <rect x="45" y="74" width="230" height="174" rx="6" ry="6"
         fill="#ffffff" stroke="#1B63EB" stroke-width="1.5"/>
-  <text x="145" y="104" text-anchor="middle" font-weight="bold" fill="#1B63EB">Topaz Pod</text>
-  <text x="145" y="122" text-anchor="middle" font-size="11" fill="#6b7280">(shared emulator)</text>
+  <text x="160" y="96" text-anchor="middle" font-weight="bold" fill="#1B63EB">Topaz Pod</text>
+  <text x="160" y="112" text-anchor="middle" font-size="10" fill="#6b7280">(shared emulator)</text>
+  <line x1="46" y1="119" x2="274" y2="119" stroke="#dbeafe" stroke-width="1"/>
+
+  <!-- Emulated service badges -->
+  <rect x="58" y="126" width="206" height="18" rx="3" fill="#eff6ff"/>
+  <text x="68" y="139" font-size="10" fill="#1d4ed8">ARM</text>
+  <text x="256" y="139" font-size="10" fill="#6b7280" text-anchor="end">:8899</text>
+
+  <rect x="58" y="148" width="206" height="18" rx="3" fill="#eff6ff"/>
+  <text x="68" y="161" font-size="10" fill="#1d4ed8">Key Vault</text>
+  <text x="256" y="161" font-size="10" fill="#6b7280" text-anchor="end">:8898</text>
+
+  <rect x="58" y="170" width="206" height="18" rx="3" fill="#eff6ff"/>
+  <text x="68" y="183" font-size="10" fill="#1d4ed8">Blob · Queue · Table</text>
+  <text x="256" y="183" font-size="10" fill="#6b7280" text-anchor="end">:8891</text>
+
+  <rect x="58" y="192" width="206" height="18" rx="3" fill="#eff6ff"/>
+  <text x="68" y="205" font-size="10" fill="#1d4ed8">Service Bus</text>
+  <text x="256" y="205" font-size="10" fill="#6b7280" text-anchor="end">:5671</text>
+
+  <rect x="58" y="214" width="206" height="18" rx="3" fill="#eff6ff"/>
+  <text x="68" y="227" font-size="10" fill="#1d4ed8">Cosmos DB</text>
+  <text x="256" y="227" font-size="10" fill="#6b7280" text-anchor="end">:8895</text>
 
   <!-- apps namespace -->
-  <rect x="30" y="186" width="260" height="174" rx="8" ry="8"
+  <rect x="30" y="278" width="260" height="192" rx="8" ry="8"
         fill="#dcfce7" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="46" y="206" font-size="11" fill="#15803d" font-weight="bold">apps namespace</text>
+  <text x="46" y="298" font-size="11" fill="#15803d" font-weight="bold">apps namespace</text>
 
   <!-- order-service box -->
-  <rect x="55" y="218" width="180" height="44" rx="6" ry="6"
+  <rect x="55" y="310" width="180" height="44" rx="6" ry="6"
         fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
-  <text x="145" y="245" text-anchor="middle" font-weight="bold" fill="#15803d">order-service</text>
+  <text x="145" y="337" text-anchor="middle" font-weight="bold" fill="#15803d">order-service</text>
 
   <!-- inventory-service box -->
-  <rect x="55" y="284" width="180" height="44" rx="6" ry="6"
+  <rect x="55" y="394" width="180" height="44" rx="6" ry="6"
         fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
-  <text x="145" y="311" text-anchor="middle" font-weight="bold" fill="#15803d">inventory-service</text>
+  <text x="145" y="421" text-anchor="middle" font-weight="bold" fill="#15803d">inventory-service</text>
 
   <!-- CoreDNS box -->
   <rect x="350" y="44" width="290" height="100" rx="8" ry="8"
@@ -48,26 +70,26 @@
   <text x="366" y="232" font-size="10" fill="#a16207">(data-plane SDK hostnames)</text>
 
   <!-- Arrow: order-service → CoreDNS -->
-  <line x1="236" y1="240" x2="348" y2="196" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+  <line x1="236" y1="332" x2="348" y2="210" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
 
   <!-- Arrow: inventory-service → CoreDNS -->
-  <line x1="236" y1="306" x2="348" y2="220" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+  <line x1="236" y1="416" x2="348" y2="228" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
 
   <!-- Arrow: CoreDNS → Topaz pod (resolves to) -->
-  <line x1="350" y1="100" x2="236" y2="108" stroke="#1B63EB" stroke-width="2" marker-end="url(#arrowBlue)"/>
+  <line x1="350" y1="94" x2="276" y2="155" stroke="#1B63EB" stroke-width="2" marker-end="url(#arrowBlue)"/>
 
-  <!-- Subscription isolation label -->
-  <rect x="350" y="262" width="290" height="128" rx="8" ry="8"
+  <!-- Subscription isolation -->
+  <rect x="350" y="258" width="290" height="144" rx="8" ry="8"
         fill="#f3e8ff" stroke="#9333ea" stroke-width="1.5"/>
-  <text x="495" y="284" text-anchor="middle" font-size="12" font-weight="bold" fill="#6b21a8">Subscription isolation</text>
+  <text x="495" y="280" text-anchor="middle" font-size="12" font-weight="bold" fill="#6b21a8">Subscription isolation</text>
   <text x="366" y="306" font-size="11" fill="#581c87">order-service</text>
-  <text x="510" y="306" font-size="11" fill="#581c87">sub-…0001</text>
+  <text x="630" y="306" font-size="11" fill="#581c87" text-anchor="end">sub-…0001</text>
   <line x1="365" y1="314" x2="625" y2="314" stroke="#c4b5fd" stroke-width="1"/>
-  <text x="366" y="330" font-size="11" fill="#581c87">inventory-service</text>
-  <text x="510" y="330" font-size="11" fill="#581c87">sub-…0002</text>
-  <line x1="365" y1="338" x2="625" y2="338" stroke="#c4b5fd" stroke-width="1"/>
-  <text x="366" y="356" font-size="10" fill="#7c3aed">Each app's resources are fully isolated</text>
-  <text x="366" y="370" font-size="10" fill="#7c3aed">inside the shared emulator process.</text>
+  <text x="366" y="334" font-size="11" fill="#581c87">inventory-service</text>
+  <text x="630" y="334" font-size="11" fill="#581c87" text-anchor="end">sub-…0002</text>
+  <line x1="365" y1="342" x2="625" y2="342" stroke="#c4b5fd" stroke-width="1"/>
+  <text x="366" y="368" font-size="10" fill="#7c3aed">Resources scoped per subscription —</text>
+  <text x="366" y="384" font-size="10" fill="#7c3aed">isolated inside the shared emulator.</text>
 
   <!-- Arrowhead markers -->
   <defs>
