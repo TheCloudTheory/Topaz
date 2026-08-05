@@ -6,5 +6,6 @@ internal enum Subresources
     Products,
     ProductApiAssignment,
     Backends,
-    Policies
+    Policies,
+    PortalSettings
 }

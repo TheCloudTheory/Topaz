@@ -4,6 +4,7 @@ using Topaz.Service.ApiManagement.Endpoints;
 using Topaz.Service.ApiManagement.Endpoints.DataPlane.Api;
 using Topaz.Service.ApiManagement.Endpoints.DataPlane.Backend;
 using Topaz.Service.ApiManagement.Endpoints.DataPlane.Policy;
+using Topaz.Service.ApiManagement.Endpoints.DataPlane.PortalSettings;
 using Topaz.Service.ApiManagement.Endpoints.DataPlane.Product;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -22,7 +23,7 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
     [
         "apis", "apis-etag", "apis-revision", "products", "products-etag", "products-subscriptions",
         "productapiassignment", "backends", "backends-etag", 
-        "policies", "policies-etag"
+        "policies", "policies-etag", "portalsettings", "portalsettings-etag"
     ];
     public static string UniqueName => "apim";
 
@@ -66,6 +67,8 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
         new DeletePolicyEndpoint(eventPipeline, logger),
         new GetPolicyEndpoint(eventPipeline, logger),
         new ListPolicyByServiceEndpoint(eventPipeline, logger),
-        new GetPolicyEntityTagEndpoint(eventPipeline, logger)
+        new GetPolicyEntityTagEndpoint(eventPipeline, logger),
+        new GetSignInSettingsEndpoint(eventPipeline, logger),
+        new CreateOrUpdateSignInSettingsEndpoint(eventPipeline, logger)
     ];
 }

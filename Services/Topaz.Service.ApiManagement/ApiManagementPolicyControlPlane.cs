@@ -61,7 +61,7 @@ internal sealed class ApiManagementPolicyControlPlane(
             return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.Created, api);
         }
 
-        // As per API docs, If-Match is required for CreateOrUpdate operation
+        // As per API docs, If-Match is required for CreateOrUpdateSignInSettings operation
         // when it's an update operation
         if (string.IsNullOrWhiteSpace(ifMatch))
         {
