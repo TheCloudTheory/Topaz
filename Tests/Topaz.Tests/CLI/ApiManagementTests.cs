@@ -835,4 +835,125 @@ public class ApiManagementTests
 
         Assert.That(code, Is.Zero);
     }
+
+    // --- Policy DataPlane ---
+
+    private const string PolicyId = "policy";
+    private const string PolicyValue = "<policies><inbound><base /></inbound><backend><base /></backend><outbound><base /></outbound></policies>";
+
+    private string PolicyEtagFilePath => Path.Combine(
+        Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+        SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+        ".apim", ServiceName, "policies-etag", PolicyId, "metadata.json");
+
+    [Test]
+    public async Task ApiManagement_Policy_Create_CommandSucceeds()
+    {
+        var code = await Program.RunAsync([
+            "apim", "policy", "create",
+            "--service-name", ServiceName,
+            "--policy-id", PolicyId,
+            "--value", PolicyValue,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Policy_Show_ReturnsExistingPolicy()
+    {
+        await Program.RunAsync([
+            "apim", "policy", "create",
+            "--service-name", ServiceName,
+            "--policy-id", PolicyId,
+            "--value", PolicyValue,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "policy", "show",
+            "--service-name", ServiceName,
+            "--policy-id", PolicyId,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Policy_List_ReturnsPolicies()
+    {
+        await Program.RunAsync([
+            "apim", "policy", "create",
+            "--service-name", ServiceName,
+            "--policy-id", PolicyId,
+            "--value", PolicyValue,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "policy", "list",
+            "--service-name", ServiceName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Policy_GetEntityTag_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "policy", "create",
+            "--service-name", ServiceName,
+            "--policy-id", PolicyId,
+            "--value", PolicyValue,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        var code = await Program.RunAsync([
+            "apim", "policy", "get-entity-tag",
+            "--service-name", ServiceName,
+            "--policy-id", PolicyId,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task ApiManagement_Policy_Delete_CommandSucceeds()
+    {
+        await Program.RunAsync([
+            "apim", "policy", "create",
+            "--service-name", ServiceName,
+            "--policy-id", PolicyId,
+            "--value", PolicyValue,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(File.Exists(PolicyEtagFilePath), Is.True);
+
+        var etag = JsonNode.Parse(await File.ReadAllTextAsync(PolicyEtagFilePath))!["value"];
+
+        var code = await Program.RunAsync([
+            "apim", "policy", "delete",
+            "--service-name", ServiceName,
+            "--policy-id", PolicyId,
+            "--if-match", $"\"{etag}\"",
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
 }

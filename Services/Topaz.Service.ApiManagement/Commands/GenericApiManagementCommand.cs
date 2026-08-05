@@ -2,6 +2,7 @@ using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
 using Topaz.Service.ApiManagement.Commands.Api;
 using Topaz.Service.ApiManagement.Commands.Backend;
+using Topaz.Service.ApiManagement.Commands.Policy;
 using Topaz.Service.ApiManagement.Commands.Product;
 
 namespace Topaz.Service.ApiManagement.Commands;
@@ -53,6 +54,15 @@ public sealed class GenericApiManagementCommand : IEmulatorCommand
                 backend.AddCommand<ListBackendByServiceCommand>("list");
                 backend.AddCommand<GetBackendEntityTagCommand>("get-entity-tag");
                 backend.AddCommand<ReconnectBackendCommand>("reconnect");
+            });
+
+            apim.AddBranch("policy", policy =>
+            {
+                policy.AddCommand<GetPolicyCommand>("show");
+                policy.AddCommand<CreateOrUpdatePolicyCommand>("create");
+                policy.AddCommand<DeletePolicyCommand>("delete");
+                policy.AddCommand<ListPolicyByServiceCommand>("list");
+                policy.AddCommand<GetPolicyEntityTagCommand>("get-entity-tag");
             });
         });
     }
