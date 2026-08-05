@@ -73,6 +73,23 @@ internal sealed class ApiManagementApiControlPlane(
                 "If-Match is required for update requests.", "MissingIfMatchHeader");
         }
         
+        var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, apiId,
+            apimName, ApiEtagSubresourceId);
+
+        if (etag == null)
+        {
+            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Delete), "API Management API is missing ETag value");
+            
+            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Failed, null, "ETag not found",
+                "InvalidStateError");
+        }
+
+        if (ifMatch != "*" && !etag.IsEqualToETag(ifMatch))
+        {
+            return new ControlPlaneOperationResult<ApiContractResource>(OperationResult.Conflict, null,
+                "If-Match does not match ETag value", "ConcurrentOperationFailed");
+        }
+        
         existing.Resource!.UpdateFromRequest(request);
         validationResult = existing.Resource!.Validate<ApiContractResource>();
         if (!validationResult.IsValid)

@@ -38,7 +38,8 @@ internal sealed class PolicyContractResource : ArmSubresource<PolicyContractReso
 
     public void UpdateFromRequest(CreateOrUpdatePolicyRequest request)
     {
-        throw new NotImplementedException();
+        Properties.Format = request.Properties?.Format ?? Properties.Format;
+        Properties.Value = request.Properties?.Value ?? Properties.Value;
     }
 
     public (bool IsValid, string? Error) Validate<TModel>(TModel? data = null) where TModel : class

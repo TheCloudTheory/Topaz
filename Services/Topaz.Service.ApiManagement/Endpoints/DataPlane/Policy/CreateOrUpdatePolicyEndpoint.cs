@@ -64,6 +64,9 @@ internal sealed class CreateOrUpdatePolicyEndpoint(Pipeline eventPipeline, ITopa
             case OperationResult.BadRequest:
                 response.CreateErrorResponse(result, HttpStatusCode.BadRequest);
                 return;
+            case OperationResult.Conflict:
+                response.CreateErrorResponse(result, HttpStatusCode.Conflict);
+                return;
         }
 
         if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)

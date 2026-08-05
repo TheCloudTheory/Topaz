@@ -4,8 +4,8 @@ namespace Topaz.Service.ApiManagement.Models;
 
 internal sealed class PolicyContractResourceProperties
 {
-    public string? Format { get; init; } = "xml";
-    public string? Value { get; init; }
+    public string? Format { get; set; } = "xml";
+    public string? Value { get; set; }
 
     public static PolicyContractResourceProperties From(CreateOrUpdatePolicyRequest request)
     {

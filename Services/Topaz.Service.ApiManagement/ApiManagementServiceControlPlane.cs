@@ -149,7 +149,7 @@ internal sealed class ApiManagementServiceControlPlane(
                 OperationResult.NotFound, existing.Reason, existing.Code);
         }
         
-        existing.Resource!.DeletionDate =  DateTime.UtcNow;
+        existing.Resource!.DeletionDate = DateTime.UtcNow;
         
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, existing.Resource);
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, name, softDelete: true);

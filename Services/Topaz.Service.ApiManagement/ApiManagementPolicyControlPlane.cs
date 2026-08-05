@@ -29,7 +29,7 @@ internal sealed class ApiManagementPolicyControlPlane(
     
     public ControlPlaneOperationResult<PolicyContractResource> CreateOrUpdate(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName,
-        string backendId, CreateOrUpdatePolicyRequest request, string? ifMatch)
+        string policyId, CreateOrUpdatePolicyRequest request, string? ifMatch)
     {
         var apimOperation =
             _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
@@ -39,11 +39,11 @@ internal sealed class ApiManagementPolicyControlPlane(
                 apimOperation.Reason, apimOperation.Code);
         }
 
-        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, apimName, backendId);
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, apimName, policyId);
         (bool IsValid, string? Error) validationResult;
         if (existing.Result == OperationResult.NotFound)
         {
-            var api = new PolicyContractResource(subscriptionIdentifier, resourceGroupIdentifier, apimName, backendId,
+            var api = new PolicyContractResource(subscriptionIdentifier, resourceGroupIdentifier, apimName, policyId,
                 PolicyContractResourceProperties.From(request));
             
             validationResult = api.Validate<ApiContractResource>();
@@ -53,9 +53,9 @@ internal sealed class ApiManagementPolicyControlPlane(
                     validationResult.Error, "InvalidRequest");
             }
             
-            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName,
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, policyId, apimName,
                 PolicySubresourceId, api);
-            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName,
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, policyId, apimName,
                 PolicyEtagSubresourceId, api.ETag);
 
             return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.Created, api);
@@ -69,6 +69,23 @@ internal sealed class ApiManagementPolicyControlPlane(
                 "If-Match is required for update requests.", "MissingIfMatchHeader");
         }
         
+        var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, policyId,
+            apimName, PolicyEtagSubresourceId);
+
+        if (etag == null)
+        {
+            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(CreateOrUpdate), "API Management policy is missing ETag value");
+            
+            return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.Failed, null, "ETag not found",
+                "InvalidStateError");
+        }
+
+        if (ifMatch != "*" && !etag.IsEqualToETag(ifMatch))
+        {
+            return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.Conflict, null,
+                "If-Match does not match ETag value", "ConcurrentOperationFailed");
+        }
+        
         existing.Resource!.UpdateFromRequest(request);
         validationResult = existing.Resource!.Validate<PolicyContractResource>();
         if (!validationResult.IsValid)
@@ -77,9 +94,9 @@ internal sealed class ApiManagementPolicyControlPlane(
                 validationResult.Error, "InvalidRequest");
         }
 
-        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName,
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, policyId, apimName,
             PolicySubresourceId, request);
-        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, backendId, apimName,
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, policyId, apimName,
             PolicyEtagSubresourceId, existing.Resource.ETag);
 
         return new ControlPlaneOperationResult<PolicyContractResource>(OperationResult.Updated, existing.Resource);
