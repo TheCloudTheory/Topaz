@@ -32,7 +32,7 @@ Each application gets its own Topaz subscription. Resources created inside one s
 
 Pass the subscription ID to each pod as an environment variable:
 
-```yaml
+```yaml title="pod spec"
 env:
   - name: TOPAZ_SUBSCRIPTION_ID
     value: "00000000-0000-0000-0000-000000000001"
@@ -42,7 +42,7 @@ env:
 
 ### Namespaces
 
-```yaml
+```yaml title="namespaces.yaml"
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -58,7 +58,7 @@ metadata:
 
 Topaz runs as a single-replica `Deployment` in the `topaz-system` namespace. The TLS certificate is mounted from a `Secret` so pods can be recreated without losing it.
 
-```yaml
+```yaml title="topaz-deployment.yaml"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -105,7 +105,7 @@ spec:
 
 A `ClusterIP` service makes Topaz reachable cluster-wide as `topaz.topaz-system.svc.cluster.local`. The service exposes all emulated ports.
 
-```yaml
+```yaml title="topaz-service.yaml"
 apiVersion: v1
 kind: Service
 metadata:
@@ -130,7 +130,7 @@ spec:
 
 Create the secret from the Topaz certificate files before deploying:
 
-```sh
+```sh title="create-tls-secret.sh"
 kubectl create secret generic topaz-tls \
   --from-file=topaz.crt=certificate/topaz.crt \
   --from-file=topaz.key=certificate/topaz.key \
@@ -144,14 +144,14 @@ The certificate files are available in the [`certificate/`](https://github.com/T
 
 Patch the `coredns` ConfigMap in `kube-system` to add two rewrite rules — one exact match for the ARM control-plane host and one regex rule for all data-plane SDK hostnames:
 
-```
+```text title="Corefile rules"
 rewrite name exact topaz.local.dev topaz.topaz-system.svc.cluster.local
 rewrite name regex (.+)\.topaz\.local\.dev topaz.topaz-system.svc.cluster.local answer auto
 ```
 
 The full patch script is shown below. It is idempotent — safe to run multiple times.
 
-```sh
+```sh title="patch-coredns.sh"
 MARKER="topaz.local.dev"
 REWRITE_RULE="    rewrite name exact topaz.local.dev topaz.topaz-system.svc.cluster.local\n    rewrite name regex (.+)\\.topaz\\.local\\.dev topaz.topaz-system.svc.cluster.local answer auto"
 
@@ -181,7 +181,7 @@ The ARM client (`TopazArmClientOptions`) connects to `https://topaz.local.dev:88
 
 Applications connect to Topaz exactly as they would in any other environment. The only Kubernetes-specific step is reading the subscription ID from an environment variable.
 
-```csharp
+```csharp title="Startup.cs" showLineNumbers
 var subscriptionId = Environment.GetEnvironmentVariable("TOPAZ_SUBSCRIPTION_ID")
     ?? throw new InvalidOperationException("TOPAZ_SUBSCRIPTION_ID is required");
 
@@ -207,14 +207,14 @@ Because CoreDNS rewrites the hostnames, `TopazArmClientOptions.New` and `TopazRe
 
 Application images must trust the Topaz certificate so that Azure SDK TLS connections succeed. Add the following to the app's `Dockerfile`:
 
-```dockerfile
+```dockerfile title="Dockerfile"
 COPY topaz.crt /usr/local/share/ca-certificates/topaz.crt
 RUN update-ca-certificates
 ```
 
 Copy the certificate into the Docker build context before building:
 
-```sh
+```sh title="build image"
 cp certificate/topaz.crt apps/my-service/topaz.crt
 docker build -t my-service:latest apps/my-service/
 ```
