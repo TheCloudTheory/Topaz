@@ -391,14 +391,14 @@ jobs:
         else
           FILTER="${EXCLUDE}"
         fi
-        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test -m:1 --no-build --verbosity normal --logger "trx;verbosity=minimal" \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
     - name: Terraform Tests
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || steps.changes.outputs.terraform == 'true')
       run: |
-        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test -m:1 --no-build --verbosity normal --logger "trx;verbosity=minimal" \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "FullyQualifiedName~Topaz.Tests.Terraform"
@@ -421,7 +421,7 @@ jobs:
         if [[ -z "$FILTER" ]]; then
           FILTER="FullyQualifiedName~Topaz.Tests.AzurePowerShell"
         fi
-        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test -m:1 --no-build --verbosity normal --logger "trx;verbosity=minimal" \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
@@ -434,7 +434,7 @@ jobs:
         if [[ -z "$FILTER" ]]; then
           FILTER="FullyQualifiedName~Topaz.Tests.Python"
         fi
-        dotnet test Tests/Topaz.Tests.Python/Topaz.Tests.Python.csproj -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test Tests/Topaz.Tests.Python/Topaz.Tests.Python.csproj -m:1 --no-build --verbosity normal --logger "trx;verbosity=minimal" \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
@@ -443,7 +443,7 @@ jobs:
       env:
         TOPAZ_JAVA_TEST_IMAGE: topaz-java-legacy-test
       run: |
-        dotnet test Tests/Topaz.Tests.Legacy.Java/Topaz.Tests.Legacy.Java.csproj -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test Tests/Topaz.Tests.Legacy.Java/Topaz.Tests.Legacy.Java.csproj -m:1 --no-build --verbosity normal --logger "trx;verbosity=minimal" \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults
     - name: NodeJS Tests
@@ -455,7 +455,7 @@ jobs:
         if [[ -z "$FILTER" ]]; then
           FILTER="FullyQualifiedName~Topaz.Tests.NodeJS"
         fi
-        dotnet test Tests/Topaz.Tests.NodeJS/Topaz.Tests.NodeJS.csproj -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test Tests/Topaz.Tests.NodeJS/Topaz.Tests.NodeJS.csproj -m:1 --no-build --verbosity normal --logger "trx;verbosity=minimal" \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
@@ -560,7 +560,7 @@ jobs:
         if [[ -z "$FILTER" ]]; then
           FILTER="FullyQualifiedName~Topaz.Tests.AzureCLI"
         fi
-        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test -m:1 --no-build --verbosity normal --logger "trx;verbosity=minimal" \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
