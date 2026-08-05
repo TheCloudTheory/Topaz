@@ -5,7 +5,7 @@ description: Unit-test individual Bicep modules against Topaz — deploy modules
 keywords: [bicep module testing, bicep unit test, bicep test azure, topaz bicep, azure bicep emulator, bicep module validation, bicep contract testing]
 ---
 
-# How to unit-test Bicep modules with Topaz
+# Bicep Module Testing
 
 This guide shows you how to deploy individual Bicep modules against Topaz's ARM endpoint and assert their outputs using the Azure SDK. Testing modules in isolation catches contract regressions early, before a full-stack deployment surfaces them.
 

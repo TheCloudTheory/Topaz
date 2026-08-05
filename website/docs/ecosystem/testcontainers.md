@@ -5,7 +5,7 @@ description: Use the official Testcontainers.Topaz package to run Topaz automati
 keywords: [topaz testcontainers, azure emulator integration tests, testcontainers dotnet topaz, local azure unit tests]
 ---
 
-# How to write integration tests with Testcontainers
+# Testcontainers
 
 This guide shows you how to use the official [Testcontainers.Topaz](https://www.nuget.org/packages/TheCloudTheory.Topaz.Testcontainers) package to run a Topaz instance automatically in your test suite.
 

@@ -5,7 +5,7 @@ description: Deploy Topaz as a shared emulator inside a Kubernetes cluster, inte
 keywords: [topaz kubernetes, azure emulator kubernetes, topaz k8s, local azure kubernetes, coredns topaz, shared azure emulator]
 ---
 
-# How to run Topaz in Kubernetes
+# Kubernetes
 
 This guide shows how to deploy Topaz as a **shared, self-managed emulator** inside a Kubernetes cluster so multiple applications can use the same instance without each team running their own copy.
 

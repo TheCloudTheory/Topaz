@@ -8,7 +8,7 @@ keywords: [topaz docker compose, azure emulator docker, local azure docker compo
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# How to run Topaz with Docker Compose
+# Docker Compose
 
 This guide shows you how to configure a `docker-compose.yml` that runs Topaz alongside your application, with the networking required for Azure SDK clients to reach the emulator.
 

@@ -5,7 +5,7 @@ description: Use the Topaz.AspNetCore.Extensions NuGet package to provision loca
 keywords: [topaz aspnet core, aspnet core azure emulator, topaz builder api, local azure aspnet, azure sdk aspnet local]
 ---
 
-# How to configure ASP.NET Core apps to use Topaz
+# ASP.NET Core
 
 This guide shows you how to use the [TheCloudTheory.Topaz.AspNetCore.Extensions](https://www.nuget.org/packages/TheCloudTheory.Topaz.AspNetCore.Extensions/) NuGet package to provision local Azure infrastructure automatically at ASP.NET Core startup.
 

@@ -8,7 +8,7 @@ keywords: [topaz ci, topaz github actions, topaz azure devops, azure emulator ci
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# How to run Topaz in CI/CD pipelines
+# CI/CD Pipelines
 
 This guide shows you how to run Topaz as a service in CI pipelines, with complete examples for GitHub Actions and Azure DevOps. Setup mirrors local development: install the certificate, configure DNS, and start the emulator.
 
