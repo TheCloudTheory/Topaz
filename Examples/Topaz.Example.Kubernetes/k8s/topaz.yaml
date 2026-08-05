@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: topaz-data
+  namespace: topaz-system
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: topaz
+  namespace: topaz-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: topaz
+  template:
+    metadata:
+      labels:
+        app: topaz
+    spec:
+      containers:
+        - name: topaz
+          image: thecloudtheory/topaz-host:latest
+          imagePullPolicy: Always
+          args:
+            - --certificate-file
+            - /certs/topaz.crt
+            - --certificate-key
+            - /certs/topaz.key
+            - --log-level
+            - Information
+          ports:
+            - containerPort: 8899   # ARM / Resource Manager
+              name: arm
+            - containerPort: 8898   # Key Vault
+              name: keyvault
+            - containerPort: 8891   # Blob Storage
+              name: blob
+            - containerPort: 8890   # Storage Tables / Queues
+              name: storage
+            - containerPort: 8892   # Container Registry
+              name: registry
+            - containerPort: 8895   # Cosmos DB
+              name: cosmos
+            - containerPort: 5671   # Service Bus AMQPS
+              name: amqps
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+            - name: data
+              mountPath: /app/.topaz
+      volumes:
+        - name: certs
+          secret:
+            secretName: topaz-tls
+        - name: data
+          persistentVolumeClaim:
+            claimName: topaz-data
+---
+# ClusterIP service — reachable within the cluster as:
+#   topaz.topaz-system.svc.cluster.local
+# CoreDNS rewrites *.topaz.local.dev to this FQDN so SDK clients work
+# without any configuration changes.
+apiVersion: v1
+kind: Service
+metadata:
+  name: topaz
+  namespace: topaz-system
+spec:
+  selector:
+    app: topaz
+  ports:
+    - name: arm
+      port: 8899
+      targetPort: 8899
+    - name: keyvault
+      port: 8898
+      targetPort: 8898
+    - name: blob
+      port: 8891
+      targetPort: 8891
+    - name: storage
+      port: 8890
+      targetPort: 8890
+    - name: registry
+      port: 8892
+      targetPort: 8892
+    - name: cosmos
+      port: 8895
+      targetPort: 8895
+    - name: amqps
+      port: 5671
+      targetPort: 5671
+  # NodePort exposes ARM to the host machine via the k3d load-balancer
+  # so you can run `topaz` CLI commands from outside the cluster.
+  type: NodePort
+  # Kubernetes assigns a NodePort; the k3d load-balancer maps 8899→30899.
+---
+# Dedicated NodePort for ARM so the port mapping in setup.sh is stable.
+apiVersion: v1
+kind: Service
+metadata:
+  name: topaz-nodeport
+  namespace: topaz-system
+spec:
+  selector:
+    app: topaz
+  type: NodePort
+  ports:
+    - name: arm
+      port: 8899
+      targetPort: 8899
+      nodePort: 30899
