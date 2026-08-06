@@ -28,3 +28,4 @@ sdk/python/topaz_sdk.egg-info/**
 .agents/skills/*
 .debugging/findings.md
 CLAUDE.md
+topaz.log
