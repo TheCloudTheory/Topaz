@@ -171,4 +171,57 @@ internal sealed class ContainerInstancesServiceControlPlane(
         
         return new ControlPlaneOperationResult(OperationResult.Success);
     }
+
+    public ControlPlaneOperationResult Start(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string containerGroupName)
+    {
+        var existing= Get(subscriptionIdentifier, resourceGroupIdentifier, containerGroupName);
+        if(existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, existing.Reason, existing.Code);
+        }
+        
+        return new ControlPlaneOperationResult(OperationResult.Success);
+    }
+    
+    public ControlPlaneOperationResult Stop(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string containerGroupName)
+    {
+        var existing= Get(subscriptionIdentifier, resourceGroupIdentifier, containerGroupName);
+        if(existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, existing.Reason, existing.Code);
+        }
+        
+        return new ControlPlaneOperationResult(OperationResult.Success);
+    }
+    
+    public ControlPlaneOperationResult<ContainerInstancesServiceResource> Update(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string containerGroupName, CreateOrUpdateContainerGroupRequest request)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ContainerInstancesServiceResource>(
+                OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
+        }
+            
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, containerGroupName);
+        if(existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ContainerInstancesServiceResource>(OperationResult.NotFound, null, existing.Reason, existing.Code);
+        }
+        
+        existing.Resource!.UpdateFromRequest(request);
+        
+        if (!existing.Resource.Validate<ContainerInstancesServiceResource>().IsValid)
+        {
+            return new ControlPlaneOperationResult<ContainerInstancesServiceResource>(
+                OperationResult.BadRequest, null, existing.Resource.Validate<ContainerInstancesServiceResource>().Error, "InvalidRequest");
+        }
+        
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, containerGroupName, existing.Resource);
+        return new ControlPlaneOperationResult<ContainerInstancesServiceResource>(
+            OperationResult.Updated, existing.Resource);
+    }
 }

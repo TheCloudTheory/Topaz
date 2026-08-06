@@ -7,7 +7,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ContainerInstances.Endpoints;
 
-internal sealed class RestartContainerGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class StopContainerGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly ContainerInstancesServiceControlPlane _controlPlane =
@@ -17,7 +17,7 @@ internal sealed class RestartContainerGroupEndpoint(Pipeline eventPipeline, ITop
 
     public string[] Endpoints =>
     [
-        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerInstance/containerGroups/{containerGroupName}/restart"
+        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerInstance/containerGroups/{containerGroupName}/stop"
     ];
 
     public string[] Permissions => ["Microsoft.ContainerInstances/service/write"];
@@ -31,7 +31,7 @@ internal sealed class RestartContainerGroupEndpoint(Pipeline eventPipeline, ITop
         var rg = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         var name = context.Request.Path.Value.ExtractValueFromPath(8);
 
-        var existing = _controlPlane.Restart(sub, rg, name!);
+        var existing = _controlPlane.Stop(sub, rg, name!);
         if (existing.Result == OperationResult.NotFound)
         {
             response.CreateNotFoundResponse(existing);
