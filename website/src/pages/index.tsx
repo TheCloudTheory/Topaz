@@ -47,6 +47,7 @@ const SERVICES = [
   {name: 'Azure Application Insights', sub: 'Workspaces · Data Collection · Query'},
   {name: 'Private Endpoints', sub: 'Control Plane'},
   {name: 'Redis Cache', sub: 'Control Plane'},
+  {name: 'API Management', sub: 'Control Plane'},
 ];
 
 const INTEGRATIONS = [
