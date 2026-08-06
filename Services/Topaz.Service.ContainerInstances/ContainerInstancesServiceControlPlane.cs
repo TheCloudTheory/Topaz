@@ -5,6 +5,7 @@ using Topaz.Service.ContainerInstances.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.ContainerInstances;
@@ -17,6 +18,7 @@ internal sealed class ContainerInstancesServiceControlPlane(
     private const string NotFoundCode = "ResourceNotFound";
     private const string NotFoundMessage = "ContainerInstances resource '{0}' could not be found.";
     
+    private readonly SubscriptionControlPlane _subscriptionControlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
 
     public static ContainerInstancesServiceControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
@@ -101,5 +103,72 @@ internal sealed class ContainerInstancesServiceControlPlane(
             ? new ControlPlaneOperationResult<ContainerInstancesServiceResource>(
                 OperationResult.NotFound, null, string.Format(NotFoundMessage, containerGroupName), NotFoundCode)
             : new ControlPlaneOperationResult<ContainerInstancesServiceResource>(OperationResult.Success, resource);
+    }
+
+    public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string containerGroupName)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, resourceGroupOperation.Reason, resourceGroupOperation.Code);
+        }
+            
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, containerGroupName);
+        if(existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, existing.Reason, existing.Code);
+        }
+        
+        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, containerGroupName);
+
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<ContainerInstancesServiceResource[]> List(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var subscriptionOperation = _subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscriptionOperation.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<ContainerInstancesServiceResource[]>(
+                subscriptionOperation.Result, null, subscriptionOperation.Reason, subscriptionOperation.Code);
+        }
+        
+        var resources = provider.ListAs<ContainerInstancesServiceResource>(subscriptionIdentifier, null, lookForNoOfSegments: 8)
+            .Where(r => r.IsInSubscription(subscriptionIdentifier))
+            .ToArray();
+        
+        return new ControlPlaneOperationResult<ContainerInstancesServiceResource[]>(OperationResult.Success, resources);
+    }
+
+    public ControlPlaneOperationResult<ContainerInstancesServiceResource[]> ListByResourceGroup(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ContainerInstancesServiceResource[]>(
+                OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
+        }
+
+        var resources = provider
+            .ListAs<ContainerInstancesServiceResource>(subscriptionIdentifier, resourceGroupIdentifier,
+                lookForNoOfSegments: 8)
+            .ToArray();
+
+        return new ControlPlaneOperationResult<ContainerInstancesServiceResource[]>(OperationResult.Success, resources);
+    }
+
+    public ControlPlaneOperationResult Restart(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string containerGroupName)
+    {
+        var existing= Get(subscriptionIdentifier, resourceGroupIdentifier, containerGroupName);
+        if(existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, existing.Reason, existing.Code);
+        }
+        
+        return new ControlPlaneOperationResult(OperationResult.Success);
     }
 }

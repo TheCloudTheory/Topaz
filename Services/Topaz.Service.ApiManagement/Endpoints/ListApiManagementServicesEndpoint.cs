@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.ApiManagement.Models;
 using Topaz.Service.ApiManagement.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -37,6 +38,8 @@ internal sealed class ListApiManagementServicesEndpoint(Pipeline eventPipeline, 
             return;
         }
 
-        response.CreateJsonContentResponse(ApiManagementServiceListResultResponse.From(existing.Resource!));
+        response.CreateJsonContentResponse(ApiManagementServiceListResultResponse.From([
+            .. existing.Resource!.Select(ApiManagementServiceResource (service) => service)
+        ]));
     }
 }

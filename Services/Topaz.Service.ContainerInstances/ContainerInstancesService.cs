@@ -17,6 +17,10 @@ public sealed class ContainerInstancesService(Pipeline eventPipeline, ITopazLogg
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new CreateOrUpdateContainerGroupEndpoint(eventPipeline, logger)
+        new CreateOrUpdateContainerGroupEndpoint(eventPipeline, logger),
+        new GetContainerGroupEndpoint(eventPipeline, logger),
+        new ListContainerGroupsEndpoint(eventPipeline, logger),
+        new ListContainerGroupsByResourceGroupEndpoint(eventPipeline, logger),
+        new DeleteContainerGroupEndpoint(eventPipeline, logger),
     ];
 }
