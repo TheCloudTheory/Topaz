@@ -55,27 +55,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ### Azure Container Instances — initial control plane
 
 <!--
-TODO: Azure Container Instances: New service project scaffold
-  Create Topaz.Service.ContainerInstances following existing service conventions:
-  - ContainerGroupResourceProperties + ContainerGroupResource (ArmResource<T>) capturing:
-    containers (array of ContainerDefinition with name, image, resources, ports, environmentVariables,
-    volumeMounts), osType (Linux/Windows), restartPolicy (Always/OnFailure/Never),
-    ipAddress (type: Public/Private, ports, ip), provisioningState (always Succeeded),
-    instanceView (state: Running), volumes.
-  - ContainerGroupResourceProvider (ResourceProviderBase<T>) for filesystem persistence
-    under .topaz/container-instances/{subscriptionId}/{resourceGroup}/{groupName}/.
-  - ContainerInstancesServiceControlPlane implementing IControlPlane with a working Deploy()
-    that maps GenericResource → ContainerGroupResource via resource.As<T,TProps>().
-  - IServiceDefinition registration and wiring in Topaz.Host.
-  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
-    case "Microsoft.ContainerInstance/containerGroups": entry in
-    TemplateDeploymentOrchestrator.RouteDeployment().
-  See: https://learn.microsoft.com/en-us/rest/api/container-instances/operation-groups?view=rest-container-instances-2025-09-01
-  milestone: v1.10-preview
-  labels: enhancement, container-instances, good first issue
--->
-
-<!--
 TODO: Azure Container Instances: Container Groups control plane endpoints
   Implement the ARM-level ContainerGroup resource surface
   (Microsoft.ContainerInstance/containerGroups):

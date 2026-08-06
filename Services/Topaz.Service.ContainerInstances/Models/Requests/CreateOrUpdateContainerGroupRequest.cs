@@ -1,0 +1,3 @@
+namespace Topaz.Service.ContainerInstances.Models.Requests;
+
+internal sealed class CreateOrUpdateContainerGroupRequest : ContainerInstancesServiceResource;

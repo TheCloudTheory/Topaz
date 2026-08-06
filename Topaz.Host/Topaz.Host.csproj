@@ -17,6 +17,7 @@
     <ProjectReference Include="../Services/Topaz.Service.Subscription/Topaz.Service.Subscription.csproj" />
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
     <ProjectReference Include="..\Services\Topaz.Service.ApiManagement\Topaz.Service.ApiManagement.csproj" />
+    <ProjectReference Include="..\Services\Topaz.Service.ContainerInstances\Topaz.Service.ContainerInstances.csproj" />
     <ProjectReference Include="..\Services\Topaz.Service.Redis\Topaz.Service.Redis.csproj" />
     <ProjectReference Include="..\Topaz.Chaos\Topaz.Chaos.csproj" />
     <ProjectReference Include="..\Topaz.CloudEnvironment\Topaz.CloudEnvironment.csproj" />
