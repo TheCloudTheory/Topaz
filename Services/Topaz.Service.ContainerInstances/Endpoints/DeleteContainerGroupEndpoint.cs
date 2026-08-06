@@ -46,12 +46,18 @@ internal sealed class DeleteContainerGroupEndpoint(Pipeline eventPipeline, ITopa
         }
 
         var result = _controlPlane.Delete(sub, rg, name);
+        if (result.Result == OperationResult.NotFound)
+        {
+            response.CreateNotFoundResponse(result);
+            return;
+        }
+        
         if (result.Result != OperationResult.Deleted)
         {
             response.CreateErrorResponse(result);
             return;
         }
 
-        response.CreateNoContentResponse();
+        response.CreateJsonContentResponse(result.Resource!);
     }
 }

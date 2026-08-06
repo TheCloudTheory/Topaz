@@ -105,25 +105,25 @@ internal sealed class ContainerInstancesServiceControlPlane(
             : new ControlPlaneOperationResult<ContainerInstancesServiceResource>(OperationResult.Success, resource);
     }
 
-    public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string containerGroupName)
+    public ControlPlaneOperationResult<ContainerInstancesServiceResource> Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string containerGroupName)
     {
         var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound)
         {
-            return new ControlPlaneOperationResult(
-                OperationResult.NotFound, resourceGroupOperation.Reason, resourceGroupOperation.Code);
+            return new ControlPlaneOperationResult<ContainerInstancesServiceResource>(
+                OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
         }
             
         var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, containerGroupName);
         if(existing.Result == OperationResult.NotFound)
         {
-            return new ControlPlaneOperationResult(
-                OperationResult.NotFound, existing.Reason, existing.Code);
+            return new ControlPlaneOperationResult<ContainerInstancesServiceResource>(
+                OperationResult.NotFound, null, existing.Reason, existing.Code);
         }
         
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, containerGroupName);
 
-        return new ControlPlaneOperationResult(OperationResult.Deleted);
+        return new ControlPlaneOperationResult<ContainerInstancesServiceResource>(OperationResult.Deleted, existing.Resource);
     }
 
     public ControlPlaneOperationResult<ContainerInstancesServiceResource[]> List(SubscriptionIdentifier subscriptionIdentifier)
