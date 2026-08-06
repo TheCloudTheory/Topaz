@@ -26,7 +26,30 @@ internal sealed class ApiManagementProductControlPlane(Pipeline eventPipeline, A
     
     public OperationResult Deploy(GenericResource resource)
     {
-        throw new NotImplementedException();
+        var product = resource.AsSubresource<ProductContractResource, ProductContractResourceProperties>();
+        if (product == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a ApiManagement product instance.");
+            return OperationResult.Failed;
+        }
+
+        try
+        {
+            var result = CreateOrUpdate(product.GetSubscription(), product.GetResourceGroup(), product.GetParentId(), product.GetName(), CreateOrUpdateProductRequest.From(product), "*");
+            if (result.Result != OperationResult.Created && result.Result != OperationResult.Updated)
+            {
+                logger.LogError(nameof(ApiManagementProductControlPlane), nameof(Deploy), $"Failed to create or update product `{product.Id}`. Reason: {result.Reason}");
+            }
+            
+            return result.Result is OperationResult.Created or OperationResult.Updated
+                ? OperationResult.Success
+                : OperationResult.Failed;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            return OperationResult.Failed;
+        }
     }
 
     public ControlPlaneOperationResult<ProductContractResource> CreateOrUpdate(SubscriptionIdentifier subscriptionIdentifier,

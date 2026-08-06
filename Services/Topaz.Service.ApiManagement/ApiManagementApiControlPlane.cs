@@ -25,7 +25,30 @@ internal sealed class ApiManagementApiControlPlane(
 
     public OperationResult Deploy(GenericResource resource)
     {
-        throw new NotImplementedException();
+        var api = resource.AsSubresource<ApiContractResource, ApiContractResourceProperties>();
+        if (api == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a ApiManagement API instance.");
+            return OperationResult.Failed;
+        }
+
+        try
+        {
+            var result = CreateOrUpdate(api.GetSubscription(), api.GetResourceGroup(), api.GetParentId(), api.GetName(), CreateOrUpdateApiRequest.From(api), "*");
+            if (result.Result != OperationResult.Created && result.Result != OperationResult.Updated)
+            {
+                logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Deploy), $"Failed to create or update API `{api.Id}`. Reason: {result.Reason}");
+            }
+            
+            return result.Result is OperationResult.Created or OperationResult.Updated
+                ? OperationResult.Success
+                : OperationResult.Failed;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            return OperationResult.Failed;
+        }
     }
 
     public ControlPlaneOperationResult<ApiContractResource> CreateOrUpdate(

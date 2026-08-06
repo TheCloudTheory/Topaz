@@ -22,6 +22,24 @@ public abstract class ArmSubresource<T>
         return ResourceGroupIdentifier.From(Id.Split("/")[4]);
     }
 
+    /// <summary>
+    /// Retrieves the last segment of the resource name, which typically represents
+    /// the unique identifier for the resource within its hierarchy.
+    /// </summary>
+    /// <returns>
+    /// A string containing the last segment of the resource name.
+    /// </returns>
+    public string GetName()
+    {
+        var segments = Name.Split('/');
+        return segments[^1];
+    }
+    
+    public string GetParentId()
+    {
+        return Id.Split("/")[9];
+    }
+
     public override string ToString()
     {
         return JsonSerializer.Serialize(this, GetType(), GlobalSettings.JsonOptions);

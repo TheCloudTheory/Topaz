@@ -4,6 +4,7 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.ApiManagement;
 using Azure.ResourceManager.ApiManagement.Models;
 using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -220,5 +221,38 @@ public class ApiManagementTests
             new ApiManagementServiceNameAvailabilityContent(serviceName));
 
         Assert.That(result.Value.IsNameAvailable, Is.False);
+    }
+
+    [Test]
+    public async Task ApiManagementService_DeployedViaArmTemplate_ServiceAndChildResourcesExist()
+    {
+        const string serviceName = "apim-arm-deploy-test";
+        var armClient = CreateArmClient();
+        var resourceGroup = await GetResourceGroupAsync(armClient);
+
+        await resourceGroup.GetArmDeployments().CreateOrUpdateAsync(
+            WaitUntil.Completed,
+            "deploy-apim-test",
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/apim-test-resources.json")),
+                Parameters = BinaryData.FromObjectAsJson(new
+                {
+                    serviceName = new { value = serviceName }
+                })
+            }));
+
+        var service = (await resourceGroup.GetApiManagementServiceAsync(serviceName)).Value;
+        var api = (await service.GetApiAsync("test-api")).Value;
+        var backend = (await service.GetApiManagementBackendAsync("test-backend")).Value;
+        var product = (await service.GetApiManagementProductAsync("test-product")).Value;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(service.Data.Name, Is.EqualTo(serviceName));
+            Assert.That(api.Data.Path, Is.EqualTo("test-api"));
+            Assert.That(backend.Data.Uri, Is.EqualTo(new Uri("https://backend.example.com")));
+            Assert.That(product.Data.DisplayName, Is.EqualTo("Test Product"));
+        }
     }
 }

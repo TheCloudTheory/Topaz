@@ -1,0 +1,94 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "serviceName": {
+      "type": "string",
+      "metadata": { "description": "Name of the API Management service instance." }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "westeurope"
+    },
+    "publisherEmail": {
+      "type": "string",
+      "defaultValue": "admin@example.com"
+    },
+    "publisherName": {
+      "type": "string",
+      "defaultValue": "Test Publisher"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ApiManagement/service",
+      "apiVersion": "2022-08-01",
+      "name": "[parameters('serviceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Developer",
+        "capacity": 1
+      },
+      "properties": {
+        "publisherEmail": "[parameters('publisherEmail')]",
+        "publisherName": "[parameters('publisherName')]"
+      }
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis",
+      "apiVersion": "2022-08-01",
+      "name": "[concat(parameters('serviceName'), '/test-api')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))]"
+      ],
+      "properties": {
+        "displayName": "Test API",
+        "path": "test-api",
+        "protocols": [ "https" ]
+      }
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/backends",
+      "apiVersion": "2022-08-01",
+      "name": "[concat(parameters('serviceName'), '/test-backend')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))]"
+      ],
+      "properties": {
+        "url": "https://backend.example.com",
+        "protocol": "http"
+      }
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/policies",
+      "apiVersion": "2022-08-01",
+      "name": "[concat(parameters('serviceName'), '/policy')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))]"
+      ],
+      "properties": {
+        "value": "<policies><inbound><base /></inbound><backend><base /></backend><outbound><base /></outbound></policies>",
+        "format": "xml"
+      }
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/products",
+      "apiVersion": "2022-08-01",
+      "name": "[concat(parameters('serviceName'), '/test-product')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))]"
+      ],
+      "properties": {
+        "displayName": "Test Product",
+        "state": "notPublished",
+        "subscriptionRequired": false
+      }
+    }
+  ],
+  "outputs": {
+    "serviceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))]"
+    }
+  }
+}

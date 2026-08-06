@@ -24,7 +24,30 @@ internal sealed class ApiManagementPolicyControlPlane(
     
     public OperationResult Deploy(GenericResource resource)
     {
-        throw new NotImplementedException();
+        var policy = resource.AsSubresource<PolicyContractResource, PolicyContractResourceProperties>();
+        if (policy == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a ApiManagement policy instance.");
+            return OperationResult.Failed;
+        }
+
+        try
+        {
+            var result = CreateOrUpdate(policy.GetSubscription(), policy.GetResourceGroup(), policy.GetParentId(), policy.GetName(), CreateOrUpdatePolicyRequest.From(policy), "*");
+            if (result.Result != OperationResult.Created && result.Result != OperationResult.Updated)
+            {
+                logger.LogError(nameof(ApiManagementPolicyControlPlane), nameof(Deploy), $"Failed to create or update policy `{policy.Id}`. Reason: {result.Reason}");
+            }
+            
+            return result.Result is OperationResult.Created or OperationResult.Updated
+                ? OperationResult.Success
+                : OperationResult.Failed;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            return OperationResult.Failed;
+        }
     }
     
     public ControlPlaneOperationResult<PolicyContractResource> CreateOrUpdate(

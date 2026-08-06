@@ -395,11 +395,6 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return Path.Combine(basePath, resolvedId, "data");
     }
 
-    private static void ThrowIfIdentifierContainsForbiddenExpressions(string identifier)
-    {
-        PathGuard.ValidateName(identifier);
-    }
-
     public void CreateOrUpdateSubresource<TModel>(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string id, string parentId, string subresource, TModel model)
     {

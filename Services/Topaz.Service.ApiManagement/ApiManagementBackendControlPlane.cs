@@ -24,7 +24,30 @@ internal sealed class ApiManagementBackendControlPlane(
     
     public OperationResult Deploy(GenericResource resource)
     {
-        throw new NotImplementedException();
+        var backend = resource.AsSubresource<BackendContractResource, BackendContractResourceProperties>();
+        if (backend == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a ApiManagement backend instance.");
+            return OperationResult.Failed;
+        }
+
+        try
+        {
+            var result = CreateOrUpdate(backend.GetSubscription(), backend.GetResourceGroup(), backend.GetParentId(), backend.GetName(), CreateOrUpdateBackendRequest.From(backend), "*");
+            if (result.Result != OperationResult.Created && result.Result != OperationResult.Updated)
+            {
+                logger.LogError(nameof(ApiManagementBackendControlPlane), nameof(Deploy), $"Failed to create or update backend `{backend.Id}`. Reason: {result.Reason}");
+            }
+            
+            return result.Result is OperationResult.Created or OperationResult.Updated
+                ? OperationResult.Success
+                : OperationResult.Failed;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            return OperationResult.Failed;
+        }
     }
     
     public ControlPlaneOperationResult<BackendContractResource> CreateOrUpdate(

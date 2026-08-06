@@ -20,6 +20,41 @@ internal sealed class CreateOrUpdateApiRequest
     public string? TermsOfServiceUrl { get; init; }
     public string? Type { get; init; }
     public CreateOrUpdateApiRequestProperties? Properties { get; init; }
+
+    public static CreateOrUpdateApiRequest From(ApiContractResource api)
+    {
+        return new CreateOrUpdateApiRequest
+        {
+            ApiRevision = api.Properties.ApiRevision,
+            ApiRevisionDescription = api.Properties.ApiRevisionDescription,
+            ApiVersion = api.Properties.ApiVersion,
+            ApiVersionDescription = api.Properties.ApiVersionDescription,
+            ApiVersionSetId = api.Properties.ApiVersionSetId,
+            AuthenticationSettings = api.Properties.AuthenticationSettings,
+            Contact = api.Properties.Contact,
+            Description = api.Properties.Description,
+            IsCurrent = api.Properties.IsCurrent,
+            License = api.Properties.License,
+            SubscriptionKeyParameterNames = api.Properties.SubscriptionKeyParameterNames,
+            SubscriptionRequired = api.Properties.SubscriptionRequired,
+            TermsOfServiceUrl = api.Properties.TermsOfServiceUrl,
+            Type = api.Properties.Type,
+            Properties = new CreateOrUpdateApiRequestProperties
+            {
+                Path = api.Properties.Path,
+                ApiType = api.Properties.ApiType,
+                ApiVersionSet = api.Properties.ApiVersionSet,
+                DisplayName = api.Properties.DisplayName,
+                Format = api.Properties.Format,
+                Protocols = api.Properties.Protocols,
+                ServiceUrl = api.Properties.ServiceUrl,
+                SourceApiId = api.Properties.SourceApiId,
+                TranslateRequiredQueryParameters = api.Properties.TranslateRequiredQueryParameters,
+                Value = api.Properties.Value,
+                WsdlSelector = api.Properties.WsdlSelector
+            }
+        };
+    }
 }
 
 [UsedImplicitly]

@@ -410,6 +410,18 @@ public sealed class TemplateDeploymentOrchestrator(
                 case "microsoft.apimanagement/service":
                     controlPlane = ApiManagementServiceControlPlane.New(eventPipeline, logger);
                     break;
+                case "microsoft.apimanagement/service/apis":
+                    controlPlane = ApiManagementApiControlPlane.New(eventPipeline, logger);
+                    break;
+                case "microsoft.apimanagement/service/backends":
+                    controlPlane = ApiManagementBackendControlPlane.New(eventPipeline, logger);
+                    break;
+                case "microsoft.apimanagement/service/products":
+                    controlPlane = ApiManagementProductControlPlane.New(eventPipeline, logger);
+                    break;
+                case "microsoft.apimanagement/service/policies":
+                    controlPlane = ApiManagementPolicyControlPlane.New(eventPipeline, logger);
+                    break;
                 case "microsoft.resources/deployments":
                     HandleNestedDeployment(genericResource, templateDeployment, resource, ref hasProvisioningFailed);
                     break;
