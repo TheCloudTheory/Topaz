@@ -70,6 +70,11 @@ public sealed class ApiManagementService(Pipeline eventPipeline, ITopazLogger lo
         new GetPolicyEntityTagEndpoint(eventPipeline, logger),
         new GetSignInSettingsEndpoint(eventPipeline, logger),
         new CreateOrUpdateSignInSettingsEndpoint(eventPipeline, logger),
-        new UpdateSignInSettingsEndpoint(eventPipeline, logger)
+        new UpdateSignInSettingsEndpoint(eventPipeline, logger),
+        new GetSignInSettingsEntityTagEndpoint(eventPipeline, logger),
+        new CreateOrUpdateSignUpSettingsEndpoint(eventPipeline, logger),
+        new GetSignUpSettingsEndpoint(eventPipeline, logger),
+        new GetSignUpSettingsEntityTagEndpoint(eventPipeline, logger),
+        new UpdateSignUpSettingsEndpoint(eventPipeline, logger)
     ];
 }

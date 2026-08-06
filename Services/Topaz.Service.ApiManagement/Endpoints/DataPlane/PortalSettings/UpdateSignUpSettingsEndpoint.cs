@@ -10,7 +10,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ApiManagement.Endpoints.DataPlane.PortalSettings;
 
-internal sealed class UpdateSignInSettingsEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class UpdateSignUpSettingsEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly PortalSettingsControlPlane _controlPlane =
@@ -20,7 +20,7 @@ internal sealed class UpdateSignInSettingsEndpoint(Pipeline eventPipeline, ITopa
 
     public string[] Endpoints =>
     [
-        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/portalsettings/signin"
+        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/portalsettings/signup"
     ];
 
     public string[] Permissions => ["Microsoft.ApiManagement/service/portalsettings/write"];
@@ -42,7 +42,7 @@ internal sealed class UpdateSignInSettingsEndpoint(Pipeline eventPipeline, ITopa
 
         using var reader = new StreamReader(context.Request.Body);
         var request =
-            JsonSerializer.Deserialize<CreateOrUpdatePortalSignInSettingsRequest>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+            JsonSerializer.Deserialize<CreateOrUpdatePortalSignUpSettingsRequest>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
         if (request == null)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
@@ -53,7 +53,7 @@ internal sealed class UpdateSignInSettingsEndpoint(Pipeline eventPipeline, ITopa
             ? value.ToString()
             : null;
 
-        var result = _controlPlane.UpdateSignInSettings(sub, rg, name, request, ifMatch);
+        var result = _controlPlane.UpdateSignUpSettings(sub, rg, name, request, ifMatch);
         switch (result.Result)
         {
             case OperationResult.NotFound:

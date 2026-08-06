@@ -112,7 +112,7 @@ internal sealed class PortalSettingsControlPlane(
         return new ControlPlaneOperationResult<string>(OperationResult.Success, etag?.Value);
     }
 
-    public ControlPlaneOperationResult<PortalSignInSettingsResource> Update(
+    public ControlPlaneOperationResult<PortalSignInSettingsResource> UpdateSignInSettings(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName,
         CreateOrUpdatePortalSignInSettingsRequest request, string? ifMatch)
     {
@@ -144,7 +144,7 @@ internal sealed class PortalSettingsControlPlane(
 
         if (etag == null)
         {
-            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Update),
+            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(UpdateSignInSettings),
                 "API Management sign-in setting is missing ETag value");
 
             return new ControlPlaneOperationResult<PortalSignInSettingsResource>(OperationResult.Failed, null,
@@ -229,5 +229,83 @@ internal sealed class PortalSettingsControlPlane(
             ? new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.Success, existing)
             : new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.NotFound, null,
                 "SignInSettings not found", "PortalSettingsNotFound");
+    }
+    
+    public ControlPlaneOperationResult<string> GetSignUpSettingsEntityTag(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<string>(OperationResult.NotFound, null,
+                apimOperation.Reason, apimOperation.Code);
+        }
+
+        var existing = GetSignUpSettings(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<string>(OperationResult.NotFound, null, existing.Reason, existing.Code);
+        }
+
+        var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, "signup",
+            apimName, PortalSettingsETagSubresourceId);
+
+        return new ControlPlaneOperationResult<string>(OperationResult.Success, etag?.Value);
+    }
+    
+    public ControlPlaneOperationResult<PortalSignUpSettingsResource> UpdateSignUpSettings(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName,
+        CreateOrUpdatePortalSignUpSettingsRequest request, string? ifMatch)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.NotFound, null,
+                apimOperation.Reason, apimOperation.Code);
+        }
+
+        var existing = GetSignUpSettings(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.NotFound, null,
+                existing.Reason, existing.Code);
+        }
+
+        // As per API docs, If-Match is required for Update operation,
+        // and it must match the current ETag (unless it's unconditional update with "*")
+        if (string.IsNullOrWhiteSpace(ifMatch))
+        {
+            return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.BadRequest, null,
+                "If-Match is required for update requests.", "MissingIfMatchHeader");
+        }
+
+        var etag = provider.GetSubresourceAs<ContractEtag>(subscriptionIdentifier, resourceGroupIdentifier, "signup",
+            apimName, PortalSettingsETagSubresourceId);
+
+        if (etag == null)
+        {
+            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(UpdateSignInSettings),
+                "API Management sign-in setting is missing ETag value");
+
+            return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.Failed, null,
+                "ETag not found",
+                "InvalidStateError");
+        }
+
+        if (ifMatch != "*" && !etag.IsEqualToETag(ifMatch))
+        {
+            return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.Conflict, null,
+                "If-Match does not match ETag value", "ConcurrentOperationFailed");
+        }
+
+        existing.Resource!.UpdateFromRequest(request);
+
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, "signup", apimName,
+            PortalSettingsSubresourceId, request);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, "signup", apimName,
+            PortalSettingsETagSubresourceId, existing.Resource.ETag);
+
+        return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.Updated, existing.Resource);
     }
 }
