@@ -24,18 +24,25 @@ internal sealed class ContainerInstancesServiceControlPlane(
 
     public OperationResult Deploy(GenericResource resource)
     {
-        // TODO: replace MyResource / MyResourceProperties with your actual model types
-        // var typed = resource.As<MyResource, MyResourceProperties>();
-        // if (typed == null)
-        // {
-        //     logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a ContainerInstances instance.");
-        //     return OperationResult.Failed;
-        // }
+        var aci = resource.As<ContainerInstancesServiceResource, ContainerInstancesServiceResourceProperties>();
+        if (aci == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Azure Container Instances instance.");
+            return OperationResult.Failed;
+        }
+
+        if (string.IsNullOrWhiteSpace(aci.Location))
+        {
+            logger.LogError($"Azure Container Instances resource `{resource.Id}` is missing required location.");
+            return OperationResult.Failed;
+        }
 
         try
         {
-            // TODO: call CreateOrUpdate / other provider methods here
-            return OperationResult.Success;
+            var result = CreateOrUpdate(aci.GetSubscription(), aci.GetResourceGroup(), aci.Name, CreateOrUpdateContainerGroupRequest.From(aci));
+            return result.Result is OperationResult.Created or OperationResult.Updated
+                ? OperationResult.Success
+                : OperationResult.Failed;
         }
         catch (Exception ex)
         {
