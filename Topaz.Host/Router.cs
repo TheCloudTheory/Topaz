@@ -256,7 +256,9 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "Request body: {0}", requestBodyContent);
             }
             
-            response!.Content = new StringContent(ex.Message);
+            logger.LogError(nameof(Router), nameof(CallEndpoint), "Failed to parse JSON body. Error: {0}", ex.Message);
+            
+            response!.Content = new StringContent("Failed to parse JSON body.");
             response.StatusCode = HttpStatusCode.InternalServerError;
         }
         catch(Exception ex)
