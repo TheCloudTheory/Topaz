@@ -30,6 +30,7 @@ using Topaz.Service.AppConfiguration.Commands;
 using Topaz.Service.LogAnalytics.Commands;
 using Topaz.FinOps.Commands;
 using Topaz.Chaos.Commands;
+using Topaz.Service.ContainerInstances.Commands;
 using Topaz.Service.Insights.Commands;
 using Topaz.Service.Redis.Commands;
 using Topaz.Shared;
@@ -167,7 +168,8 @@ internal class Program
             typeof(GenericChaosCommand),
             typeof(GenericInsightsCommand),
             typeof(GenericPublicIpAddressCommand),
-            typeof(GenericRedisCommand)
+            typeof(GenericRedisCommand),
+            typeof(GenericContainerInstancesCommand),
         };
 
         var commands = Assembly.GetExecutingAssembly()
