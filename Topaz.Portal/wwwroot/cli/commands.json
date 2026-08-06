@@ -1126,6 +1126,186 @@
     ]
   },
   {
+    "name": "apim policy create",
+    "group": "api-management",
+    "description": "Creates or updates a policy in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--policy-id",
+        "description": "(Required) policy identifier",
+        "required": false
+      },
+      {
+        "names": "--value",
+        "description": "(Required) policy content",
+        "required": false
+      },
+      {
+        "names": "--format",
+        "description": "(Optional) policy content format (default: xml)",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for optimistic concurrency",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a policy in an API Management service",
+        "command": "topaz apim policy create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --policy-id \u0022policy\u0022 \\\n    --value \u0022\u003Cpolicies\u003E\u003Cinbound /\u003E\u003C/policies\u003E\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim policy delete",
+    "group": "api-management",
+    "description": "Deletes a policy in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--policy-id",
+        "description": "(Required) policy identifier",
+        "required": false
+      },
+      {
+        "names": "--if-match",
+        "description": "(Optional) ETag for optimistic concurrency",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a policy in an API Management service",
+        "command": "topaz apim policy delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --policy-id \u0022policy\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim policy get-entity-tag",
+    "group": "api-management",
+    "description": "Gets the entity tag (ETag) for a policy in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--policy-id",
+        "description": "(Required) policy identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets the ETag for a policy",
+        "command": "topaz apim policy get-entity-tag --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --policy-id \u0022policy\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim policy list",
+    "group": "api-management",
+    "description": "Lists policies in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists policies in an API Management service",
+        "command": "topaz apim policy list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "apim policy show",
+    "group": "api-management",
+    "description": "Gets a policy in an Azure API Management service.",
+    "options": [
+      {
+        "names": "--service-name",
+        "description": "(Required) API Management service name",
+        "required": false
+      },
+      {
+        "names": "--policy-id",
+        "description": "(Required) policy identifier",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a policy in an API Management service",
+        "command": "topaz apim policy show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --service-name \u0022my-apim\u0022 \\\n    --policy-id \u0022policy\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
     "name": "apim product add-api",
     "group": "api-management",
     "description": "Assigns an API to a product in an Azure API Management service.",

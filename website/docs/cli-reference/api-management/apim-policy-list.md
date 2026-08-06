@@ -1,9 +1,9 @@
 ---
-sidebar_position: 33
+sidebar_position: 21
 ---
 
-# apim api list
-Lists APIs in an Azure API Management service.
+# apim policy list
+Lists policies in an Azure API Management service.
 
 ## Options
 * `--service-name` - (Required) API Management service name
@@ -12,9 +12,9 @@ Lists APIs in an Azure API Management service.
 
 ## Examples
 
-### Lists APIs in an API Management service
+### Lists policies in an API Management service
 ```bash
-$ topaz apim api list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \
+$ topaz apim policy list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \
     --service-name "my-apim" \
     --resource-group "rg-local"
 ```
