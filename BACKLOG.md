@@ -52,22 +52,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 
 ## v1.10-preview
 
-<!--
-TODO: Azure API Management: Data plane — Policies CRUD
-  Implement ARM-level Policy resource endpoints at service, API, and operation scope:
-  - PUT    .../service/{name}/policies/policy         – service-level policy
-  - GET    .../service/{name}/policies/policy
-  - DELETE .../service/{name}/policies/policy
-  - PUT    .../service/{name}/apis/{apiId}/policies/policy     – API-level policy
-  - GET    .../service/{name}/apis/{apiId}/policies/policy
-  - DELETE .../service/{name}/apis/{apiId}/policies/policy
-  Policies are stored as raw XML strings (APIM policy document format). No policy
-  execution is performed in v1.10; the emulator stores and returns the XML verbatim.
-  Policy execution (inbound/outbound/backend/on-error) is planned for a future version.
-  milestone: v1.10-preview
-  labels: enhancement, api-management
--->
-
 ### Azure Container Instances — initial control plane
 
 <!--
