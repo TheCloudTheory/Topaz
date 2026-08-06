@@ -167,4 +167,67 @@ internal sealed class PortalSettingsControlPlane(
 
         return new ControlPlaneOperationResult<PortalSignInSettingsResource>(OperationResult.Updated, existing.Resource);
     }
+
+    public ControlPlaneOperationResult<PortalSignUpSettingsResource> CreateOrUpdateSignUpSettings(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName,
+        CreateOrUpdatePortalSignUpSettingsRequest request, string? ifMatch)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.NotFound, null,
+                apimOperation.Reason, apimOperation.Code);
+        }
+
+        var existing = GetSignUpSettings(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (existing.Result == OperationResult.NotFound)
+        {
+            var signInSettings = new PortalSignUpSettingsResource(subscriptionIdentifier, resourceGroupIdentifier, apimName,
+                PortalSignUpSettingsResource.From(request));
+
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, "signup", apimName,
+                PortalSettingsSubresourceId, signInSettings);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, "signup", apimName,
+                PortalSettingsETagSubresourceId, signInSettings.ETag);
+
+            return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.Created, signInSettings);
+        }
+
+        // As per API docs, If-Match is required for CreateOrUpdateSignInSettings operation
+        // when it's an update operation
+        if (string.IsNullOrWhiteSpace(ifMatch))
+        {
+            return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.BadRequest, null,
+                "If-Match is required for update requests.", "MissingIfMatchHeader");
+        }
+
+        existing.Resource!.UpdateFromRequest(request);
+
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, "signup", apimName,
+            PortalSettingsSubresourceId, request);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, "signup", apimName,
+            PortalSettingsETagSubresourceId, existing.Resource.ETag);
+
+        return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.Updated, existing.Resource);
+    }
+    
+    public ControlPlaneOperationResult<PortalSignUpSettingsResource> GetSignUpSettings(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName)
+    {
+        var apimOperation =
+            _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
+        if (apimOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.NotFound, null,
+                apimOperation.Reason, apimOperation.Code);
+        }
+
+        var existing = provider.GetSubresourceAs<PortalSignUpSettingsResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, "signup", apimName, PortalSettingsSubresourceId);
+
+        return existing != null
+            ? new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.Success, existing)
+            : new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.NotFound, null,
+                "SignInSettings not found", "PortalSettingsNotFound");
+    }
 }
