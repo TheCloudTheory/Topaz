@@ -60,4 +60,16 @@ internal sealed class PortalDelegationSettingsResource : ArmSubresource<PortalDe
         Properties.UserRegistration?.Enabled = request.Properties?.UserRegistration?.Enabled ?? false;
         Properties.ValidationKey = request.Properties?.ValidationKey;
     }
+
+    /// <summary>
+    /// Prepares the PortalDelegationSettingsResource instance for a GET operation by clearing sensitive properties.
+    /// </summary>
+    /// <returns>
+    /// A modified instance of PortalDelegationSettingsResource with sensitive properties, such as ValidationKey, set to null.
+    /// </returns>
+    public PortalDelegationSettingsResource ForGetOperation()
+    {
+        Properties.ValidationKey = null;
+        return this;
+    }
 }

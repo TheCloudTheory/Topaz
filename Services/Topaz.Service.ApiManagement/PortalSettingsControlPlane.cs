@@ -375,7 +375,7 @@ internal sealed class PortalSettingsControlPlane(
             resourceGroupIdentifier, DelegationSettingsId, apimName, PortalSettingsSubresourceId);
 
         return existing != null
-            ? new ControlPlaneOperationResult<PortalDelegationSettingsResource>(OperationResult.Success, existing)
+            ? new ControlPlaneOperationResult<PortalDelegationSettingsResource>(OperationResult.Success, existing.ForGetOperation())
             : new ControlPlaneOperationResult<PortalDelegationSettingsResource>(OperationResult.Success, PortalDelegationSettingsResource.Default);
     }
 
