@@ -72,18 +72,6 @@ TODO: Azure Container Instances: Container Groups control plane endpoints
 -->
 
 <!--
-TODO: Azure Container Instances: Container Groups lifecycle endpoints
-  Implement lifecycle operation endpoints for container groups:
-  - POST .../containerGroups/{name}/start   – start all containers (returns 204 No Content)
-  - POST .../containerGroups/{name}/stop    – stop all containers (returns 204 No Content)
-  - POST .../containerGroups/{name}/restart – restart all containers (returns 204 No Content)
-  All three operations are no-ops in the emulator (no real containers are started or stopped).
-  provisioningState and instanceView.state remain Succeeded/Running regardless of lifecycle calls.
-  milestone: v1.10-preview
-  labels: enhancement, container-instances
--->
-
-<!--
 TODO: Azure Container Instances: Containers data-plane endpoints (logs)
   Implement the Containers sub-resource endpoints:
   - GET .../containerGroups/{name}/containers/{containerName}/logs
