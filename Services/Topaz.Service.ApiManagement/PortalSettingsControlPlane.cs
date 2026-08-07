@@ -30,8 +30,9 @@ internal sealed class PortalSettingsControlPlane(
     {
         throw new NotImplementedException();
     }
-    
-    public ControlPlaneOperationResult<PortalSignInSettingsResource> GetSignInSettings(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName)
+
+    public ControlPlaneOperationResult<PortalSignInSettingsResource> GetSignInSettings(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName)
     {
         var apimOperation =
             _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
@@ -46,8 +47,7 @@ internal sealed class PortalSettingsControlPlane(
 
         return existing != null
             ? new ControlPlaneOperationResult<PortalSignInSettingsResource>(OperationResult.Success, existing)
-            : new ControlPlaneOperationResult<PortalSignInSettingsResource>(OperationResult.NotFound, null,
-                "SignInSettings not found", "PortalSettingsNotFound");
+            : new ControlPlaneOperationResult<PortalSignInSettingsResource>(OperationResult.Success, PortalSignInSettingsResource.Default);
     }
 
     public ControlPlaneOperationResult<PortalSignInSettingsResource> CreateOrUpdateSignInSettings(
@@ -63,7 +63,7 @@ internal sealed class PortalSettingsControlPlane(
         }
 
         var existing = GetSignInSettings(subscriptionIdentifier, resourceGroupIdentifier, apimName);
-        if (existing.Result == OperationResult.NotFound)
+        if (existing.Result == OperationResult.NotFound || existing.Resource?.IsDefault == true)
         {
             var signInSettings = new PortalSignInSettingsResource(subscriptionIdentifier, resourceGroupIdentifier, apimName,
                 PortalSignInSettingsResource.From(request));
@@ -185,7 +185,7 @@ internal sealed class PortalSettingsControlPlane(
         }
 
         var existing = GetSignUpSettings(subscriptionIdentifier, resourceGroupIdentifier, apimName);
-        if (existing.Result == OperationResult.NotFound)
+        if (existing.Result == OperationResult.NotFound || existing.Resource?.IsDefault == true)
         {
             var signInSettings = new PortalSignUpSettingsResource(subscriptionIdentifier, resourceGroupIdentifier, apimName,
                 PortalSignUpSettingsResource.From(request));
@@ -215,8 +215,9 @@ internal sealed class PortalSettingsControlPlane(
 
         return new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.Updated, existing.Resource);
     }
-    
-    public ControlPlaneOperationResult<PortalSignUpSettingsResource> GetSignUpSettings(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName)
+
+    public ControlPlaneOperationResult<PortalSignUpSettingsResource> GetSignUpSettings(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName)
     {
         var apimOperation =
             _apiManagementServiceControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
@@ -231,10 +232,9 @@ internal sealed class PortalSettingsControlPlane(
 
         return existing != null
             ? new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.Success, existing)
-            : new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.NotFound, null,
-                "SignUpSettings not found", "PortalSettingsNotFound");
+            : new ControlPlaneOperationResult<PortalSignUpSettingsResource>(OperationResult.Success, PortalSignUpSettingsResource.Default);
     }
-    
+
     public ControlPlaneOperationResult<string> GetSignUpSettingsEntityTag(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string apimName)
     {
         var apimOperation =
@@ -326,7 +326,7 @@ internal sealed class PortalSettingsControlPlane(
         }
 
         var existing = GetDelegationSettings(subscriptionIdentifier, resourceGroupIdentifier, apimName);
-        if (existing.Result == OperationResult.NotFound)
+        if (existing.Result == OperationResult.NotFound || existing.Resource?.IsDefault == true)
         {
             var signInSettings = new PortalDelegationSettingsResource(subscriptionIdentifier, resourceGroupIdentifier, apimName,
                 PortalDelegationSettingsResourceProperties.From(request));
@@ -373,7 +373,6 @@ internal sealed class PortalSettingsControlPlane(
 
         return existing != null
             ? new ControlPlaneOperationResult<PortalDelegationSettingsResource>(OperationResult.Success, existing)
-            : new ControlPlaneOperationResult<PortalDelegationSettingsResource>(OperationResult.NotFound, null,
-                "DelegationSettings not found", "PortalSettingsNotFound");
+            : new ControlPlaneOperationResult<PortalDelegationSettingsResource>(OperationResult.Success, PortalDelegationSettingsResource.Default);
     }
 }

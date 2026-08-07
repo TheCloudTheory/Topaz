@@ -26,7 +26,7 @@ public sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscriptio
         
         var model = JsonSerializer.Deserialize<Models.Subscription>(data, GlobalSettings.JsonOptions);
 
-        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Success, model, null, null);
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Success, model);
     }
 
     public ControlPlaneOperationResult<Models.Subscription> Create(SubscriptionIdentifier subscriptionIdentifier,
@@ -47,7 +47,7 @@ public sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscriptio
             }
         });
 
-        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Created, model, null, null);
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Created, model);
     }
 
     internal void Delete(SubscriptionIdentifier subscriptionIdentifier)
@@ -61,7 +61,7 @@ public sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscriptio
         var subscriptions = rawSubscriptions
             .Select(s => JsonSerializer.Deserialize<Models.Subscription>(s, GlobalSettings.JsonOptions)!).ToArray();
         
-        return new ControlPlaneOperationResult<Models.Subscription[]>(OperationResult.Success, subscriptions, null, null);
+        return new ControlPlaneOperationResult<Models.Subscription[]>(OperationResult.Success, subscriptions);
     }
 
     public ControlPlaneOperationResult UpdateTags(SubscriptionIdentifier subscriptionIdentifier, string tagName, string tagValue)
@@ -81,7 +81,7 @@ public sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscriptio
             Tags = subscription.Resource.Tags
         });
         
-        return new ControlPlaneOperationResult(OperationResult.Updated, null, null);
+        return new ControlPlaneOperationResult(OperationResult.Updated);
     }
 
     public ControlPlaneOperationResult<Models.Subscription> Update(SubscriptionIdentifier subscriptionIdentifier,
@@ -97,8 +97,7 @@ public sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscriptio
         subscriptionOperation.Resource.UpdateFrom(request);
         
         provider.CreateOrUpdate(subscriptionIdentifier, null, null, subscriptionOperation.Resource);
-        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource,
-            null, null);
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource);
     }
 
     public ControlPlaneOperationResult<Models.Subscription[]> ListLocations(SubscriptionIdentifier subscriptionIdentifier)
@@ -114,7 +113,7 @@ public sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscriptio
                 SubscriptionNotFoundCode);
         }
 
-        return new ControlPlaneOperationResult<Models.Subscription[]>(OperationResult.Success, null, null, null);
+        return new ControlPlaneOperationResult<Models.Subscription[]>(OperationResult.Success, null);
     }
 
     public ControlPlaneOperationResult<Models.Subscription> Cancel(SubscriptionIdentifier subscriptionIdentifier)
@@ -133,8 +132,7 @@ public sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscriptio
         subscriptionOperation.Resource.State = "Disabled";
 
         provider.CreateOrUpdate(subscriptionIdentifier, null, null, subscriptionOperation.Resource);
-        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource,
-            null, null);
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource);
     }
 
     public ControlPlaneOperationResult<Models.Subscription> Enable(SubscriptionIdentifier subscriptionIdentifier)
@@ -153,7 +151,6 @@ public sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscriptio
         subscriptionOperation.Resource.State = "Enabled";
 
         provider.CreateOrUpdate(subscriptionIdentifier, null, null, subscriptionOperation.Resource);
-        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource,
-            null, null);
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource);
     }
 }

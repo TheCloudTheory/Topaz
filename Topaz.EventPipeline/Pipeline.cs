@@ -4,7 +4,7 @@ namespace Topaz.EventPipeline;
 
 public sealed class Pipeline(ITopazLogger logger)
 {
-    private readonly Dictionary<string, List<Action<object?>>> Handlers = new();
+    private readonly Dictionary<string, List<Action<object?>>> _handlers = new();
     
     public void RegisterHandler<TData>(string eventName, Action<TData?> handler) where TData : class
     {
@@ -26,9 +26,9 @@ public sealed class Pipeline(ITopazLogger logger)
             }
         };
         
-        if (!Handlers.TryGetValue(eventName, out var handlers))
+        if (!_handlers.TryGetValue(eventName, out var handlers))
         {
-            Handlers[eventName] = [genericHandler];
+            _handlers[eventName] = [genericHandler];
             return;
         }
         
@@ -39,7 +39,7 @@ public sealed class Pipeline(ITopazLogger logger)
     {
         logger.LogDebug(nameof(Pipeline), nameof(TriggerEvent), "Triggering event `{0}` with data `{1}`.", @event.Name, @event.Data);
         
-        if (!Handlers.TryGetValue(@event.Name, out var handlers))
+        if (!_handlers.TryGetValue(@event.Name, out var handlers))
         {
             logger.LogWarning($"No handlers registered for event `{@event.Name}`");
             return;

@@ -33,6 +33,25 @@ internal sealed class PortalDelegationSettingsResource : ArmSubresource<PortalDe
     
     [JsonIgnore]
     public ContractEtag? ETag { get; set; }
+    
+    [JsonIgnore]
+    public bool IsDefault { get; set; }
+
+    public static PortalDelegationSettingsResource Default => new()
+    {
+        IsDefault = true,
+        Properties = new PortalDelegationSettingsResourceProperties
+        {
+            Subscriptions = new PortalDelegationSettingsResourceProperties.SubscriptionsDelegationSettingsProperties
+            {
+                Enabled = false
+            },
+            UserRegistration = new PortalDelegationSettingsResourceProperties.RegistrationDelegationSettingsProperties
+            {
+                Enabled = false
+            }
+        }
+    };
 
     public void UpdateFromRequest(CreateOrUpdatePortalDelegationSettingsRequest request)
     {

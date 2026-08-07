@@ -33,6 +33,18 @@ internal sealed class PortalSignInSettingsResource : ArmSubresource<PortalSignIn
     
     [JsonIgnore]
     public ContractEtag? ETag { get; set; }
+    
+    [JsonIgnore]
+    public bool IsDefault { get; set; }
+
+    public static PortalSignInSettingsResource Default => new()
+    {
+        IsDefault = true,
+        Properties = new PortalSignInSettingsResourceProperties
+        {
+            Enabled = false
+        }
+    };
 
     public static PortalSignInSettingsResourceProperties From(CreateOrUpdatePortalSignInSettingsRequest request)
     {

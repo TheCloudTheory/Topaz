@@ -1,5 +1,6 @@
 using Topaz.Dns;
 using Topaz.EventPipeline;
+using Topaz.EventPipeline.Events;
 using Topaz.ResourceManager;
 using Topaz.Service.ApiManagement.Models;
 using Topaz.Service.ApiManagement.Models.Requests;
@@ -56,7 +57,7 @@ internal sealed class ApiManagementServiceControlPlane(
     }
 
     public ControlPlaneOperationResult<ApiManagementServiceFullResource> CreateOrUpdate(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string name, CreateOrUpdateApiManagementServiceRequest request)
+        ResourceGroupIdentifier resourceGroupIdentifier, string apimName, CreateOrUpdateApiManagementServiceRequest request)
     {
         var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound)
@@ -65,10 +66,10 @@ internal sealed class ApiManagementServiceControlPlane(
                 OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
         }
             
-        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, apimName);
         if(existing.Result == OperationResult.NotFound)
         {
-            var apim = new ApiManagementServiceFullResource(subscriptionIdentifier, resourceGroupIdentifier, name,
+            var apim = new ApiManagementServiceFullResource(subscriptionIdentifier, resourceGroupIdentifier, apimName,
                 request.Location!, request.Tags, request.Sku, ApiManagementServiceResourceProperties.From(request));
 
             if (!apim.Validate<ApiManagementServiceFullResource>().IsValid)
@@ -77,7 +78,7 @@ internal sealed class ApiManagementServiceControlPlane(
                     OperationResult.BadRequest, null, apim.Validate<ApiManagementServiceFullResource>().Error, "InvalidRequest");
             }
             
-            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, apim, createOperation: true);
+            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, apimName, apim, createOperation: true);
             
             return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
                 OperationResult.Created, apim);
@@ -91,7 +92,7 @@ internal sealed class ApiManagementServiceControlPlane(
                 OperationResult.BadRequest, null, existing.Resource.Validate<ApiManagementServiceFullResource>().Error, "InvalidRequest");
         }
         
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, existing.Resource, createOperation: false);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, apimName, existing.Resource, createOperation: false);
         return new ControlPlaneOperationResult<ApiManagementServiceFullResource>(
             OperationResult.Updated, existing.Resource);
     }
