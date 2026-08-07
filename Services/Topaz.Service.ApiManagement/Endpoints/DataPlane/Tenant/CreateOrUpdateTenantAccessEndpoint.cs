@@ -1,0 +1,79 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
+using Topaz.Service.ApiManagement.Models.Requests;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
+using Topaz.Shared.Extensions;
+
+namespace Topaz.Service.ApiManagement.Endpoints.DataPlane.Tenant;
+
+internal sealed class CreateOrUpdateTenantAccessEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : IEndpointDefinition
+{
+    private readonly TenantControlPlane _controlPlane =
+        TenantControlPlane.New(eventPipeline, logger);
+
+    public string ProviderNamespace => "Microsoft.ApiManagement";
+
+    public string[] Endpoints =>
+    [
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/tenant/access",
+    ];
+
+    public string[] Permissions => ["Microsoft.ApiManagement/service/tenant/write"];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        var sub = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var rg = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
+        var name = context.Request.Path.Value.ExtractValueFromPath(8);
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+
+        using var reader = new StreamReader(context.Request.Body);
+        var request =
+            JsonSerializer.Deserialize<CreateOrUpdateTenantAccessRequest>(reader.ReadToEnd(),
+                GlobalSettings.JsonOptions);
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+
+        var ifMatch = context.Request.Headers.TryGetValue("If-Match", out var value)
+            ? value.ToString()
+            : null;
+
+        var result = _controlPlane.CreateOrUpdateTenantAccess(sub, rg, name, request, ifMatch);
+        switch (result.Result)
+        {
+            case OperationResult.NotFound:
+                response.CreateNotFoundResponse(result);
+                return;
+            case OperationResult.BadRequest:
+                response.CreateErrorResponse(result, HttpStatusCode.BadRequest);
+                return;
+        }
+
+        if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
+        {
+            response.CreateErrorResponse(result.Code!, result.Reason!);
+            return;
+        }
+
+        response.StatusCode = result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+        response.Headers.ETag = new EntityTagHeaderValue($"\"{result.Resource.ETag?.Value!}\"");
+        response.CreateJsonContentResponse(result.Resource);
+    }
+}

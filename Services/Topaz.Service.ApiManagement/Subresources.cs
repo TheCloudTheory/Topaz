@@ -7,5 +7,6 @@ internal enum Subresources
     ProductApiAssignment,
     Backends,
     Policies,
-    PortalSettings
+    PortalSettings,
+    Tenants
 }
