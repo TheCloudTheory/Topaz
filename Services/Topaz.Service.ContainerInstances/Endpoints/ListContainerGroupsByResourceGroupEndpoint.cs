@@ -21,7 +21,7 @@ internal sealed class ListContainerGroupsByResourceGroupEndpoint(Pipeline eventP
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerInstance/containerGroups"
     ];
 
-    public string[] Permissions => ["Microsoft.ContainerInstances/service/read"];
+    public string[] Permissions => ["Microsoft.ContainerInstances/containerGroups/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

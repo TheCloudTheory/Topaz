@@ -20,7 +20,7 @@ internal sealed class StopContainerGroupEndpoint(Pipeline eventPipeline, ITopazL
         "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerInstance/containerGroups/{containerGroupName}/stop"
     ];
 
-    public string[] Permissions => ["Microsoft.ContainerInstances/service/write"];
+    public string[] Permissions => ["Microsoft.ContainerInstance/containerGroups/start/stop"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

@@ -202,4 +202,18 @@ public class ContainerInstancesTests
         Assert.ThrowsAsync<RequestFailedException>(async () =>
             await groups.GetAsync(ContainerGroupName));
     }
+    
+    [Test]
+    public async Task ContainerGroup_ListLogs_ShouldReturnLogs()
+    {
+        var client = CreateClient();
+        var subscription = await client.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var groups = resourceGroup.Value.GetContainerGroups();
+
+        var resource = await groups.CreateOrUpdateAsync(WaitUntil.Completed, ContainerGroupName, MinimalContainerGroup());
+        var logs = await resource.Value.GetContainerLogsAsync(ContainerGroupName);
+
+        Assert.That(logs.Value.Content, Is.Not.Null);
+    }
 }

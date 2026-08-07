@@ -21,7 +21,7 @@ internal sealed class DeleteContainerGroupEndpoint(Pipeline eventPipeline, ITopa
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerInstance/containerGroups/{containerGroupName}"
     ];
 
-    public string[] Permissions => ["Microsoft.ContainerInstances/service/delete"];
+    public string[] Permissions => ["Microsoft.ContainerInstances/containerGroups/delete"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

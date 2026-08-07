@@ -20,7 +20,7 @@ internal sealed class StartContainerGroupEndpoint(Pipeline eventPipeline, ITopaz
         "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerInstance/containerGroups/{containerGroupName}/start"
     ];
 
-    public string[] Permissions => ["Microsoft.ContainerInstances/service/write"];
+    public string[] Permissions => ["Microsoft.ContainerInstance/containerGroups/start/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

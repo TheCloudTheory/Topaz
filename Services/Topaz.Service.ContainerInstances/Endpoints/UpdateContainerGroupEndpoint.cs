@@ -23,7 +23,7 @@ internal sealed class UpdateContainerGroupEndpoint(Pipeline eventPipeline, ITopa
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerInstance/containerGroups/{containerGroupName}"
     ];
 
-    public string[] Permissions => ["Microsoft.ContainerInstances/service/write"];
+    public string[] Permissions => ["Microsoft.ContainerInstances/containerGroups/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

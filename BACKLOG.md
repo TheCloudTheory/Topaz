@@ -71,17 +71,6 @@ TODO: Azure Container Instances: Container Groups control plane endpoints
   labels: enhancement, container-instances
 -->
 
-<!--
-TODO: Azure Container Instances: Containers data-plane endpoints (logs)
-  Implement the Containers sub-resource endpoints:
-  - GET .../containerGroups/{name}/containers/{containerName}/logs
-    Returns a stub log body with a single line "Container emulated by Topaz."
-    Supports optional ?tail= query parameter (integer); ignored in emulation.
-  This satisfies `az container logs` calls without running real containers.
-  milestone: v1.10-preview
-  labels: enhancement, container-instances, good first issue
--->
-
 ## v1.11
 
 ### Blob Storage — ADLS Gen2 / ABFS DFS protocol

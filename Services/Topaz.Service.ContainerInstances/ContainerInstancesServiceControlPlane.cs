@@ -224,4 +224,22 @@ internal sealed class ContainerInstancesServiceControlPlane(
         return new ControlPlaneOperationResult<ContainerInstancesServiceResource>(
             OperationResult.Updated, existing.Resource);
     }
+
+    public ControlPlaneOperationResult<string> ListLogs(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string containerGroupName, string containerName)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<string>(
+                OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
+        }
+            
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, containerGroupName);
+        if(existing.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<string>(OperationResult.NotFound, null, existing.Reason, existing.Code);
+        }
+        
+        return new ControlPlaneOperationResult<string>(OperationResult.Success, "Logs streaming is not yet available in Topaz.");
+    }
 }

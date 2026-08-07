@@ -25,6 +25,7 @@ public sealed class ContainerInstancesService(Pipeline eventPipeline, ITopazLogg
         new RestartContainerGroupEndpoint(eventPipeline, logger),
         new StartContainerGroupEndpoint(eventPipeline, logger),
         new StopContainerGroupEndpoint(eventPipeline, logger),
-        new UpdateContainerGroupEndpoint(eventPipeline, logger)
+        new UpdateContainerGroupEndpoint(eventPipeline, logger),
+        new ListContainerLogsEndpoint(eventPipeline, logger)
     ];
 }
