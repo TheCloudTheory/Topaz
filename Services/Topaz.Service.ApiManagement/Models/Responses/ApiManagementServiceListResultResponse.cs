@@ -7,11 +7,11 @@ internal sealed class ApiManagementServiceListResultResponse : TopazApiModel
     public string? NextLink { get; set; }
     public ApiManagementServiceResource[]? Value { get; set; }
 
-    public static ApiManagementServiceListResultResponse From(ApiManagementServiceResource[] apims)
+    public static ApiManagementServiceListResultResponse From(ApiManagementServiceFullResource[] apims)
     {
         return new ApiManagementServiceListResultResponse
         {
-            Value = apims
+            Value = [.. apims.Select(apim => (ApiManagementServiceResource)apim)]
         };
     }
 }

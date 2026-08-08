@@ -530,7 +530,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cli_version: ['2.84.0', '2.85.0', '2.86.0']
+        cli_version: ['2.87.0', '2.88.0', '2.89.0']
     steps:
     - uses: actions/checkout@v4
       with:

@@ -344,7 +344,7 @@ public class Host
         if (_logger.LogLevel == LogLevel.Debug)
         {
             Trace.TraceLevel = TraceLevel.Frame;
-            Trace.TraceListener = (l, f, a) => _logger.LogDebug(nameof(Host), nameof(CreateAmqpListener),
+            Trace.TraceListener = (_, f, a) => _logger.LogDebug(nameof(Host), nameof(CreateAmqpListener),
                 $"[{address.Scheme}://{address.Host}:{address.Port}]: {string.Format(f, a)}");
         }
 

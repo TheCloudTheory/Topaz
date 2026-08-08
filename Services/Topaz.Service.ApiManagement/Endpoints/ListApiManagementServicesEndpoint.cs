@@ -38,8 +38,6 @@ internal sealed class ListApiManagementServicesEndpoint(Pipeline eventPipeline, 
             return;
         }
 
-        response.CreateJsonContentResponse(ApiManagementServiceListResultResponse.From([
-            .. existing.Resource!.Select(ApiManagementServiceResource (service) => service)
-        ]));
+        response.CreateJsonContentResponse(ApiManagementServiceListResultResponse.From(existing.Resource!));
     }
 }

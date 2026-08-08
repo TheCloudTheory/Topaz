@@ -166,8 +166,10 @@ internal sealed class ApiManagementServiceControlPlane(
             return new ControlPlaneOperationResult<ApiManagementServiceFullResource[]>(
                 OperationResult.NotFound, null, resourceGroupOperation.Reason, resourceGroupOperation.Code);
         }
-        
-        var existing = provider.ListAs<ApiManagementServiceFullResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
+
+        var existing = provider
+            .ListAs<ApiManagementServiceFullResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8)
+            .Where(apim => !GlobalDnsEntries.IsSoftDeleted(ApiManagementService.UniqueName, apim.Name));
 
         return new ControlPlaneOperationResult<ApiManagementServiceFullResource[]>(OperationResult.Success, [.. existing]);
     }
@@ -183,6 +185,7 @@ internal sealed class ApiManagementServiceControlPlane(
         
         var resources = provider.ListAs<ApiManagementServiceFullResource>(subscriptionIdentifier, null, lookForNoOfSegments: 8)
             .Where(r => r.IsInSubscription(subscriptionIdentifier))
+            .Where(apim => !GlobalDnsEntries.IsSoftDeleted(ApiManagementService.UniqueName, apim.Name))
             .ToArray();
         
         return new ControlPlaneOperationResult<ApiManagementServiceFullResource[]>(OperationResult.Success, resources);
