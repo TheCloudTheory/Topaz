@@ -50,27 +50,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
   labels: enhancement, service-bus, event-hub, amqp
 -->
 
-## v1.10-preview
-
-### Azure Container Instances — initial control plane
-
-<!--
-TODO: Azure Container Instances: Container Groups control plane endpoints
-  Implement the ARM-level ContainerGroup resource surface
-  (Microsoft.ContainerInstance/containerGroups):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups/{name}  – delete
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups/{name}  – update (tags)
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.ContainerInstance/containerGroups                              – list by subscription
-  provisioningState is always Succeeded. instanceView.state is always Running.
-  ipAddress.ip is a stub value (e.g. "10.0.0.1") assigned on creation.
-  Includes E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests.
-  milestone: v1.10-preview
-  labels: enhancement, container-instances
--->
-
 ## v1.11
 
 ### Topaz CLI - switching context helper
