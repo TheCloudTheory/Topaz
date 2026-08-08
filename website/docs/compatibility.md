@@ -24,16 +24,16 @@ This page lists the tool and SDK versions that Topaz is tested against in CI. Us
 | `Azure.Identity` | `1.18.0` |
 | `Azure.ResourceManager.Storage` | `1.7.0` |
 | `Azure.ResourceManager.KeyVault` | `1.4.0` |
-| `Azure.ResourceManager.ServiceBus` | `1.1.0` |
-| `Azure.ResourceManager.EventHubs` | `1.2.1` |
+| `Azure.ResourceManager.ServiceBus` | `1.2.0` |
+| `Azure.ResourceManager.EventHubs` | `1.3.0` |
 | `Azure.ResourceManager.ContainerRegistry` | `1.4.0` |
 | `Azure.ResourceManager.ManagedServiceIdentities` | `1.4.1` |
-| `Azure.ResourceManager.Network` | `1.15.0` |
+| `Azure.ResourceManager.Network` | `1.16.1` |
 | `Azure.ResourceManager.Resources` | `1.11.2` |
 | `Azure.ResourceManager.Authorization` | `1.1.6` |
-| `Azure.ResourceManager.Compute` | `1.14.0` |
-| `Azure.ResourceManager.AppService` | `1.4.1` |
-| `Azure.ResourceManager.CosmosDB` | `1.4.0` |
+| `Azure.ResourceManager.Compute` | `1.16.0` |
+| `Azure.ResourceManager.AppService` | `1.5.0` |
+| `Azure.ResourceManager.CosmosDB` | `1.5.0` |
 | `Azure.ResourceManager.Sql` | `1.4.0` |
 | `Azure.Security.KeyVault.Certificates` | `4.8.0` |
 | `Azure.Security.KeyVault.Keys` | `4.10.0` |
@@ -41,11 +41,11 @@ This page lists the tool and SDK versions that Topaz is tested against in CI. Us
 | `Azure.Storage.Blobs` | `12.28.0` |
 | `Azure.Storage.Queues` | `12.26.0` |
 | `Azure.Data.Tables` | `12.11.0` |
-| `Azure.Messaging.ServiceBus` | `7.20.1` |
+| `Azure.Messaging.ServiceBus` | `7.20.2` |
 | `Azure.Messaging.EventHubs` | `5.12.2` |
 | `Azure.Messaging.EventHubs.Processor` | `5.12.2` |
 | `Azure.Containers.ContainerRegistry` | `1.3.0` |
-| `Azure.Data.AppConfiguration` | `1.10.0` |
+| `Azure.Data.AppConfiguration` | `1.11.0` |
 | `Azure.ResourceManager.AppConfiguration` | `1.4.1` |
 | `Azure.ResourceManager.ApplicationInsights` | `1.1.0` |
 | `Azure.ResourceManager.OperationalInsights` | `1.3.2` |
@@ -66,7 +66,7 @@ Topaz Azure CLI compatibility is validated in CI with a version matrix:
 
 | Tool | Tested versions | Notes |
 |---|---|---|
-| Azure CLI | `2.84.0`, `2.85.0`, `2.86.0` | Tested in `.github/workflows/ci-build-and-test.yml` (`cli-matrix` job) |
+| Azure CLI | `2.87.0`, `2.88.0`, `2.89.0` | Tested in `.github/workflows/ci-build-and-test.yml` (`cli-matrix` job) |
 
 See [Azure CLI integration](./integrations/azure-cli-integration.md) for setup instructions.
 
