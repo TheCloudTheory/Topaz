@@ -96,7 +96,7 @@ public class VirtualNetworkTests
         Assert.Multiple(() =>
         {
             Assert.That(virtualNetwork.Value.Data.Name, Is.EqualTo(virtualNetworkName));
-            Assert.That(virtualNetwork.Value.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.Network/virtualNetworks")));
+            Assert.That(virtualNetwork.Value.Data.Type, Is.EqualTo("Microsoft.Network/virtualNetworks"));
             Assert.That(virtualNetwork.Value.Data.AddressPrefixes, Contains.Item("10.0.0.0/22"));
             Assert.That(virtualNetwork.Value.Data.Subnets, Has.Count.EqualTo(1));
             Assert.That(virtualNetwork.Value.Data.Subnets.First().Name, Is.EqualTo("test-subnet"));

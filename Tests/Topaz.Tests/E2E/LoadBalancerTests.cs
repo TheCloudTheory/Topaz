@@ -80,7 +80,7 @@ public class LoadBalancerTests
         Assert.Multiple(() =>
         {
             Assert.That(loadBalancer.Data.Name, Is.EqualTo(lbName));
-            Assert.That(loadBalancer.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.Network/loadBalancers")));
+            Assert.That(loadBalancer.Data.Type, Is.EqualTo("Microsoft.Network/loadBalancers"));
             Assert.That(loadBalancer.Data.Location.ToString(), Is.EqualTo("westeurope").IgnoreCase);
         });
     }
