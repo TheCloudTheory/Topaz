@@ -41,7 +41,7 @@ public class ApplicationInsightsTests : TopazFixture
             $"az monitor app-insights component show --app {ComponentName}-qry -g {ResourceGroup}-qry",
             response =>
             {
-                ikey = response["properties"]!["InstrumentationKey"]!.GetValue<string>();
+                ikey = response["instrumentationKey"]!.GetValue<string>();
                 Assert.That(ikey, Is.Not.Null.And.Not.Empty);
             });
 
