@@ -821,3 +821,79 @@ output "apim_basic_publisher_email" { value = azurerm_api_management.apim_basic.
 output "apim_tagged_name"          { value = azurerm_api_management.apim_tagged.name }
 output "apim_tagged_env"           { value = azurerm_api_management.apim_tagged.tags["environment"] }
 output "apim_tagged_team"          { value = azurerm_api_management.apim_tagged.tags["team"] }
+
+# ── Container Instances ───────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "aci_rg" {
+  name     = "tf-rm-aci-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_container_group" "aci_basic" {
+  name                = "tf-rm-aci-basic"
+  resource_group_name = azurerm_resource_group.aci_rg.name
+  location            = azurerm_resource_group.aci_rg.location
+  ip_address_type     = "None"
+  os_type             = "Linux"
+  restart_policy      = "Always"
+
+  container {
+    name   = "hello"
+    image  = "mcr.microsoft.com/azuredocs/aci-helloworld:latest"
+    cpu    = "0.5"
+    memory = "1.5"
+  }
+}
+
+resource "azurerm_container_group" "aci_public" {
+  name                = "tf-rm-aci-public"
+  resource_group_name = azurerm_resource_group.aci_rg.name
+  location            = azurerm_resource_group.aci_rg.location
+  ip_address_type     = "Public"
+  dns_name_label      = "tf-rm-aci-public"
+  os_type             = "Linux"
+  restart_policy      = "OnFailure"
+
+  container {
+    name   = "nginx"
+    image  = "nginx:latest"
+    cpu    = "1"
+    memory = "2"
+
+    ports {
+      port     = 80
+      protocol = "TCP"
+    }
+  }
+}
+
+resource "azurerm_container_group" "aci_tagged" {
+  name                = "tf-rm-aci-tagged"
+  resource_group_name = azurerm_resource_group.aci_rg.name
+  location            = azurerm_resource_group.aci_rg.location
+  ip_address_type     = "None"
+  os_type             = "Linux"
+
+  container {
+    name   = "app"
+    image  = "alpine:latest"
+    cpu    = "0.5"
+    memory = "0.5"
+  }
+
+  tags = {
+    environment = "test"
+    team        = "platform"
+  }
+}
+
+output "aci_basic_name"           { value = azurerm_container_group.aci_basic.name }
+output "aci_basic_location"       { value = azurerm_container_group.aci_basic.location }
+output "aci_basic_os_type"        { value = azurerm_container_group.aci_basic.os_type }
+output "aci_basic_restart_policy" { value = azurerm_container_group.aci_basic.restart_policy }
+output "aci_public_name"          { value = azurerm_container_group.aci_public.name }
+output "aci_public_ip_type"       { value = azurerm_container_group.aci_public.ip_address_type }
+output "aci_public_dns_label"     { value = azurerm_container_group.aci_public.dns_name_label }
+output "aci_tagged_name"          { value = azurerm_container_group.aci_tagged.name }
+output "aci_tagged_env"           { value = azurerm_container_group.aci_tagged.tags["environment"] }
+output "aci_tagged_team"          { value = azurerm_container_group.aci_tagged.tags["team"] }

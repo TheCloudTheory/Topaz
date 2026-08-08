@@ -94,7 +94,7 @@ internal sealed class ContainerProperties
 {
     public string? Image { get; set; }
     public string[]? Command { get; set; }
-    public ContainerPort[]? Ports { get; set; }
+    public ContainerPort[] Ports { get; set; } = [];
     public EnvironmentVariable[]? EnvironmentVariables { get; set; }
     public ResourceRequirements? Resources { get; set; }
     public VolumeMount[]? VolumeMounts { get; set; }
