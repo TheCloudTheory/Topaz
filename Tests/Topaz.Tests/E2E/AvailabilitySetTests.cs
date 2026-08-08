@@ -257,7 +257,7 @@ public class AvailabilitySetTests
         var vms = rg.Value.GetVirtualMachines().GetAll().ToList();
         var vmNames = vms.Select(v => v.Data.Name).ToList();
         var avSet = await rg.Value.GetAvailabilitySetAsync("avset-with-vms");
-        var avSetVmIds = avSet.Value.Data.VirtualMachines.Select(v => v.Id?.ToString()).ToList();
+        var avSetVmIds = avSet.Value.Data.VirtualMachineResources.Select(v => v.Id?.ToString()).ToList();
         using (Assert.EnterMultipleScope())
         {
             Assert.That(vmNames, Does.Contain("avset-vm-1"));
@@ -376,7 +376,7 @@ public class AvailabilitySetTests
             .CreateOrUpdateAsync(WaitUntil.Completed, vmName, vmData);
 
         var vmBeforeDelete = (await resourceGroup.Value.GetAvailabilitySetAsync(avSetName)).Value;
-        Assert.That(vmBeforeDelete.Data.VirtualMachines, Has.Count.EqualTo(1));
+        Assert.That(vmBeforeDelete.Data.VirtualMachineResources, Has.Count.EqualTo(1));
 
         // Act
         var vm = await resourceGroup.Value.GetVirtualMachineAsync(vmName);
@@ -384,6 +384,6 @@ public class AvailabilitySetTests
 
         // Assert
         var avSetAfterDelete = await resourceGroup.Value.GetAvailabilitySetAsync(avSetName);
-        Assert.That(avSetAfterDelete.Value.Data.VirtualMachines, Is.Empty);
+        Assert.That(avSetAfterDelete.Value.Data.VirtualMachineResources, Is.Empty);
     }
 }

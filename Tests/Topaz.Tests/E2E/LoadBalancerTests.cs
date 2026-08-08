@@ -99,7 +99,7 @@ public class LoadBalancerTests
             .CreateOrUpdateAsync(WaitUntil.Completed, lbName, MinimalLoadBalancerData());
 
         // Act
-        var loadBalancer = await resourceGroup.Value.GetLoadBalancerAsync(lbName);
+        var loadBalancer = await resourceGroup.Value.GetLoadBalancerAsync(lbName, null, CancellationToken.None);
 
         // Assert
         Assert.That(loadBalancer.Value.Data.Name, Is.EqualTo(lbName));
@@ -119,12 +119,12 @@ public class LoadBalancerTests
             .CreateOrUpdateAsync(WaitUntil.Completed, lbName, MinimalLoadBalancerData());
 
         // Act
-        var loadBalancer = resourceGroup.Value.GetLoadBalancer(lbName);
+        var loadBalancer = await resourceGroup.Value.GetLoadBalancerAsync(lbName, null, CancellationToken.None);
         await loadBalancer.Value.DeleteAsync(WaitUntil.Completed);
 
         // Assert
         Assert.ThrowsAsync<RequestFailedException>(async () =>
-            await resourceGroup.Value.GetLoadBalancerAsync(lbName));
+            await resourceGroup.Value.GetLoadBalancerAsync(lbName, null, CancellationToken.None));
     }
 
     [Test]
@@ -137,7 +137,7 @@ public class LoadBalancerTests
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
         const string lbName = "test-lb-update";
 
-        var originalLb = await resourceGroup.Value.GetLoadBalancers()
+        _ = await resourceGroup.Value.GetLoadBalancers()
             .CreateOrUpdateAsync(WaitUntil.Completed, lbName, MinimalLoadBalancerData());
 
         // Act - Re-create with tags
