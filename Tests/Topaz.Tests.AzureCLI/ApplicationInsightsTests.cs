@@ -1,5 +1,3 @@
-using System.Text.Json.Nodes;
-
 namespace Topaz.Tests.AzureCLI;
 
 public class ApplicationInsightsTests : TopazFixture
@@ -14,7 +12,7 @@ public class ApplicationInsightsTests : TopazFixture
     [Test]
     public async Task AppInsights_WhenComponentIsCreated_ItShouldBeAvailable()
     {
-        await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}", null, 0);
+        await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}");
         await RunAzureCliCommand(
             $"az monitor app-insights component create --app {ComponentName} -g {ResourceGroup} -l westeurope --kind web",
             response =>
@@ -24,19 +22,18 @@ public class ApplicationInsightsTests : TopazFixture
                     Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo(ComponentName));
                     Assert.That(response["type"]!.GetValue<string>(),
                         Is.EqualTo("microsoft.insights/components").IgnoreCase);
-                    Assert.That(response["properties"]!["provisioningState"]!.GetValue<string>(),
+                    Assert.That(response["provisioningState"]!.GetValue<string>(),
                         Is.EqualTo("Succeeded"));
                 });
-            }, 0);
+            });
     }
 
     [Test]
     public async Task AppInsights_QueryAfterIngestion_ReturnsPrimaryResultTable()
     {
-        await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}-qry", null, 0);
+        await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}-qry");
         await RunAzureCliCommand(
-            $"az monitor app-insights component create --app {ComponentName}-qry -g {ResourceGroup}-qry -l westeurope --kind web",
-            null, 0);
+            $"az monitor app-insights component create --app {ComponentName}-qry -g {ResourceGroup}-qry -l westeurope --kind web");
 
         // Retrieve the generated instrumentation key.
         string? ikey = null;
@@ -46,19 +43,16 @@ public class ApplicationInsightsTests : TopazFixture
             {
                 ikey = response["properties"]!["InstrumentationKey"]!.GetValue<string>();
                 Assert.That(ikey, Is.Not.Null.And.Not.Empty);
-            }, 0);
-
-        var ingestionHost = $"https://{ComponentName}-qry.applicationinsights.topaz.local.dev:8899";
+            });
 
         // Seed one request telemetry envelope directly via the ingestion endpoint.
         var payload = $"{{\\\"iKey\\\":\\\"{ikey}\\\",\\\"time\\\":\\\"{DateTimeOffset.UtcNow:O}\\\",\\\"data\\\":{{\\\"baseType\\\":\\\"RequestData\\\",\\\"baseData\\\":{{\\\"name\\\":\\\"GET /api/cli-test\\\",\\\"responseCode\\\":\\\"200\\\",\\\"success\\\":true}}}}}}";
         await RunAzureCliCommand(
-            $"curl -sk -X POST {ingestionHost}/v2/track -H 'Content-Type: application/x-json-stream' -d \"{payload}\"",
-            null, 0);
+            $"curl -sk -X POST {IngestionHost}/v2/track -H 'Content-Type: application/x-json-stream' -d \"{payload}\"");
 
         // Run the query via az rest, targeting the query endpoint on the same host.
         await RunAzureCliCommand(
-            $"az rest --method post --url \"{ingestionHost}/v1/apps/{ikey}/query\" --body '{{\"query\":\"requests | take 10\"}}'",
+            $"az rest --method post --url \"{IngestionHost}/v1/apps/{ikey}/query\" --body '{{\"query\":\"requests | take 10\"}}'",
             response =>
             {
                 var tables = response["tables"]!.AsArray();
@@ -68,21 +62,20 @@ public class ApplicationInsightsTests : TopazFixture
                     Assert.That(tables[0]!["name"]!.GetValue<string>(), Is.EqualTo("PrimaryResult"));
                     Assert.That(tables[0]!["rows"]!.AsArray().Count, Is.GreaterThanOrEqualTo(1));
                 });
-            }, 0);
+            });
     }
 
     [Test]
     public async Task AppInsights_QueryUnknownTable_ReturnsEmptyPrimaryResult()
     {
-        await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}-empty", null, 0);
+        await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}-empty");
         await RunAzureCliCommand(
-            $"az monitor app-insights component create --app {ComponentName}-empty -g {ResourceGroup}-empty -l westeurope --kind web",
-            null, 0);
+            $"az monitor app-insights component create --app {ComponentName}-empty -g {ResourceGroup}-empty -l westeurope --kind web");
 
         string? ikey = null;
         await RunAzureCliCommand(
             $"az monitor app-insights component show --app {ComponentName}-empty -g {ResourceGroup}-empty",
-            response => ikey = response["properties"]!["InstrumentationKey"]!.GetValue<string>(), 0);
+            response => ikey = response["instrumentationKey"]!.GetValue<string>());
 
         var ingestionHost = $"https://{ComponentName}-empty.applicationinsights.topaz.local.dev:8899";
 
@@ -93,10 +86,10 @@ public class ApplicationInsightsTests : TopazFixture
                 var tables = response["tables"]!.AsArray();
                 Assert.Multiple(() =>
                 {
-                    Assert.That(tables.Count, Is.GreaterThan(0));
+                    Assert.That(tables, Is.Not.Empty);
                     Assert.That(tables[0]!["name"]!.GetValue<string>(), Is.EqualTo("PrimaryResult"));
-                    Assert.That(tables[0]!["rows"]!.AsArray().Count, Is.EqualTo(0));
+                    Assert.That(tables[0]!["rows"]!.AsArray(), Is.Empty);
                 });
-            }, 0);
+            });
     }
 }
