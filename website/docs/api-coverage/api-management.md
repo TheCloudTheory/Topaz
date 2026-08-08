@@ -53,6 +53,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Get | ✅ |
 | Get Entity Tag | ✅ |
 | List By Service | ✅ |
+| List By Tags | ❌ |
 | List Revisions | ✅ |
 | Update | ✅ |
 
@@ -81,6 +82,18 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Get | ✅ |
 | Get Entity Tag | ✅ |
 | List By Service | ✅ |
+
+### Portal Settings — Delegation
+
+> [REST reference](https://learn.microsoft.com/en-us/rest/api/apimanagement/delegation-settings)
+
+| Operation | Status |
+|-----------|--------|
+| Create Or Update | ✅ |
+| Get | ✅ |
+| Get Entity Tag | ✅ |
+| List Secrets | ✅ |
+| Update | ✅ |
 
 ### Portal Settings — Sign-In
 
@@ -127,3 +140,18 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Create Or Update | ✅ |
 | Delete | ✅ |
 | List By Product | ✅ |
+
+### Tenant Access
+
+> [REST reference](https://learn.microsoft.com/en-us/rest/api/apimanagement/tenant-access)
+
+| Operation | Status |
+|-----------|--------|
+| Create | ✅ |
+| Get | ❌ |
+| Get Entity Tag | ❌ |
+| List By Service | ❌ |
+| List Secrets | ✅ |
+| Regenerate Primary Key | ❌ |
+| Regenerate Secondary Key | ❌ |
+| Update | ✅ |
