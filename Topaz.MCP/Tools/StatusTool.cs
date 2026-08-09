@@ -17,30 +17,47 @@ public sealed class StatusTool
 
     private static readonly IReadOnlyList<(string Name, ushort Port)> KnownServices =
     [
-        ("Resource Manager",     GlobalSettings.DefaultResourceManagerPort),
-        ("Key Vault",            GlobalSettings.DefaultKeyVaultPort),
-        ("Blob Storage",         GlobalSettings.DefaultBlobStoragePort),
-        ("Queue Storage",        GlobalSettings.DefaultQueueStoragePort),
-        ("Table Storage",        GlobalSettings.DefaultTableStoragePort),
-        ("Container Registry",   GlobalSettings.ContainerRegistryPort),
-        ("Event Hub (HTTP)",     GlobalSettings.DefaultEventHubPort),
-        ("Event Hub (AMQP)",     GlobalSettings.DefaultEventHubAmqpPort),
-        ("Service Bus (AMQP)",   GlobalSettings.DefaultServiceBusAmqpPort),
-        ("Service Bus (Extra)",  GlobalSettings.AdditionalServiceBusPort),
-        ("Cosmos DB",  GlobalSettings.DefaultCosmosDbPort),
-        ("App Configuration",  GlobalSettings.DefaultAppConfigurationPort),
-        ("App Service (Kudu)",         GlobalSettings.DefaultAppServiceKuduPort),
-        ("App Service Forward Proxy",  8900),
-        ("HTTP CONNECT Proxy",         GlobalSettings.ConnectProxyPort),
+        ("Resource Manager", GlobalSettings.DefaultResourceManagerPort),
+        ("Authorization", GlobalSettings.DefaultResourceManagerPort),
+        ("Key Vault", GlobalSettings.DefaultKeyVaultPort),
+        ("Container Registry", GlobalSettings.DefaultResourceManagerPort),
+        ("Container Registry (OCI)", GlobalSettings.ContainerRegistryPort),
+        ("Blob Storage", GlobalSettings.DefaultBlobStoragePort),
+        ("Queue Storage", GlobalSettings.DefaultQueueStoragePort),
+        ("Table Storage", GlobalSettings.DefaultTableStoragePort),
+        ("Container Registry", GlobalSettings.ContainerRegistryPort),
+        ("Event Hub (HTTP)", GlobalSettings.DefaultEventHubPort),
+        ("Event Hub (AMQP)", GlobalSettings.DefaultEventHubAmqpPort),
+        ("Service Bus (AMQP)", GlobalSettings.DefaultServiceBusAmqpPort),
+        ("Service Bus (Extra)", GlobalSettings.AdditionalServiceBusPort),
+        ("Cosmos DB", GlobalSettings.DefaultCosmosDbPort),
+        ("Disk", GlobalSettings.DefaultResourceManagerPort),
+        ("Entra ID", GlobalSettings.DefaultResourceManagerPort),
+        ("Application Insights", GlobalSettings.DefaultResourceManagerPort),
+        ("Log Analytics", GlobalSettings.DefaultResourceManagerPort),
+        ("Managed Identity", GlobalSettings.DefaultResourceManagerPort),
+        ("Management Group", GlobalSettings.DefaultResourceManagerPort),
+        ("Redis", GlobalSettings.DefaultResourceManagerPort),
+        ("SQL", GlobalSettings.DefaultResourceManagerPort),
+        ("Virtual Machine", GlobalSettings.DefaultResourceManagerPort),
+        ("Virtual Network", GlobalSettings.DefaultResourceManagerPort),
+        ("App Configuration", GlobalSettings.DefaultAppConfigurationPort),
+        ("API Management", GlobalSettings.DefaultResourceManagerPort),
+        ("Container Instances", GlobalSettings.DefaultResourceManagerPort),
+        ("App Services", GlobalSettings.DefaultResourceManagerPort),
+        ("App Service (Kudu)", GlobalSettings.DefaultAppServiceKuduPort),
+        ("App Service Forward Proxy", 8900),
+        ("HTTP CONNECT Proxy", GlobalSettings.ConnectProxyPort),
     ];
 
     [McpServerTool]
-    [Description("Calls the Topaz health-check endpoint and probes all service ports. Returns the running version, overall status, working directory, chaos mode state, and which services are up. Useful for debugging when a setup fails partway through.")]
+    [Description(
+        "Calls the Topaz health-check endpoint and probes all service ports. Returns the running version, overall status, working directory, chaos mode state, and which services are up. Useful for debugging when a setup fails partway through.")]
     [UsedImplicitly]
     public static async Task<TopazStatusResult> GetTopazStatus()
     {
-        var healthUrl     = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/health";
-        var chaosUrl      = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/topaz/chaos/status";
+        var healthUrl = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/health";
+        var chaosUrl = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/topaz/chaos/status";
 
         HttpResponseMessage httpResponse;
         try
@@ -58,20 +75,23 @@ public sealed class StatusTool
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
-        var version          = root.TryGetProperty("version",          out var v)  ? v.GetString()  ?? "Unknown" : "Unknown";
-        var status           = root.TryGetProperty("status",           out var s)  ? s.GetString()  ?? "Unknown" : "Unknown";
-        var workingDirectory = root.TryGetProperty("workingDirectory", out var wd) ? wd.GetString() ?? "Unknown" : "Unknown";
+        var version = root.TryGetProperty("version", out var v) ? v.GetString() ?? "Unknown" : "Unknown";
+        var status = root.TryGetProperty("status", out var s) ? s.GetString() ?? "Unknown" : "Unknown";
+        var workingDirectory = root.TryGetProperty("workingDirectory", out var wd)
+            ? wd.GetString() ?? "Unknown"
+            : "Unknown";
 
-        var serviceStatuses = await Task.WhenAll(KnownServices.Select(svc => ProbePortAsync(svc.Name, svc.Port))).ConfigureAwait(false);
-        var chaosEnabled    = await GetChaosEnabledAsync(chaosUrl).ConfigureAwait(false);
+        var serviceStatuses = await Task.WhenAll(KnownServices.Select(svc => ProbePortAsync(svc.Name, svc.Port)))
+            .ConfigureAwait(false);
+        var chaosEnabled = await GetChaosEnabledAsync(chaosUrl).ConfigureAwait(false);
 
         return new TopazStatusResult
         {
-            Version          = version,
-            Status           = status,
+            Version = version,
+            Status = status,
             WorkingDirectory = workingDirectory,
-            ChaosEnabled     = chaosEnabled,
-            Services         = [.. serviceStatuses],
+            ChaosEnabled = chaosEnabled,
+            Services = [.. serviceStatuses],
         };
     }
 
@@ -107,17 +127,17 @@ public sealed class StatusTool
 
     public sealed record TopazStatusResult
     {
-        public required string Version          { [UsedImplicitly] get; init; }
-        public required string Status           { [UsedImplicitly] get; init; }
+        public required string Version { [UsedImplicitly] get; init; }
+        public required string Status { [UsedImplicitly] get; init; }
         public required string WorkingDirectory { [UsedImplicitly] get; init; }
-        public required bool   ChaosEnabled     { [UsedImplicitly] get; init; }
+        public required bool ChaosEnabled { [UsedImplicitly] get; init; }
         public required List<ServiceStatus> Services { [UsedImplicitly] get; init; }
     }
 
     public sealed record ServiceStatus
     {
-        public required string Name  { [UsedImplicitly] get; init; }
-        public required ushort Port  { [UsedImplicitly] get; init; }
-        public required bool   IsUp  { [UsedImplicitly] get; init; }
+        public required string Name { [UsedImplicitly] get; init; }
+        public required ushort Port { [UsedImplicitly] get; init; }
+        public required bool IsUp { [UsedImplicitly] get; init; }
     }
 }
