@@ -55,7 +55,8 @@ internal sealed class GetContainerAclEndpoint(Pipeline eventPipeline, ITopazLogg
 
             var now = DateTimeOffset.UtcNow;
             response.Headers.ETag = new EntityTagHeaderValue($"\"{now.Ticks}\"");
-            response.Content = new StringContent(op.Resource!, Encoding.UTF8); // codeql[cs/web/xss] - Content is stored ACL XML retrieved from the data plane; served as application/xml, not reflected HTML.
+            // codeql[cs/web/xss] - Content is stored ACL XML retrieved from the data plane; served as application/xml, not reflected HTML.
+            response.Content = new StringContent(op.Resource!, Encoding.UTF8);
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
             response.Content.Headers.TryAddWithoutValidation("Last-Modified", now.ToString("R"));
         }
