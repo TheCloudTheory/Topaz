@@ -159,8 +159,7 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
         }
 
         // Validate that the required service letter is in ss=.
-        // codeql[cs/user-controlled-bypass] -- ss= is cryptographically bound by HMAC-SHA256 above; cannot be altered without invalidating the signature.
-        if (!ss.Contains(serviceChar, StringComparison.OrdinalIgnoreCase))
+        if (!ss.Contains(serviceChar, StringComparison.OrdinalIgnoreCase)) // codeql[cs/user-controlled-bypass] -- ss= is cryptographically bound by HMAC-SHA256 above; cannot be altered without invalidating the signature.
         {
             logger.LogError(nameof(AccountSasValidator), nameof(Validate),
                 "Account SAS ss='{0}' does not include required service '{1}'. Denying.", ss, serviceChar);
@@ -168,8 +167,7 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
         }
 
         // Validate that the required resource-type letter is in srt=.
-        // codeql[cs/user-controlled-bypass] -- srt= is cryptographically bound by HMAC-SHA256 above; cannot be altered without invalidating the signature.
-        if (!srt.Contains(resourceTypeChar, StringComparison.OrdinalIgnoreCase))
+        if (!srt.Contains(resourceTypeChar, StringComparison.OrdinalIgnoreCase)) // codeql[cs/user-controlled-bypass] -- srt= is cryptographically bound by HMAC-SHA256 above; cannot be altered without invalidating the signature.
         {
             logger.LogError(nameof(AccountSasValidator), nameof(Validate),
                 "Account SAS srt='{0}' does not include required resource type '{1}'. Denying.", srt, resourceTypeChar);
@@ -177,8 +175,7 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
         }
 
         // Validate that the HTTP method is covered by sp= permission letters.
-        // codeql[cs/user-controlled-bypass] -- sp= is cryptographically bound by HMAC-SHA256 above; cannot be altered without invalidating the signature.
-        if (!IsMethodPermitted(method, sp))
+        if (!IsMethodPermitted(method, sp)) // codeql[cs/user-controlled-bypass] -- sp= is cryptographically bound by HMAC-SHA256 above; cannot be altered without invalidating the signature.
         {
             logger.LogError(nameof(AccountSasValidator), nameof(Validate),
                 "Account SAS sp='{0}' does not cover HTTP method '{1}'. Denying.", sp, method);
