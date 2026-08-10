@@ -136,7 +136,6 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         var response = await CallEndpoint(endpoint, context);
         // Ensure Content is never null — a missing body returns empty string so downstream
         // code can always call ReadAsByteArrayAsync() without a NullReferenceException.
-        response.Content ??= new StringContent(string.Empty);
         var responseBytes = await response.Content.ReadAsByteArrayAsync();
         var textResponse = System.Text.Encoding.UTF8.GetString(responseBytes);
 
@@ -246,7 +245,9 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
             }
 
             context.User = principal!;
+            // ReSharper disable once MethodHasAsyncOverload
             endpoint.GetResponse(context, response, options);
+            await endpoint.GetResponseAsync(context, response, options);
         }
         catch (JsonException ex)
         {
