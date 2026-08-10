@@ -72,22 +72,22 @@ const config: Config = {
               badge: false,
               noIndex: true,
             },
-            'v1.9': {
-              label: 'v1.9 (stable)',
+            'v1.10': {
+              label: 'v1.10 (stable)',
               badge: true,
+            },
+            'v1.9': {
+              label: 'v1.9',
+              badge: true,
+              noIndex: true,
             },
             'v1.8': {
-              label: 'v1.8 (stable)',
+              label: 'v1.8',
               badge: true,
               noIndex: true,
             },
-            'v1.7': {
-              label: 'v1.7 (stable)',
-              badge: true,
-              noIndex: true,
-            }
           },
-          lastVersion: 'v1.9',
+          lastVersion: 'v1.10',
         },
         blog: {
           showReadingTime: true,
@@ -108,7 +108,7 @@ const config: Config = {
           ignorePatterns: [
             '/tags/**',
             '/docs/next/**',
-            '/docs/v1.7/**',
+            '/docs/v1.9/**',
             '/docs/v1.8/**',
             '/blog/tags/**',
             '/blog/authors/**',

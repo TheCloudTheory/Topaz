@@ -1,0 +1,22 @@
+---
+sidebar_position: 34
+---
+
+# apim api list-revisions
+Lists revisions of an API in an Azure API Management service.
+
+## Options
+* `--service-name` - (Required) API Management service name
+* `--api-id` - (Required) API identifier
+* `-g, --resource-group` - (Required) resource group name
+* `-s, --subscription-id` - (Required) subscription ID
+
+## Examples
+
+### Lists revisions of an API
+```bash
+$ topaz apim api list-revisions --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \
+    --service-name "my-apim" \
+    --api-id "my-api" \
+    --resource-group "rg-local"
+```

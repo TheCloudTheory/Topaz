@@ -1,0 +1,9 @@
+{
+  "label": "Client SDKs",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "slug": "/client-sdks",
+    "description": "Language-specific packages that make it easy to authenticate and interact with the Topaz emulator from test code and local development applications."
+  }
+}
