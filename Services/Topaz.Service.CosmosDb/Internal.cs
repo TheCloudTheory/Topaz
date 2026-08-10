@@ -5,3 +5,4 @@ using System.Runtime.CompilerServices;
 [assembly:InternalsVisibleTo("Topaz.Tests")]
 [assembly:InternalsVisibleTo("Topaz.Tests.Unit")]
 [assembly:InternalsVisibleTo("DynamicProxyGenAssembly2")]
+[assembly:InternalsVisibleTo("Topaz.Importer")]

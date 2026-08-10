@@ -1,5 +1,8 @@
+using Azure.ResourceManager.Resources;
 using JetBrains.Annotations;
 using Topaz.ResourceManager;
+using Topaz.Shared;
+using GenericResource = Topaz.ResourceManager.GenericResource;
 
 namespace Topaz.Service.ServiceBus.Models.Requests;
 
@@ -34,6 +37,25 @@ internal sealed class CreateOrUpdateServiceBusNamespaceRequest
             Location = resource.Location,
             Properties = resource.Properties as CreateOrUpdateServiceBusNamespaceRequestProperties,
             Tags = resource.Tags
+        };
+    }
+
+    public static CreateOrUpdateServiceBusNamespaceRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateServiceBusNamespaceRequest
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Properties =
+                data.Properties.ToObjectFromJson<CreateOrUpdateServiceBusNamespaceRequestProperties>(GlobalSettings
+                    .JsonOptions),
+            Sku = new ResourceSku
+            {
+                Capacity = data.Sku?.Capacity,
+                Name = data.Sku?.Name,
+                Tier = data.Sku?.Tier,
+                Family = data.Sku?.Family
+            }
         };
     }
 }

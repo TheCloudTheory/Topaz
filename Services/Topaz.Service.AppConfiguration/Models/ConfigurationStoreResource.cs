@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using Azure.ResourceManager.Resources;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
 
 namespace Topaz.Service.AppConfiguration.Models;
 
@@ -38,5 +40,23 @@ public class ConfigurationStoreResource : ArmResource<ConfigurationStoreResource
     public sealed override ResourceSku? Sku { get; set; }
     public sealed override string? Kind { get; init; }
     public sealed override ConfigurationStoreResourceProperties Properties { get; init; }
+
+    public static ConfigurationStoreResource From(GenericResourceData data)
+    {
+        return new ConfigurationStoreResource
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Sku = new ResourceSku
+            {
+                Capacity = data.Sku?.Capacity,
+                Name = data.Sku?.Name,
+                Tier = data.Sku?.Tier,
+                Family = data.Sku?.Family
+            },
+            Properties =
+                data.Properties.ToObjectFromJson<ConfigurationStoreResourceProperties>(GlobalSettings.JsonOptions)!
+        };
+    }
 }
 

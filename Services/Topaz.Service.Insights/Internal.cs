@@ -1,1 +1,4 @@
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Topaz.Service.ResourceManager")]
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Topaz.Service.ResourceManager")]
+[assembly: InternalsVisibleTo("Topaz.Importer")]

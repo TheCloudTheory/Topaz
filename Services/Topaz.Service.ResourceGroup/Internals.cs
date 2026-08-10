@@ -19,3 +19,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Topaz.Service.Redis")]
 [assembly: InternalsVisibleTo("Topaz.Service.ApiManagement")]
 [assembly: InternalsVisibleTo("Topaz.Service.ContainerInstances")]
+[assembly: InternalsVisibleTo("Topaz.Importer")]

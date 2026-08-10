@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using Azure.ResourceManager.Resources;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
 
 namespace Topaz.Service.Redis.Models;
 
@@ -40,4 +42,21 @@ internal sealed class RedisResource : ArmResource<RedisResourceProperties>
     public override ResourceSku? Sku { get; set; }
     public override string? Kind { get; init; }
     public override RedisResourceProperties Properties { get; init; }
+
+    public static RedisResource From(GenericResourceData data)
+    {
+        return new RedisResource
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Sku = new ResourceSku
+            {
+                Capacity = data.Sku.Capacity,
+                Family = data.Sku.Family,
+                Name = data.Sku.Name,
+                Tier = data.Sku.Tier
+            },
+            Properties = data.Properties.ToObjectFromJson<RedisResourceProperties>(GlobalSettings.JsonOptions)!
+        };
+    }
 }

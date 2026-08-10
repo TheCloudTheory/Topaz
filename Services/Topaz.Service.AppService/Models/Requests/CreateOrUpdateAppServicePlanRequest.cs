@@ -1,3 +1,6 @@
+using Azure.ResourceManager.Resources;
+using Topaz.Shared;
+
 namespace Topaz.Service.AppService.Models.Requests;
 
 internal sealed record CreateOrUpdateAppServicePlanRequest
@@ -24,5 +27,23 @@ internal sealed record CreateOrUpdateAppServicePlanRequest
         public bool? HyperV { get; init; }
         public bool? IsSpot { get; init; }
         public bool? Reserved { get; init; }
+    }
+
+    public static CreateOrUpdateAppServicePlanRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateAppServicePlanRequest
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Sku = new AppServicePlanSkuDescription
+            {
+                Capacity = data.Sku?.Capacity,
+                Family = data.Sku?.Family,
+                Name = data.Sku?.Name,
+                Size = data.Sku?.Size,
+                Tier = data.Sku?.Tier
+            },
+            Properties = data.Properties.ToObjectFromJson<AppServicePlanProperties>(GlobalSettings.JsonOptions)
+        };
     }
 }

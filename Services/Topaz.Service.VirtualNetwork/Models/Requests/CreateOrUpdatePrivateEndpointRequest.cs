@@ -1,3 +1,6 @@
+using Azure.ResourceManager.Resources;
+using Topaz.Shared;
+
 namespace Topaz.Service.VirtualNetwork.Models.Requests;
 
 internal record CreateOrUpdatePrivateEndpointRequest
@@ -15,5 +18,17 @@ internal record CreateOrUpdatePrivateEndpointRequest
         public List<PrivateEndpointIpConfiguration>? IpConfigurations { get; init; }
         public string? CustomNetworkInterfaceName { get; init; }
         public List<NetworkInterfaceResource>? NetworkInterfaces { get; set; }
+    }
+
+    public static CreateOrUpdatePrivateEndpointRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdatePrivateEndpointRequest
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Properties =
+                data.Properties.ToObjectFromJson<CreateOrUpdatePrivateEndpointRequestProperties>(GlobalSettings
+                    .JsonOptions)
+        };
     }
 }

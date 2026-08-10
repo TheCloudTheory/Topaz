@@ -1,5 +1,7 @@
 using System.Text.Json;
+using Azure.ResourceManager.Resources;
 using JetBrains.Annotations;
+using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Models.Requests;
 
@@ -31,5 +33,16 @@ public sealed class CreateOrUpdateVirtualNetworkRequest
         public JsonElement? FlowLogs { get; set; }
         public string? PrivateEndpointVnetPolicy { get; set; }
         public JsonElement? DhcpOptions { get; set; }
+    }
+
+    public static CreateOrUpdateVirtualNetworkRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateVirtualNetworkRequest
+        {
+            Tags = data.Tags,
+            Properties =
+                data.Properties.ToObjectFromJson<CreateOrUpdateVirtualNetworkRequestProperties>(GlobalSettings
+                    .JsonOptions)
+        };
     }
 }

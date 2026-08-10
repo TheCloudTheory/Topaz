@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Azure.Core;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.ResourceGroup.Models;
@@ -38,22 +37,6 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
             new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Success, resource,
                 null,
                 null);
-    }
-
-    public ControlPlaneOperationResult<ResourceGroupResource> Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location)
-    {
-        var subscriptionOperation = subscriptionControlPlane.Get(subscriptionIdentifier);
-        if (subscriptionOperation.Result == OperationResult.NotFound || subscriptionOperation.Resource == null)
-        {
-            return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Failed, null,
-                subscriptionOperation.Reason, subscriptionOperation.Code);
-        }
-        
-        var model = new ResourceGroupResource(subscriptionIdentifier, resourceGroupIdentifier.Value, location, new ResourceGroupProperties());
-
-        groupResourceProvider.Create(subscriptionIdentifier, resourceGroupIdentifier, null, model);
-
-        return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Created, model, null, null);
     }
 
     public ControlPlaneOperationResult<ResourceGroupResource> CreateOrUpdate(

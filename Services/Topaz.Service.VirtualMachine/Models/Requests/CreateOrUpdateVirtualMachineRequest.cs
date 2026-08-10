@@ -1,5 +1,7 @@
 using System.Text.Json;
+using Azure.ResourceManager.Resources;
 using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.Service.VirtualMachine.Models.Requests;
 
@@ -64,5 +66,17 @@ public sealed class CreateOrUpdateVirtualMachineRequest
                 UserData = properties.UserData
             };
         }
+    }
+
+    public static CreateOrUpdateVirtualMachineRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateVirtualMachineRequest
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Properties =
+                data.Properties.ToObjectFromJson<CreateOrUpdateVirtualMachineRequestProperties>(GlobalSettings
+                    .JsonOptions)
+        };
     }
 }

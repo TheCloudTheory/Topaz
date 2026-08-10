@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Azure.ResourceManager.Resources;
+using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Models.Requests;
 
@@ -74,6 +76,18 @@ internal record CreateOrUpdateNetworkInterfaceRequest
                 EnableAcceleratedNetworking = false,
                 EnableIpForwarding = false
             }
+        };
+    }
+
+    public static CreateOrUpdateNetworkInterfaceRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateNetworkInterfaceRequest
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Properties =
+                data.Properties.ToObjectFromJson<CreateOrUpdateNetworkInterfaceRequestProperties>(GlobalSettings
+                    .JsonOptions)
         };
     }
 }

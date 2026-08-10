@@ -1,3 +1,6 @@
+using Azure.ResourceManager.Resources;
+using Topaz.Shared;
+
 namespace Topaz.Service.ApiManagement.Models.Requests;
 
 internal sealed class CreateOrUpdateProductRequest
@@ -9,6 +12,14 @@ internal sealed class CreateOrUpdateProductRequest
         return new CreateOrUpdateProductRequest
         {
             Properties = product.Properties
+        };
+    }
+
+    public static CreateOrUpdateProductRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateProductRequest
+        {
+            Properties = data.Properties.ToObjectFromJson<ProductContractResourceProperties>(GlobalSettings.JsonOptions)
         };
     }
 }

@@ -65,4 +65,9 @@ public interface IEndpointDefinition
     }
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options);
+
+    public Task GetResponseAsync(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        return Task.CompletedTask;
+    }
 }

@@ -1,3 +1,5 @@
+using Azure.ResourceManager.Resources;
+
 namespace Topaz.Service.ManagedIdentity.Models.Requests;
 
 public sealed class CreateUpdateManagedIdentityRequest
@@ -9,5 +11,15 @@ public sealed class CreateUpdateManagedIdentityRequest
     public sealed class ManagedIdentityProperties
     {
         public string? IsolationScope { get; init; }
+    }
+
+    public static CreateUpdateManagedIdentityRequest From(GenericResourceData data)
+    {
+        return new CreateUpdateManagedIdentityRequest
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Properties = data.Properties.ToObjectFromJson<ManagedIdentityProperties>()
+        };
     }
 }

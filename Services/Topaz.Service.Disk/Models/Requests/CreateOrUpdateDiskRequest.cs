@@ -1,3 +1,6 @@
+using Azure.ResourceManager.Resources;
+using Topaz.Shared;
+
 namespace Topaz.Service.Disk.Models.Requests;
 
 public sealed class CreateOrUpdateDiskRequest
@@ -67,5 +70,20 @@ public sealed class CreateOrUpdateDiskRequest
                 public string? Id { get; set; }
             }
         }
+    }
+
+    public static CreateOrUpdateDiskRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateDiskRequest
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Sku = new DiskSkuRequest
+            {
+                Name = data.Sku.Name
+            },
+            Properties =
+                data.Properties.ToObjectFromJson<CreateOrUpdateDiskRequestProperties>(GlobalSettings.JsonOptions)
+        };
     }
 }

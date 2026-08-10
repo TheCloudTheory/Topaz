@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Services\Topaz.Service.ApiManagement\Topaz.Service.ApiManagement.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.AppConfiguration\Topaz.Service.AppConfiguration.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.AppService\Topaz.Service.AppService.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Authorization\Topaz.Service.Authorization.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ContainerInstances\Topaz.Service.ContainerInstances.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ContainerRegistry\Topaz.Service.ContainerRegistry.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.CosmosDb\Topaz.Service.CosmosDb.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Disk\Topaz.Service.Disk.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Insights\Topaz.Service.Insights.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.KeyVault\Topaz.Service.KeyVault.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.LoadBalancer\Topaz.Service.LoadBalancer.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.LogAnalytics\Topaz.Service.LogAnalytics.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ManagedIdentity\Topaz.Service.ManagedIdentity.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ManagementGroup\Topaz.Service.ManagementGroup.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Redis\Topaz.Service.Redis.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Sql\Topaz.Service.Sql.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Storage\Topaz.Service.Storage.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.VirtualMachine\Topaz.Service.VirtualMachine.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Azure.Identity" Version="1.18.0" />
+      <PackageReference Include="Azure.ResourceManager.Resources" Version="1.11.2" />
+    </ItemGroup>
+
+</Project>

@@ -1,9 +1,9 @@
+using Azure.ResourceManager.Resources;
 using JetBrains.Annotations;
-using Topaz.Service.KeyVault.Models;
+using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Models.Requests.Vault;
 
-// TODO: There should be a way to validate requests
 internal record CreateOrUpdateKeyVaultRequest
 {
     public string? Location { get; init; }
@@ -30,5 +30,15 @@ internal record CreateOrUpdateKeyVaultRequest
             public string? Family { get; set; }
             public string? Name { get; set; }
         }
+    }
+
+    public static CreateOrUpdateKeyVaultRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateKeyVaultRequest
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Properties = data.Properties.ToObjectFromJson<KeyVaultProperties>(GlobalSettings.JsonOptions)
+        };
     }
 }

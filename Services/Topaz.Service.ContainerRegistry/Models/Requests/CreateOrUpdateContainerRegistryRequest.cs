@@ -1,4 +1,6 @@
+using Azure.ResourceManager.Resources;
 using JetBrains.Annotations;
+using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Models.Requests;
 
@@ -50,5 +52,20 @@ internal sealed class CreateOrUpdateContainerRegistryRequest
     internal sealed class ResourceIdentityRequest
     {
         public string? Type { get; init; }
+    }
+
+    public static CreateOrUpdateContainerRegistryRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateContainerRegistryRequest
+        {
+            Location = data.Location,
+            Sku = new ContainerRegistrySku
+            {
+                Name = data.Sku.Name
+            },
+            Tags = data.Tags,
+            Identity = new ResourceIdentityRequest { Type = data.Identity?.ManagedServiceIdentityType.ToString() },
+            Properties = data.Properties.ToObjectFromJson<ContainerRegistryProperties>(GlobalSettings.JsonOptions)
+        };
     }
 }

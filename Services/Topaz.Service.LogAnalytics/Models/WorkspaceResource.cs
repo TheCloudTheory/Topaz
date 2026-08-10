@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using Azure.ResourceManager.Resources;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
 
 namespace Topaz.Service.LogAnalytics.Models;
 
@@ -36,4 +38,14 @@ public sealed class WorkspaceResource : ArmResource<WorkspaceResourceProperties>
     public sealed override ResourceSku? Sku { get; set; }
     public sealed override string? Kind { get; init; }
     public sealed override WorkspaceResourceProperties Properties { get; init; }
+
+    public static WorkspaceResource From(GenericResourceData data)
+    {
+        return new WorkspaceResource
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Properties = data.Properties.ToObjectFromJson<WorkspaceResourceProperties>(GlobalSettings.JsonOptions)!
+        };
+    }
 }

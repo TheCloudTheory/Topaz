@@ -4,7 +4,6 @@ using Topaz.ResourceManager;
 using Topaz.Service.ContainerRegistry.Models;
 using Topaz.Service.ContainerRegistry.Models.Requests;
 using Topaz.Service.ManagedIdentity;
-using Topaz.Service.ContainerRegistry.Models.Responses;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -148,13 +147,13 @@ internal sealed class ContainerRegistryControlPlane(
         if (!string.Equals(request.Identity?.Type, "SystemAssigned", StringComparison.OrdinalIgnoreCase))
             return new ControlPlaneOperationResult<ContainerRegistryResource>(
                 isCreate ? OperationResult.Created : OperationResult.Updated,
-                resource, null, null);
+                resource);
         
         var identityOperation = systemAssignedIdentityControlPlane.CreateOrUpdate(resource.Id);
         if (identityOperation.Resource == null)
             return new ControlPlaneOperationResult<ContainerRegistryResource>(
                 isCreate ? OperationResult.Created : OperationResult.Updated,
-                resource, null, null);
+                resource);
             
         resource.Identity = new ResourceIdentity
         {
@@ -162,11 +161,11 @@ internal sealed class ContainerRegistryControlPlane(
             PrincipalId = identityOperation.Resource.Properties.PrincipalId,
             TenantId = identityOperation.Resource.Properties.TenantId
         };
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource, false);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource);
 
         return new ControlPlaneOperationResult<ContainerRegistryResource>(
             isCreate ? OperationResult.Created : OperationResult.Updated,
-            resource, null, null);
+            resource);
     }
 
     public ControlPlaneOperationResult<ContainerRegistryResource> Get(
@@ -191,7 +190,7 @@ internal sealed class ContainerRegistryControlPlane(
 
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(Get),
             "Executing {0}: Registry '{1}' found.", nameof(Get), registryName);
-        return new ControlPlaneOperationResult<ContainerRegistryResource>(OperationResult.Success, resource, null, null);
+        return new ControlPlaneOperationResult<ContainerRegistryResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<ContainerRegistryResource> Delete(
@@ -219,7 +218,7 @@ internal sealed class ContainerRegistryControlPlane(
             "Executing {0}: Registry '{1}' deleted.", nameof(Delete), registryName);
 
         return new ControlPlaneOperationResult<ContainerRegistryResource>(
-            OperationResult.Deleted, existing.Resource, null, null);
+            OperationResult.Deleted, existing.Resource);
     }
 
     // LocalDirectoryPath has 5 segments; add 3 for .topaz prefix, registry-name dir, and metadata.json
@@ -242,7 +241,7 @@ internal sealed class ContainerRegistryControlPlane(
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListByResourceGroup),
             "Executing {0}: Found {1} registries.", nameof(ListByResourceGroup), resources.Length);
         return new ControlPlaneOperationResult<ContainerRegistryResource[]>(
-            OperationResult.Success, resources, null, null);
+            OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<ContainerRegistryResource[]> ListBySubscription(
@@ -259,7 +258,7 @@ internal sealed class ContainerRegistryControlPlane(
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListBySubscription),
             "Executing {0}: Found {1} registries.", nameof(ListBySubscription), resources.Length);
         return new ControlPlaneOperationResult<ContainerRegistryResource[]>(
-            OperationResult.Success, resources, null, null);
+            OperationResult.Success, resources);
     }
 
     public bool IsNameAvailable(
@@ -332,13 +331,13 @@ internal sealed class ContainerRegistryControlPlane(
         else
             resource.Properties.AdminPassword = newPassword;
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource, false);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource);
 
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(RegenerateCredential),
             "Executing {0}: Password '{1}' regenerated for registry '{2}'.",
             nameof(RegenerateCredential), passwordName, registryName);
 
-        return new ControlPlaneOperationResult<ContainerRegistryResource>(OperationResult.Updated, resource, null, null);
+        return new ControlPlaneOperationResult<ContainerRegistryResource>(OperationResult.Updated, resource);
     }
 
     private static bool IsNameValid(string name)
@@ -369,7 +368,7 @@ internal sealed class ContainerRegistryControlPlane(
             return new ControlPlaneOperationResult<RegistryUsage[]>(OperationResult.NotFound, null, result.Reason, result.Code);
 
         var usages = ContainerRegistryResourceProperties.GetUsagesForSku(result.Resource!.Sku?.Name);
-        return new ControlPlaneOperationResult<RegistryUsage[]>(OperationResult.Success, usages, null, null);
+        return new ControlPlaneOperationResult<RegistryUsage[]>(OperationResult.Success, usages);
     }
 
     private const string TasksSubresource = "tasks";
@@ -435,7 +434,7 @@ internal sealed class ContainerRegistryControlPlane(
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(CreateOrUpdateTask),
             "Executing {0}: task '{1}' {2}.", nameof(CreateOrUpdateTask), taskName,
             existing == null ? "created" : "updated");
-        return new ControlPlaneOperationResult<AcrTaskResource>(result, resource, null, null);
+        return new ControlPlaneOperationResult<AcrTaskResource>(result, resource);
     }
 
     public ControlPlaneOperationResult<AcrTaskResource> GetTask(
@@ -460,7 +459,7 @@ internal sealed class ContainerRegistryControlPlane(
                 OperationResult.NotFound, null,
                 string.Format(TaskNotFoundMessageTemplate, taskName, registryName),
                 TaskNotFoundCode)
-            : new ControlPlaneOperationResult<AcrTaskResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<AcrTaskResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult DeleteTask(
@@ -507,7 +506,7 @@ internal sealed class ContainerRegistryControlPlane(
 
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListTasks),
             "Executing {0}: Found {1} tasks.", nameof(ListTasks), tasks.Length);
-        return new ControlPlaneOperationResult<AcrTaskResource[]>(OperationResult.Success, tasks, null, null);
+        return new ControlPlaneOperationResult<AcrTaskResource[]>(OperationResult.Success, tasks);
     }
 
     public ControlPlaneOperationResult<AcrTaskResource> UpdateTask(
@@ -535,7 +534,7 @@ internal sealed class ContainerRegistryControlPlane(
 
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(UpdateTask),
             "Executing {0}: task '{1}' updated.", nameof(UpdateTask), taskName);
-        return new ControlPlaneOperationResult<AcrTaskResource>(OperationResult.Updated, existing, null, null);
+        return new ControlPlaneOperationResult<AcrTaskResource>(OperationResult.Updated, existing);
     }
 
     public ControlPlaneOperationResult<AcrRunResource> TriggerTaskRun(
@@ -587,7 +586,7 @@ internal sealed class ContainerRegistryControlPlane(
 
             logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(TriggerTaskRun),
                 "Executing {0}: Docker run '{1}' queued for task '{2}'.", nameof(TriggerTaskRun), runId, taskName);
-            return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource, null, null);
+            return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource);
         }
 
         // Non-DockerBuildRequest or Docker unavailable: immediate-Succeeded.
@@ -598,7 +597,7 @@ internal sealed class ContainerRegistryControlPlane(
                 subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
             logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(TriggerTaskRun),
                 "Executing {0}: run '{1}' created for task '{2}'.", nameof(TriggerTaskRun), runId, taskName);
-            return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource, null, null);
+            return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource);
         }
     }
 
@@ -637,7 +636,7 @@ internal sealed class ContainerRegistryControlPlane(
 
             logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ScheduleRun),
                 "Executing {0}: Docker run '{1}' queued.", nameof(ScheduleRun), runId);
-            return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource, null, null);
+            return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource);
         }
 
         // Non-DockerBuildRequest or Docker unavailable: immediate-Succeeded.
@@ -648,7 +647,7 @@ internal sealed class ContainerRegistryControlPlane(
                 subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
             logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ScheduleRun),
                 "Executing {0}: run '{1}' created.", nameof(ScheduleRun), runId);
-            return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource, null, null);
+            return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource);
         }
     }
 
@@ -737,7 +736,7 @@ internal sealed class ContainerRegistryControlPlane(
                 OperationResult.NotFound, null,
                 string.Format(RunNotFoundMessageTemplate, runId, registryName),
                 RunNotFoundCode)
-            : new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<AcrRunResource[]> ListRuns(
@@ -758,7 +757,7 @@ internal sealed class ContainerRegistryControlPlane(
 
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListRuns),
             "Executing {0}: Found {1} runs.", nameof(ListRuns), runs.Length);
-        return new ControlPlaneOperationResult<AcrRunResource[]>(OperationResult.Success, runs, null, null);
+        return new ControlPlaneOperationResult<AcrRunResource[]>(OperationResult.Success, runs);
     }
 
     public ControlPlaneOperationResult<AcrRunResource> UpdateRun(
@@ -786,6 +785,6 @@ internal sealed class ContainerRegistryControlPlane(
 
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(UpdateRun),
             "Executing {0}: run '{1}' updated.", nameof(UpdateRun), runId);
-        return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Updated, existing, null, null);
+        return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Updated, existing);
     }
 }

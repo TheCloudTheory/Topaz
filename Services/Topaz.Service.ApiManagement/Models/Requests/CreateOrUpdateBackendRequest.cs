@@ -1,3 +1,6 @@
+using Azure.ResourceManager.Resources;
+using Topaz.Shared;
+
 namespace Topaz.Service.ApiManagement.Models.Requests;
 
 internal sealed class CreateOrUpdateBackendRequest
@@ -9,6 +12,14 @@ internal sealed class CreateOrUpdateBackendRequest
         return new CreateOrUpdateBackendRequest
         {
             Properties = backend.Properties
+        };
+    }
+
+    public static CreateOrUpdateBackendRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateBackendRequest
+        {
+            Properties = data.Properties.ToObjectFromJson<BackendContractResourceProperties>(GlobalSettings.JsonOptions)
         };
     }
 }

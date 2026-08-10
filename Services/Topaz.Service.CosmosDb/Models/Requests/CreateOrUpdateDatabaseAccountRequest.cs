@@ -1,3 +1,6 @@
+using Azure.ResourceManager.Resources;
+using Topaz.Shared;
+
 namespace Topaz.Service.CosmosDb.Models.Requests;
 
 public sealed class CreateOrUpdateDatabaseAccountRequest
@@ -44,5 +47,18 @@ public sealed class CreateOrUpdateDatabaseAccountRequest
         public bool? EnableAnalyticalStorage { get; set; }
         public ApiProperties? ApiProperties { get; set; }
         public bool? DisableLocalAuth { get; set; }
+    }
+
+    public static CreateOrUpdateDatabaseAccountRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateDatabaseAccountRequest
+        {
+            Kind = data.Kind,
+            Location = data.Location,
+            Tags = data.Tags,
+            Properties =
+                data.Properties.ToObjectFromJson<CreateOrUpdateDatabaseAccountRequestProperties>(GlobalSettings
+                    .JsonOptions)
+        };
     }
 }

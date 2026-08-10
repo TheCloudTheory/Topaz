@@ -1,3 +1,4 @@
+using Azure.ResourceManager.Resources;
 using JetBrains.Annotations;
 using Topaz.Service.ApiManagement.Models;
 
@@ -53,6 +54,29 @@ internal sealed class CreateOrUpdateApiRequest
                 Value = api.Properties.Value,
                 WsdlSelector = api.Properties.WsdlSelector
             }
+        };
+    }
+
+    public static CreateOrUpdateApiRequest From(GenericResourceData data)
+    {
+        var properties = data.Properties.ToObjectFromJson<CreateOrUpdateApiRequest>()!;
+        return new CreateOrUpdateApiRequest
+        {
+            Type = properties.Type,
+            ApiRevision = properties.ApiRevision,
+            ApiRevisionDescription = properties.ApiRevisionDescription,
+            ApiVersion = properties.ApiVersion,
+            ApiVersionDescription = properties.ApiVersionDescription,
+            ApiVersionSetId = properties.ApiVersionSetId,
+            AuthenticationSettings = properties.AuthenticationSettings,
+            Contact = properties.Contact,
+            Description = properties.Description,
+            IsCurrent = properties.IsCurrent,
+            Properties = properties.Properties,
+            SubscriptionRequired = properties.SubscriptionRequired,
+            TermsOfServiceUrl = properties.TermsOfServiceUrl,
+            SubscriptionKeyParameterNames = properties.SubscriptionKeyParameterNames,
+            License = properties.License
         };
     }
 }

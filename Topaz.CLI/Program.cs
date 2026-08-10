@@ -128,13 +128,16 @@ internal class Program
         config.AddCommand<Commands.HealthCommand>("health")
             .WithDescription("Check whether the Topaz host is running and display its status.");
         
-        config.AddBranch("configure", (configurator =>
+        config.AddCommand<Commands.SeedCommand>("seed")
+            .WithDescription("Seed the Topaz host with data from a real cloud environment.");
+        
+        config.AddBranch("configure", configurator =>
         {
             configurator.AddCommand<Commands.SetDefaultsCommand>("set")
                 .WithDescription("Allows configuring defaults for CLI.");
             configurator.AddCommand<Commands.ShowDefaultsCommand>("show")
                 .WithDescription("Show current defaults for CLI.");
-        }));
+        });
 
         // Even though the types will be loaded via reflection, they must be explicitly
         // used so they can be loaded. The issue here is related to GetReferencedAssemblies(),

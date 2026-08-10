@@ -43,6 +43,7 @@ using Topaz.FinOps;
 using Spectre.Console;
 using Topaz.Chaos;
 using Topaz.ForwardProxy;
+using Topaz.Importer;
 using Topaz.Service.ApiManagement;
 using Topaz.Service.ContainerInstances;
 using Topaz.Service.Redis;
@@ -147,7 +148,8 @@ public class Host
             new RedisService(_eventPipeline, _logger),
             new AvailabilitySetService(_eventPipeline, _logger),
             new ApiManagementService(_eventPipeline, _logger),
-            new ContainerInstancesService(_eventPipeline, _logger)
+            new ContainerInstancesService(_eventPipeline, _logger),
+            new ImporterService(_eventPipeline, _logger),
         };
 
         _logger.ConfigureIdFactory(idFactory);

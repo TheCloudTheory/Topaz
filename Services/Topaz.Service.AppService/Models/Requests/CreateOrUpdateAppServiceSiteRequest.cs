@@ -1,4 +1,6 @@
+using Azure.ResourceManager.Resources;
 using Topaz.Service.AppService.Models;
+using Topaz.Shared;
 
 namespace Topaz.Service.AppService.Models.Requests;
 
@@ -24,5 +26,16 @@ internal sealed record CreateOrUpdateAppServiceSiteRequest
         public bool? AlwaysOn { get; init; }
         public string? FtpsState { get; init; }
         public string? MinTlsVersion { get; init; }
+    }
+
+    public static CreateOrUpdateAppServiceSiteRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateAppServiceSiteRequest
+        {
+            Kind = data.Kind,
+            Location = data.Location,
+            Tags = data.Tags,
+            Properties = data.Properties.ToObjectFromJson<AppServiceSiteProperties>(GlobalSettings.JsonOptions)
+        };
     }
 }

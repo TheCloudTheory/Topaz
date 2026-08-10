@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using Azure.ResourceManager.Resources;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
 
 namespace Topaz.Service.Insights.Models;
 
@@ -38,4 +40,17 @@ public sealed class ApplicationInsightsComponentResource : ArmResource<Applicati
     public sealed override ResourceSku? Sku { get; set; }
     public sealed override string? Kind { get; init; }
     public sealed override ApplicationInsightsComponentResourceProperties Properties { get; init; }
+
+    public static ApplicationInsightsComponentResource From(GenericResourceData data)
+    {
+        return new ApplicationInsightsComponentResource
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Properties =
+                data.Properties.ToObjectFromJson<ApplicationInsightsComponentResourceProperties>(GlobalSettings
+                    .JsonOptions)!,
+            Kind = data.Kind,
+        };
+    }
 }

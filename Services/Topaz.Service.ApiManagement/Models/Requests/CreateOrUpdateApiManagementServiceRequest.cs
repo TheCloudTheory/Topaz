@@ -1,3 +1,4 @@
+using Azure.ResourceManager.Resources;
 using Topaz.ResourceManager;
 
 namespace Topaz.Service.ApiManagement.Models.Requests;
@@ -29,6 +30,23 @@ internal sealed class CreateOrUpdateApiManagementServiceRequest
                 DisableGateway = apim.Properties.DisableGateway,
                 EnableClientCertificate = apim.Properties.EnableClientCertificate,
             }
+        };
+    }
+
+    public static CreateOrUpdateApiManagementServiceRequest From(GenericResourceData data)
+    {
+        return new CreateOrUpdateApiManagementServiceRequest
+        {
+            Location = data.Location,
+            Tags = data.Tags,
+            Sku = new ResourceSku
+            {
+                Capacity = data.Sku.Capacity,
+                Name = data.Sku.Name,
+                Tier = data.Sku.Tier,
+                Family = data.Sku.Family,
+            },
+            Properties = data.Properties.ToObjectFromJson<CreateOrUpdateApiManagementServiceRequestProperties>()
         };
     }
 }
