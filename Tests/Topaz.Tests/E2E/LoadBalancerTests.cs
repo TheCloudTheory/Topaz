@@ -77,12 +77,12 @@ public class LoadBalancerTests
 
         // Assert
         Assert.That(loadBalancer, Is.Not.Null);
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(loadBalancer.Data.Name, Is.EqualTo(lbName));
-            Assert.That(loadBalancer.Data.Type, Is.EqualTo("Microsoft.Network/loadBalancers"));
+            Assert.That(loadBalancer.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.Network/loadBalancers")));
             Assert.That(loadBalancer.Data.Location.ToString(), Is.EqualTo("westeurope").IgnoreCase);
-        });
+        }
     }
 
     [Test]
@@ -149,12 +149,12 @@ public class LoadBalancerTests
             .CreateOrUpdateAsync(WaitUntil.Completed, lbName, lbDataWithTags);
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(updateResult.Value.Data.Tags.ContainsKey("env"), Is.True);
             Assert.That(updateResult.Value.Data.Tags["env"], Is.EqualTo("test"));
             Assert.That(updateResult.Value.Data.Tags["team"], Is.EqualTo("platform"));
-        });
+        }
     }
 
     [Test]
@@ -176,11 +176,11 @@ public class LoadBalancerTests
 
         // Assert
         var names = loadBalancers.Select(lb => lb.Data.Name).ToList();
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(names, Does.Contain("test-lb-list-a"));
             Assert.That(names, Does.Contain("test-lb-list-b"));
-        });
+        }
     }
 
     [Test]

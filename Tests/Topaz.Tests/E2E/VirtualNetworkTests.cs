@@ -93,15 +93,15 @@ public class VirtualNetworkTests
         
         // Assert
         Assert.That(virtualNetwork, Is.Not.Null);
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(virtualNetwork.Value.Data.Name, Is.EqualTo(virtualNetworkName));
-            Assert.That(virtualNetwork.Value.Data.Type, Is.EqualTo("Microsoft.Network/virtualNetworks"));
+            Assert.That(virtualNetwork.Value.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.Network/virtualNetworks")));
             Assert.That(virtualNetwork.Value.Data.AddressPrefixes, Contains.Item("10.0.0.0/22"));
             Assert.That(virtualNetwork.Value.Data.Subnets, Has.Count.EqualTo(1));
             Assert.That(virtualNetwork.Value.Data.Subnets.First().Name, Is.EqualTo("test-subnet"));
             Assert.That(virtualNetwork.Value.Data.Subnets.First().AddressPrefixes, Contains.Item("10.0.0.0/26"));
-        });
+        }
     }
 
     [Test]
@@ -125,13 +125,13 @@ public class VirtualNetworkTests
 
         // Assert
         Assert.That(subnet, Is.Not.Null);
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(subnet.Value.Data.Name, Is.EqualTo("test-subnet"));
             Assert.That(subnet.Value.Data.ResourceType,
                 Is.EqualTo(new ResourceType("Microsoft.Network/virtualNetworks/subnets")));
             Assert.That(subnet.Value.Data.AddressPrefixes, Contains.Item("10.10.1.0/24"));
-        });
+        }
     }
 
     [Test]
@@ -244,11 +244,11 @@ public class VirtualNetworkTests
         // Assert
         var vnet = await rg.Value.GetVirtualNetworkAsync("topaz-vnet");
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(vnet, Is.Not.Null);
             Assert.That(vnet.Value.Data.Name, Is.EqualTo("topaz-vnet"));
-        });
+        }
     }
 
     [Test]
@@ -347,11 +347,11 @@ public class VirtualNetworkTests
 
         // Assert
         var names = vnets.Select(v => v.Data.Name).ToList();
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(names, Does.Contain("vnet-list-rg-a"));
             Assert.That(names, Does.Contain("vnet-list-rg-b"));
-        });
+        }
     }
 
     [Test]
@@ -396,13 +396,13 @@ public class VirtualNetworkTests
         var updated = await vnet.UpdateAsync(tagsObject);
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(updated.Value.Data.Tags, Does.ContainKey("env"));
             Assert.That(updated.Value.Data.Tags["env"], Is.EqualTo("test"));
             Assert.That(updated.Value.Data.Tags, Does.ContainKey("owner"));
             Assert.That(updated.Value.Data.Tags["owner"], Is.EqualTo("topaz"));
-        });
+        }
     }
 
     [Test]
@@ -502,12 +502,12 @@ public class VirtualNetworkTests
         var result = await vnet.CheckIPAddressAvailabilityAsync("10.71.1.5");
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(result.Value.Available, Is.True);
             Assert.That(result.Value.AvailableIPAddresses, Is.Not.Empty);
             Assert.That(result.Value.AvailableIPAddresses, Does.Not.Contain(staticIp));
-        });
+        }
     }
 
     [Test]

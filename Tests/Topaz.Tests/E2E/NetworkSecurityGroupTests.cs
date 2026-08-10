@@ -79,7 +79,7 @@ public class NetworkSecurityGroupTests
         Assert.Multiple(() =>
         {
             Assert.That(nsg.Value.Data.Name, Is.EqualTo(nsgName));
-            Assert.That(nsg.Value.Data.Type, Is.EqualTo("Microsoft.Network/networkSecurityGroups"));
+            Assert.That(nsg.Value.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.Network/networkSecurityGroups")));
             Assert.That(nsg.Value.Data.DefaultSecurityRules, Has.Count.EqualTo(6));
         });
     }

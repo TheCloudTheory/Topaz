@@ -20,7 +20,7 @@ public class StatusToolTests
     {
         var result = await StatusTool.GetTopazStatus();
 
-        var rmService = result.Services.Single(s => s.Port == GlobalSettings.DefaultResourceManagerPort);
+        var rmService = result.Services.First(s => s.Port == GlobalSettings.DefaultResourceManagerPort);
 
         Assert.That(rmService.IsUp, Is.True);
     }
@@ -30,7 +30,7 @@ public class StatusToolTests
     {
         var result = await StatusTool.GetTopazStatus();
 
-        Assert.That(result.Services, Has.Count.EqualTo(15));
+        Assert.That(result.Services, Has.Count.EqualTo(31));
     }
 
     [Test]

@@ -84,7 +84,7 @@ public class NetworkInterfaceTests
         Assert.Multiple(() =>
         {
             Assert.That(nic.Data.Name, Is.EqualTo(nicName));
-            Assert.That(nic.Data.Type, Is.EqualTo("Microsoft.Network/networkInterfaces"));
+            Assert.That(nic.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.Network/networkInterfaces")));
             Assert.That(nic.Data.Location.ToString(), Is.EqualTo("westeurope").IgnoreCase);
             Assert.That(nic.Data.ProvisioningState.ToString(), Is.EqualTo("Succeeded").IgnoreCase);
         });

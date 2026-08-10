@@ -28,7 +28,7 @@ This page lists the tool and SDK versions that Topaz is tested against in CI. Us
 | `Azure.ResourceManager.EventHubs` | `1.3.0` |
 | `Azure.ResourceManager.ContainerRegistry` | `1.4.0` |
 | `Azure.ResourceManager.ManagedServiceIdentities` | `1.4.1` |
-| `Azure.ResourceManager.Network` | `1.16.1` |
+| `Azure.ResourceManager.Network` | `1.15.0` |
 | `Azure.ResourceManager.Resources` | `1.11.2` |
 | `Azure.ResourceManager.Authorization` | `1.1.6` |
 | `Azure.ResourceManager.Compute` | `1.16.0` |

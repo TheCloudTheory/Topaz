@@ -53,7 +53,7 @@ public class PublicIpAddressTests
         Assert.Multiple(() =>
         {
             Assert.That(pip.Data.Name, Is.EqualTo(pipName));
-            Assert.That(pip.Data.Type, Is.EqualTo("Microsoft.Network/publicIPAddresses"));
+            Assert.That(pip.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.Network/publicIPAddresses")));
             Assert.That(pip.Data.Location.ToString(), Is.EqualTo("westeurope").IgnoreCase);
             Assert.That(pip.Data.ProvisioningState.ToString(), Is.EqualTo("Succeeded").IgnoreCase);
             Assert.That(pip.Data.IPAddress, Is.Not.Null.And.Not.Empty);
