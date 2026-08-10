@@ -42,19 +42,28 @@ internal sealed class SeedCommand(HttpClient httpClient)
     {
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {
-            return ValidationResult.Error("SubscriptionId is required");
+            return ValidationResult.Error("Subscription ID is required");
         }
         
-        return Guid.TryParse(settings.SubscriptionId, out _) ? ValidationResult.Error("SubscriptionId is not a valid GUID") : ValidationResult.Success();
+        return !Guid.TryParse(settings.SubscriptionId, out _) ? ValidationResult.Error("Subscription ID is not a valid GUID") : ValidationResult.Success();
     }
     
     [UsedImplicitly]
     internal sealed class SeedCommandSettings : CommandSettings
     {
+        [CommandOption("-s|--subscription-id")]
         public string? SubscriptionId { get; set; }
+        
+        [CommandOption("-g|--resource-group")]
         public string? ResourceGroup { get; set; }
+        
+        [CommandOption("--resource-type")]
         public string? ResourceType { get; set; }
+        
+        [CommandOption("--dry-run")]
         public bool DryRun { get; set; }
+        
+        [CommandOption("--overwrite")]
         public bool Overwrite { get; set; }
     }
 }

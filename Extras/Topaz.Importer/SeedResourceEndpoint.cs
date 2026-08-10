@@ -34,7 +34,7 @@ internal sealed class SeedResourceEndpoint(Pipeline eventPipeline, ITopazLogger 
         }
 
         var result = await _importerService.Import(SubscriptionIdentifier.From(request.SubscriptionId),
-            ResourceGroupIdentifier.From(request.ResourceGroup), request.ResourceType, request.DryRun,
+            string.IsNullOrWhiteSpace(request.ResourceGroup) ? null : ResourceGroupIdentifier.From(request.ResourceGroup), request.ResourceType, request.DryRun,
             request.Overwrite);
         
         response.CreateJsonContentResponse(result);

@@ -45,7 +45,7 @@ public sealed class WorkspaceResource : ArmResource<WorkspaceResourceProperties>
         {
             Location = data.Location,
             Tags = data.Tags,
-            Properties = data.Properties.ToObjectFromJson<WorkspaceResourceProperties>(GlobalSettings.JsonOptions)!
+            Properties = data.Properties == null ? new WorkspaceResourceProperties() : data.Properties?.ToObjectFromJson<WorkspaceResourceProperties>(GlobalSettings.JsonOptions)!
         };
     }
 }

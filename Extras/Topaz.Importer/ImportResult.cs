@@ -10,22 +10,24 @@ public sealed class ImportResult(bool dryRun) : TopazApiModel
 
     public void AddSubscription(SubscriptionIdentifier subscriptionIdentifier)
     {
-        Subscription = subscriptionIdentifier;
+        Subscription = subscriptionIdentifier.Value.ToString();
     }
 
-    public SubscriptionIdentifier? Subscription { get; private set; }
+    public string? Subscription { get; private set; }
 
     public void AddResourceGroup(ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        ResourceGroups.Add(resourceGroupIdentifier);
+        ResourceGroups.Add(resourceGroupIdentifier.Value);
     }
 
-    public IList<ResourceGroupIdentifier> ResourceGroups { get; set; } = [];
+    public IList<string> ResourceGroups { get; set; } = [];
+    public uint TotalResourceGroups => (uint)ResourceGroups.Count;
 
     public void Add(ResourceIdentifier resourceId)
     {
-        Resources.Add(resourceId);
+        Resources.Add(resourceId.ToString());
     }
 
-    public IList<ResourceIdentifier> Resources { get; set; } = [];
+    public IList<string> Resources { get; set; } = [];
+    public uint TotalResources => (uint)Resources.Count;
 }

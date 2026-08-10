@@ -40,6 +40,11 @@ namespace Topaz.CLI;
 [UsedImplicitly]
 internal class Program
 {
+    private static readonly HttpClient Client = new()
+    {
+        Timeout = TimeSpan.FromSeconds(5)
+    };
+
     internal static async Task<int> Main(string[] args)
     {
         if (args.Length != 0 && args[0] == "health") return await RunAsync(args);
@@ -76,14 +81,9 @@ internal class Program
 
     private static async Task<int> CheckHostAsync()
     {
-        using var handler = new HttpClientHandler();
-        handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
-        using var client = new HttpClient(handler);
-        client.Timeout = TimeSpan.FromSeconds(5);
-
         try
         {
-            var response = await client.GetAsync(
+            var response = await Client.GetAsync(
                 $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/health");
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);

@@ -19,7 +19,7 @@ public sealed class CreateUpdateManagedIdentityRequest
         {
             Location = data.Location,
             Tags = data.Tags,
-            Properties = data.Properties.ToObjectFromJson<ManagedIdentityProperties>()
+            Properties = data.Properties == null ? new ManagedIdentityProperties() : data.Properties.ToObjectFromJson<ManagedIdentityProperties>()
         };
     }
 }

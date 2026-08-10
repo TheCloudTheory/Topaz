@@ -131,7 +131,7 @@ public class AzureImporterService(Pipeline eventPipeline, ITopazLogger logger)
             await ProcessResourceImport(subscriptionIdentifier, resourceType, rg, importResult, rg.GetGenericResourcesAsync(), dryRun, overwrite);
         }
 
-        return new ImportResult(dryRun);
+        return importResult;
     }
 
     private async Task ProcessResourceImport(SubscriptionIdentifier subscriptionIdentifier, string? resourceType,
@@ -142,280 +142,282 @@ public class AzureImporterService(Pipeline eventPipeline, ITopazLogger logger)
             logger.LogDebug(nameof(AzureImporterService), nameof(RunSubscriptionScopedImport), "Found resource {0}",
                 resource.Id);
 
+            var fullResource = await resource.GetAsync();
             var rgId = ResourceGroupIdentifier.From(rg.Data.Name);
-            switch (resource.Data.ResourceType.Type.ToLowerInvariant())
+            var type = fullResource.Value.Data.ResourceType.ToString().ToLowerInvariant();
+            switch (type)
             {
                 case "microsoft.containerregistry/registries":
                 {
                     var cp = ContainerRegistryControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateContainerRegistryRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateContainerRegistryRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.keyvault/vaults":
                 {
                     var cp = KeyVaultControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateKeyVaultRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateKeyVaultRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.network/virtualnetworks":
                 {
                     var cp = VirtualNetworkControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateVirtualNetworkRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateVirtualNetworkRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.network/networksecuritygroups":
                 {
                     var cp = NetworkSecurityGroupControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateNetworkSecurityGroupRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateNetworkSecurityGroupRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.network/networkinterfaces":
                 {
                     var cp = NetworkInterfaceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateNetworkInterfaceRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateNetworkInterfaceRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.network/privateendpoints":
                 {
                     var cp = PrivateEndpointControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdatePrivateEndpointRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdatePrivateEndpointRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.network/publicipaddresses":
                 {
                     var cp = PublicIpAddressControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdatePublicIpAddressRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdatePublicIpAddressRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.network/loadbalancers":
                 {
                     var cp = LoadBalancerControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateLoadBalancerRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateLoadBalancerRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.compute/virtualmachines":
                 {
                     var cp = VirtualMachineServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateVirtualMachineRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateVirtualMachineRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.compute/disks":
                 {
                     var cp = DiskServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateDiskRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateDiskRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.appconfiguration/configurationstores":
                 {
                     var cp = AppConfigurationServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            ConfigurationStoreResource.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            ConfigurationStoreResource.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.operationalinsights/workspaces":
                 {
                     var cp = LogAnalyticsServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            WorkspaceResource.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            WorkspaceResource.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.insights/components":
                 {
                     var cp = ApplicationInsightsServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            ApplicationInsightsComponentResource.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            ApplicationInsightsComponentResource.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.managedidentity/userassignedidentities":
                 {
                     var cp = ManagedIdentityControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, ManagedIdentityIdentifier.From(resource.Data.Name)).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, ManagedIdentityIdentifier.From(resource.Data.Name),
-                            CreateUpdateManagedIdentityRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, ManagedIdentityIdentifier.From(fullResource.Value.Data.Name)).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, ManagedIdentityIdentifier.From(fullResource.Value.Data.Name),
+                            CreateUpdateManagedIdentityRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.eventhub/namespaces":
                 {
                     var cp = EventHubServiceControlPlane.New(logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.GetNamespace(subscriptionIdentifier, rgId, EventHubNamespaceIdentifier.From(resource.Data.Name)).Result,
-                        () => cp.CreateOrUpdateNamespace(subscriptionIdentifier, rgId, resource.Data.Location, EventHubNamespaceIdentifier.From(resource.Data.Name),
-                            CreateOrUpdateEventHubNamespaceRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.GetNamespace(subscriptionIdentifier, rgId, EventHubNamespaceIdentifier.From(fullResource.Value.Data.Name)).Result,
+                        () => cp.CreateOrUpdateNamespace(subscriptionIdentifier, rgId, fullResource.Value.Data.Location, EventHubNamespaceIdentifier.From(fullResource.Value.Data.Name),
+                            CreateOrUpdateEventHubNamespaceRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.servicebus/namespaces":
                 {
                     var cp = ServiceBusServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.GetNamespace(subscriptionIdentifier, rgId, ServiceBusNamespaceIdentifier.From(resource.Data.Name)).Result,
-                        () => cp.CreateOrUpdateNamespace(subscriptionIdentifier, rgId, resource.Data.Location, ServiceBusNamespaceIdentifier.From(resource.Data.Name),
-                            CreateOrUpdateServiceBusNamespaceRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.GetNamespace(subscriptionIdentifier, rgId, ServiceBusNamespaceIdentifier.From(fullResource.Value.Data.Name)).Result,
+                        () => cp.CreateOrUpdateNamespace(subscriptionIdentifier, rgId, fullResource.Value.Data.Location, ServiceBusNamespaceIdentifier.From(fullResource.Value.Data.Name),
+                            CreateOrUpdateServiceBusNamespaceRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.storage/storageaccounts":
                 {
                     var cp = AzureStorageControlPlane.New(logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateStorageAccountRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateStorageAccountRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.web/serverfarms":
                 {
                     var cp = AppServicePlanControlPlane.New(logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateAppServicePlanRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateAppServicePlanRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.web/sites":
                 {
                     var cp = AppServiceSiteControlPlane.New(logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateAppServiceSiteRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateAppServiceSiteRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.sql/servers":
                 {
                     var cp = SqlServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateSqlServerRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateSqlServerRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.sql/servers/databases":
                 {
                     var cp = SqlServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdateDatabase(subscriptionIdentifier, rgId, resource.Data.Id.Parent!.Name, resource.Data.Name,
-                            CreateOrUpdateSqlDatabaseRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdateDatabase(subscriptionIdentifier, rgId, fullResource.Value.Data.Id.Parent!.Name, fullResource.Value.Data.Name,
+                            CreateOrUpdateSqlDatabaseRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.documentdb/databaseaccounts":
                 {
                     var cp = CosmosDbServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateDatabaseAccountRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateDatabaseAccountRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.cache/redis":
                 {
                     var cp = RedisServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            RedisResource.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            RedisResource.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.compute/availabilitysets":
                 {
                     var cp = AvailabilitySetControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
-                            CreateOrUpdateAvailabilitySetRequest.From(resource.Data)).Result, dryRun, overwrite);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            CreateOrUpdateAvailabilitySetRequest.From(fullResource.Value.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.apimanagement/service":
                 {
                     var cp = ApiManagementServiceControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, resource.Data.Name,
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
                             CreateOrUpdateApiManagementServiceRequest.From(resource.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.apimanagement/service/apis":
                 {
                     var cp = ApiManagementApiControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Id.Parent!.Name, resource.Data.Name)
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Id.Parent!.Name, fullResource.Value.Data.Name)
                             .Result,
                         () => cp.CreateOrUpdate(subscriptionIdentifier, rgId,
-                            resource.Id.Parent!.Name, resource.Data.Name,
-                            CreateOrUpdateApiRequest.From(resource.Data), "*").Result, dryRun, overwrite);
+                            fullResource.Value.Id.Parent!.Name, fullResource.Value.Data.Name,
+                            CreateOrUpdateApiRequest.From(fullResource.Value.Data), "*").Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.apimanagement/service/backends":
                 {
                     var cp = ApiManagementBackendControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Id.Parent!.Name, resource.Data.Name)
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, resource.Id.Parent!.Name, fullResource.Value.Data.Name)
                             .Result,
                         () => cp.CreateOrUpdate(subscriptionIdentifier, rgId,
-                            resource.Id.Parent!.Name, resource.Data.Name,
-                            CreateOrUpdateBackendRequest.From(resource.Data), "*").Result, dryRun, overwrite);
+                            fullResource.Value.Id.Parent!.Name, fullResource.Value.Data.Name,
+                            CreateOrUpdateBackendRequest.From(fullResource.Value.Data), "*").Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.apimanagement/service/products":
                 {
                     var cp = ApiManagementProductControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Id.Parent!.Name, resource.Data.Name)
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Id.Parent!.Name, fullResource.Value.Data.Name)
                             .Result,
                         () => cp.CreateOrUpdate(subscriptionIdentifier, rgId,
-                            resource.Id.Parent!.Name, resource.Data.Name,
-                            CreateOrUpdateProductRequest.From(resource.Data), "*").Result, dryRun, overwrite);
+                            fullResource.Value.Id.Parent!.Name, fullResource.Value.Data.Name,
+                            CreateOrUpdateProductRequest.From(fullResource.Value.Data), "*").Result, dryRun, overwrite);
                     break;
                 }
                 case "microsoft.apimanagement/service/policies":
                 {
                     var cp = ApiManagementPolicyControlPlane.New(eventPipeline, logger);
-                    TryImportResource(resource.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, resource.Id.Parent!.Name, resource.Data.Name)
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Id.Parent!.Name, fullResource.Value.Data.Name)
                             .Result,
                         () => cp.CreateOrUpdate(subscriptionIdentifier, rgId,
-                            resource.Id.Parent!.Name, resource.Data.Name,
-                            CreateOrUpdatePolicyRequest.From(resource.Data), "*").Result, dryRun, overwrite);
+                            fullResource.Value.Id.Parent!.Name, fullResource.Value.Data.Name,
+                            CreateOrUpdatePolicyRequest.From(fullResource.Value.Data), "*").Result, dryRun, overwrite);
                     break;
                 }
                 default:
-                    logger.LogWarning($"Deployment of resource type {resourceType} is not yet supported.");
+                    logger.LogWarning($"Deployment of resource type {type} is not yet supported.");
                     break;
             }
         }
@@ -430,6 +432,10 @@ public class AzureImporterService(Pipeline eventPipeline, ITopazLogger logger)
         {
             if (createOrUpdate() is OperationResult.Created or OperationResult.Updated)
                 importResult.Add(resourceId);
+        }
+        else
+        {
+            logger.LogDebug(nameof(AzureImporterService), nameof(TryImportResource), "Resource {0} won't be imported because it already exists.", resourceId);
         }
     }
 
