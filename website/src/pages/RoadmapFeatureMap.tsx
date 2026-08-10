@@ -15,18 +15,6 @@ interface Milestone {
 
 const MILESTONES: Milestone[] = [
   {
-    version: 'v1.10-preview',
-    label: 'v1.10 preview',
-    colorClass: styles.milestoneRed,
-    features: [
-      { service: 'API Management', summary: 'Initial control plane · APIs · Products · Backends · Policies' },
-      { service: 'Container Instances', summary: 'Initial control plane · lifecycle operations · container logs' },
-      { service: 'Availability Sets', summary: 'Initial control plane · list available VM sizes' },
-      { service: 'Private Endpoints', summary: 'Initial control plane · IP allocation via subnet CIDR' },
-      { service: 'Redis Cache', summary: 'Initial control plane · firewall rules · MCP provisioning tool' },
-    ],
-  },
-  {
     version: 'v1.11',
     label: 'v1.11',
     colorClass: styles.milestonePurple,
@@ -59,6 +47,17 @@ const MILESTONES: Milestone[] = [
       { service: 'Chaos Engineering', summary: 'AMQP link detach injection · credit starvation · session timeout injection' },
     ],
   },
+  {
+    version: 'v1.14',
+    label: 'v1.14',
+    colorClass: styles.milestoneOrange,
+    features: [
+      { service: 'OpenTofu', summary: 'Verified compatibility · dedicated test suite · integration guide · API coverage docs' },
+      { service: 'Azure Service Health', summary: 'Resource Health availability statuses · Service Health events · chaos-injectable incidents' },
+      { service: 'IaC state export', summary: 'topaz export --format bicep · topaz export --format terraform (HCL + tfvars stub)' },
+      { service: 'Service Bus', summary: 'Chained DLQ forwarding (A → B DLQ → C) with configurable hop limit' },
+    ],
+  },
 ];
 
 export default function RoadmapFeatureMap(): JSX.Element {
@@ -67,7 +66,7 @@ export default function RoadmapFeatureMap(): JSX.Element {
       <div className="container">
         <h2 className={styles.featureMapTitle}>What's coming</h2>
         <p className={styles.featureMapSubtitle}>
-          v1.9 is now released. Here is a quick overview of the services and features planned for upcoming releases.
+          v1.10 is now released. Here is a quick overview of the services and features planned for upcoming releases.
         </p>
         <div className={styles.milestoneGrid}>
           {MILESTONES.map((milestone) => (
