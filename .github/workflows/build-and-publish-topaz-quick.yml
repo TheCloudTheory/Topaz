@@ -46,7 +46,7 @@ jobs:
         tags: topaz/host
         platforms: linux/amd64
     - name: Test (E2E + CLI only)
-      run: dotnet test Topaz.Tests/Topaz.Tests.csproj -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
+      run: dotnet test Tests/Topaz.Tests/Topaz.Tests.csproj -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
