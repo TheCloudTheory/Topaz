@@ -30,6 +30,7 @@ using Topaz.Service.AppConfiguration.Commands;
 using Topaz.Service.LogAnalytics.Commands;
 using Topaz.FinOps.Commands;
 using Topaz.Chaos.Commands;
+using Topaz.Importer.Commands;
 using Topaz.Service.ContainerInstances.Commands;
 using Topaz.Service.Insights.Commands;
 using Topaz.Service.Redis.Commands;
@@ -128,9 +129,6 @@ internal class Program
         config.AddCommand<Commands.HealthCommand>("health")
             .WithDescription("Check whether the Topaz host is running and display its status.");
         
-        config.AddCommand<Commands.SeedCommand>("seed")
-            .WithDescription("Seed the Topaz host with data from a real cloud environment.");
-        
         config.AddBranch("configure", configurator =>
         {
             configurator.AddCommand<Commands.SetDefaultsCommand>("set")
@@ -173,6 +171,7 @@ internal class Program
             typeof(GenericPublicIpAddressCommand),
             typeof(GenericRedisCommand),
             typeof(GenericContainerInstancesCommand),
+            typeof(GenericSeedCommand)
         };
 
         var commands = Assembly.GetExecutingAssembly()

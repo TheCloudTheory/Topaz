@@ -25,6 +25,7 @@ using Topaz.Service.Disk.Commands;
 using Topaz.Service.CosmosDb.Commands;
 using Topaz.Service.Sql.Commands;
 using Topaz.FinOps.Commands;
+using Topaz.Importer.Commands;
 using Topaz.Service.Insights.Commands;
 using Topaz.Service.LogAnalytics.Commands;
 
@@ -63,7 +64,7 @@ _ = new[]
     typeof(GenericLogAnalyticsCommand),
     typeof(GenericInsightsCommand),
     typeof(GenericApiManagementCommand),
-    typeof(SeedCommand)
+    typeof(GenericSeedCommand)
 };
 
 Console.WriteLine("Looking for commands...");
