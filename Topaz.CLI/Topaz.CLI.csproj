@@ -36,6 +36,7 @@
     <ProjectReference Include="../Topaz.Chaos/Topaz.Chaos.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.LogAnalytics/Topaz.Service.LogAnalytics.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.Insights/Topaz.Service.Insights.csproj" />
+    <ProjectReference Include="..\Extras\Topaz.Importer\Topaz.Importer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
