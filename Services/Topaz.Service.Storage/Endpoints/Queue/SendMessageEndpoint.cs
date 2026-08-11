@@ -30,7 +30,6 @@ internal sealed class SendMessageEndpoint(Pipeline eventPipeline, ITopazLogger l
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        Logger.LogInformation($"[SendMessageEndpoint] GetResponse called with path: {context.Request.Path} method: {context.Request.Method}");
         try
         {
             if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;

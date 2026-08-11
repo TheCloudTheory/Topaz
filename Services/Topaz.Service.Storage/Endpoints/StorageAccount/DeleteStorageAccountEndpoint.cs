@@ -40,7 +40,6 @@ internal sealed class DeleteStorageAccountEndpoint(ITopazLogger logger) : IEndpo
             var storageAccount = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
             if (storageAccount.Result == OperationResult.NotFound || storageAccount.Resource == null)
             {
-                logger.LogInformation($"Storage account [{storageAccountName}] not found.");
                 // According to the documentation, deleting a non-existent storage account returns HTTP 204.
                 response.StatusCode = HttpStatusCode.NoContent;
                 return;

@@ -33,7 +33,7 @@ public sealed class ChaosProvider(ITopazLogger logger)
             var failValue = 1 - new Random().NextDouble();
             if (failValue >= rule.FaultRate) continue;
 
-            logger.LogInformation($"[ChaosProvider] Rule '{rule.Id}' triggered (faultType={rule.FaultType}, faultRate={rule.FaultRate}).");
+            logger.LogInformation(nameof(ChaosProvider), nameof(GetChaosResponse), $"[ChaosProvider] Rule '{rule.Id}' triggered (faultType={rule.FaultType}, faultRate={rule.FaultRate}).");
             return (true, await rule.GetResponse());
         }
         

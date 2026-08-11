@@ -28,7 +28,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         // external port (e.g. a random Docker host-port mapping in tests).
         var port = context.Connection.LocalPort;
 
-        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][port:{port}]");
+        logger.LogInformation(nameof(Router), nameof(MatchAndExecuteEndpoint), $"[{method}][{context.Request.Host}{path}{query}][port:{port}]");
 
         // Normalize consecutive slashes (some clients, e.g. `az resource`, emit
         // paths like `/providers/Microsoft.Compute//virtualMachines/` with a double
@@ -139,7 +139,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         var responseBytes = await response.Content.ReadAsByteArrayAsync();
         var textResponse = System.Text.Encoding.UTF8.GetString(responseBytes);
 
-        logger.LogInformation($"[{method}][{context.Request.Host}:{path}{query}][{response.StatusCode}] {textResponse}");
+        logger.LogInformation(nameof(Router), nameof(MatchAndExecuteEndpoint), $"[{method}][{context.Request.Host}:{path}{query}][{response.StatusCode}] {textResponse}");
         
         context.Response.StatusCode = (int)response.StatusCode;
         

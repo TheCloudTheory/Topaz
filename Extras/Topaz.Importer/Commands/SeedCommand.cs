@@ -23,6 +23,8 @@ internal sealed class SeedCommand(HttpClient httpClient)
             settings.Overwrite
         };
 
+        AnsiConsole.WriteLine("Importing resources. This may take a while.");
+        
         var response = await HttpClient.PostAsync(
             $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/topaz/extras/seed",
             new StringContent(JsonSerializer.Serialize(request, GlobalSettings.JsonOptions)), cancellationToken);
@@ -34,7 +36,41 @@ internal sealed class SeedCommand(HttpClient httpClient)
             return 1;
         }
         
-        AnsiConsole.WriteLine(body);
+        var parsed = JsonSerializer.Deserialize<ImportResult>(body, GlobalSettings.JsonOptions);
+
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("Property")
+            .AddColumn("Value");
+
+        table.AddRow("Dry run", parsed!.DryRun ? "[yellow]Yes[/]" : "[green]No[/]");
+        table.AddRow("Resource groups", parsed.TotalResourceGroups.ToString());
+        table.AddRow("Resources imported", parsed.TotalResources.ToString());
+
+        AnsiConsole.Write(table);
+
+        if (parsed.ResourceGroups.Count > 0)
+        {
+            var rgTable = new Table()
+                .Border(TableBorder.Rounded)
+                .Title("Resource Groups")
+                .AddColumn("Name");
+            foreach (var rg in parsed.ResourceGroups)
+                rgTable.AddRow(rg);
+            AnsiConsole.Write(rgTable);
+        }
+
+        if (parsed.Resources.Count > 0)
+        {
+            var resTable = new Table()
+                .Border(TableBorder.Rounded)
+                .Title("Imported Resources")
+                .AddColumn("Resource ID");
+            foreach (var r in parsed.Resources)
+                resTable.AddRow(r);
+            AnsiConsole.Write(resTable);
+        }
+
         return 0;
     }
 

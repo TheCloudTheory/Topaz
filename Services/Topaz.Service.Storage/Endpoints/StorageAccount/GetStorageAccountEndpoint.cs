@@ -40,7 +40,6 @@ internal sealed class GetStorageAccountEndpoint(ITopazLogger logger) : IEndpoint
             var storageAccount = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
             if (storageAccount.Result == OperationResult.NotFound || storageAccount.Resource == null)
             {
-                logger.LogInformation($"Storage account [{storageAccountName}] not found.");
                 response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode,
                     $"Microsoft.Storage/storageAccounts/{storageAccountName}", resourceGroupIdentifier);
                 return;

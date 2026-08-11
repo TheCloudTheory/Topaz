@@ -45,9 +45,9 @@ internal sealed class QueueManagementRequestEndpoint(
         const int statusCode = 200;
         var requestBody = DescribeBody(messageContext.Message.Body);
 
-        logger.LogInformation(
-            $"[{nameof(QueueManagementRequestEndpoint)}.{nameof(OnMessage)}] Received queue management request: operation='{operation}', session='{messageContext.Link.Session}', hasResponseLink='{responseLinks.ContainsKey(messageContext.Link.Session)}'.");
-        logger.LogInformation(
+        logger.LogInformation(nameof(QueueManagementRequestEndpoint), nameof(OnMessage),
+            $"Received queue management request: operation='{operation}', session='{messageContext.Link.Session}', hasResponseLink='{responseLinks.ContainsKey(messageContext.Link.Session)}'.");
+        logger.LogInformation(nameof(QueueManagementRequestEndpoint), nameof(OnMessage),
             $"[{nameof(QueueManagementRequestEndpoint)}.{nameof(OnMessage)}] Queue management request body: {requestBody}");
 
         // Settle the incoming delivery immediately.
@@ -139,7 +139,7 @@ internal sealed class QueueManagementRequestEndpoint(
         if (msgId != null)
             reply.Properties.SetCorrelationId(msgId);
 
-        logger.LogInformation(
+        logger.LogInformation(nameof(QueueManagementRequestEndpoint), nameof(OnMessage),
             $"[{nameof(QueueManagementRequestEndpoint)}.{nameof(OnMessage)}] Sending queue management response: operation='{operation}', statusCode='{statusCode}', correlationId='{msgId ?? "<missing>"}'.");
 
         responseLink.SendMessage(reply);

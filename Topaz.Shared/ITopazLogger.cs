@@ -4,12 +4,11 @@ public interface ITopazLogger
 {
     LogLevel LogLevel { get; }
     
+    [Obsolete("Use LogInformation(string className, string methodName, string template, params object[] parameters) instead.")]
     void LogInformation(string message);
-    
-    [Obsolete("Use LogDebug(string className, string methodName, string template, params object[] parameters) instead.")]
-    void LogDebug(string message);
+    void LogInformation(string className, string methodName, string template, params object?[] parameters);
+
     void LogDebug(string methodName, string message);
-    void LogDebug(string className, string methodName, params object[] parameters);
     void LogDebug(string className, string methodName, string template, params object?[] parameters);
     void LogError(Exception ex);
     void LogError(string message);

@@ -208,7 +208,7 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
             // Client opens a ReceiverLink to "{queue}/$management" → server is the sender →
             // this is the management RESPONSE link.  Register it by session so that
             // QueueManagementRequestEndpoint can look it up and send 200 OK replies.
-            logger.LogInformation($"[{nameof(LinkProcessor)}.{nameof(HandleQueueManagementLink)}] Registering queue management response link for address '{address}'.");
+            logger.LogInformation(nameof(LinkProcessor), nameof(HandleQueueManagementLink), $"Registering queue management response link for address '{address}'.");
 
             var session = attachContext.Link.Session;
             _queueManagementResponseLinks[session] = attachContext.Link;
@@ -220,7 +220,7 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
             // Client opens a SenderLink to "{queue}/$management" → server is the receiver →
             // this is the management REQUEST link.  Pass the session registry so OnMessage
             // can send responses (200 OK) for com.microsoft:complete, renew-lock, etc.
-            logger.LogInformation($"[{nameof(LinkProcessor)}.{nameof(HandleQueueManagementLink)}] Registering queue management request link for address '{address}'.");
+            logger.LogInformation(nameof(LinkProcessor), nameof(HandleQueueManagementLink),$"Registering queue management request link for address '{address}'.");
 
             // Strip the /$management suffix to get the bare entity address for session operations.
             var entityAddress = address != null && address.EndsWith("/$management", StringComparison.OrdinalIgnoreCase)

@@ -63,10 +63,10 @@ public class AzureImporterService(Pipeline eventPipeline, ITopazLogger logger)
         string? resourceType, bool dryRun, bool overwrite)
     {
         if (resourceGroupIdentifier != null)
-            return await RunResourceGroupScopedImport(subscriptionIdentifier, resourceGroupIdentifier!, resourceType,
+            return await RunResourceGroupScopedImport(subscriptionIdentifier, resourceGroupIdentifier, resourceType,
                 dryRun, overwrite);
         
-        logger.LogInformation(
+        logger.LogInformation(nameof(AzureImporterService), nameof(Import),
             $"Running subscription scoped import for sub {subscriptionIdentifier.Value} and resource type {resourceType}");
         
         return await RunSubscriptionScopedImport(subscriptionIdentifier, resourceType, dryRun, overwrite);
@@ -78,21 +78,25 @@ public class AzureImporterService(Pipeline eventPipeline, ITopazLogger logger)
     {
         logger.LogDebug(nameof(AzureImporterService), nameof(RunSubscriptionScopedImport),
             "Running resource group scoped import for sub {0} and resource type {1} and resource group {2}", subscriptionIdentifier.Value,
-            resourceType, resourceGroupIdentifier?.Value);
+            resourceType, resourceGroupIdentifier.Value);
         
         var importResult = new ImportResult(dryRun);
         var armClient = new ArmClient(new DefaultAzureCredential(), subscriptionIdentifier.Value.ToString());
         var subscription = await armClient.GetDefaultSubscriptionAsync();
 
         // Only create the subscription if it doesn't already exist
-        if (_subscriptionControlPlane.Get(subscriptionIdentifier).Result == OperationResult.NotFound && !dryRun)
+        if (_subscriptionControlPlane.Get(subscriptionIdentifier).Result == OperationResult.NotFound)
         {
             importResult.AddSubscription(subscriptionIdentifier);
-            _subscriptionControlPlane.Create(subscriptionIdentifier, subscription.Data.DisplayName,
-                subscription.Data.Tags.ToDictionary());
+
+            if (!dryRun)
+            {
+                _subscriptionControlPlane.Create(subscriptionIdentifier, subscription.Data.DisplayName,
+                    subscription.Data.Tags.ToDictionary());
+            }
         }
         
-        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier?.Value);
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
         importResult.AddResourceGroup(resourceGroupIdentifier!);
         
         await ProcessResourceImport(subscriptionIdentifier, resourceType, resourceGroup, importResult, resourceGroup.Value.GetGenericResourcesAsync(), dryRun, overwrite);
@@ -137,7 +141,13 @@ public class AzureImporterService(Pipeline eventPipeline, ITopazLogger logger)
     private async Task ProcessResourceImport(SubscriptionIdentifier subscriptionIdentifier, string? resourceType,
         ResourceGroupResource rg, ImportResult importResult, AsyncPageable<GenericResource> resources, bool dryRun, bool overwrite)
     {
-        await foreach (var resource in resources)
+        var filteredResources = string.IsNullOrWhiteSpace(resourceType)
+            ? resources
+            : resources.Where(r => r.Data.ResourceType.ToString() == resourceType);
+        
+        logger.LogInformation(nameof(AzureImporterService), nameof(ProcessResourceImport), "Importing `{0}` resources from resource group {1}", string.IsNullOrWhiteSpace(resourceType) ? "all" : resourceType, rg.Data.Name);
+        
+        await foreach (var resource in filteredResources)
         {
             logger.LogDebug(nameof(AzureImporterService), nameof(RunSubscriptionScopedImport), "Found resource {0}",
                 resource.Id);

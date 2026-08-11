@@ -281,7 +281,7 @@ public sealed class TemplateDeploymentOrchestrator(
             "Routing deployment resources of {0} to appropriate control planes.", templateDeployment.Id);
 
         templateDeployment.Start();
-        logger.LogInformation($"Deployment of {templateDeployment.Id} started.");
+        logger.LogInformation(nameof(TemplateDeploymentOrchestrator), nameof(RouteDeployment),$"Deployment of {templateDeployment.Id} started.");
 
         // Parse scope identifiers from the deployment ID once; used for both property
         // expression evaluation and output evaluation below.
@@ -432,7 +432,7 @@ public sealed class TemplateDeploymentOrchestrator(
 
             var operationStart = DateTimeOffset.UtcNow;
             var result = controlPlane?.Deploy(genericResource);
-            logger.LogInformation($"Deployment of {genericResource.Id} completed with status {result}.");
+            logger.LogInformation(nameof(TemplateDeploymentOrchestrator), nameof(RouteDeployment),$"Deployment of {genericResource.Id} completed with status {result}.");
 
             if (controlPlane != null)
             {
@@ -454,7 +454,7 @@ public sealed class TemplateDeploymentOrchestrator(
             
             templateDeployment.Cancel();
             templateDeployment.Persist();
-            logger.LogInformation($"Deployment {templateDeployment.Id} was cancelled mid-flight after provisioning {genericResource.Id}.");
+            logger.LogInformation(nameof(TemplateDeploymentOrchestrator), nameof(RouteDeployment),$"Deployment {templateDeployment.Id} was cancelled mid-flight after provisioning {genericResource.Id}.");
             return;
         }
 
@@ -482,7 +482,7 @@ public sealed class TemplateDeploymentOrchestrator(
             templateDeployment.Fail();
 
         templateDeployment.Persist();
-        logger.LogInformation($"Deployment {templateDeployment.Id} completed.");
+        logger.LogInformation(nameof(TemplateDeploymentOrchestrator), nameof(RouteDeployment),$"Deployment {templateDeployment.Id} completed.");
     }
 
     private void HandleNestedDeployment(

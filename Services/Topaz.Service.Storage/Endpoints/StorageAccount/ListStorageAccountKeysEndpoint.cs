@@ -41,25 +41,12 @@ internal sealed class ListStorageAccountKeysEndpoint(ITopazLogger logger) : IEnd
             var storageAccount = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
             if (storageAccount.Result == OperationResult.NotFound || storageAccount.Resource == null)
             {
-                logger.LogInformation($"Storage account [{storageAccountName}] not found.");
                 response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode,
                     $"Microsoft.Storage/storageAccounts/{storageAccountName}", resourceGroupIdentifier);
                 return;
             }
 
             var keys = new ListKeysResponse(storageAccount.Resource.Keys);
-            var keysJson = keys.ToString();
-            logger.LogInformation(
-                $"ListKeys for '{storageAccountName}': key1prefix={storageAccount.Resource.Keys[0].Value[..16]}, key2prefix={storageAccount.Resource.Keys[1].Value[..16]}");
-            logger.LogInformation(
-                $"ListKeys response body for '{storageAccountName}': {keysJson}");
-            // Log decoded key bytes to confirm the base64 round-trip is exact
-            var k1Bytes = Convert.FromBase64String(storageAccount.Resource.Keys[0].Value);
-            var k2Bytes = Convert.FromBase64String(storageAccount.Resource.Keys[1].Value);
-            logger.LogInformation(
-                $"ListKeys key1 decoded bytes ({k1Bytes.Length} bytes): {Convert.ToHexString(k1Bytes)}");
-            logger.LogInformation(
-                $"ListKeys key2 decoded bytes ({k2Bytes.Length} bytes): {Convert.ToHexString(k2Bytes)}");
             response.CreateJsonContentResponse(keys);
         }
         catch (Exception ex)

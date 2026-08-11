@@ -33,14 +33,14 @@ internal sealed class AzureStorageControlPlane(
         var storageAccount = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (string.IsNullOrEmpty(storageAccount))
         {
-            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null, null, null);
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null);
         }
 
         var resource = JsonSerializer.Deserialize<StorageAccountResource>(storageAccount, GlobalSettings.JsonOptions);
 
         return resource == null
-            ? new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null, null, null)
-            : new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Success, resource, null, null);
+            ? new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null)
+            : new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<CheckStorageAccountNameAvailabilityResponse> CheckNameAvailability(
@@ -54,14 +54,14 @@ internal sealed class AzureStorageControlPlane(
                     NameAvailable = false,
                     Reason = CheckStorageAccountNameAvailabilityResponse.NameUnavailableReason.AccountNameInvalid,
                     Message = $"The storage account name '{storageAccountName}' is invalid. A storage account name must be 3-24 characters long and use lowercase letters and numbers only."
-                }, null, null);
+                });
         }
 
         var dnsEntry = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, storageAccountName);
         if (dnsEntry == null)
         {
             return new ControlPlaneOperationResult<CheckStorageAccountNameAvailabilityResponse>(OperationResult.Success,
-                new CheckStorageAccountNameAvailabilityResponse { NameAvailable = true }, null, null);
+                new CheckStorageAccountNameAvailabilityResponse { NameAvailable = true });
         }
 
         var existingStorageAccount = provider.GetAs<StorageAccountResource>(subscriptionIdentifier,
@@ -71,7 +71,7 @@ internal sealed class AzureStorageControlPlane(
             !string.Equals(existingStorageAccount.Type, resourceType, StringComparison.OrdinalIgnoreCase))
         {
             return new ControlPlaneOperationResult<CheckStorageAccountNameAvailabilityResponse>(OperationResult.Success,
-                new CheckStorageAccountNameAvailabilityResponse { NameAvailable = true }, null, null);
+                new CheckStorageAccountNameAvailabilityResponse { NameAvailable = true });
         }
 
         return new ControlPlaneOperationResult<CheckStorageAccountNameAvailabilityResponse>(OperationResult.Success,
@@ -80,7 +80,7 @@ internal sealed class AzureStorageControlPlane(
                 NameAvailable = false,
                 Reason = CheckStorageAccountNameAvailabilityResponse.NameUnavailableReason.AlreadyExists,
                 Message = $"The storage account name '{storageAccountName}' is already in use."
-            }, null, null);
+            });
     }
 
     private void InitializeServicePropertiesFiles(SubscriptionIdentifier subscriptionIdentifier,
@@ -185,11 +185,11 @@ internal sealed class AzureStorageControlPlane(
         };
 
         if (existingAccount != null && existingKeys != null)
-            logger.LogInformation($"CreateOrUpdate '{storageAccountName}': UsingExistingKeys key1prefix={existingKeys[0].Value[..16]}");
+            logger.LogInformation(nameof(AzureStorageControlPlane), nameof(CreateOrUpdate),$"CreateOrUpdate '{storageAccountName}': UsingExistingKeys key1prefix={existingKeys[0].Value[..16]}");
         else if (existingAccount != null)
             logger.LogWarning($"CreateOrUpdate '{storageAccountName}': ExistingAccountFoundButKeyDeserializationFailed — generating NEW keys!");
         else
-            logger.LogInformation($"CreateOrUpdate '{storageAccountName}': NewAccount — generating new keys");
+            logger.LogInformation(nameof(AzureStorageControlPlane), nameof(CreateOrUpdate),$"CreateOrUpdate '{storageAccountName}': NewAccount — generating new keys");
 
         var resource = existingKeys != null
             ? new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
@@ -203,7 +203,7 @@ internal sealed class AzureStorageControlPlane(
         InitializeServicePropertiesFiles(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
         var operationResult = string.IsNullOrWhiteSpace(existingAccount) ? OperationResult.Created : OperationResult.Updated;
-        return new ControlPlaneOperationResult<StorageAccountResource>(operationResult, resource, null, null);
+        return new ControlPlaneOperationResult<StorageAccountResource>(operationResult, resource);
     }
 
     private static bool IsStorageAccountNameValid(string storageAccountName)
@@ -222,7 +222,7 @@ internal sealed class AzureStorageControlPlane(
         if (existing == null) return;
 
         existing.Properties.LastGeoSyncTime = DateTimeOffset.UtcNow;
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, existing, false);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, existing);
     }
 
     internal static bool IsRaGrsSkuName(string? skuName) =>
@@ -243,7 +243,7 @@ internal sealed class AzureStorageControlPlane(
             resource.IsInSubscription(subscriptionIdentifier) && resource.IsInResourceGroup(resourceGroupIdentifier));
 
         return new ControlPlaneOperationResult<StorageAccountResource[]>(OperationResult.Success,
-            filteredResources.ToArray(), null, null);
+            filteredResources.ToArray());
     }
 
     public ControlPlaneOperationResult<StorageAccountResource[]> ListBySubscription(
@@ -254,7 +254,7 @@ internal sealed class AzureStorageControlPlane(
             .Where(r => r.IsInSubscription(subscriptionIdentifier))
             .ToArray();
 
-        return new ControlPlaneOperationResult<StorageAccountResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<StorageAccountResource[]>(OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<ListAccountSasResponse> ListAccountSas(
@@ -265,13 +265,13 @@ internal sealed class AzureStorageControlPlane(
     {
         var storageAccount = provider.GetAs<StorageAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (storageAccount == null)
-            return new ControlPlaneOperationResult<ListAccountSasResponse>(OperationResult.NotFound, null, null, null);
+            return new ControlPlaneOperationResult<ListAccountSasResponse>(OperationResult.NotFound, null);
 
         var keyName = string.IsNullOrWhiteSpace(request.KeyToSign) ? "key1" : request.KeyToSign;
         var signingKey = storageAccount.Keys.FirstOrDefault(k =>
             string.Equals(k.KeyName, keyName, StringComparison.OrdinalIgnoreCase));
         if (signingKey == null)
-            return new ControlPlaneOperationResult<ListAccountSasResponse>(OperationResult.NotFound, null, null, null);
+            return new ControlPlaneOperationResult<ListAccountSasResponse>(OperationResult.NotFound, null);
 
         const string signedVersion = "2023-01-01";
         var services = request.SignedServices ?? string.Empty;
@@ -315,8 +315,7 @@ internal sealed class AzureStorageControlPlane(
 
         return new ControlPlaneOperationResult<ListAccountSasResponse>(
             OperationResult.Success,
-            new ListAccountSasResponse(tokenParts.ToString()),
-            null, null);
+            new ListAccountSasResponse(tokenParts.ToString()));
     }
 
     public OperationResult RevokeUserDelegationKeys(
@@ -345,11 +344,11 @@ internal sealed class AzureStorageControlPlane(
     {
         var existingJson = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (string.IsNullOrEmpty(existingJson))
-            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null, null, null);
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null);
 
         var existing = JsonSerializer.Deserialize<StorageAccountResource>(existingJson, GlobalSettings.JsonOptions);
         if (existing == null)
-            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null, null, null);
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null);
 
         var updatedKeys = existing.Keys
             .Select(k => string.Equals(k.KeyName, keyName, StringComparison.OrdinalIgnoreCase)
@@ -358,7 +357,7 @@ internal sealed class AzureStorageControlPlane(
             .ToArray();
 
         if (!updatedKeys.Any(k => string.Equals(k.KeyName, keyName, StringComparison.OrdinalIgnoreCase)))
-            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null, null, null);
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null);
 
         var updated = new StorageAccountResource(
             subscriptionIdentifier,
@@ -376,7 +375,7 @@ internal sealed class AzureStorageControlPlane(
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, updated);
 
-        return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Success, updated, null, null);
+        return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Success, updated);
     }
 
     public ControlPlaneOperationResult<StorageAccountResource> Update(
@@ -387,11 +386,11 @@ internal sealed class AzureStorageControlPlane(
     {
         var existingJson = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (string.IsNullOrEmpty(existingJson))
-            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null, null, null);
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null);
 
         var existing = JsonSerializer.Deserialize<StorageAccountResource>(existingJson, GlobalSettings.JsonOptions);
         if (existing == null)
-            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null, null, null);
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null);
 
         var mergedProperties = request.Properties != null
             ? MergeProperties(existing.Properties, request.Properties)
@@ -413,7 +412,7 @@ internal sealed class AzureStorageControlPlane(
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, updated);
 
-        return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Updated, updated, null, null);
+        return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Updated, updated);
     }
 
     private static StorageAccountResourceProperties MergeProperties(
@@ -456,13 +455,13 @@ internal sealed class AzureStorageControlPlane(
     {
         var storageAccount = provider.GetAs<StorageAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (storageAccount == null)
-            return new ControlPlaneOperationResult<ListServiceSasResponse>(OperationResult.NotFound, null, null, null);
+            return new ControlPlaneOperationResult<ListServiceSasResponse>(OperationResult.NotFound, null);
 
         var keyName = string.IsNullOrWhiteSpace(request.KeyToSign) ? "key1" : request.KeyToSign;
         var signingKey = storageAccount.Keys.FirstOrDefault(k =>
             string.Equals(k.KeyName, keyName, StringComparison.OrdinalIgnoreCase));
         if (signingKey == null)
-            return new ControlPlaneOperationResult<ListServiceSasResponse>(OperationResult.NotFound, null, null, null);
+            return new ControlPlaneOperationResult<ListServiceSasResponse>(OperationResult.NotFound, null);
 
         const string signedVersion = "2023-01-01";
         var permissions = request.SignedPermission ?? string.Empty;
@@ -515,8 +514,7 @@ internal sealed class AzureStorageControlPlane(
 
         return new ControlPlaneOperationResult<ListServiceSasResponse>(
             OperationResult.Success,
-            new ListServiceSasResponse(tokenParts.ToString()),
-            null, null);
+            new ListServiceSasResponse(tokenParts.ToString()));
     }
 
     public OperationResult Deploy(GenericResource resource)
