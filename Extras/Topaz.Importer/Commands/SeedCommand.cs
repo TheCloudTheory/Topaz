@@ -8,6 +8,7 @@ using Topaz.Shared;
 
 namespace Topaz.Importer.Commands;
 
+[UsedImplicitly]
 [CommandDefinition("seed", "generic", "Imports resources from a remote source.")]
 internal sealed class SeedCommand(HttpClient httpClient)
     : TopazHttpCommand<SeedCommand.SeedCommandSettings>(httpClient)

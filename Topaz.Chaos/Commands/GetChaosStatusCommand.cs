@@ -12,14 +12,16 @@ internal sealed class GetChaosStatusCommand(HttpClient httpClient) : AsyncComman
 {
     protected override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
-        var url = $"https://topaz.local.dev:{Topaz.Shared.GlobalSettings.DefaultResourceManagerPort}/topaz/chaos/status";
-        var response = await httpClient.GetAsync(url);
-        var body = await response.Content.ReadAsStringAsync();
+        var url =
+            $"https://topaz.local.dev:{Topaz.Shared.GlobalSettings.DefaultResourceManagerPort}/topaz/chaos/status";
+        var response = await httpClient.GetAsync(url, cancellationToken);
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
             return 1;
         }
+
         AnsiConsole.WriteLine(body);
         return 0;
     }

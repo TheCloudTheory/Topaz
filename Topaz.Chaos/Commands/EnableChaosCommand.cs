@@ -14,13 +14,14 @@ internal sealed class EnableChaosCommand(HttpClient httpClient) : AsyncCommand
     protected override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
         var url = $"https://topaz.local.dev:{Shared.GlobalSettings.DefaultResourceManagerPort}/topaz/chaos/enable";
-        var response = await httpClient.PostAsync(url, new StreamContent(Stream.Null));
-        var body = await response.Content.ReadAsStringAsync();
+        var response = await httpClient.PostAsync(url, new StreamContent(Stream.Null), cancellationToken);
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
             return 1;
         }
+
         AnsiConsole.WriteLine(body);
         return 0;
     }
