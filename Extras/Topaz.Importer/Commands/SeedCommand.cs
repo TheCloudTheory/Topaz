@@ -61,16 +61,15 @@ internal sealed class SeedCommand(HttpClient httpClient)
             AnsiConsole.Write(rgTable);
         }
 
-        if (parsed.Resources.Count > 0)
-        {
-            var resTable = new Table()
-                .Border(TableBorder.Rounded)
-                .Title("Imported Resources")
-                .AddColumn("Resource ID");
-            foreach (var r in parsed.Resources)
-                resTable.AddRow(r);
-            AnsiConsole.Write(resTable);
-        }
+        if (parsed.Resources.Count <= 0) return 0;
+        
+        var resTable = new Table()
+            .Border(TableBorder.Rounded)
+            .Title("Imported Resources")
+            .AddColumn("Resource ID");
+        foreach (var r in parsed.Resources)
+            resTable.AddRow(r);
+        AnsiConsole.Write(resTable);
 
         return 0;
     }

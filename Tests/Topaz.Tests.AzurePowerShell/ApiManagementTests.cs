@@ -20,7 +20,7 @@ public class ApiManagementTests : PowerShellTestBase
                     Assert.That(response["Location"]!.GetValue<string>(), Is.EqualTo("westeurope").IgnoreCase);
                     Assert.That(response["Sku"]!.GetValue<string>(), Is.EqualTo("Developer").IgnoreCase);
                     Assert.That(response["PublisherEmail"]!.GetValue<string>(), Is.EqualTo("admin@contoso.com").IgnoreCase);
-                    Assert.That(response["PublisherName"]!.GetValue<string>(), Is.EqualTo("Contoso").IgnoreCase);
+                    Assert.That(response["OrganizationName"]!.GetValue<string>(), Is.EqualTo("Contoso").IgnoreCase);
                 });
             });
     }
