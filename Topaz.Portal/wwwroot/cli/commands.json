@@ -6755,6 +6755,13 @@
     ]
   },
   {
+    "name": "seed",
+    "group": "generic",
+    "description": "Imports resources from a remote source.",
+    "options": [],
+    "examples": []
+  },
+  {
     "name": "servicebus namespace create",
     "group": "service-bus",
     "description": "Creates or updates a Service Bus namespace.",
