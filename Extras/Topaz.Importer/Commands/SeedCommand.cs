@@ -10,6 +10,12 @@ namespace Topaz.Importer.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("seed", "generic", "Imports resources from a remote source.")]
+[CommandExample("Import all resources from a subscription",
+    "topaz seed --subscription-id \"00000000-0000-0000-0000-000000000001\"")]
+[CommandExample("Import resources from a specific resource group (dry run)",
+    "topaz seed \\\n    --subscription-id \"00000000-0000-0000-0000-000000000001\" \\\n    --resource-group \"rg-production\" \\\n    --dry-run")]
+[CommandExample("Import only Storage Accounts and overwrite existing",
+    "topaz seed \\\n    --subscription-id \"00000000-0000-0000-0000-000000000001\" \\\n    --resource-type \"Microsoft.Storage/storageAccounts\" \\\n    --overwrite")]
 internal sealed class SeedCommand(HttpClient httpClient)
     : TopazHttpCommand<SeedCommand.SeedCommandSettings>(httpClient)
 {
@@ -87,18 +93,23 @@ internal sealed class SeedCommand(HttpClient httpClient)
     [UsedImplicitly]
     internal sealed class SeedCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string? SubscriptionId { get; set; }
         
+        [CommandOptionDefinition("Scope import to a single resource group.")]
         [CommandOption("-g|--resource-group")]
         public string? ResourceGroup { get; set; }
         
+        [CommandOptionDefinition("Scope import to a specific resource type (e.g. Microsoft.Storage/storageAccounts).")]
         [CommandOption("--resource-type")]
         public string? ResourceType { get; set; }
         
+        [CommandOptionDefinition("Preview what would be imported without writing anything to Topaz.")]
         [CommandOption("--dry-run")]
         public bool DryRun { get; set; }
         
+        [CommandOptionDefinition("Replace resources that already exist in the emulator.")]
         [CommandOption("--overwrite")]
         public bool Overwrite { get; set; }
     }

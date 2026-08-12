@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
       className: 'sidebar-section-header',
       items: [
         'using-cli',
+        'import-azure-resources',
         {
           type: 'category',
           label: 'Ecosystem',
