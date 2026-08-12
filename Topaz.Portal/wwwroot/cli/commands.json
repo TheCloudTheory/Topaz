@@ -6758,8 +6758,47 @@
     "name": "seed",
     "group": "generic",
     "description": "Imports resources from a remote source.",
-    "options": [],
-    "examples": []
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "Scope import to a single resource group.",
+        "required": false
+      },
+      {
+        "names": "--resource-type",
+        "description": "Scope import to a specific resource type (e.g. Microsoft.Storage/storageAccounts).",
+        "required": false
+      },
+      {
+        "names": "--dry-run",
+        "description": "Preview what would be imported without writing anything to Topaz.",
+        "required": false
+      },
+      {
+        "names": "--overwrite",
+        "description": "Replace resources that already exist in the emulator.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Import all resources from a subscription",
+        "command": "topaz seed --subscription-id \u002200000000-0000-0000-0000-000000000001\u0022"
+      },
+      {
+        "title": "Import resources from a specific resource group (dry run)",
+        "command": "topaz seed \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000001\u0022 \\\n    --resource-group \u0022rg-production\u0022 \\\n    --dry-run"
+      },
+      {
+        "title": "Import only Storage Accounts and overwrite existing",
+        "command": "topaz seed \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000001\u0022 \\\n    --resource-type \u0022Microsoft.Storage/storageAccounts\u0022 \\\n    --overwrite"
+      }
+    ]
   },
   {
     "name": "servicebus namespace create",
