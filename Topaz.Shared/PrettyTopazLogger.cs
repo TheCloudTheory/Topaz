@@ -22,7 +22,7 @@ public sealed class PrettyTopazLogger : ITopazLogger
         LogDebug(message);
     }
 
-    public void LogDebug(string message)
+    private void LogDebug(string message)
     {
         Log(message, LogLevel.Debug, GetCorrelationId());
     }

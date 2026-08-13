@@ -120,14 +120,23 @@ internal class Program
         };
         var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", JwtHelper.GenerateCliToken());
+
+        registrations.AddSingleton<ITopazLogger>(new PrettyTopazLogger());
         registrations.AddSingleton(client);
         registrations.AddSingleton<DefaultsProvider>();
+        registrations.AddSingleton<AzureCliRunner>();
     }
 
     private static void FindAndRegisterCommands(IConfigurator config)
     {
         config.AddCommand<Commands.HealthCommand>("health")
             .WithDescription("Check whether the Topaz host is running and display its status.");
+
+        config.AddBranch("context", configurator =>
+        {
+            configurator.AddCommand<Commands.ContextSwitchCommand>("switch")
+                .WithDescription("Changes the active cloud environment context.");
+        });
         
         config.AddBranch("configure", configurator =>
         {

@@ -64,7 +64,8 @@ _ = new[]
     typeof(GenericLogAnalyticsCommand),
     typeof(GenericInsightsCommand),
     typeof(GenericApiManagementCommand),
-    typeof(GenericSeedCommand)
+    typeof(GenericSeedCommand),
+    typeof(ContextSwitchCommand)
 };
 
 Console.WriteLine("Looking for commands...");

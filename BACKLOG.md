@@ -52,15 +52,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 
 ## v1.11
 
-### Topaz CLI - switching context helper
-
-<!-- 
-TODO: Implement a helper command to switch between Azure CLI contexts, e.g. topaz context switch -n <context-name>.
-  This would switch the underlying cloud environment for Azure CLI commands. Also, a nice to have feature would be to list available contexts if the `-n ` parameter is omitted.
-  milestone: v1.11-preview
-  labels: enhancement, topaz-cli, good first issue
--->
-
 ### Blob Storage — ADLS Gen2 / ABFS DFS protocol
 
 <!--
