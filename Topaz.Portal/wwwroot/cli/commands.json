@@ -2643,6 +2643,38 @@
     ]
   },
   {
+    "name": "context switch",
+    "group": "generic",
+    "description": "Changes the active cloud environment context.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "Name of the context to switch to",
+        "required": false
+      },
+      {
+        "names": "--use-topaz",
+        "description": "Use the default context provided by Topaz",
+        "required": false
+      },
+      {
+        "names": "--use-default",
+        "description": "Use the default context provided by Azure CLI",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Switch the context by selecting one from the list",
+        "command": "topaz context switch"
+      },
+      {
+        "title": "Switch the context by using the one provided by the parameter",
+        "command": "topaz context switch -n Topaz"
+      }
+    ]
+  },
+  {
     "name": "cosmosdb account create",
     "group": "cosmos-db",
     "description": "Creates or updates an Azure Cosmos DB account.",
