@@ -2,10 +2,11 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager.ApplicationInsights;
 using Azure.ResourceManager.ApplicationInsights.Models;
-using AiData = Azure.ResourceManager.ApplicationInsights.ApplicationInsightsComponentData;
+using Azure.ResourceManager.Resources;
 using Topaz.Portal.Models.Insights;
+using AiData = Azure.ResourceManager.ApplicationInsights.ApplicationInsightsComponentData;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -21,7 +22,7 @@ internal sealed partial class TopazClient
             var subscriptionResource = _armClient!
                 .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"));
 
-            await foreach (var component in subscriptionResource.GetApplicationInsightsComponentsAsync())
+            await foreach (var component in ApplicationInsightsExtensions.GetApplicationInsightsComponentsAsync(subscriptionResource))
             {
                 components.Add(MapToDto(component.Data, subscription.SubscriptionId, subscription.DisplayName));
             }
@@ -48,7 +49,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{componentName}");
 
-        var component = await _armClient!.GetApplicationInsightsComponentResource(resourceId).GetAsync(cancellationToken);
+        var component = await ApplicationInsightsExtensions.GetApplicationInsightsComponentResource(_armClient!, resourceId).GetAsync(cancellationToken);
 
         var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
@@ -86,7 +87,7 @@ internal sealed partial class TopazClient
             ApplicationType = new ApplicationInsightsApplicationType(applicationType)
         };
 
-        _ = await rg.Value.GetApplicationInsightsComponents().CreateOrUpdateAsync(
+        _ = await ApplicationInsightsExtensions.GetApplicationInsightsComponents((ResourceGroupResource)rg.Value).CreateOrUpdateAsync(
             WaitUntil.Completed,
             componentName,
             content,
@@ -111,7 +112,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{componentName}");
 
-        _ = await _armClient!.GetApplicationInsightsComponentResource(resourceId).DeleteAsync(
+        _ = await ApplicationInsightsExtensions.GetApplicationInsightsComponentResource(_armClient!, resourceId).DeleteAsync(
             WaitUntil.Completed,
             cancellationToken);
     }
@@ -143,8 +144,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{componentName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{componentName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -181,8 +181,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{componentName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.insights/components/{componentName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -218,7 +217,7 @@ internal sealed partial class TopazClient
         var url = $"{ingestionEndpoint.TrimEnd('/')}/v1/apps/{ikey}/query";
         var payload = new { query };
 
-        using var client = _httpClientFactory.CreateClient();
+        using var client = HttpClientFactoryExtensions.CreateClient(_httpClientFactory);
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _session.Token);
 

@@ -1,10 +1,11 @@
 using Azure;
 using Azure.Core;
+using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.ServiceBus;
 using Azure.ResourceManager.ServiceBus.Models;
 using Topaz.Portal.Models.ServiceBus;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -21,7 +22,7 @@ internal sealed partial class TopazClient
             var subscriptionResource = _armClient!
                 .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"));
 
-            await foreach (var ns in subscriptionResource.GetServiceBusNamespacesAsync(cancellationToken: cancellationToken))
+            await foreach (var ns in ServiceBusExtensions.GetServiceBusNamespacesAsync(subscriptionResource, cancellationToken: cancellationToken))
             {
                 namespaces.Add(MapToServiceBusNamespaceDto(ns, subscription.SubscriptionId, subscription.DisplayName));
             }
@@ -41,7 +42,7 @@ internal sealed partial class TopazClient
         var resourceId = ServiceBusNamespaceResource.CreateResourceIdentifier(
             subscriptionId.ToString(), resourceGroupName, namespaceName);
 
-        var ns = await _armClient!.GetServiceBusNamespaceResource(resourceId).GetAsync(cancellationToken: cancellationToken);
+        var ns = await ServiceBusExtensions.GetServiceBusNamespaceResource(_armClient!, resourceId).GetAsync(cancellationToken: cancellationToken);
 
         var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
@@ -68,7 +69,7 @@ internal sealed partial class TopazClient
             Sku = new ServiceBusSku(ServiceBusSkuName.Standard)
         };
 
-        await rg.Value.GetServiceBusNamespaces().CreateOrUpdateAsync(
+        await ServiceBusExtensions.GetServiceBusNamespaces((ResourceGroupResource)rg.Value).CreateOrUpdateAsync(
             WaitUntil.Completed, namespaceName, data, cancellationToken);
     }
 
@@ -83,7 +84,7 @@ internal sealed partial class TopazClient
         var resourceId = ServiceBusNamespaceResource.CreateResourceIdentifier(
             subscriptionId.ToString(), resourceGroupName, namespaceName);
 
-        await _armClient!.GetServiceBusNamespaceResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await ServiceBusExtensions.GetServiceBusNamespaceResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     public async Task CreateOrUpdateServiceBusNamespaceTag(
@@ -104,8 +105,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -133,8 +133,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -156,7 +155,7 @@ internal sealed partial class TopazClient
         var resourceId = ServiceBusNamespaceResource.CreateResourceIdentifier(
             subscriptionId.ToString(), resourceGroupName, namespaceName);
 
-        var ns = _armClient!.GetServiceBusNamespaceResource(resourceId);
+        var ns = ServiceBusExtensions.GetServiceBusNamespaceResource(_armClient!, resourceId);
         var queues = new List<ServiceBusQueueDto>();
 
         await foreach (var queue in ns.GetServiceBusQueues().GetAllAsync(cancellationToken: cancellationToken))
@@ -193,7 +192,7 @@ internal sealed partial class TopazClient
         var resourceId = ServiceBusNamespaceResource.CreateResourceIdentifier(
             subscriptionId.ToString(), resourceGroupName, namespaceName);
 
-        var ns = _armClient!.GetServiceBusNamespaceResource(resourceId);
+        var ns = ServiceBusExtensions.GetServiceBusNamespaceResource(_armClient!, resourceId);
         var data = new ServiceBusQueueData();
 
         await ns.GetServiceBusQueues().CreateOrUpdateAsync(WaitUntil.Completed, queueName, data, cancellationToken);
@@ -211,7 +210,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/queues/{queueName}");
 
-        await _armClient!.GetServiceBusQueueResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await ServiceBusExtensions.GetServiceBusQueueResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     public async Task<ListServiceBusTopicsResponse> ListServiceBusTopics(
@@ -225,7 +224,7 @@ internal sealed partial class TopazClient
         var resourceId = ServiceBusNamespaceResource.CreateResourceIdentifier(
             subscriptionId.ToString(), resourceGroupName, namespaceName);
 
-        var ns = _armClient!.GetServiceBusNamespaceResource(resourceId);
+        var ns = ServiceBusExtensions.GetServiceBusNamespaceResource(_armClient!, resourceId);
         var topics = new List<ServiceBusTopicDto>();
 
         await foreach (var topic in ns.GetServiceBusTopics().GetAllAsync(cancellationToken: cancellationToken))
@@ -260,7 +259,7 @@ internal sealed partial class TopazClient
         var resourceId = ServiceBusNamespaceResource.CreateResourceIdentifier(
             subscriptionId.ToString(), resourceGroupName, namespaceName);
 
-        var ns = _armClient!.GetServiceBusNamespaceResource(resourceId);
+        var ns = ServiceBusExtensions.GetServiceBusNamespaceResource(_armClient!, resourceId);
         var data = new ServiceBusTopicData();
 
         await ns.GetServiceBusTopics().CreateOrUpdateAsync(WaitUntil.Completed, topicName, data, cancellationToken);
@@ -278,7 +277,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}");
 
-        await _armClient!.GetServiceBusTopicResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await ServiceBusExtensions.GetServiceBusTopicResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     private static ServiceBusNamespaceDto MapToServiceBusNamespaceDto(

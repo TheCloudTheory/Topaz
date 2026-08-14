@@ -3,7 +3,7 @@ using Microsoft.Graph;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient : ITopazClient
 {

@@ -1,10 +1,11 @@
 using Azure;
 using Azure.Core;
+using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
 using Topaz.Portal.Models.Storage;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -20,7 +21,7 @@ internal sealed partial class TopazClient
             var subscriptionResource = _armClient!
                 .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"));
 
-            await foreach (var sa in subscriptionResource.GetStorageAccountsAsync())
+            await foreach (var sa in StorageExtensions.GetStorageAccountsAsync(subscriptionResource))
             {
                 storageAccounts.Add(MapToStorageAccountDto(sa, subscription.SubscriptionId, subscription.DisplayName));
             }
@@ -49,7 +50,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}");
 
-        var sa = await _armClient!.GetStorageAccountResource(resourceId).GetAsync(cancellationToken: cancellationToken);
+        var sa = await StorageExtensions.GetStorageAccountResource(_armClient!, resourceId).GetAsync(cancellationToken: cancellationToken);
 
         var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
@@ -90,7 +91,7 @@ internal sealed partial class TopazClient
             new StorageKind(kind),
             new AzureLocation(location));
 
-        await rg.Value.GetStorageAccounts().CreateOrUpdateAsync(
+        await StorageExtensions.GetStorageAccounts((ResourceGroupResource)rg.Value).CreateOrUpdateAsync(
             WaitUntil.Completed,
             storageAccountName,
             content,
@@ -117,7 +118,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}");
 
-        await _armClient!.GetStorageAccountResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await StorageExtensions.GetStorageAccountResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     public async Task CreateOrUpdateStorageAccountTag(
@@ -153,8 +154,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -194,8 +194,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Topaz.Portal;
 using Topaz.Portal.Components;
 using Topaz.Portal.Services;
+using TopazClient = Topaz.Portal.Clients.TopazClient;
 
 var builder = WebApplication.CreateBuilder(args);
 

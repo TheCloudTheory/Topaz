@@ -1,8 +1,7 @@
-using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Topaz.Portal.Models.VirtualNetworks;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -22,7 +21,7 @@ internal sealed partial class TopazClient
             if (!response.IsSuccessStatusCode)
                 continue;
 
-            var result = await response.Content.ReadFromJsonAsync<VnetListResult>(cancellationToken: cancellationToken);
+            var result = await HttpContentJsonExtensions.ReadFromJsonAsync<VnetListResult>(response.Content, cancellationToken: cancellationToken);
 
             if (result?.Value is null)
                 continue;
@@ -57,7 +56,7 @@ internal sealed partial class TopazClient
         if (!response.IsSuccessStatusCode)
             return null;
 
-        var vnet = await response.Content.ReadFromJsonAsync<VnetItem>(cancellationToken: cancellationToken);
+        var vnet = await HttpContentJsonExtensions.ReadFromJsonAsync<VnetItem>(response.Content, cancellationToken: cancellationToken);
 
         if (vnet is null)
             return null;
@@ -99,7 +98,7 @@ internal sealed partial class TopazClient
         };
 
         var url = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{vnetName}?api-version=2024-05-01";
-        using var resp = await _httpClient.PutAsJsonAsync(url, body, cancellationToken);
+        using var resp = await HttpClientJsonExtensions.PutAsJsonAsync(_httpClient, url, body, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
         {
@@ -162,8 +161,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{vnetName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{vnetName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -200,8 +198,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{vnetName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{vnetName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)

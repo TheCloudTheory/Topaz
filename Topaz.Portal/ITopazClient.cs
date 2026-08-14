@@ -20,6 +20,7 @@ using Topaz.Portal.Models.VirtualNetworks;
 using Topaz.Portal.Models.PublicIps;
 using Topaz.Portal.Models.ContainerRegistry;
 using Topaz.Portal.Models.Insights;
+using Topaz.Portal.Models.Redis;
 
 namespace Topaz.Portal;
 
@@ -753,5 +754,38 @@ public interface ITopazClient
     Task<ApplicationInsightsQueryResponse> QueryApplicationInsights(
         string connectionString,
         string query,
+        CancellationToken cancellationToken = default);
+
+    // Redis
+    Task<ListRedisCachesResponse> ListRedisCaches();
+
+    Task CreateRedisCache(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string name,
+        string location,
+        string skuName = "Basic",
+        int capacity = 1,
+        CancellationToken cancellationToken = default);
+
+    Task<RedisDto?> GetRedisCache(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string name,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdateRedisCacheTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string name,
+        string tagKey,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteRedisCacheTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string name,
+        string tagKey,
         CancellationToken cancellationToken = default);
 }

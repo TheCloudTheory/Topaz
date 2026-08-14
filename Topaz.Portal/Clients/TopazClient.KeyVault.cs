@@ -2,9 +2,10 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
+using Azure.ResourceManager.Resources;
 using Topaz.Portal.Models.KeyVaults;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -20,7 +21,7 @@ internal sealed partial class TopazClient
             var subscriptionResource = _armClient!
                 .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"));
 
-            await foreach (var kv in subscriptionResource.GetKeyVaultsAsync())
+            await foreach (var kv in KeyVaultExtensions.GetKeyVaultsAsync(subscriptionResource))
             {
                 keyVaults.Add(new KeyVaultDto
                 {
@@ -76,7 +77,7 @@ internal sealed partial class TopazClient
             new AzureLocation(location),
             new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, skuNameValue)));
 
-        _ = await rg.Value.GetKeyVaults().CreateOrUpdateAsync(
+        _ = await KeyVaultExtensions.GetKeyVaults((ResourceGroupResource)rg.Value).CreateOrUpdateAsync(
             WaitUntil.Completed,
             keyVaultName,
             content,
@@ -103,7 +104,7 @@ internal sealed partial class TopazClient
         var vaultId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}");
 
-        var vault = await _armClient!.GetKeyVaultResource(vaultId).GetAsync(cancellationToken);
+        var vault = await KeyVaultExtensions.GetKeyVaultResource(_armClient!, vaultId).GetAsync(cancellationToken);
 
         var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
@@ -158,8 +159,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -199,8 +199,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)

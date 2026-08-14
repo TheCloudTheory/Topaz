@@ -2,7 +2,7 @@ using Azure.Core;
 using Azure.ResourceManager.Authorization;
 using Topaz.Portal.Models.Rbac;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -28,7 +28,7 @@ internal sealed partial class TopazClient
             ? null
             : $"roleName eq '{roleNameFilter.Replace("'", string.Empty)}'";
 
-        var pageable = subscription.GetAuthorizationRoleDefinitions().GetAllAsync(
+        var pageable = AuthorizationExtensions.GetAuthorizationRoleDefinitions(subscription).GetAllAsync(
             filter: filter,
             cancellationToken: cancellationToken);
 
@@ -83,7 +83,7 @@ internal sealed partial class TopazClient
             ? null
             : $"roleName eq '{roleNameFilter.Replace("'", string.Empty)}'";
 
-        var pageable = subscription.GetRoleAssignments().GetAllAsync(
+        var pageable = AuthorizationExtensions.GetRoleAssignments(subscription).GetAllAsync(
             filter: filter,
             cancellationToken: cancellationToken);
 

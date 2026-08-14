@@ -2,9 +2,10 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager.EventHubs;
 using Azure.ResourceManager.EventHubs.Models;
+using Azure.ResourceManager.Resources;
 using Topaz.Portal.Models.EventHubs;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -21,7 +22,7 @@ internal sealed partial class TopazClient
             var subscriptionResource = _armClient!
                 .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"));
 
-            await foreach (var ns in subscriptionResource.GetEventHubsNamespacesAsync(cancellationToken: cancellationToken))
+            await foreach (var ns in EventHubsExtensions.GetEventHubsNamespacesAsync(subscriptionResource, cancellationToken: cancellationToken))
             {
                 namespaces.Add(MapToNamespaceDto(ns, subscription.SubscriptionId, subscription.DisplayName));
             }
@@ -41,7 +42,7 @@ internal sealed partial class TopazClient
         var resourceId = EventHubsNamespaceResource.CreateResourceIdentifier(
             subscriptionId.ToString(), resourceGroupName, namespaceName);
 
-        var ns = await _armClient!.GetEventHubsNamespaceResource(resourceId).GetAsync(cancellationToken: cancellationToken);
+        var ns = await EventHubsExtensions.GetEventHubsNamespaceResource(_armClient!, resourceId).GetAsync(cancellationToken: cancellationToken);
 
         var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
@@ -68,7 +69,7 @@ internal sealed partial class TopazClient
             Sku = new EventHubsSku(EventHubsSkuName.Standard)
         };
 
-        await rg.Value.GetEventHubsNamespaces().CreateOrUpdateAsync(
+        await EventHubsExtensions.GetEventHubsNamespaces((ResourceGroupResource)rg.Value).CreateOrUpdateAsync(
             WaitUntil.Completed, namespaceName, data, cancellationToken);
     }
 
@@ -83,7 +84,7 @@ internal sealed partial class TopazClient
         var resourceId = EventHubsNamespaceResource.CreateResourceIdentifier(
             subscriptionId.ToString(), resourceGroupName, namespaceName);
 
-        await _armClient!.GetEventHubsNamespaceResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await EventHubsExtensions.GetEventHubsNamespaceResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     public async Task CreateOrUpdateEventHubNamespaceTag(
@@ -104,8 +105,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -133,8 +133,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -156,7 +155,7 @@ internal sealed partial class TopazClient
         var resourceId = EventHubsNamespaceResource.CreateResourceIdentifier(
             subscriptionId.ToString(), resourceGroupName, namespaceName);
 
-        var ns = _armClient!.GetEventHubsNamespaceResource(resourceId);
+        var ns = EventHubsExtensions.GetEventHubsNamespaceResource(_armClient!, resourceId);
         var hubs = new List<EventHubDto>();
 
         await foreach (var hub in ns.GetEventHubs().GetAllAsync(cancellationToken: cancellationToken))
@@ -181,7 +180,7 @@ internal sealed partial class TopazClient
         var resourceId = EventHubsNamespaceResource.CreateResourceIdentifier(
             subscriptionId.ToString(), resourceGroupName, namespaceName);
 
-        var ns = _armClient!.GetEventHubsNamespaceResource(resourceId);
+        var ns = EventHubsExtensions.GetEventHubsNamespaceResource(_armClient!, resourceId);
         var data = new EventHubData
         {
             PartitionCount = partitionCount,
@@ -205,7 +204,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}");
 
-        await _armClient!.GetEventHubResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await EventHubsExtensions.GetEventHubResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     private static EventHubNamespaceDto MapToNamespaceDto(

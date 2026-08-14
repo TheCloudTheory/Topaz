@@ -1,0 +1,127 @@
+@page "/redis/{SubscriptionId:guid}/{ResourceGroupName}/{CacheName}/tags"
+@using System.Net
+@using Topaz.Portal.Models.Redis
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/redis">Redis caches</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/redis/{SubscriptionId:D}/{ResourceGroupName}/{CacheName}")">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Tags</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<RedisCacheDetailsShell SubscriptionId="SubscriptionId"
+                        ResourceGroupName="@DecodedRg"
+                        CacheName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_loadError
+        </div>
+    }
+    else
+    {
+        <TagsPanel Tags="_tags"
+                   OnAdd="AddTagAsync"
+                   OnRemove="RemoveTagAsync"
+                   OnEdit="EditTagAsync" />
+    }
+</RedisCacheDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string CacheName { get; set; } = "";
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(CacheName);
+
+    private bool _loading = true;
+    private string? _loadError;
+    private Dictionary<string, string> _tags = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadError = null;
+
+        try
+        {
+            var cache = await TopazClient.GetRedisCache(SubscriptionId, DecodedRg, DecodedName);
+
+            if (cache is null)
+            {
+                _tags = [];
+                _loadError = "Redis cache not found.";
+                return;
+            }
+
+            _tags = new Dictionary<string, string>(cache.Tags, StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _tags = [];
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<string?> AddTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateRedisCacheTag(SubscriptionId, DecodedRg, DecodedName, tag, value);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> RemoveTagAsync(string key)
+    {
+        try
+        {
+            await TopazClient.DeleteRedisCacheTag(SubscriptionId, DecodedRg, DecodedName, key);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> EditTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateRedisCacheTag(SubscriptionId, DecodedRg, DecodedName, tag, value);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+}

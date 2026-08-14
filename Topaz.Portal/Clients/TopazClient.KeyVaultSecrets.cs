@@ -1,6 +1,6 @@
 using Topaz.Portal.Models.KeyVaults;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -214,7 +214,7 @@ internal sealed partial class TopazClient
 
     private HttpClient CreateVaultClient()
     {
-        var client = _httpClientFactory.CreateClient();
+        var client = HttpClientFactoryExtensions.CreateClient(_httpClientFactory);
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _session.Token);
         return client;

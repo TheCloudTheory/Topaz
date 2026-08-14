@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Topaz.Portal.Models;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {

@@ -2,9 +2,10 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager.ContainerRegistry;
 using Azure.ResourceManager.ContainerRegistry.Models;
+using Azure.ResourceManager.Resources;
 using Topaz.Portal.Models.ContainerRegistry;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -20,7 +21,7 @@ internal sealed partial class TopazClient
             var subscriptionResource = _armClient!
                 .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"));
 
-            await foreach (var registry in subscriptionResource.GetContainerRegistriesAsync())
+            await foreach (var registry in ContainerRegistryExtensions.GetContainerRegistriesAsync(subscriptionResource))
             {
                 registries.Add(new ContainerRegistryDto
                 {
@@ -80,7 +81,7 @@ internal sealed partial class TopazClient
             new AzureLocation(location),
             new ContainerRegistrySku(sku));
 
-        _ = await rg.Value.GetContainerRegistries().CreateOrUpdateAsync(
+        _ = await ContainerRegistryExtensions.GetContainerRegistries((ResourceGroupResource)rg.Value).CreateOrUpdateAsync(
             WaitUntil.Completed,
             registryName,
             content,
@@ -107,7 +108,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}");
 
-        _ = await _armClient!.GetContainerRegistryResource(resourceId).DeleteAsync(
+        _ = await ContainerRegistryExtensions.GetContainerRegistryResource(_armClient!, resourceId).DeleteAsync(
             WaitUntil.Completed,
             cancellationToken);
     }
@@ -132,7 +133,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}");
 
-        var registry = await _armClient!.GetContainerRegistryResource(resourceId).GetAsync(cancellationToken);
+        var registry = await ContainerRegistryExtensions.GetContainerRegistryResource(_armClient!, resourceId).GetAsync(cancellationToken);
 
         var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))

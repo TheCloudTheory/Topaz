@@ -1,8 +1,7 @@
-using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Topaz.Portal.Models.Tenant;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {

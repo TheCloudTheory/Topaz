@@ -1,8 +1,7 @@
-using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Topaz.Portal.Models.PublicIps;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -22,7 +21,7 @@ internal sealed partial class TopazClient
             if (!response.IsSuccessStatusCode)
                 continue;
 
-            var result = await response.Content.ReadFromJsonAsync<PipListResult>(cancellationToken: cancellationToken);
+            var result = await HttpContentJsonExtensions.ReadFromJsonAsync<PipListResult>(response.Content, cancellationToken: cancellationToken);
 
             if (result?.Value is null)
                 continue;
@@ -55,7 +54,7 @@ internal sealed partial class TopazClient
         if (!response.IsSuccessStatusCode)
             return null;
 
-        var pip = await response.Content.ReadFromJsonAsync<PipItem>(cancellationToken: cancellationToken);
+        var pip = await HttpContentJsonExtensions.ReadFromJsonAsync<PipItem>(response.Content, cancellationToken: cancellationToken);
 
         if (pip is null)
             return null;
@@ -98,7 +97,7 @@ internal sealed partial class TopazClient
         };
 
         var url = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{pipName}?api-version=2024-05-01";
-        using var resp = await _httpClient.PutAsJsonAsync(url, body, cancellationToken);
+        using var resp = await HttpClientJsonExtensions.PutAsJsonAsync(_httpClient, url, body, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
         {
@@ -161,8 +160,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{pipName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{pipName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -199,8 +197,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{pipName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{pipName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)

@@ -1,0 +1,107 @@
+@page "/redis/{SubscriptionId:guid}/{ResourceGroupName}/{CacheName}"
+@using System.Net
+@using Topaz.Portal.Models.Redis
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/redis">Redis caches</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">@DecodedName</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<RedisCacheDetailsShell SubscriptionId="SubscriptionId"
+                        ResourceGroupName="@DecodedRg"
+                        CacheName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_error</div>
+    }
+    else if (_cache is null)
+    {
+        <p class="mb-0">Redis cache not found.</p>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Overview</h5>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Name</dt>
+                    <dd class="col-sm-9">@(_cache.Name ?? "-")</dd>
+
+                    <dt class="col-sm-3">Location</dt>
+                    <dd class="col-sm-9"><code>@(_cache.Location ?? "-")</code></dd>
+
+                    <dt class="col-sm-3">Resource group</dt>
+                    <dd class="col-sm-9">@(_cache.ResourceGroupName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription</dt>
+                    <dd class="col-sm-9">@(_cache.SubscriptionName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription ID</dt>
+                    <dd class="col-sm-9">@(_cache.SubscriptionId ?? "-")</dd>
+
+                    <dt class="col-sm-3">SKU</dt>
+                    <dd class="col-sm-9">@(_cache.SkuName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Redis version</dt>
+                    <dd class="col-sm-9">@(_cache.RedisVersion ?? "-")</dd>
+
+                    <dt class="col-sm-3">Host name</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_cache.HostName ?? "-")</small></dd>
+
+                    <dt class="col-sm-3">Port</dt>
+                    <dd class="col-sm-9">@(_cache.Port?.ToString() ?? "-")</dd>
+
+                    <dt class="col-sm-3">SSL port</dt>
+                    <dd class="col-sm-9">@(_cache.SslPort?.ToString() ?? "-")</dd>
+
+                    <dt class="col-sm-3">Provisioning state</dt>
+                    <dd class="col-sm-9">@(_cache.ProvisioningState ?? "-")</dd>
+
+                    <dt class="col-sm-3">Resource ID</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_cache.Id ?? "-")</small></dd>
+                </dl>
+            </div>
+        </div>
+    }
+</RedisCacheDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string CacheName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private RedisDto? _cache;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(CacheName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _cache = await TopazClient.GetRedisCache(SubscriptionId, DecodedRg, DecodedName);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

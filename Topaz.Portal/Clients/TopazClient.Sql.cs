@@ -1,10 +1,10 @@
 using Azure;
 using Azure.Core;
+using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Sql;
-using Azure.ResourceManager.Sql.Models;
 using Topaz.Portal.Models.Sql;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -20,7 +20,7 @@ internal sealed partial class TopazClient
             var subscriptionResource = _armClient!
                 .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"));
 
-            await foreach (var server in subscriptionResource.GetSqlServersAsync(cancellationToken: cancellationToken))
+            await foreach (var server in SqlExtensions.GetSqlServersAsync(subscriptionResource, cancellationToken: cancellationToken))
             {
                 servers.Add(MapToSqlServerDto(server, subscription.SubscriptionId, subscription.DisplayName));
             }
@@ -47,7 +47,7 @@ internal sealed partial class TopazClient
             throw new ArgumentException("SQL server name is required.", nameof(serverName));
 
         var resourceId = SqlServerResource.CreateResourceIdentifier(subscriptionId.ToString(), resourceGroupName, serverName);
-        var server = await _armClient!.GetSqlServerResource(resourceId).GetAsync(cancellationToken: cancellationToken);
+        var server = await SqlExtensions.GetSqlServerResource(_armClient!, resourceId).GetAsync(cancellationToken: cancellationToken);
 
         var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
@@ -97,7 +97,7 @@ internal sealed partial class TopazClient
             Version = version
         };
 
-        await rg.Value.GetSqlServers().CreateOrUpdateAsync(
+        await SqlExtensions.GetSqlServers((ResourceGroupResource)rg.Value).CreateOrUpdateAsync(
             WaitUntil.Completed,
             serverName,
             serverData,
@@ -122,7 +122,7 @@ internal sealed partial class TopazClient
             throw new ArgumentException("SQL server name is required.", nameof(serverName));
 
         var resourceId = SqlServerResource.CreateResourceIdentifier(subscriptionId.ToString(), resourceGroupName, serverName);
-        await _armClient!.GetSqlServerResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await SqlExtensions.GetSqlServerResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     public async Task CreateOrUpdateSqlServerTag(
@@ -149,8 +149,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}",
             payload,
             cancellationToken);
 
@@ -182,8 +181,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}",
             payload,
             cancellationToken);
 
@@ -204,7 +202,7 @@ internal sealed partial class TopazClient
         await EnsureInitializedAsync();
 
         var serverId = SqlServerResource.CreateResourceIdentifier(subscriptionId.ToString(), resourceGroupName, serverName);
-        var server = _armClient!.GetSqlServerResource(serverId);
+        var server = SqlExtensions.GetSqlServerResource(_armClient!, serverId);
         var databases = new List<SqlDatabaseDto>();
 
         await foreach (var database in server.GetSqlDatabases().GetAllAsync(cancellationToken: cancellationToken))
@@ -242,7 +240,7 @@ internal sealed partial class TopazClient
             serverName,
             databaseName);
 
-        var database = await _armClient!.GetSqlDatabaseResource(resourceId).GetAsync(cancellationToken: cancellationToken);
+        var database = await SqlExtensions.GetSqlDatabaseResource(_armClient!, resourceId).GetAsync(cancellationToken: cancellationToken);
         return MapToSqlDatabaseDto(database.Value, serverName);
     }
 
@@ -271,8 +269,7 @@ internal sealed partial class TopazClient
         var location = string.IsNullOrWhiteSpace(server?.Location) ? "westeurope" : server.Location;
 
         var serverId = SqlServerResource.CreateResourceIdentifier(subscriptionId.ToString(), resourceGroupName, serverName);
-        await _armClient!
-            .GetSqlServerResource(serverId)
+        await SqlExtensions.GetSqlServerResource(_armClient!, serverId)
             .GetSqlDatabases()
             .CreateOrUpdateAsync(
                 WaitUntil.Completed,
@@ -308,7 +305,7 @@ internal sealed partial class TopazClient
             serverName,
             databaseName);
 
-        await _armClient!.GetSqlDatabaseResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await SqlExtensions.GetSqlDatabaseResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     private static SqlServerDto MapToSqlServerDto(

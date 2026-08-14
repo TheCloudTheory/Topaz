@@ -4,7 +4,7 @@ using Azure.ResourceManager.Resources;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.ResourceManager;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -130,8 +130,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}", payload, cancellationToken);
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}", payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
         {
@@ -166,8 +165,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}", payload, cancellationToken);
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}", payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
         {
@@ -192,7 +190,7 @@ internal sealed partial class TopazClient
                 new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
             .GetResourceGroupAsync(resourceGroupName, cancellationToken);
         var deployments = new List<DeploymentDto>();
-        await foreach (var deployment in rg.Value.GetArmDeployments()
+        await foreach (var deployment in ResourcesExtensions.GetArmDeployments((ResourceGroupResource)rg.Value)
                            .GetAllAsync(cancellationToken: cancellationToken))
         {
             deployments.Add(new DeploymentDto
@@ -238,7 +236,7 @@ internal sealed partial class TopazClient
                 new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
             .GetResourceGroupAsync(resourceGroupName, cancellationToken);
 
-        var deployment = await rg.Value.GetArmDeploymentAsync(deploymentName, cancellationToken);
+        var deployment = await ResourcesExtensions.GetArmDeploymentAsync((ResourceGroupResource)rg.Value, deploymentName, cancellationToken);
         return deployment.Value;
     }
 

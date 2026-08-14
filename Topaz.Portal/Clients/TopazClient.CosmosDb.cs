@@ -2,10 +2,11 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.CosmosDB.Models;
+using Azure.ResourceManager.Resources;
 using Topaz.Portal.Models.CosmosDb;
 using Topaz.ResourceManager;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -21,7 +22,7 @@ internal sealed partial class TopazClient
             var subscriptionResource = _armClient!
                 .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"));
 
-            await foreach (var account in subscriptionResource.GetCosmosDBAccountsAsync(cancellationToken: cancellationToken))
+            await foreach (var account in CosmosDBExtensions.GetCosmosDBAccountsAsync(subscriptionResource, cancellationToken: cancellationToken))
             {
                 accounts.Add(MapToCosmosDbAccountDto(account, subscription.SubscriptionId, subscription.DisplayName));
             }
@@ -48,7 +49,7 @@ internal sealed partial class TopazClient
             throw new ArgumentException("Account name is required.", nameof(accountName));
 
         var resourceId = CosmosDBAccountResource.CreateResourceIdentifier(subscriptionId.ToString(), resourceGroupName, accountName);
-        var account = await _armClient!.GetCosmosDBAccountResource(resourceId).GetAsync(cancellationToken: cancellationToken);
+        var account = await CosmosDBExtensions.GetCosmosDBAccountResource(_armClient!, resourceId).GetAsync(cancellationToken: cancellationToken);
 
         var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
@@ -86,7 +87,7 @@ internal sealed partial class TopazClient
             new AzureLocation(location),
             [new CosmosDBAccountLocation { LocationName = new AzureLocation(location) }]);
 
-        await rg.Value.GetCosmosDBAccounts().CreateOrUpdateAsync(
+        await CosmosDBExtensions.GetCosmosDBAccounts((ResourceGroupResource)rg.Value).CreateOrUpdateAsync(
             WaitUntil.Completed,
             accountName,
             accountData,
@@ -111,7 +112,7 @@ internal sealed partial class TopazClient
             throw new ArgumentException("Account name is required.", nameof(accountName));
 
         var resourceId = CosmosDBAccountResource.CreateResourceIdentifier(subscriptionId.ToString(), resourceGroupName, accountName);
-        await _armClient!.GetCosmosDBAccountResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await CosmosDBExtensions.GetCosmosDBAccountResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     public async Task CreateOrUpdateCosmosDbAccountTag(
@@ -138,8 +139,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
             payload,
             cancellationToken);
 
@@ -171,8 +171,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
             payload,
             cancellationToken);
 
@@ -193,7 +192,7 @@ internal sealed partial class TopazClient
         await EnsureInitializedAsync();
 
         var resourceId = CosmosDBAccountResource.CreateResourceIdentifier(subscriptionId.ToString(), resourceGroupName, accountName);
-        var keys = await _armClient!.GetCosmosDBAccountResource(resourceId).GetKeysAsync(cancellationToken: cancellationToken);
+        var keys = await CosmosDBExtensions.GetCosmosDBAccountResource(_armClient!, resourceId).GetKeysAsync(cancellationToken: cancellationToken);
 
         var primaryKey = keys.Value.PrimaryMasterKey ?? string.Empty;
         var secondaryKey = keys.Value.SecondaryMasterKey ?? string.Empty;

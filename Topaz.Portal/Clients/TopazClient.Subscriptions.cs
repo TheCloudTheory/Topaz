@@ -2,7 +2,7 @@ using Azure.Core;
 using Azure.ResourceManager.Resources;
 using Topaz.Portal.Models.Subscriptions;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -81,7 +81,7 @@ internal sealed partial class TopazClient
         };
 
         using var resp =
-            await _httpClient.PatchAsJsonAsync($"/subscriptions/{subscriptionId}", payload, cancellationToken);
+            await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}", payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
         {
@@ -124,7 +124,7 @@ internal sealed partial class TopazClient
         };
 
         using var resp =
-            await _httpClient.PatchAsJsonAsync($"/subscriptions/{subscriptionId}", payload, cancellationToken);
+            await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}", payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
         {
@@ -163,7 +163,7 @@ internal sealed partial class TopazClient
         };
 
         using var resp =
-            await _httpClient.PatchAsJsonAsync($"/subscriptions/{subscriptionId}", payload, cancellationToken);
+            await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}", payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
         {
@@ -191,7 +191,7 @@ internal sealed partial class TopazClient
         };
 
         using var resp =
-            await _httpClient.PostAsJsonAsync($"/subscriptions/{subscriptionId}", payload, cancellationToken);
+            await HttpClientJsonExtensions.PostAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}", payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
         {

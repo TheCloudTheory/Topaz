@@ -1,8 +1,7 @@
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using Topaz.Portal.Models.ManagementGroups;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -80,8 +79,7 @@ internal sealed partial class TopazClient
             }
         };
 
-        using var resp = await _httpClient.PutAsJsonAsync(
-            $"/providers/Microsoft.Management/managementGroups/{groupId}?api-version=2023-04-01",
+        using var resp = await HttpClientJsonExtensions.PutAsJsonAsync(_httpClient, $"/providers/Microsoft.Management/managementGroups/{groupId}?api-version=2023-04-01",
             payload,
             cancellationToken);
 
@@ -106,8 +104,7 @@ internal sealed partial class TopazClient
         if (string.IsNullOrWhiteSpace(subscriptionId))
             throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
 
-        using var resp = await _httpClient.PutAsJsonAsync(
-            $"/providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}?api-version=2023-04-01",
+        using var resp = await HttpClientJsonExtensions.PutAsJsonAsync(_httpClient, $"/providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}?api-version=2023-04-01",
             new { },
             cancellationToken);
 

@@ -1,10 +1,10 @@
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager.ManagedServiceIdentities;
-using Azure.ResourceManager.ManagedServiceIdentities.Models;
+using Azure.ResourceManager.Resources;
 using Topaz.Portal.Models.ManagedIdentities;
 
-namespace Topaz.Portal;
+namespace Topaz.Portal.Clients;
 
 internal sealed partial class TopazClient
 {
@@ -21,7 +21,7 @@ internal sealed partial class TopazClient
             var subscriptionResource = _armClient!
                 .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"));
 
-            await foreach (var identity in subscriptionResource.GetUserAssignedIdentitiesAsync(cancellationToken: cancellationToken))
+            await foreach (var identity in ManagedServiceIdentitiesExtensions.GetUserAssignedIdentitiesAsync(subscriptionResource, cancellationToken: cancellationToken))
             {
                 identities.Add(MapToManagedIdentityDto(identity, subscription.SubscriptionId, subscription.DisplayName));
             }
@@ -48,7 +48,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}");
 
-        var identity = await _armClient!.GetUserAssignedIdentityResource(resourceId).GetAsync(cancellationToken: cancellationToken);
+        var identity = await ManagedServiceIdentitiesExtensions.GetUserAssignedIdentityResource(_armClient!, resourceId).GetAsync(cancellationToken: cancellationToken);
 
         var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
@@ -81,7 +81,7 @@ internal sealed partial class TopazClient
 
         var content = new UserAssignedIdentityData(new AzureLocation(location));
 
-        await rg.Value.GetUserAssignedIdentities().CreateOrUpdateAsync(
+        await ManagedServiceIdentitiesExtensions.GetUserAssignedIdentities((ResourceGroupResource)rg.Value).CreateOrUpdateAsync(
             WaitUntil.Completed,
             identityName,
             content,
@@ -106,7 +106,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}");
 
-        await _armClient!.GetUserAssignedIdentityResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await ManagedServiceIdentitiesExtensions.GetUserAssignedIdentityResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     public async Task CreateOrUpdateManagedIdentityTag(
@@ -136,8 +136,7 @@ internal sealed partial class TopazClient
         tags[tagName] = tagValue;
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -174,8 +173,7 @@ internal sealed partial class TopazClient
         tags.Remove(tagName);
 
         var payload = new { Tags = tags };
-        using var resp = await _httpClient.PatchAsJsonAsync(
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}",
+        using var resp = await HttpClientJsonExtensions.PatchAsJsonAsync(_httpClient, $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}",
             payload, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -204,7 +202,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}");
 
-        var identity = _armClient!.GetUserAssignedIdentityResource(resourceId);
+        var identity = ManagedServiceIdentitiesExtensions.GetUserAssignedIdentityResource(_armClient!, resourceId);
         var credentials = new List<FederatedCredentialDto>();
 
         await foreach (var cred in identity.GetFederatedIdentityCredentials().GetAllAsync(cancellationToken: cancellationToken))
@@ -250,7 +248,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}");
 
-        var identity = _armClient!.GetUserAssignedIdentityResource(resourceId);
+        var identity = ManagedServiceIdentitiesExtensions.GetUserAssignedIdentityResource(_armClient!, resourceId);
 
         var data = new FederatedIdentityCredentialData
         {
@@ -288,7 +286,7 @@ internal sealed partial class TopazClient
         var resourceId = new ResourceIdentifier(
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}/federatedIdentityCredentials/{credentialName}");
 
-        await _armClient!.GetFederatedIdentityCredentialResource(resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
+        await ManagedServiceIdentitiesExtensions.GetFederatedIdentityCredentialResource(_armClient!, resourceId).DeleteAsync(WaitUntil.Completed, cancellationToken);
     }
 
     private static ManagedIdentityDto MapToManagedIdentityDto(
