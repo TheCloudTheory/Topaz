@@ -36,6 +36,15 @@ docker run -p 8899:8899 thecloudtheory/topaz-host:nightly
 > - [Features overview](https://topaz.thecloudtheory.com/features/)
 > - [Pricing](https://topaz.thecloudtheory.com/pricing/)
 
+## Current versions
+
+| Component | Version |
+|---|---|
+| Topaz Host + CLI | v1.10.222-preview |
+| Topaz.MCP | v1.10.225-preview |
+| Topaz.Portal | 1.11.19 |
+| topaz.sdk (Python) | 0.1.2 |
+
 ## What is Topaz?
 
 Topaz is a single-binary Azure emulator. Instead of running Azurite for Storage, a separate emulator for Service Bus, and another for Key Vault — you run one tool.
