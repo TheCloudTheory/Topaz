@@ -248,18 +248,18 @@ public class KeyVaultFullTests
         // Arrange
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
-        var subscription = armClient.GetDefaultSubscription();
-        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
         var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
             new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
-        _ = resourceGroup.Value.GetKeyVaults()
-            .CreateOrUpdate(WaitUntil.Completed, TestKeyVaultName, operation, CancellationToken.None);
+        _ = await resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdateAsync(WaitUntil.Completed, TestKeyVaultName, operation, CancellationToken.None);
 
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(TestKeyVaultName),
             credential: credential,
             new SecretClientOptions { DisableChallengeResourceVerification = true });
-        _ = client.SetSecret("scheduler-purge-me", "value");
-        client.StartDeleteSecret("scheduler-purge-me");
+        _ = await client.SetSecretAsync("scheduler-purge-me", "value");
+        await client.StartDeleteSecretAsync("scheduler-purge-me");
 
         var logger = new PrettyTopazLogger();
         var eventPipeline = new Pipeline(logger);
