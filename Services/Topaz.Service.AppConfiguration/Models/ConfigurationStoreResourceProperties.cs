@@ -1,22 +1,19 @@
+using JetBrains.Annotations;
+
 namespace Topaz.Service.AppConfiguration.Models;
 
 public sealed class ConfigurationStoreResourceProperties
 {
-    public string? Sku { get; set; }
-
-    public string ProvisioningState => "Succeeded";
-
+    private const int DefaultSoftDeleteRetentionInDays = 7;
+    
+    public string? Sku { get; init; }
+    [UsedImplicitly] public string ProvisioningState => "Succeeded";
     public string? Endpoint { get; set; }
-
     public string? PublicNetworkAccess { get; set; }
-
-    public bool? DisableLocalAuth { get; set; }
-
-    public string? CreateMode { get; set; }
-
-    public int? SoftDeleteRetentionInDays { get; set; }
-
-    public bool? EnablePurgeProtection { get; set; }
+    public bool? DisableLocalAuth { get; init; }
+    public string? CreateMode { get; init; }
+    public int? SoftDeleteRetentionInDays { get; init; }
+    public bool? EnablePurgeProtection { get; init; }
 
     public static ConfigurationStoreResourceProperties FromRequest(
         ConfigurationStoreResourceProperties? source,
@@ -29,7 +26,7 @@ public sealed class ConfigurationStoreResourceProperties
             PublicNetworkAccess = source?.PublicNetworkAccess ?? "Enabled",
             DisableLocalAuth = source?.DisableLocalAuth ?? false,
             CreateMode = source?.CreateMode ?? "Default",
-            SoftDeleteRetentionInDays = source?.SoftDeleteRetentionInDays ?? 7,
+            SoftDeleteRetentionInDays = source?.SoftDeleteRetentionInDays ?? DefaultSoftDeleteRetentionInDays,
             EnablePurgeProtection = source?.EnablePurgeProtection ?? false,
         };
     }
