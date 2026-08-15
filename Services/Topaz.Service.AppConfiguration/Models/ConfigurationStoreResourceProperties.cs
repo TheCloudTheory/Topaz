@@ -19,15 +19,37 @@ public sealed class ConfigurationStoreResourceProperties
         ConfigurationStoreResourceProperties? source,
         string storeName)
     {
+        var sku = source?.Sku ?? "Free";
+        
         return new ConfigurationStoreResourceProperties
         {
-            Sku = source?.Sku ?? "Free",
+            Sku = sku,
             Endpoint = $"https://{storeName}.azconfig.topaz.local.dev:{Topaz.Shared.GlobalSettings.DefaultAppConfigurationPort}/",
             PublicNetworkAccess = source?.PublicNetworkAccess ?? "Enabled",
             DisableLocalAuth = source?.DisableLocalAuth ?? false,
             CreateMode = source?.CreateMode ?? "Default",
-            SoftDeleteRetentionInDays = source?.SoftDeleteRetentionInDays ?? DefaultSoftDeleteRetentionInDays,
-            EnablePurgeProtection = source?.EnablePurgeProtection ?? false,
+            SoftDeleteRetentionInDays = ConfigureSoftDeleteRetentionInDays(source, sku),
+            EnablePurgeProtection = ConfigurePurgeProtection(source, sku),
         };
+    }
+
+    private static bool? ConfigurePurgeProtection(ConfigurationStoreResourceProperties? source, string sku)
+    {
+        if (sku == "Free")
+        {
+            return null;
+        }
+        
+        return source?.EnablePurgeProtection ?? false;
+    }
+
+    private static int? ConfigureSoftDeleteRetentionInDays(ConfigurationStoreResourceProperties? source, string sku)
+    {
+        if (sku == "Free")
+        {
+            return null;
+        }
+        
+        return source?.SoftDeleteRetentionInDays ?? DefaultSoftDeleteRetentionInDays;
     }
 }
