@@ -1,0 +1,19 @@
+# Release Notes - v1.11
+
+## New Features
+
+### Azure Resource Seeding (`seed` command)
+Import resources from a real Azure subscription into Topaz using the new `seed` CLI command. The `Topaz.Importer` module handles seeding across all major resource types: App Service Plans & Sites, API Management, App Configuration, Container Registry, Cosmos DB, Disks, Event Hubs, Key Vault, Load Balancers, Log Analytics, Managed Identity, Redis Cache, Resource Groups, Service Bus, SQL Server & Databases, Storage Accounts, Virtual Machines, Availability Sets, and Virtual Networks (NICs, NSGs, Private Endpoints, Public IPs).
+
+### Redis Cache Management (Portal)
+The web portal now includes full Redis Cache management: list caches, view overview details, manage IAM, and update tags.
+
+### Context Switching (`context` command)
+New CLI command to switch Azure CLI contexts, enabling multi-tenant and multi-subscription workflows without leaving Topaz.
+
+### App Configuration Soft-Delete Purge Scheduler
+Topaz now runs a background scheduler (`AppConfigurationSoftDeletePurgeScheduler`) that automatically purges soft-deleted App Configuration stores past their scheduled purge date, matching Azure's behaviour.
+
+## Bug Fixes
+
+- Fixed nullable `Content` handling and added async overload in the internal Router, preventing potential null reference errors on certain request paths.
