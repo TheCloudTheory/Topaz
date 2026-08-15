@@ -449,4 +449,18 @@ internal sealed class AppConfigurationServiceControlPlane(
         var replicas = provider.ListSubresourcesAs<ReplicaResource>(subscriptionIdentifier, resourceGroupIdentifier, storeName, ReplicaSubresource);
         return new ControlPlaneOperationResult<ReplicaResource[]?>(OperationResult.Success, replicas);
     }
+
+    // Intended for testing only — fast-forwards the purge date without waiting for the real retention window.
+    internal void OverrideScheduledPurgeDate(SubscriptionIdentifier subscriptionIdentifier, string storeName, DateTimeOffset purgeDate)
+    {
+        var stores = ListBySubscription(subscriptionIdentifier);
+        var store = (stores.Resource ?? [])
+            .SingleOrDefault(s => s.Name == storeName &&
+                                   GlobalDnsEntries.IsSoftDeleted(AppConfigurationService.UniqueName, s.Name));
+
+        if (store == null) return;
+
+        store.ScheduledPurgeDate = purgeDate;
+        provider.CreateOrUpdate(subscriptionIdentifier, store.GetResourceGroup(), storeName, store);
+    }
 }

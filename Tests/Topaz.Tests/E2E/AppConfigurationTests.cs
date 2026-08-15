@@ -6,8 +6,14 @@ using Azure.ResourceManager.AppConfiguration;
 using Azure.ResourceManager.AppConfiguration.Models;
 using Azure.ResourceManager.Resources;
 using Topaz.CLI;
+using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Service.AppConfiguration;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -371,5 +377,47 @@ public class AppConfigurationTests
         await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Locked", "mutated"));
         var retrieved = (await configClient.GetConfigurationSettingAsync("Locked")).Value;
         Assert.That(retrieved.Value, Is.EqualTo("mutated"));
+    }
+
+    [Test]
+    public async Task AppConfigurationScheduler_WhenScheduledPurgeDateHasPassed_StoreShouldBePurged()
+    {
+        // Arrange
+        var client = CreateClient();
+        var rg = await GetResourceGroup(client);
+        const string storeName = "e2e-appconfig-scheduler-purge";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var store = (await rg.GetAppConfigurationStores().GetAsync(storeName)).Value;
+        await store.DeleteAsync(WaitUntil.Completed);
+
+        var logger = new PrettyTopazLogger();
+        var eventPipeline = new Pipeline(logger);
+        var controlPlane = AppConfigurationServiceControlPlane.New(eventPipeline, logger);
+        var subscriptionControlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
+
+        var subscriptionIdentifier = SubscriptionIdentifier.From(SubscriptionId);
+        controlPlane.OverrideScheduledPurgeDate(subscriptionIdentifier, storeName,
+            DateTimeOffset.UtcNow.AddSeconds(30));
+
+        // Wait for the purge date to pass
+        await Task.Delay(TimeSpan.FromSeconds(31));
+
+        var scheduler = new AppConfigurationSoftDeletePurgeScheduler(
+            subscriptionControlPlane,
+            controlPlane,
+            GlobalSettings.SoftDeletePurgeSchedulerInterval,
+            logger);
+
+        // Act
+        await scheduler.ScanAndPurgeAsync();
+
+        // Assert
+        var sub = await client.GetDefaultSubscriptionAsync();
+        Assert.That(
+            async () => await sub.GetDeletedAppConfigurationStoreAsync(AzureLocation.WestEurope, storeName),
+            Throws.InstanceOf<RequestFailedException>());
     }
 }
