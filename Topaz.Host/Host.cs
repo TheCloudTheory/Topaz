@@ -166,13 +166,12 @@ public class Host
 
         PrintServicesTable(services);
 
+        var subscriptionControlPlane = SubscriptionControlPlane.New(_eventPipeline, _logger);
         if (_options.DefaultSubscription.HasValue)
         {
             Console.WriteLine();
             Console.WriteLine("Creating a default subscription...");
-
-            var subscriptionControlPlane =
-                SubscriptionControlPlane.New(_eventPipeline, _logger);
+            
             var existingSubscriptionOperation =
                 subscriptionControlPlane.Get(SubscriptionIdentifier.From(_options.DefaultSubscription.Value));
             if (existingSubscriptionOperation.Result == OperationResult.NotFound)
@@ -219,18 +218,18 @@ public class Host
         {
             new KeyVaultSoftDeletePurgeScheduler(
                 KeyVaultControlPlane.New(_eventPipeline, _logger),
-                SubscriptionControlPlane.New(_eventPipeline, _logger),
+                subscriptionControlPlane,
                 _logger,
                 GlobalSettings.SoftDeletePurgeSchedulerInterval),
             new KeyVaultSecretsSoftDeletePurgeScheduler(
                 KeyVaultControlPlane.New(_eventPipeline, _logger),
                 new KeyVaultSecretsDataPlane(_logger, new KeyVaultResourceProvider(_logger)),
-                SubscriptionControlPlane.New(_eventPipeline, _logger),
+                subscriptionControlPlane,
                 _logger,
                 GlobalSettings.SoftDeletePurgeSchedulerInterval),
             new GeoReplicationSyncScheduler(
                 AzureStorageControlPlane.New(_logger),
-                SubscriptionControlPlane.New(_eventPipeline, _logger),
+                subscriptionControlPlane,
                 _logger,
                 TimeSpan.FromSeconds(30)),
             new ExpiredDocumentsPurgeScheduler(_eventPipeline, TimeSpan.FromSeconds(60), _logger),
@@ -238,6 +237,9 @@ public class Host
                 new Service.ServiceBus.Filtering.ServiceBusRuleLoader(GlobalSettings.MainEmulatorDirectory, _logger),
                 _logger,
                 TimeSpan.FromSeconds(30)),
+            new AppConfigurationSoftDeletePurgeScheduler(subscriptionControlPlane,
+                AppConfigurationServiceControlPlane.New(_eventPipeline, _logger),
+                GlobalSettings.SoftDeletePurgeSchedulerInterval, _logger)
         };
 
         InFlightMessageStore.SetRuleLoader(
