@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Topaz.Shared;
 
 namespace Topaz.Service.AppConfiguration.Models;
 
@@ -24,7 +25,7 @@ public sealed class ConfigurationStoreResourceProperties
         return new ConfigurationStoreResourceProperties
         {
             Sku = sku,
-            Endpoint = $"https://{storeName}.azconfig.topaz.local.dev:{Topaz.Shared.GlobalSettings.DefaultAppConfigurationPort}/",
+            Endpoint = GlobalSettings.GetAppConfigurationEndpoint(storeName),
             PublicNetworkAccess = source?.PublicNetworkAccess ?? "Enabled",
             DisableLocalAuth = source?.DisableLocalAuth ?? false,
             CreateMode = source?.CreateMode ?? "Default",
