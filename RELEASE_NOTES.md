@@ -17,3 +17,4 @@ Topaz now runs a background scheduler (`AppConfigurationSoftDeletePurgeScheduler
 ## Bug Fixes
 
 - Fixed nullable `Content` handling and added async overload in the internal Router, preventing potential null reference errors on certain request paths.
+- Improved App Configuration store update logic: update and validation are now handled by `ConfigurationStoreFullResource.UpdateFromRequest()` and `Validate()`, ensuring invalid SKU downgrades and other bad requests are rejected with a proper `BadRequest` response.
