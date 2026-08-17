@@ -81,7 +81,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         }
 
         var location = request.Location ?? rgOp.Resource!.Location!;
-        var properties = ConfigurationStoreResourceProperties.FromRequest(request.Properties, storeName, request.Sku!.Name!);
+        var properties = ConfigurationStoreResourceProperties.FromRequest(request.Properties, request.Sku!.Name!, storeName);
         var resource = new ConfigurationStoreFullResource(subscriptionIdentifier, resourceGroupIdentifier, storeName, location, request.Tags, request.Sku, properties);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storeName, resource, createOperation: true);
