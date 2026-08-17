@@ -87,6 +87,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 		BACKLOG.md = BACKLOG.md
+		Tests\Topaz.Tests\bin\Debug\net10.0\topaz.log = Tests\Topaz.Tests\bin\Debug\net10.0\topaz.log
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.EventPipeline", "Topaz.EventPipeline\Topaz.EventPipeline.csproj", "{E2D22511-D6C1-41FB-8D4B-35FB89616896}"

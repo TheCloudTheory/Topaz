@@ -28,7 +28,7 @@ internal sealed class UpdateAppConfigurationStoreCommand(HttpClient httpClient, 
         if (settings.PublicNetworkAccess != null)
             body["properties"] = new { publicNetworkAccess = settings.PublicNetworkAccess };
 
-        var (success, responseBody) = await PatchAsync(url, body);
+        var (success, responseBody) = await PatchAsync(url, body, cancellationToken);
         if (!success) return 1;
         AnsiConsole.WriteLine(responseBody);
         return 0;

@@ -66,8 +66,9 @@ public sealed class ConfigurationStoreResourceProperties
     {
         DisableLocalAuth = request.Properties?.DisableLocalAuth ?? DisableLocalAuth;
         PublicNetworkAccess = request.Properties?.PublicNetworkAccess;
-        
-        if ((EnablePurgeProtection.HasValue && EnablePurgeProtection.Value) || !request.Properties!.EnablePurgeProtection.HasValue) return;
+
+        if (request.Properties == null) return;
+        if ((EnablePurgeProtection.HasValue && EnablePurgeProtection.Value) || !request.Properties.EnablePurgeProtection.HasValue) return;
 
         EnablePurgeProtection = ConfigurePurgeProtection(request, sku);
     }

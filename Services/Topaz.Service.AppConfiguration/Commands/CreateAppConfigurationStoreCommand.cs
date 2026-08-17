@@ -63,8 +63,8 @@ internal sealed class CreateAppConfigurationStoreCommand(HttpClient httpClient, 
         [CommandOption("-s|--subscription-id")]
         public string? SubscriptionId { get; set; }
 
-        [CommandOptionDefinition("(Optional) SKU name (e.g. Free, Standard).", required: false)]
+        [CommandOptionDefinition("(Optional) SKU name (e.g. Free, Standard). Default: Free", required: false)]
         [CommandOption("--sku")]
-        public string? Sku { get; set; }
+        public string? Sku { get; set; } = "Free";
     }
 }

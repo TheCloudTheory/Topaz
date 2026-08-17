@@ -56,7 +56,7 @@ public class AppConfigurationTests
             "--subscription-id", SubscriptionId.ToString()
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class AppConfigurationTests
             "--tags", "env=test"
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -115,7 +115,7 @@ public class AppConfigurationTests
             "--subscription-id", SubscriptionId.ToString()
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -128,7 +128,7 @@ public class AppConfigurationTests
             "--subscription-id", SubscriptionId.ToString()
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -142,7 +142,7 @@ public class AppConfigurationTests
             "--key-id", "Primary"
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -155,7 +155,7 @@ public class AppConfigurationTests
             "--value", "16"
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -174,7 +174,7 @@ public class AppConfigurationTests
             "--key", "MyApp:Settings:FontSize"
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -192,7 +192,7 @@ public class AppConfigurationTests
             "--name", StoreName
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -211,7 +211,7 @@ public class AppConfigurationTests
             "--key", "MyApp:Settings:FontSize"
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -269,7 +269,7 @@ public class AppConfigurationTests
             "--value", "32"
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -288,7 +288,7 @@ public class AppConfigurationTests
             "--name", StoreName
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -306,7 +306,7 @@ public class AppConfigurationTests
             "--name", StoreName
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 
     [Test]
@@ -334,6 +334,6 @@ public class AppConfigurationTests
             "--label", "production"
         ]);
 
-        Assert.That(code, Is.EqualTo(0));
+        Assert.That(code, Is.Zero);
     }
 }
