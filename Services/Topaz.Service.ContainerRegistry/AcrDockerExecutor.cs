@@ -9,9 +9,9 @@ namespace Topaz.Service.ContainerRegistry;
 /// </summary>
 public static class AcrDockerExecutor
 {
-    private static readonly Lazy<bool> _available = new(CheckAvailability);
+    private static readonly Lazy<bool> Available = new(CheckAvailability);
 
-    public static bool IsAvailable() => _available.Value;
+    public static bool IsAvailable() => Available.Value;
 
     /// <summary>
     /// Runs <c>docker build</c> (and optionally <c>docker push</c>) for a DockerBuildRequest run.
