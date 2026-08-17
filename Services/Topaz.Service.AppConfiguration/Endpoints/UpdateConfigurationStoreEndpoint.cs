@@ -49,6 +49,12 @@ internal sealed class UpdateConfigurationStoreEndpoint(Pipeline eventPipeline, I
         }
 
         var result = _controlPlane.Update(sub, rg, name, request);
+        if (result.Result == OperationResult.BadRequest)
+        {
+            response.CreateBadRequestResponse(result);
+            return;
+        }
+        
         if (result.Result != OperationResult.Updated || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);

@@ -10,7 +10,6 @@ using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Service.AppConfiguration;
-using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
@@ -45,6 +44,13 @@ public class AppConfigurationTests
 
     private static AppConfigurationStoreData MinimalStoreData() =>
         new(AzureLocation.WestEurope, new AppConfigurationSku("free"));
+    
+    private static AppConfigurationStoreData SoftDeleteStore(bool enablePurgeProtection = false) =>
+        new(AzureLocation.WestEurope, new AppConfigurationSku("Standard"))
+        {
+            SoftDeleteRetentionInDays = 30,
+            EnablePurgeProtection = enablePurgeProtection
+        };
 
     private async Task<ResourceGroupResource> GetResourceGroup(ArmClient client)
     {
@@ -63,13 +69,54 @@ public class AppConfigurationTests
             .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
 
         var store = result.Value;
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(store.Data.Name, Is.EqualTo(storeName));
             Assert.That(store.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.AppConfiguration/configurationStores")));
             Assert.That(store.Data.Location.ToString(), Is.EqualTo("westeurope").IgnoreCase);
             Assert.That(store.Data.ProvisioningState.ToString(), Is.EqualTo("Succeeded").IgnoreCase);
+        }
+    }
+    
+    [Test]
+    public async Task AppConfiguration_CreateAndUpdate_PurgeProtectionCannotBeChanged()
+    {
+        var client = CreateClient();
+        var rg = await GetResourceGroup(client);
+        const string storeName = "e2e-appconfig-create";
+
+        var result = await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, SoftDeleteStore(enablePurgeProtection: true));
+        
+        var store = await rg.GetAppConfigurationStores().GetAsync(storeName);
+        Assert.That(async () => await store.Value.UpdateAsync(WaitUntil.Completed, new AppConfigurationStorePatch
+        {
+            EnablePurgeProtection = false,
+        }), Throws.InstanceOf<RequestFailedException>());
+    }
+    
+    [Test]
+    public async Task AppConfiguration_CreateAndUpdate_PurgeProtectionCanBeSetIfNotSetPreviously()
+    {
+        var client = CreateClient();
+        var rg = await GetResourceGroup(client);
+        const string storeName = "e2e-appconfig-create";
+
+        _ = await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, SoftDeleteStore(enablePurgeProtection: false));
+        
+        var store = await rg.GetAppConfigurationStores().GetAsync(storeName);
+        await store.Value.UpdateAsync(WaitUntil.Completed, new AppConfigurationStorePatch
+        {
+            EnablePurgeProtection = true
         });
+        
+        store = await rg.GetAppConfigurationStores().GetAsync(storeName);
+        
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(store.Value.Data.EnablePurgeProtection, Is.True);
+        }
     }
 
     [Test]
@@ -142,11 +189,11 @@ public class AppConfigurationTests
         await foreach (var store in rg.GetAppConfigurationStores().GetAllAsync())
             stores.Add(store.Data.Name);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(stores, Does.Contain("e2e-appconfig-list-a"));
             Assert.That(stores, Does.Contain("e2e-appconfig-list-b"));
-        });
+        }
     }
 
     [Test]
@@ -165,7 +212,7 @@ public class AppConfigurationTests
         await foreach (var key in store.GetKeysAsync())
             keys.Add(key);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(keys, Has.Count.EqualTo(4));
             Assert.That(keys.Any(k => k.Id == "Primary" && k.IsReadOnly == false), Is.True);
@@ -174,7 +221,7 @@ public class AppConfigurationTests
             Assert.That(keys.Any(k => k.Id == "Secondary Read Only" && k.IsReadOnly == true), Is.True);
             Assert.That(keys.All(k => !string.IsNullOrEmpty(k.Value)), Is.True);
             Assert.That(keys.All(k => k.ConnectionString!.Contains("Endpoint=")), Is.True);
-        });
+        }
     }
 
     [Test]
@@ -204,11 +251,11 @@ public class AppConfigurationTests
         var secondaryBefore = keysBefore.Single(k => k.Id == "Secondary").Value;
         var secondaryAfter = keysAfter.Single(k => k.Id == "Secondary").Value;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(primaryAfter, Is.Not.EqualTo(primaryBefore));
             Assert.That(secondaryAfter, Is.EqualTo(secondaryBefore));
-        });
+        }
     }
 
     private async Task<ConfigurationClient> CreateDataPlaneClient(string storeName)
@@ -272,11 +319,11 @@ public class AppConfigurationTests
         await foreach (var s in configClient.GetConfigurationSettingsAsync(new SettingSelector()))
             settings.Add(s);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(settings.Any(s => s.Key == "Key1" && s.Value == "Value1"), Is.True);
             Assert.That(settings.Any(s => s.Key == "Key2" && s.Value == "Value2"), Is.True);
-        });
+        }
     }
 
     [Test]
@@ -333,11 +380,11 @@ public class AppConfigurationTests
         var prod = (await configClient.GetConfigurationSettingAsync("Env", "production")).Value;
         var dev = (await configClient.GetConfigurationSettingAsync("Env", "development")).Value;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(prod.Value, Is.EqualTo("prod"));
             Assert.That(dev.Value, Is.EqualTo("dev"));
-        });
+        }
     }
 
     [Test]

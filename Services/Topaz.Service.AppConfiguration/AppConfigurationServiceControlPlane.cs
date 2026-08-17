@@ -60,46 +60,34 @@ internal sealed class AppConfigurationServiceControlPlane(
     }
 
     public ControlPlaneOperationResult<ConfigurationStoreFullResource> CreateOrUpdate(
-        SubscriptionIdentifier sub,
-        ResourceGroupIdentifier rg,
-        string name,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storeName,
         ConfigurationStoreResource request)
     {
-        var rgOp = _resourceGroupControlPlane.Get(sub, rg);
+        var rgOp = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (rgOp.Result == OperationResult.NotFound)
             return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(
                 OperationResult.NotFound, null, rgOp.Reason, rgOp.Code);
 
-        var existing = provider.GetAs<ConfigurationStoreFullResource>(sub, rg, name);
+        var existing = provider.GetAs<ConfigurationStoreFullResource>(subscriptionIdentifier, resourceGroupIdentifier, storeName);
 
         if (existing != null)
         {
-            existing.Location = request.Location ?? existing.Location;
-            existing.Tags = request.Tags ?? existing.Tags;
-            if (request.Properties.PublicNetworkAccess != null)
-                existing.Properties.PublicNetworkAccess = request.Properties.PublicNetworkAccess;
+            existing.UpdateFromRequest(request);
 
-            if (request.Sku?.Name != null)
-            {
-                var updated = new ConfigurationStoreFullResource(
-                    sub, rg, name, existing.Location!, existing.Tags,
-                    new ResourceSku { Name = request.Sku.Name }, existing.Properties);
-                provider.CreateOrUpdate(sub, rg, name, updated);
-                return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, updated);
-            }
-
-            provider.CreateOrUpdate(sub, rg, name, existing);
+            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storeName, existing);
             return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, existing);
         }
 
         var location = request.Location ?? rgOp.Resource!.Location!;
-        var properties = ConfigurationStoreResourceProperties.FromRequest(request.Properties, name);
-        var resource = new ConfigurationStoreFullResource(sub, rg, name, location, request.Tags, request.Sku, properties);
+        var properties = ConfigurationStoreResourceProperties.FromRequest(request.Properties, storeName, request.Sku!.Name!);
+        var resource = new ConfigurationStoreFullResource(subscriptionIdentifier, resourceGroupIdentifier, storeName, location, request.Tags, request.Sku, properties);
 
-        provider.CreateOrUpdate(sub, rg, name, resource, createOperation: true);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storeName, resource, createOperation: true);
 
-        var keyStore = AppConfigurationAccessKeyStore.Generate(name);
-        provider.CreateOrUpdateSubresource(sub, rg, AccessKeysId, name, AccessKeysSubresource, keyStore);
+        var keyStore = AppConfigurationAccessKeyStore.Generate(storeName);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, AccessKeysId, storeName, AccessKeysSubresource, keyStore);
 
         return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Created, resource);
     }
@@ -131,31 +119,28 @@ internal sealed class AppConfigurationServiceControlPlane(
     }
 
     public ControlPlaneOperationResult<ConfigurationStoreFullResource> Update(
-        SubscriptionIdentifier sub,
-        ResourceGroupIdentifier rg,
-        string name,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storeName,
         UpdateConfigurationStoreRequest request)
     {
-        var existing = provider.GetAs<ConfigurationStoreFullResource>(sub, rg, name);
+        var existing = provider.GetAs<ConfigurationStoreFullResource>(subscriptionIdentifier, resourceGroupIdentifier, storeName);
         if (existing == null)
-            return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(
-                OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode);
-
-        if (request.Tags != null)
-            existing.Tags = request.Tags;
-        if (request.Properties?.PublicNetworkAccess != null)
-            existing.Properties.PublicNetworkAccess = request.Properties.PublicNetworkAccess;
-
-        if (request.Sku?.Name != null)
         {
-            var updated = new ConfigurationStoreFullResource(
-                sub, rg, name, existing.Location!, existing.Tags,
-                new ResourceSku { Name = request.Sku.Name }, existing.Properties);
-            provider.CreateOrUpdate(sub, rg, name, updated);
-            return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, updated);
+            return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, storeName), NotFoundCode);
+        }
+        
+        existing.UpdateFromRequest(request);
+        var (isValid, error) = existing.Validate(request);
+
+        if (!isValid)
+        {
+            return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.BadRequest, null,
+                error, "BadRequest");
         }
 
-        provider.CreateOrUpdate(sub, rg, name, existing);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storeName, existing);
         return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Updated, existing);
     }
 

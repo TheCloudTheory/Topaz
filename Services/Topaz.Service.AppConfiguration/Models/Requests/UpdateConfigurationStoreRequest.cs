@@ -1,16 +1,19 @@
+using JetBrains.Annotations;
 using Topaz.ResourceManager;
-using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.AppConfiguration.Models.Requests;
 
-internal sealed class UpdateConfigurationStoreRequest
+public sealed class UpdateConfigurationStoreRequest
 {
-    public IDictionary<string, string>? Tags { get; set; }
-    public ResourceSku? Sku { get; set; }
-    public UpdateConfigurationStoreRequestProperties? Properties { get; set; }
+    public IDictionary<string, string>? Tags { get; init; }
+    public ResourceSku? Sku { get; init; }
+    public UpdateConfigurationStoreRequestProperties? Properties { get; init; }
 }
 
-internal sealed class UpdateConfigurationStoreRequestProperties
+[UsedImplicitly]
+public sealed class UpdateConfigurationStoreRequestProperties
 {
     public string? PublicNetworkAccess { get; set; }
+    public bool? DisableLocalAuth  { get; set; }
+    public bool? EnablePurgeProtection { get; set; }
 }

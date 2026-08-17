@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Topaz.Service.AppConfiguration.Models.Requests;
 using Topaz.Shared;
 
 namespace Topaz.Service.AppConfiguration.Models;
@@ -7,24 +8,21 @@ public sealed class ConfigurationStoreResourceProperties
 {
     private const int DefaultSoftDeleteRetentionInDays = 7;
     
-    public string? Sku { get; init; }
     [UsedImplicitly] public string ProvisioningState => "Succeeded";
     public string? Endpoint { get; set; }
     public string? PublicNetworkAccess { get; set; }
-    public bool? DisableLocalAuth { get; init; }
+    public bool? DisableLocalAuth { get; set; }
     public string? CreateMode { get; init; }
     public int? SoftDeleteRetentionInDays { get; init; }
-    public bool? EnablePurgeProtection { get; init; }
+    public bool? EnablePurgeProtection { get; set; }
 
     public static ConfigurationStoreResourceProperties FromRequest(
         ConfigurationStoreResourceProperties? source,
+        string sku,
         string storeName)
     {
-        var sku = source?.Sku ?? "Free";
-        
         return new ConfigurationStoreResourceProperties
         {
-            Sku = sku,
             Endpoint = GlobalSettings.GetAppConfigurationEndpoint(storeName),
             PublicNetworkAccess = source?.PublicNetworkAccess ?? "Enabled",
             DisableLocalAuth = source?.DisableLocalAuth ?? false,
@@ -52,5 +50,35 @@ public sealed class ConfigurationStoreResourceProperties
         }
         
         return source?.SoftDeleteRetentionInDays ?? DefaultSoftDeleteRetentionInDays;
+    }
+
+    public void UpdateFromRequest(ConfigurationStoreResource request, string sku)
+    {
+        DisableLocalAuth = request.Properties.DisableLocalAuth ?? DisableLocalAuth;
+        PublicNetworkAccess = request.Properties.PublicNetworkAccess;
+
+        if (EnablePurgeProtection.HasValue || !request.Properties.EnablePurgeProtection.HasValue) return;
+
+        EnablePurgeProtection = ConfigurePurgeProtection(this, sku);
+    }
+
+    public void UpdateFromRequest(UpdateConfigurationStoreRequest request, string sku)
+    {
+        DisableLocalAuth = request.Properties?.DisableLocalAuth ?? DisableLocalAuth;
+        PublicNetworkAccess = request.Properties?.PublicNetworkAccess;
+        
+        if ((EnablePurgeProtection.HasValue && EnablePurgeProtection.Value) || !request.Properties!.EnablePurgeProtection.HasValue) return;
+
+        EnablePurgeProtection = ConfigurePurgeProtection(request, sku);
+    }
+
+    private bool? ConfigurePurgeProtection(UpdateConfigurationStoreRequest request, string sku)
+    {
+        if (sku == "Free")
+        {
+            return null;
+        }
+        
+        return request.Properties?.EnablePurgeProtection ?? false;
     }
 }
