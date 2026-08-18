@@ -43,7 +43,8 @@ public sealed class AppConfigurationService(Pipeline eventPipeline, ITopazLogger
         new GetRevisionsEndpoint(eventPipeline, logger),
         new LockKeyValueEndpoint(eventPipeline, logger),
         new UnlockKeyValueEndpoint(eventPipeline, logger),
-        new CreateOrUpdateCreateSnapshotEndpointEndpoint(eventPipeline, logger)
+        new CreateSnapshotEndpoint(eventPipeline, logger),
+        new GetSnapshotEndpoint(eventPipeline, logger)
     ];
 }
 

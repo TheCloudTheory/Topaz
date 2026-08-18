@@ -494,4 +494,24 @@ internal sealed class AppConfigurationServiceControlPlane(
 
         return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Created, subresource);
     }
+
+    public ControlPlaneOperationResult<SnapshotSubresource> GetSnapshot(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string snapshotName)
+    {
+        var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
+        if (store.Resource == null)
+        {
+            return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.NotFound, null,
+                $"Store {storeName} not found", "StoreNotFound");
+        }
+
+        var snapshot = provider.GetSubresourceAs<SnapshotSubresource>(subscriptionIdentifier, resourceGroupIdentifier,
+            snapshotName, storeName, SnapshotSubresource);
+
+        if (snapshot == null)
+        {
+            return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.NotFound, null, "Snapshot not found.", "SnapshotNotFound");
+        }
+
+        return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Success, snapshot);
+    }
 }

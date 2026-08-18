@@ -10,7 +10,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.AppConfiguration.Endpoints.Snapshots;
 
-internal sealed class CreateOrUpdateCreateSnapshotEndpointEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class CreateSnapshotEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly AppConfigurationServiceControlPlane _controlPlane =
@@ -62,13 +62,12 @@ internal sealed class CreateOrUpdateCreateSnapshotEndpointEndpoint(Pipeline even
             return;
         }
 
-        if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
+        if (result.Result is not (OperationResult.Created or OperationResult.Success) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
             return;
         }
-
-        response.StatusCode = result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+        
         response.CreateJsonContentResponse(result.Resource);
     }
 }
