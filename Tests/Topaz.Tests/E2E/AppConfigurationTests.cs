@@ -85,7 +85,7 @@ public class AppConfigurationTests
         var rg = await GetResourceGroup(client);
         const string storeName = "e2e-appconfig-create";
 
-        var result = await rg.GetAppConfigurationStores()
+        _ = await rg.GetAppConfigurationStores()
             .CreateOrUpdateAsync(WaitUntil.Completed, storeName, SoftDeleteStore(enablePurgeProtection: true));
         
         var store = await rg.GetAppConfigurationStores().GetAsync(storeName);
@@ -171,6 +171,27 @@ public class AppConfigurationTests
 
         Assert.That(
             async () => await sub.GetDeletedAppConfigurationStoreAsync(AzureLocation.WestEurope, storeName),
+            Throws.InstanceOf<RequestFailedException>());
+    }
+    
+    [Test]
+    public async Task AppConfiguration_Purge_CannotBePurgedIfPurgeProtectionEnabled()
+    {
+        var client = CreateClient();
+        var rg = await GetResourceGroup(client);
+        const string storeName = "e2e-appconfig-purge";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, SoftDeleteStore(enablePurgeProtection: true));
+
+        var store = (await rg.GetAppConfigurationStores().GetAsync(storeName)).Value;
+        await store.DeleteAsync(WaitUntil.Completed);
+
+        var sub = await client.GetDefaultSubscriptionAsync();
+        var deletedStore = (await sub.GetDeletedAppConfigurationStoreAsync(AzureLocation.WestEurope, storeName)).Value;
+
+        Assert.That(
+            async () => await deletedStore.PurgeDeletedAsync(WaitUntil.Completed),
             Throws.InstanceOf<RequestFailedException>());
     }
 

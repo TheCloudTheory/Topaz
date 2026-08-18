@@ -225,17 +225,6 @@ TODO: Azure Event Grid: MCP provisioning tool
 ### App Configuration — advanced data plane features
 
 <!--
-TODO: App Configuration: Purge protection support
-  Implement enablePurgeProtection on the store resource. When true:
-  - Prevent immediate purge via POST .../deletedConfigurationStores/{name}/purge (return 409 Conflict).
-  - Prevent disabling soft-delete or shortening the retention period (return 400 Bad Request).
-  - Surface purgeProtectionEnabled in GET responses.
-  - Once enabled, purge protection cannot be disabled (match Azure behaviour).
-  milestone: future
-  labels: enhancement, app-configuration
--->
-
-<!--
 TODO: App Configuration: Snapshots API
   Implement PUT/GET/DELETE /snapshots/{name} — capture a point-in-time copy of key-values matching
   a filter; archiveSnapshot and recoverSnapshot transitions; snapshot status (provisioning → ready /

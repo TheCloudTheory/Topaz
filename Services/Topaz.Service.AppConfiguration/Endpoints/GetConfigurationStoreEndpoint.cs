@@ -14,7 +14,7 @@ internal sealed class GetConfigurationStoreEndpoint(Pipeline eventPipeline, ITop
     private readonly AppConfigurationServiceControlPlane _controlPlane =
         AppConfigurationServiceControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.AppConfiguration";
+    public string ProviderNamespace => "Microsoft.AppConfiguration";
 
     public string[] Endpoints =>
     [

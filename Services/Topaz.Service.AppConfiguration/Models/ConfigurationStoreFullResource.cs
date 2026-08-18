@@ -51,7 +51,7 @@ internal sealed class ConfigurationStoreFullResource : ConfigurationStoreResourc
             return new ValueTuple<bool, string?>(true, "Purge protection can't be enabled for Free SKU.");
         }
         
-        return new(true, null);
+        return new ValueTuple<bool, string?>(true, null);
     }
 
     public void UpdateFromRequest(ConfigurationStoreResource request)

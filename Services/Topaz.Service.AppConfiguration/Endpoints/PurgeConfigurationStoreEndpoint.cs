@@ -38,6 +38,12 @@ internal sealed class PurgeConfigurationStoreEndpoint(Pipeline eventPipeline, IT
         }
         
         var result = _controlPlane.Purge(subscriptionIdentifier, storeName!);
+        if (result.Result == OperationResult.Conflict)
+        {
+            response.CreateErrorResponse(result, HttpStatusCode.Conflict);
+            return;
+        }
+        
         if(result.Result != OperationResult.Purged)
         {
             response.StatusCode = HttpStatusCode.InternalServerError;

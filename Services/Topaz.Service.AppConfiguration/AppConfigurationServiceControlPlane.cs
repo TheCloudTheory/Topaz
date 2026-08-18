@@ -93,14 +93,14 @@ internal sealed class AppConfigurationServiceControlPlane(
     }
 
     public ControlPlaneOperationResult<ConfigurationStoreFullResource> Get(
-        SubscriptionIdentifier sub,
-        ResourceGroupIdentifier rg,
-        string name)
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storeName)
     {
-        var resource = provider.GetAs<ConfigurationStoreFullResource>(sub, rg, name);
-        return resource == null || GlobalDnsEntries.IsSoftDeleted(AppConfigurationService.UniqueName, name)
+        var resource = provider.GetAs<ConfigurationStoreFullResource>(subscriptionIdentifier, resourceGroupIdentifier, storeName);
+        return resource == null || GlobalDnsEntries.IsSoftDeleted(AppConfigurationService.UniqueName, storeName)
             ? new ControlPlaneOperationResult<ConfigurationStoreFullResource>(
-                OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode)
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, storeName), NotFoundCode)
             : new ControlPlaneOperationResult<ConfigurationStoreFullResource>(OperationResult.Success, resource);
     }
 
@@ -334,10 +334,20 @@ internal sealed class AppConfigurationServiceControlPlane(
         var deleted = GetDeleted(subscriptionIdentifier, storeName);
         if (deleted.Result == OperationResult.NotFound)
         {
-            logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(GetDeleted), $"No soft-deleted store found with name {storeName} for subscription {subscriptionIdentifier}");
+            logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(GetDeleted),
+                $"No soft-deleted store found with name {storeName} for subscription {subscriptionIdentifier}");
             return new ControlPlaneOperationResult(OperationResult.NotFound);
         }
-        
+
+        // If purge protection is enabled for App Configuration store, it can't be purged
+        if (deleted.Resource!.Properties.EnablePurgeProtection.HasValue &&
+            deleted.Resource!.Properties.EnablePurgeProtection.Value)
+        {
+            return new ControlPlaneOperationResult(OperationResult.Conflict,
+                $"The App Configuration store '{storeName}' has purge protection enabled and cannot be purged until the retention period expires.",
+                "Conflict");
+        }
+
         provider.Delete(subscriptionIdentifier, deleted.Resource!.GetResourceGroup(), storeName, softDelete: false);
         return new ControlPlaneOperationResult(OperationResult.Purged);
     }
