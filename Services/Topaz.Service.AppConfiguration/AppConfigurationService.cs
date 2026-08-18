@@ -2,6 +2,7 @@ using Topaz.EventPipeline;
 using Topaz.Service.AppConfiguration.Endpoints;
 using Topaz.Service.AppConfiguration.Endpoints.DataPlane;
 using Topaz.Service.AppConfiguration.Endpoints.Replicas;
+using Topaz.Service.AppConfiguration.Endpoints.Snapshots;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -12,7 +13,7 @@ public sealed class AppConfigurationService(Pipeline eventPipeline, ITopazLogger
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".app-configuration");
-    public static IReadOnlyCollection<string>? Subresources => ["access-keys", "kv", "replicas"];
+    public static IReadOnlyCollection<string>? Subresources => ["access-keys", "kv", "replicas", "snapshots"];
     public static string UniqueName => "appconfig";
 
     public string Name => "Azure App Configuration";
@@ -42,6 +43,7 @@ public sealed class AppConfigurationService(Pipeline eventPipeline, ITopazLogger
         new GetRevisionsEndpoint(eventPipeline, logger),
         new LockKeyValueEndpoint(eventPipeline, logger),
         new UnlockKeyValueEndpoint(eventPipeline, logger),
+        new CreateOrUpdateCreateSnapshotEndpointEndpoint(eventPipeline, logger)
     ];
 }
 

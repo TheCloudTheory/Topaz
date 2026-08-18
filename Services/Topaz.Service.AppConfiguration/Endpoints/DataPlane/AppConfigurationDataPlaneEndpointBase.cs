@@ -21,7 +21,7 @@ namespace Topaz.Service.AppConfiguration.Endpoints.DataPlane;
 internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
-    protected static readonly object StoreContextKey = new();
+    private static readonly object StoreContextKey = new();
 
     protected readonly AppConfigurationServiceControlPlane ControlPlane =
         AppConfigurationServiceControlPlane.New(eventPipeline, logger);

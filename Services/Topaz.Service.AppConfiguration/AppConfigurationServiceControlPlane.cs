@@ -23,6 +23,7 @@ internal sealed class AppConfigurationServiceControlPlane(
     private const string AccessKeysId = "keys";
     private const string KvSubresource = "kv";
     private const string ReplicaSubresource = "replicas";
+    private const string SnapshotSubresource = "snapshots";
 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
@@ -457,5 +458,40 @@ internal sealed class AppConfigurationServiceControlPlane(
 
         store.ScheduledPurgeDate = purgeDate;
         provider.CreateOrUpdate(subscriptionIdentifier, store.GetResourceGroup(), storeName, store);
+    }
+
+    public ControlPlaneOperationResult<SnapshotSubresource> CreateSnapshot(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string snapshotName,
+        CreateSnapshotRequest request)
+    {
+        var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
+        if (store.Resource == null)
+        {
+            return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.NotFound, null,
+                $"Store {storeName} not found", "StoreNotFound");
+        }
+
+        var snapshot = provider.GetSubresourceAs<SnapshotSubresource>(subscriptionIdentifier, resourceGroupIdentifier,
+            snapshotName, storeName, SnapshotSubresource);
+
+        if (snapshot != null)
+        {
+            return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Success, snapshot);
+        }
+
+        var filters = request.Properties!.Filters!;
+        var kvs = new List<AppConfigurationKeyValue>();
+        foreach (var filter in filters)
+        {
+            kvs.AddRange(ListKvs(subscriptionIdentifier, resourceGroupIdentifier, storeName, filter.Key, filter.Label));
+        }
+
+        var subresource = new SnapshotSubresource(subscriptionIdentifier, resourceGroupIdentifier, snapshotName,
+            SnapshotSubresourceProperties.From(request, kvs));
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, snapshotName, storeName,
+            SnapshotSubresource,
+            subresource);
+
+        return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Created, subresource);
     }
 }
