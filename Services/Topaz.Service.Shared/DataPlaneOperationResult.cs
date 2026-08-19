@@ -7,8 +7,8 @@ namespace Topaz.Service.Shared;
 public class DataPlaneOperationResult<TResource>(
     OperationResult result,
     TResource? resource,
-    string? reason,
-    string? code)
+    string? reason = null,
+    string? code = null)
 {
     [JsonIgnore]
     public OperationResult Result { get; } = result;
@@ -25,8 +25,8 @@ public class DataPlaneOperationResult<TResource>(
 
 public class DataPlaneOperationResult(
     OperationResult result,
-    string? reason,
-    string? code)
+    string? reason = null,
+    string? code = null)
 {
     [JsonIgnore]
     public OperationResult Result { get; } = result;

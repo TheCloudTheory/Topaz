@@ -13,7 +13,7 @@ public sealed class AppConfigurationService(Pipeline eventPipeline, ITopazLogger
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".app-configuration");
-    public static IReadOnlyCollection<string>? Subresources => ["access-keys", "kv", "replicas", "snapshots"];
+    public static IReadOnlyCollection<string> Subresources => ["access-keys", "kv", "replicas", "snapshots", "snapshots-data"];
     public static string UniqueName => "appconfig";
 
     public string Name => "Azure App Configuration";

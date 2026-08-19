@@ -28,6 +28,8 @@ internal sealed class AppConfigurationServiceControlPlane(
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
+    private readonly AppConfigurationDataPlane _dataPlane = AppConfigurationDataPlane.New(provider, logger);
+
     public static AppConfigurationServiceControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new AppConfigurationResourceProvider(logger), logger);
 
@@ -494,15 +496,25 @@ internal sealed class AppConfigurationServiceControlPlane(
         {
             return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Conflict, null, error, "Conflict");
         }
-        
+
+        var canCreateSnapshotOperation = _dataPlane.CanCreateSnapshot(store.Resource!.Sku!.Name!, subresource);
+        if (!canCreateSnapshotOperation.Resource)
+        {
+            return new ControlPlaneOperationResult<SnapshotSubresource>(canCreateSnapshotOperation.Result, null,
+                canCreateSnapshotOperation.Reason, canCreateSnapshotOperation.Code);
+        }
+
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, snapshotName, storeName,
             SnapshotSubresource,
             subresource);
 
+        _ = _dataPlane.SaveSnapshot(subresource, [.. kvs]);
+
         return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Created, subresource);
     }
 
-    public ControlPlaneOperationResult<SnapshotSubresource> GetSnapshot(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string snapshotName)
+    public ControlPlaneOperationResult<SnapshotSubresource> GetSnapshot(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string snapshotName)
     {
         var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
         if (store.Resource == null)
@@ -514,11 +526,9 @@ internal sealed class AppConfigurationServiceControlPlane(
         var snapshot = provider.GetSubresourceAs<SnapshotSubresource>(subscriptionIdentifier, resourceGroupIdentifier,
             snapshotName, storeName, SnapshotSubresource);
 
-        if (snapshot == null)
-        {
-            return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.NotFound, null, "Snapshot not found.", "SnapshotNotFound");
-        }
-
-        return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Success, snapshot);
+        return snapshot == null
+            ? new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.NotFound, null,
+                "Snapshot not found.", "SnapshotNotFound")
+            : new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Success, snapshot);
     }
 }
