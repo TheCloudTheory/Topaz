@@ -488,6 +488,13 @@ internal sealed class AppConfigurationServiceControlPlane(
 
         var subresource = new SnapshotSubresource(subscriptionIdentifier, resourceGroupIdentifier, snapshotName,
             SnapshotSubresourceProperties.From(request, kvs));
+
+        var (isValid, error) = subresource.Validate<SnapshotSubresource>();
+        if (!isValid)
+        {
+            return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Conflict, null, error, "Conflict");
+        }
+        
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, snapshotName, storeName,
             SnapshotSubresource,
             subresource);

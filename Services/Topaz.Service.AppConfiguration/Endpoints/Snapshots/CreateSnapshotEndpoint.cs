@@ -50,16 +50,14 @@ internal sealed class CreateSnapshotEndpoint(Pipeline eventPipeline, ITopazLogge
         }
 
         var result = _controlPlane.CreateSnapshot(sub, rg, storeName, snapshotName, request);
-        if (result.Result == OperationResult.NotFound)
+        switch (result.Result)
         {
-            response.CreateNotFoundResponse(result);
-            return;
-        }
-
-        if (result.Result == OperationResult.BadRequest)
-        {
-            response.CreateBadRequestResponse(result);
-            return;
+            case OperationResult.NotFound:
+                response.CreateNotFoundResponse(result);
+                return;
+            case OperationResult.BadRequest:
+                response.CreateBadRequestResponse(result);
+                return;
         }
 
         if (result.Result is not (OperationResult.Created or OperationResult.Success) || result.Resource == null)

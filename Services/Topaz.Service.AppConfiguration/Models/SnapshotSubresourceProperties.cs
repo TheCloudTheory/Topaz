@@ -4,6 +4,7 @@ using Azure;
 using JetBrains.Annotations;
 using Topaz.Service.AppConfiguration.Models.DataPlane;
 using Topaz.Service.AppConfiguration.Models.Requests;
+using Topaz.Service.Shared;
 
 namespace Topaz.Service.AppConfiguration.Models;
 
@@ -29,8 +30,6 @@ internal sealed class SnapshotSubresourceProperties
         public string? Key { get; set; }
         public string? Label { get; set; }
     }
-    
-    private const long DefaultRetentionPeriod = 2_592_000;
 
     public static SnapshotSubresourceProperties From(CreateSnapshotRequest request, List<AppConfigurationKeyValue> kvs)
     {
@@ -43,7 +42,7 @@ internal sealed class SnapshotSubresourceProperties
             Filters = request.Properties?.Filters,
             ItemsCount = kvs.Count,
             ProvisioningState = "Succeeded",
-            RetentionPeriod = request.Properties?.RetentionPeriod ?? DefaultRetentionPeriod,
+            RetentionPeriod = request.Properties?.RetentionPeriod ?? SnapshotSubresource.DefaultRetentionPeriod,
             Size = kvs.Sum(kv =>
                 Encoding.UTF8.GetByteCount(kv.Key) +
                 (kv.Value is null ? 0 : Encoding.UTF8.GetByteCount(kv.Value))),
