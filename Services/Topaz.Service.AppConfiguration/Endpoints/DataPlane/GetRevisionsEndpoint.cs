@@ -22,7 +22,8 @@ internal sealed class GetRevisionsEndpoint(Pipeline eventPipeline, ITopazLogger 
 
         var kvs = ControlPlane.ListKvs(ctx.Sub, ctx.Rg, ctx.StoreName,
             string.IsNullOrEmpty(keyFilter) || keyFilter == "\0" ? null : keyFilter,
-            string.IsNullOrEmpty(labelFilter) || labelFilter == "\0" ? null : labelFilter);
+            string.IsNullOrEmpty(labelFilter) || labelFilter == "\0" ? null : labelFilter,
+            null);
 
         response.Content = new StringContent(JsonSerializer.Serialize(new { items = kvs }, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
         response.Headers.ETag = new System.Net.Http.Headers.EntityTagHeaderValue($"\"{Guid.NewGuid():N}\"");

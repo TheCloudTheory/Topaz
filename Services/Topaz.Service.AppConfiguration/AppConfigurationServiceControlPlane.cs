@@ -233,22 +233,46 @@ internal sealed class AppConfigurationServiceControlPlane(
         return provider.GetSubresourceAs<AppConfigurationKeyValue>(sub, rg, id, storeName, KvSubresource);
     }
 
-    public AppConfigurationKeyValue[] ListKvs(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string storeName, string? keyFilter, string? labelFilter)
+    public ControlPlaneOperationResult<AppConfigurationKeyValue[]> ListKvs(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storeName,
+        string? keyFilter, string? labelFilter, string? snapshotFilter)
     {
         logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "Listing KVs for store '{0}'...", storeName);
-        var all = provider.ListSubresourcesAs<AppConfigurationKeyValue>(sub, rg, storeName, KvSubresource);
+        
+        var all = provider.ListSubresourcesAs<AppConfigurationKeyValue>(subscriptionIdentifier, resourceGroupIdentifier, storeName, KvSubresource);
         logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "Found {0} KVs.", all.Length);
+        
+        // If snapshotFilter is provided, we will replace the already loaded KV store
+        // with the one, which was created when snapshot was compiled
+        if (!string.IsNullOrEmpty(snapshotFilter))
+        {
+            var snapshot = GetSnapshot(subscriptionIdentifier, resourceGroupIdentifier, storeName, snapshotFilter);
+            if (snapshot.Result != OperationResult.Success)
+            {
+                return new ControlPlaneOperationResult<AppConfigurationKeyValue[]>(snapshot.Result, null,
+                    snapshot.Reason, snapshot.Code);
+            }
+            
+            var snapshotData = _dataPlane.GetSnapshot(snapshot.Resource!);
+            if (snapshotData.Result != OperationResult.Success)
+            {
+                return new ControlPlaneOperationResult<AppConfigurationKeyValue[]>(snapshotData.Result, null,
+                    snapshotData.Reason, snapshotData.Code);
+            }
+
+            return new ControlPlaneOperationResult<AppConfigurationKeyValue[]>(OperationResult.Success,
+                snapshotData.Resource);
+        }
         
         if (!string.IsNullOrEmpty(keyFilter) && keyFilter != "*")
         {
             logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "keyFilter is not null, filtering KVs.");
-            all = all.Where(kv => MatchesGlob(kv.Key, keyFilter)).ToArray();
+            all = [.. all.Where(kv => MatchesGlob(kv.Key, keyFilter))];
         }
             
-        if (labelFilter == null || labelFilter == "*")
+        if (labelFilter is null or "*")
         {
             logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "labelFilter is null, returning all KVs.");
-            return all;
+            return new ControlPlaneOperationResult<AppConfigurationKeyValue[]>(OperationResult.Success, all);
         }
         
         logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "labelFilter is not null, filtering KVs.");
@@ -261,7 +285,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         
         logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "Filtered KVs: {0}", all.Length);
         
-        return all;
+        return new ControlPlaneOperationResult<AppConfigurationKeyValue[]>(OperationResult.Success, all);
     }
 
     public AppConfigurationKeyValue SetKv(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string storeName, string key, string? label, string? value, string? contentType, Dictionary<string, string>? tags)
@@ -485,7 +509,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         var kvs = new List<AppConfigurationKeyValue>();
         foreach (var filter in filters)
         {
-            kvs.AddRange(ListKvs(subscriptionIdentifier, resourceGroupIdentifier, storeName, filter.Key, filter.Label));
+            kvs.AddRange(ListKvs(subscriptionIdentifier, resourceGroupIdentifier, storeName, filter.Key, filter.Label, null).Resource!);
         }
 
         var subresource = new SnapshotSubresource(subscriptionIdentifier, resourceGroupIdentifier, snapshotName,

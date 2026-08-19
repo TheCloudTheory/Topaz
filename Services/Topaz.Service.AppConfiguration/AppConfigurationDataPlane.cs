@@ -53,4 +53,14 @@ internal sealed class AppConfigurationDataPlane(AppConfigurationResourceProvider
         
         return new DataPlaneOperationResult<bool>(OperationResult.Success, true);
     }
+
+    public DataPlaneOperationResult<AppConfigurationKeyValue[]> GetSnapshot(SnapshotSubresource snapshot)
+    {
+        var subresource = provider.GetSubresourceAs<AppConfigurationKeyValue[]>(snapshot.GetSubscription(),
+            snapshot.GetResourceGroup(), snapshot.Name, snapshot.GetParentId(), SnapshotDataSubresource);
+
+        return subresource == null
+            ? new DataPlaneOperationResult<AppConfigurationKeyValue[]>(OperationResult.NotFound, null)
+            : new DataPlaneOperationResult<AppConfigurationKeyValue[]>(OperationResult.Success, subresource);
+    }
 }

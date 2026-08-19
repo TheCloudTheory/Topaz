@@ -18,11 +18,20 @@ internal sealed class ListKeyValuesEndpoint(Pipeline eventPipeline, ITopazLogger
         var ctx = GetStoreContext(context);
         var keyFilter = context.Request.Query["key"].ToString();
         var labelFilter = context.Request.Query["label"].ToString();
+        var snapshotFilter = context.Request.Query["snapshot"].ToString();
+        
+        // In Azure, it's forbidden to use both key + label and snapshot
+        if (!string.IsNullOrWhiteSpace(keyFilter) && !string.IsNullOrWhiteSpace(labelFilter) &&
+            !string.IsNullOrWhiteSpace(snapshotFilter))
+        {
+            response.CreateErrorResponse(HttpStatusCode.BadRequest, "BadRequest");
+        }
 
         // Treat \0 (null byte) as "no filter" — Azure CLI uses this as the "no label" sentinel.
         var kvs = ControlPlane.ListKvs(ctx.Sub, ctx.Rg, ctx.StoreName,
             string.IsNullOrEmpty(keyFilter) || keyFilter == "\0" ? null : keyFilter,
-            string.IsNullOrEmpty(labelFilter) || labelFilter == "\0" ? null : labelFilter);
+            string.IsNullOrEmpty(labelFilter) || labelFilter == "\0" ? null : labelFilter,
+            snapshotFilter);
 
         response.Content = new StringContent(JsonSerializer.Serialize(new { items = kvs }, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
         response.Headers.ETag = new System.Net.Http.Headers.EntityTagHeaderValue($"\"{Guid.NewGuid():N}\"");
