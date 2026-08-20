@@ -33,7 +33,7 @@ internal sealed class ListKeyValuesEndpoint(Pipeline eventPipeline, ITopazLogger
             string.IsNullOrEmpty(labelFilter) || labelFilter == "\0" ? null : labelFilter,
             snapshotFilter);
 
-        response.Content = new StringContent(JsonSerializer.Serialize(new { items = kvs }, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
+        response.Content = new StringContent(JsonSerializer.Serialize(new { items = kvs.Resource }, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
         response.Headers.ETag = new System.Net.Http.Headers.EntityTagHeaderValue($"\"{Guid.NewGuid():N}\"");
         response.StatusCode = HttpStatusCode.OK;
     }
