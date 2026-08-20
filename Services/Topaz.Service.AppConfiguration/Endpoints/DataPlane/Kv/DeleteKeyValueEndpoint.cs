@@ -18,7 +18,7 @@ internal sealed class DeleteKeyValueEndpoint(Pipeline eventPipeline, ITopazLogge
         var label = context.Request.Query["label"].ToString();
         var labelOrNull = string.IsNullOrEmpty(label) ? null : label;
 
-        var deleted = ControlPlane.DeleteKv(ctx.Sub, ctx.Rg, ctx.StoreName, key, labelOrNull);
+        var deleted = ControlPlane.DeleteKv(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName, key, labelOrNull);
         if (deleted == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;

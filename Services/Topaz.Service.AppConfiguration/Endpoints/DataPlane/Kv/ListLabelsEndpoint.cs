@@ -16,7 +16,7 @@ internal sealed class ListLabelsEndpoint(Pipeline eventPipeline, ITopazLogger lo
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var ctx = GetStoreContext(context);
-        var kvs = ControlPlane.ListKvs(ctx.Sub, ctx.Rg, ctx.StoreName, null, null, null);
+        var kvs = ControlPlane.ListKvs(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName, null, null, null);
 
         if (kvs.Result == OperationResult.NotFound)
         {

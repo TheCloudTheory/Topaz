@@ -28,7 +28,7 @@ internal sealed class ListKeyValuesEndpoint(Pipeline eventPipeline, ITopazLogger
         }
 
         // Treat \0 (null byte) as "no filter" — Azure CLI uses this as the "no label" sentinel.
-        var kvs = ControlPlane.ListKvs(ctx.Sub, ctx.Rg, ctx.StoreName,
+        var kvs = ControlPlane.ListKvs(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName,
             string.IsNullOrEmpty(keyFilter) || keyFilter == "\0" ? null : keyFilter,
             string.IsNullOrEmpty(labelFilter) || labelFilter == "\0" ? null : labelFilter,
             snapshotFilter);

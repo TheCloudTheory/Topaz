@@ -20,7 +20,7 @@ internal sealed class GetRevisionsEndpoint(Pipeline eventPipeline, ITopazLogger 
         var keyFilter = context.Request.Query["key"].ToString();
         var labelFilter = context.Request.Query["label"].ToString();
 
-        var kvs = ControlPlane.ListKvs(ctx.Sub, ctx.Rg, ctx.StoreName,
+        var kvs = ControlPlane.ListKvs(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName,
             string.IsNullOrEmpty(keyFilter) || keyFilter == "\0" ? null : keyFilter,
             string.IsNullOrEmpty(labelFilter) || labelFilter == "\0" ? null : labelFilter,
             null);

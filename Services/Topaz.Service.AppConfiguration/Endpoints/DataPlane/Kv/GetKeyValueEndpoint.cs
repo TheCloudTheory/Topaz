@@ -17,7 +17,7 @@ internal sealed class GetKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger l
         var key = Uri.UnescapeDataString(context.Request.Path.Value!.Split('/').Last());
         var label = context.Request.Query["label"].ToString();
 
-        var kv = ControlPlane.GetKv(ctx.Sub, ctx.Rg, ctx.StoreName, key,
+        var kv = ControlPlane.GetKv(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName, key,
             string.IsNullOrEmpty(label) ? null : label);
 
         if (kv == null)

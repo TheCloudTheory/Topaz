@@ -4,5 +4,5 @@ namespace Topaz.Service.AppConfiguration.Endpoints.DataPlane;
 
 internal sealed record AppConfigurationStoreContext(
     string StoreName,
-    SubscriptionIdentifier Sub,
-    ResourceGroupIdentifier Rg);
+    SubscriptionIdentifier SubscriptionIdentifier,
+    ResourceGroupIdentifier ResourceGroupIdentifier);

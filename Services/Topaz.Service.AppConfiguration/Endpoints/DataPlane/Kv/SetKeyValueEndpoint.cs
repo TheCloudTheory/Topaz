@@ -21,7 +21,7 @@ internal sealed class SetKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger l
         var labelOrNull = string.IsNullOrEmpty(label) ? null : label;
 
         // Check if the KV is locked
-        var existing = ControlPlane.GetKv(ctx.Sub, ctx.Rg, ctx.StoreName, key, labelOrNull);
+        var existing = ControlPlane.GetKv(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName, key, labelOrNull);
         if (existing is { Locked: true })
         {
             response.StatusCode = HttpStatusCode.Conflict;
@@ -34,7 +34,7 @@ internal sealed class SetKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger l
         using var reader = new System.IO.StreamReader(context.Request.Body);
         var body = JsonSerializer.Deserialize<SetKeyValueRequest>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
 
-        var kv = ControlPlane.SetKv(ctx.Sub, ctx.Rg, ctx.StoreName, key, labelOrNull,
+        var kv = ControlPlane.SetKv(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName, key, labelOrNull,
             body?.Value, body?.ContentType, body?.Tags);
 
         response.CreateJsonContentResponse(kv);

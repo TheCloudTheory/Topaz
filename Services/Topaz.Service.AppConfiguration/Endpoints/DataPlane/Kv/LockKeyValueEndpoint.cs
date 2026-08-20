@@ -17,7 +17,7 @@ internal sealed class LockKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger 
         var key = Uri.UnescapeDataString(context.Request.Path.Value!.Split('/').Last());
         var label = context.Request.Query["label"].ToString();
 
-        var kv = ControlPlane.SetKvLock(ctx.Sub, ctx.Rg, ctx.StoreName, key,
+        var kv = ControlPlane.SetKvLock(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName, key,
             string.IsNullOrEmpty(label) ? null : label, locked: true);
 
         if (kv == null)
