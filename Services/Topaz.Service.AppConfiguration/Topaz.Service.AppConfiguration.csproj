@@ -14,8 +14,4 @@
       <ProjectReference Include="..\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Endpoints\DataPlane\Snapshots\" />
-    </ItemGroup>
-
 </Project>

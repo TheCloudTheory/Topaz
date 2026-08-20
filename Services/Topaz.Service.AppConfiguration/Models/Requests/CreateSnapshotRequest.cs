@@ -14,6 +14,7 @@ internal sealed class CreateSnapshotRequest : IValidatable
         public string? CompositionType { get; set; }
         public long? RetentionPeriod { get; set; }
         public IDictionary<string, string>? Tags { get; set; }
+        public string? Description { get; set; }
     }
 
     public (bool IsValid, string? Error) Validate<TModel>(TModel? data = null) where TModel : class

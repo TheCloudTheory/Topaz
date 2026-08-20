@@ -8,7 +8,7 @@ using Topaz.Service.Shared;
 
 namespace Topaz.Service.AppConfiguration.Models;
 
-internal sealed class SnapshotSubresourceProperties
+internal sealed class SnapshotSubresourceProperties : TopazApiModel
 {
     public string? CompositionType { get; set; }
     public string? Created { get; set; }

@@ -394,26 +394,31 @@ internal sealed class AppConfigurationServiceControlPlane(
         return new ControlPlaneOperationResult<ConfigurationStoreFullResource[]?>(OperationResult.Success, deletedStores);
     }
 
-    public ControlPlaneOperationResult<ReplicaResource?> CreateReplica(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string replicaName, string location)
+    public ControlPlaneOperationResult<ReplicaResource?> CreateReplica(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string replicaName, string location)
     {
         var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
         if (store.Resource == null)
         {
-            return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.NotFound, null, $"Store {storeName} not found", "StoreNotFound");
+            return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.NotFound, null,
+                $"Store {storeName} not found", "StoreNotFound");
         }
-        
-        logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(CreateReplica), "Creating replica {0} for store {1}", replicaName, storeName);
-        
-        var replica = new ReplicaResource(subscriptionIdentifier, resourceGroupIdentifier, storeName, replicaName, location, null, ReplicaResourceProperties.From(replicaName, store.Resource));
+
+        logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(CreateReplica),
+            "Creating replica {0} for store {1}", replicaName, storeName);
+
+        var replica = new ReplicaResource(subscriptionIdentifier, resourceGroupIdentifier, storeName, replicaName,
+            location, null, ReplicaResourceProperties.From(replicaName, store.Resource));
         var (isValid, validationError) = replica.Validate(store.Resource);
         if (!isValid)
         {
             return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Failed, null, validationError,
                 "InvalidRequest");
         }
-        
-        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, replicaName, storeName, ReplicaSubresource, replica);
-        
+
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, replicaName, storeName,
+            ReplicaSubresource, replica);
+
         return new ControlPlaneOperationResult<ReplicaResource?>(OperationResult.Created, replica);
     }
 
@@ -486,23 +491,23 @@ internal sealed class AppConfigurationServiceControlPlane(
         provider.CreateOrUpdate(subscriptionIdentifier, store.GetResourceGroup(), storeName, store);
     }
 
-    public ControlPlaneOperationResult<SnapshotSubresource> CreateSnapshot(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<SnapshotFullSubresource> CreateSnapshot(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storeName, string snapshotName,
         CreateSnapshotRequest request)
     {
         var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
         if (store.Resource == null)
         {
-            return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.NotFound, null,
+            return new ControlPlaneOperationResult<SnapshotFullSubresource>(OperationResult.NotFound, null,
                 $"Store {storeName} not found", "StoreNotFound");
         }
 
-        var snapshot = provider.GetSubresourceAs<SnapshotSubresource>(subscriptionIdentifier, resourceGroupIdentifier,
+        var snapshot = provider.GetSubresourceAs<SnapshotFullSubresource>(subscriptionIdentifier, resourceGroupIdentifier,
             snapshotName, storeName, SnapshotSubresource);
 
         if (snapshot != null)
         {
-            return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Success, snapshot);
+            return new ControlPlaneOperationResult<SnapshotFullSubresource>(OperationResult.Success, snapshot);
         }
 
         var filters = request.Properties!.Filters!;
@@ -512,19 +517,19 @@ internal sealed class AppConfigurationServiceControlPlane(
             kvs.AddRange(ListKvs(subscriptionIdentifier, resourceGroupIdentifier, storeName, filter.Key, filter.Label, null).Resource!);
         }
 
-        var subresource = new SnapshotSubresource(subscriptionIdentifier, resourceGroupIdentifier, snapshotName,
+        var subresource = new SnapshotFullSubresource(subscriptionIdentifier, resourceGroupIdentifier, snapshotName,
             SnapshotSubresourceProperties.From(request, kvs));
 
-        var (isValid, error) = subresource.Validate<SnapshotSubresource>();
+        var (isValid, error) = subresource.Validate<SnapshotFullSubresource>();
         if (!isValid)
         {
-            return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Conflict, null, error, "Conflict");
+            return new ControlPlaneOperationResult<SnapshotFullSubresource>(OperationResult.Conflict, null, error, "Conflict");
         }
 
         var canCreateSnapshotOperation = _dataPlane.CanCreateSnapshot(store.Resource!.Sku!.Name!, subresource);
         if (!canCreateSnapshotOperation.Resource)
         {
-            return new ControlPlaneOperationResult<SnapshotSubresource>(canCreateSnapshotOperation.Result, null,
+            return new ControlPlaneOperationResult<SnapshotFullSubresource>(canCreateSnapshotOperation.Result, null,
                 canCreateSnapshotOperation.Reason, canCreateSnapshotOperation.Code);
         }
 
@@ -534,7 +539,7 @@ internal sealed class AppConfigurationServiceControlPlane(
 
         _ = _dataPlane.SaveSnapshot(subresource, [.. kvs]);
 
-        return new ControlPlaneOperationResult<SnapshotSubresource>(OperationResult.Created, subresource);
+        return new ControlPlaneOperationResult<SnapshotFullSubresource>(OperationResult.Created, subresource);
     }
 
     public ControlPlaneOperationResult<SnapshotSubresource> GetSnapshot(SubscriptionIdentifier subscriptionIdentifier,

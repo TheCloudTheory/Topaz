@@ -691,3 +691,12 @@ TODO: Application Insights: currentbillingfeatures endpoint — real billing log
     daily_data_cap_in_gb and daily_data_cap_notifications_disabled settings.
   labels: enhancement, application-insights, good first issue
 -->
+
+### App Configuration — replicas and sequence number
+
+<!--
+TODO: App Configuration: Sequence number
+  Implement proper handling of sequence number in App Configuration. The sequence number increments on any mutation to the store — every key-value write, delete, lock/unlock, or snapshot create/archive/recover. It's a global monotonic counter for the entire store, not per-resource.
+  milestone: v1.16
+  labels: enhancement, app-configuration
+-->
