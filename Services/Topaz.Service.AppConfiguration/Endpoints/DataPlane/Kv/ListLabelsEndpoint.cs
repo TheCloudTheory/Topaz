@@ -6,7 +6,7 @@ using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
-namespace Topaz.Service.AppConfiguration.Endpoints.DataPlane;
+namespace Topaz.Service.AppConfiguration.Endpoints.DataPlane.Kv;
 
 internal sealed class ListLabelsEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)

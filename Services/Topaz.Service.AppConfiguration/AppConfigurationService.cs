@@ -1,6 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.Service.AppConfiguration.Endpoints;
 using Topaz.Service.AppConfiguration.Endpoints.DataPlane;
+using Topaz.Service.AppConfiguration.Endpoints.DataPlane.Kv;
 using Topaz.Service.AppConfiguration.Endpoints.Replicas;
 using Topaz.Service.AppConfiguration.Endpoints.Snapshots;
 using Topaz.Service.ResourceGroup;

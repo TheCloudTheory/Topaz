@@ -4,12 +4,12 @@ using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
-namespace Topaz.Service.AppConfiguration.Endpoints.DataPlane;
+namespace Topaz.Service.AppConfiguration.Endpoints.DataPlane.Kv;
 
-internal sealed class UnlockKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class LockKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)
 {
-    public override string[] Endpoints => ["DELETE /locks/{key}"];
+    public override string[] Endpoints => ["PUT /locks/{key}"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
@@ -18,7 +18,7 @@ internal sealed class UnlockKeyValueEndpoint(Pipeline eventPipeline, ITopazLogge
         var label = context.Request.Query["label"].ToString();
 
         var kv = ControlPlane.SetKvLock(ctx.Sub, ctx.Rg, ctx.StoreName, key,
-            string.IsNullOrEmpty(label) ? null : label, locked: false);
+            string.IsNullOrEmpty(label) ? null : label, locked: true);
 
         if (kv == null)
         {
