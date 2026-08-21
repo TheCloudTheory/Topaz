@@ -502,6 +502,13 @@ internal sealed class AppConfigurationServiceControlPlane(
                 $"Store {storeName} not found", "StoreNotFound");
         }
 
+        var validation = request.Validate<CreateSnapshotRequest>();
+        if (!validation.IsValid)
+        {
+            return new ControlPlaneOperationResult<SnapshotFullSubresource>(OperationResult.BadRequest, null,
+                validation.Error, "BadRequest");
+        }
+
         var snapshot = provider.GetSubresourceAs<SnapshotFullSubresource>(subscriptionIdentifier, resourceGroupIdentifier,
             snapshotName, storeName, SnapshotSubresource);
 
@@ -518,7 +525,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         }
 
         var subresource = new SnapshotFullSubresource(subscriptionIdentifier, resourceGroupIdentifier, snapshotName,
-            SnapshotSubresourceProperties.From(request, kvs));
+            SnapshotSubresourceProperties.From(snapshotName, request, kvs));
 
         var (isValid, error) = subresource.Validate<SnapshotFullSubresource>();
         if (!isValid)

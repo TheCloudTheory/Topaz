@@ -36,7 +36,8 @@ public abstract class ArmSubresource<T>
     
     public string GetParentId()
     {
-        return Id.Split("/")[9];
+        var segments = Id.Split("/");
+        return segments[^1];
     }
 
     public override string ToString()

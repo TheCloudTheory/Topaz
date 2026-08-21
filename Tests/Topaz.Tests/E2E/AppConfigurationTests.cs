@@ -488,4 +488,40 @@ public class AppConfigurationTests
             async () => await sub.GetDeletedAppConfigurationStoreAsync(AzureLocation.WestEurope, storeName),
             Throws.InstanceOf<RequestFailedException>());
     }
+    
+    [Test]
+    public async Task AppConfiguration_DataPlane_CanCreateAndGetSnapshot()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-snapshot";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "prod") { Label = "production" });
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "dev") { Label = "development" });
+
+        _ = await configClient.CreateSnapshotAsync(WaitUntil.Completed, "snapshot1", new ConfigurationSnapshot([
+            new ConfigurationSettingsFilter("Env")
+        ])
+        {
+            Description = "Test description",
+            Tags =
+            {
+                {"appName", "Topaz"},
+            }
+        });
+        
+        var snapshot = await configClient.GetSnapshotAsync("snapshot1");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(snapshot.Value.ItemCount, Is.EqualTo(2));
+            Assert.That(snapshot.Value.Name, Is.EqualTo("snapshot1"));
+            Assert.That(snapshot.Value.Status, Is.EqualTo(ConfigurationSnapshotStatus.Ready));
+            Assert.That(snapshot.Value.Tags, Contains.Key("appName"));
+        }
+    }
 }

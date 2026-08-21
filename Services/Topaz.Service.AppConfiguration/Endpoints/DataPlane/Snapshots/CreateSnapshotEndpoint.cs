@@ -22,11 +22,17 @@ internal sealed class CreateSnapshotEndpoint(Pipeline eventPipeline, ITopazLogge
         var snapshotName = context.Request.Path.Value.ExtractValueFromPath(2);
 
         using var reader = new StreamReader(context.Request.Body);
-        var request = JsonSerializer.Deserialize<CreateSnapshotRequest>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+        var request = JsonSerializer.Deserialize<CreateSnapshotRequest.CreateSnapshotRequestProperties>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
 
         var operation = ControlPlane.CreateSnapshot(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName,
-            snapshotName!, request!);
+            snapshotName!, CreateSnapshotRequest.From(request!));
 
+        if (operation.Result == OperationResult.BadRequest)
+        {
+            response.CreateBadRequestResponse(operation);
+            return;
+        }
+        
         if (operation.Result != OperationResult.Created)
         {
             response.CreateErrorResponse(operation);

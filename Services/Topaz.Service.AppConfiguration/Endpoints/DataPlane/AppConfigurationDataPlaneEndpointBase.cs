@@ -31,7 +31,7 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
         AppConfigurationServiceControlPlane.New(eventPipeline, logger);
 
     public abstract string[] Endpoints { get; }
-    public string[] Permissions => [];
+    public abstract string[] Permissions { get; }
     public string? ProviderNamespace => null;
     public string? RequiredHostServiceLabel => null;
 

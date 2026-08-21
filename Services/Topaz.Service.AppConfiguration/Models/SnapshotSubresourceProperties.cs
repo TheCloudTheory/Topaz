@@ -10,13 +10,19 @@ namespace Topaz.Service.AppConfiguration.Models;
 
 internal sealed class SnapshotSubresourceProperties : TopazApiModel
 {
+    public string? Name { get; set; }
+    [JsonPropertyName("composition_type")]
     public string? CompositionType { get; set; }
     public string? Created { get; set; }
     public string? Etag { get; set; }
     public string? Expires { get; set; }
     public KeyValueFilter[]? Filters { get; set; }
+    
+    [JsonPropertyName("items_count")]
     public long? ItemsCount { get; set; }
     public string? ProvisioningState { get; set; }
+    
+    [JsonPropertyName("retention_period")]
     public long? RetentionPeriod { get; set; }
     public long? Size { get; set; }
     
@@ -31,7 +37,7 @@ internal sealed class SnapshotSubresourceProperties : TopazApiModel
         public string? Label { get; set; }
     }
 
-    public static SnapshotSubresourceProperties From(CreateSnapshotRequest request, List<AppConfigurationKeyValue> kvs)
+    public static SnapshotSubresourceProperties From(string name, CreateSnapshotRequest request, List<AppConfigurationKeyValue> kvs)
     {
         return new SnapshotSubresourceProperties
         {
@@ -41,6 +47,7 @@ internal sealed class SnapshotSubresourceProperties : TopazApiModel
             Expires = null,
             Filters = request.Properties?.Filters,
             ItemsCount = kvs.Count,
+            Name = name,
             ProvisioningState = "Succeeded",
             RetentionPeriod = request.Properties?.RetentionPeriod ?? SnapshotSubresource.DefaultRetentionPeriod,
             Size = kvs.Sum(kv =>
