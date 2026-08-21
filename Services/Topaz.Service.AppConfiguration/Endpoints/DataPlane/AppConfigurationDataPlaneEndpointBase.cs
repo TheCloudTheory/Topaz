@@ -5,7 +5,9 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Topaz.EventPipeline;
+using Topaz.Identity;
 using Topaz.Service.AppConfiguration.Models;
+using Topaz.Service.Authorization;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -22,6 +24,8 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
     : IEndpointDefinition
 {
     private static readonly object StoreContextKey = new();
+    
+    private readonly AzureAuthorizationAdapter _authAdapter = new(eventPipeline, logger);
 
     protected readonly AppConfigurationServiceControlPlane ControlPlane =
         AppConfigurationServiceControlPlane.New(eventPipeline, logger);
@@ -54,7 +58,7 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
         }
 
         var store = storeOp.Resource;
-        var sub = store.GetSubscription();
+        var subscriptionIdentifier = store.GetSubscription();
         var rg = store.GetResourceGroup();
 
         var authHeader = context.Request.Headers["Authorization"].ToString();
@@ -65,14 +69,35 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
         }
 
         // Bearer tokens (Topaz CLI / Entra ID) bypass HMAC validation.
-        if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) &&
-            !TryValidateHmac(authHeader, context, ControlPlane.GetAccessKeys(sub, rg, storeName), logger))
+        // Note that HMAC validation will be bypassed if `DisableLocalAuth` is set to `true`
+        if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) && !store.Properties.DisableLocalAuth!.Value &&
+            !TryValidateHmac(authHeader, context, ControlPlane.GetAccessKeys(subscriptionIdentifier, rg, storeName), logger))
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
             return (false, null);
         }
 
-        context.Items[StoreContextKey] = new AppConfigurationStoreContext(storeName, sub, rg);
+        // Perform Bearer token validation if applicable
+        if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            var token = JwtHelper.ValidateJwt(authHeader);
+            if (token == null)
+            {
+                logger.LogDebug(nameof(AppConfigurationDataPlaneEndpointBase), nameof(Authorize),
+                    "Invalid or unrecognized JWT — denying access.");
+                return (false, null);
+            }
+            
+            // Global admin always passes.
+            if (token.Subject == Globals.GlobalAdminId) return (true, null);
+
+            if (!_authAdapter.PrincipalHasPermissions(subscriptionIdentifier, token.Subject, Permissions))
+            {
+                return (false, null);
+            }
+        }
+
+        context.Items[StoreContextKey] = new AppConfigurationStoreContext(storeName, subscriptionIdentifier, rg);
         return (true, null);
     }
 

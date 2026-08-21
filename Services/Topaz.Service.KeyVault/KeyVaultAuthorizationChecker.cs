@@ -2,7 +2,6 @@ using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.Service.Authorization;
 using Topaz.Service.KeyVault.Models;
-using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault;
