@@ -12,6 +12,7 @@ internal sealed class ListKeyValuesEndpoint(Pipeline eventPipeline, ITopazLogger
     : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)
 {
     public override string[] Endpoints => ["GET /kv"];
+    public override string[] Permissions => ["Microsoft.AppConfiguration/configurationStores/keyValuePairs/read"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

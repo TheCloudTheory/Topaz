@@ -12,6 +12,7 @@ internal sealed class GetSnapshotEndpoint(Pipeline eventPipeline, ITopazLogger l
     : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)
 {
     public override string[] Endpoints => ["GET /snapshots/{name}"];
+    public override string[] Permissions => ["Microsoft.AppConfiguration/configurationStores/snapshots/read"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

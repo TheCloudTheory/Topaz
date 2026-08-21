@@ -17,6 +17,9 @@ Topaz now runs a background scheduler (`AppConfigurationSoftDeletePurgeScheduler
 ### App Configuration Purge Protection
 Topaz now enforces purge protection for App Configuration stores. Stores with purge protection enabled cannot be purged even after soft-deletion, matching Azure's behaviour. The `PurgeConfigurationStoreEndpoint` and `AppConfigurationServiceControlPlane` were updated to validate and reject purge requests accordingly.
 
+### App Configuration data plane RBAC enforcement
+Topaz now correctly enforces RBAC authorization for all implemented data-plane operations in App Configuration.
+
 ## Bug Fixes
 
 - Fixed nullable `Content` handling and added async overload in the internal Router, preventing potential null reference errors on certain request paths.

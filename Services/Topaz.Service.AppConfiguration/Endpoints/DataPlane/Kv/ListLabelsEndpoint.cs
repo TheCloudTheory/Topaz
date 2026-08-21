@@ -12,6 +12,7 @@ internal sealed class ListLabelsEndpoint(Pipeline eventPipeline, ITopazLogger lo
     : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)
 {
     public override string[] Endpoints => ["GET /labels"];
+    public override string[] Permissions => ["Microsoft.AppConfiguration/configurationStores/keyValuePairs/read"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

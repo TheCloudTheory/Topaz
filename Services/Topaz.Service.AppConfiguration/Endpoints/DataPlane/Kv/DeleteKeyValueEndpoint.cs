@@ -10,6 +10,7 @@ internal sealed class DeleteKeyValueEndpoint(Pipeline eventPipeline, ITopazLogge
     : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)
 {
     public override string[] Endpoints => ["DELETE /kv/{key}"];
+    public override string[] Permissions => ["Microsoft.AppConfiguration/configurationStores/keyValuePairs/delete"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

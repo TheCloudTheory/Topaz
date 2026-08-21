@@ -10,6 +10,7 @@ internal sealed class LockKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger 
     : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)
 {
     public override string[] Endpoints => ["PUT /locks/{key}"];
+    public override string[] Permissions => ["Microsoft.AppConfiguration/configurationStores/keyValuePairs/write"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

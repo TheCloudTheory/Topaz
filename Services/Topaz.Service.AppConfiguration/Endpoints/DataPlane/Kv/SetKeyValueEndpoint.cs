@@ -12,6 +12,7 @@ internal sealed class SetKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger l
     : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)
 {
     public override string[] Endpoints => ["PUT /kv/{key}"];
+    public override string[] Permissions => ["Microsoft.AppConfiguration/configurationStores/keyValuePairs/write"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

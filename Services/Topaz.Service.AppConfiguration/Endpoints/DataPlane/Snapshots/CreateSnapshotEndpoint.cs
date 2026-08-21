@@ -14,6 +14,7 @@ internal sealed class CreateSnapshotEndpoint(Pipeline eventPipeline, ITopazLogge
     : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)
 {
     public override string[] Endpoints => ["PUT /snapshots/{name}"];
+    public override string[] Permissions => ["Microsoft.AppConfiguration/configurationStores/snapshots/write"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
