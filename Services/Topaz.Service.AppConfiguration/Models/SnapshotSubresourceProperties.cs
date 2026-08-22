@@ -42,7 +42,7 @@ internal sealed class SnapshotSubresourceProperties : TopazApiModel
         return new SnapshotSubresourceProperties
         {
             CompositionType = request.Properties?.CompositionType,
-            Created = DateTimeOffset.Now.ToString(),
+            Created = DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:sszzz"),
             Etag = new ETag(DateTimeOffset.Now.Ticks.ToString()).ToString(),
             Expires = null,
             Filters = request.Properties?.Filters,

@@ -524,4 +524,54 @@ public class AppConfigurationTests
             Assert.That(snapshot.Value.Tags, Contains.Key("appName"));
         }
     }
+    
+    [Test]
+    public async Task AppConfiguration_DataPlane_CanCreateAndGetMultipleSnapshot()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-snapshot";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "prod") { Label = "production" });
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "dev") { Label = "development" });
+
+        _ = await configClient.CreateSnapshotAsync(WaitUntil.Completed, "snapshot1", new ConfigurationSnapshot([
+            new ConfigurationSettingsFilter("Env")
+        ])
+        {
+            Description = "Test description",
+            Tags =
+            {
+                {"appName", "Topaz"},
+            }
+        });
+        
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "uat") { Label = "uat" });
+        
+        _ = await configClient.CreateSnapshotAsync(WaitUntil.Completed, "snapshot2", new ConfigurationSnapshot([
+            new ConfigurationSettingsFilter("Env")
+        ])
+        {
+            Description = "Test description 2",
+            Tags =
+            {
+                {"appName", "Topaz"},
+            }
+        });
+        
+        var snapshots = await configClient.GetSnapshotsAsync(new SnapshotSelector()).ToArrayAsync();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(snapshots, Has.Length.EqualTo(2));
+            Assert.That(snapshots.FirstOrDefault(s => s.Name == "snapshot1"), Is.Not.Null);
+            Assert.That(snapshots.FirstOrDefault(s => s.Name == "snapshot2"), Is.Not.Null);
+            Assert.That(snapshots.First(s => s.Name == "snapshot1").ItemCount, Is.EqualTo(2));
+            Assert.That(snapshots.First(s => s.Name == "snapshot2").ItemCount, Is.EqualTo(3));
+        }
+    }
 }

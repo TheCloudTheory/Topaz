@@ -2,11 +2,13 @@ using Topaz.EventPipeline;
 using Topaz.Service.AppConfiguration.Endpoints;
 using Topaz.Service.AppConfiguration.Endpoints.DataPlane;
 using Topaz.Service.AppConfiguration.Endpoints.DataPlane.Kv;
+using Topaz.Service.AppConfiguration.Endpoints.DataPlane.Snapshots;
 using Topaz.Service.AppConfiguration.Endpoints.Replicas;
-using Topaz.Service.AppConfiguration.Endpoints.Snapshots;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
+using CreateSnapshotEndpoint = Topaz.Service.AppConfiguration.Endpoints.Snapshots.CreateSnapshotEndpoint;
+using GetSnapshotEndpoint = Topaz.Service.AppConfiguration.Endpoints.Snapshots.GetSnapshotEndpoint;
 
 namespace Topaz.Service.AppConfiguration;
 
@@ -47,7 +49,8 @@ public sealed class AppConfigurationService(Pipeline eventPipeline, ITopazLogger
         new CreateSnapshotEndpoint(eventPipeline, logger),
         new GetSnapshotEndpoint(eventPipeline, logger),
         new Endpoints.DataPlane.Snapshots.CreateSnapshotEndpoint(eventPipeline, logger),
-        new Endpoints.DataPlane.Snapshots.GetSnapshotEndpoint(eventPipeline, logger)
+        new Endpoints.DataPlane.Snapshots.GetSnapshotEndpoint(eventPipeline, logger),
+        new GetSnapshotsEndpoint(eventPipeline, logger)
     ];
 }
 
