@@ -629,4 +629,66 @@ public class AppConfigurationTests
             Assert.That(snapshotsReady, Has.Length.EqualTo(2));
         }
     }
+    
+    [Test]
+    public async Task AppConfiguration_DataPlane_CanCreateAndGetMultipleSnapshot_AndFilterByName()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-snapshot";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "prod") { Label = "production" });
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "dev") { Label = "development" });
+
+        _ = await configClient.CreateSnapshotAsync(WaitUntil.Completed, "snapshot1", new ConfigurationSnapshot([
+            new ConfigurationSettingsFilter("Env")
+        ])
+        {
+            Description = "Test description",
+            Tags =
+            {
+                {"appName", "Topaz"},
+            }
+        });
+        
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "uat") { Label = "uat" });
+        
+        _ = await configClient.CreateSnapshotAsync(WaitUntil.Completed, "snapshot2", new ConfigurationSnapshot([
+            new ConfigurationSettingsFilter("Env")
+        ])
+        {
+            Description = "Test description 2",
+            Tags =
+            {
+                {"appName", "Topaz"},
+            }
+        });
+        
+        var allSnapshots = await configClient.GetSnapshotsAsync(new SnapshotSelector()).ToArrayAsync();
+        var snaphotsWildcard = await configClient.GetSnapshotsAsync(new SnapshotSelector
+        {
+            NameFilter = "snap*"
+        }).ToArrayAsync();
+        var singleSnaphot = await configClient.GetSnapshotsAsync(new SnapshotSelector
+        {
+            NameFilter = "snapshot1"
+        }).ToArrayAsync();
+        var notexisting = await configClient.GetSnapshotsAsync(new SnapshotSelector
+        {
+            NameFilter = "notexis*"
+        }).ToArrayAsync();
+        
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(allSnapshots, Has.Length.EqualTo(2));
+            Assert.That(snaphotsWildcard, Has.Length.EqualTo(2));
+            Assert.That(singleSnaphot, Has.Length.EqualTo(1));
+            Assert.That(notexisting, Has.Length.EqualTo(0));
+        }
+    }
 }

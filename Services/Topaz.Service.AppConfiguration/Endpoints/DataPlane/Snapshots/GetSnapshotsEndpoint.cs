@@ -18,8 +18,9 @@ internal sealed class GetSnapshotsEndpoint(Pipeline eventPipeline, ITopazLogger 
     {
         var ctx = GetStoreContext(context);
         context.Request.QueryString.TryGetValueForKey("status", out var status);
+        context.Request.QueryString.TryGetValueForKey("name", out var name);
         
-        var operation = ControlPlane.GetSnapshots(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName, status);
+        var operation = ControlPlane.GetSnapshots(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName, status, name);
         
         response.CreateJsonContentResponse(SnapshotListResultResponse.From(operation.Resource!));
         response.Content.Headers.ContentType =
