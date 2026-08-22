@@ -20,6 +20,9 @@ Topaz now enforces purge protection for App Configuration stores. Stores with pu
 ### App Configuration data plane RBAC enforcement
 Topaz now correctly enforces RBAC authorization for all implemented data-plane operations in App Configuration.
 
+### App Configuration Snapshots API
+Topaz supports both control plane and data plane operations on App Configuration snapshots. This includes capturing key-values based on the provided snapshot filter.
+
 ## Bug Fixes
 
 - Fixed nullable `Content` handling and added async overload in the internal Router, preventing potential null reference errors on certain request paths.

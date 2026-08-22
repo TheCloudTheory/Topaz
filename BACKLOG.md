@@ -225,15 +225,6 @@ TODO: Azure Event Grid: MCP provisioning tool
 ### App Configuration — advanced data plane features
 
 <!--
-TODO: App Configuration: Snapshots API
-  Implement PUT/GET/DELETE /snapshots/{name} — capture a point-in-time copy of key-values matching
-  a filter; archiveSnapshot and recoverSnapshot transitions; snapshot status (provisioning → ready /
-  archived); list snapshots with ?name=, ?status= filtering.
-  milestone: v1.11
-  labels: enhancement, app-configuration
--->
-
-<!--
 TODO: App Configuration: Key Vault references
   Key-values with content type application/vnd.microsoft.appconfig.keyvaultref+json resolved on
   GET /kv/{key}?resolve=true via the local Topaz Key Vault instance; compatible with

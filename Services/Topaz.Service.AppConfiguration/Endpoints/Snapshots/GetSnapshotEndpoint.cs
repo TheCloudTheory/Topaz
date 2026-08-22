@@ -39,7 +39,7 @@ internal sealed class GetSnapshotEndpoint(Pipeline eventPipeline, ITopazLogger l
             return;
         }
 
-        var existing = _controlPlane.GetSnapshot(sub, rg, storeName, snapshotName);
+        var existing = _controlPlane.GetSnapshot(sub, rg, storeName, snapshotName, null, null);
         if (existing.Result == OperationResult.NotFound)
         {
             response.CreateNotFoundResponse(existing);

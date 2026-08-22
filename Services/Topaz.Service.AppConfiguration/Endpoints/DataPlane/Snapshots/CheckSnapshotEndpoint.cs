@@ -8,10 +8,10 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.AppConfiguration.Endpoints.DataPlane.Snapshots;
 
-internal sealed class GetSnapshotEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class CheckSnapshotEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)
 {
-    public override string[] Endpoints => ["GET /snapshots/{name}"];
+    public override string[] Endpoints => ["HEAD /snapshots/{name}"];
     public override string[] Permissions => ["Microsoft.AppConfiguration/configurationStores/snapshots/read"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
@@ -30,7 +30,7 @@ internal sealed class GetSnapshotEndpoint(Pipeline eventPipeline, ITopazLogger l
             return;
         }
         
-        response.CreateJsonContentResponse(operation.Resource!.Properties);
+        response.Content = new ByteArrayContent([]);
         response.Headers.ETag = new EntityTagHeaderValue($"\"{operation.Resource!.Properties.Etag}\"");
         response.Content.Headers.LastModified = operation.Resource!.LastModified;
         response.Content.Headers.ContentType =
