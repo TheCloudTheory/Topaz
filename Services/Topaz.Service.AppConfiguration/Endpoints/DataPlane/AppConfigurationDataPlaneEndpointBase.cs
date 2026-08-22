@@ -59,21 +59,19 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
 
         var store = storeOp.Resource;
         var subscriptionIdentifier = store.GetSubscription();
-        var rg = store.GetResourceGroup();
+        var resourceGroupIdentifier = store.GetResourceGroup();
 
         var authHeader = context.Request.Headers["Authorization"].ToString();
         if (string.IsNullOrEmpty(authHeader))
         {
-            response.StatusCode = HttpStatusCode.Unauthorized;
             return (false, null);
         }
 
         // Bearer tokens (Topaz CLI / Entra ID) bypass HMAC validation.
         // Note that HMAC validation will be bypassed if `DisableLocalAuth` is set to `true`
         if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) && !store.Properties.DisableLocalAuth!.Value &&
-            !TryValidateHmac(authHeader, context, ControlPlane.GetAccessKeys(subscriptionIdentifier, rg, storeName), logger))
+            !TryValidateHmac(authHeader, context, ControlPlane.GetAccessKeys(subscriptionIdentifier, resourceGroupIdentifier, storeName), logger))
         {
-            response.StatusCode = HttpStatusCode.Unauthorized;
             return (false, null);
         }
 
@@ -85,11 +83,16 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
             {
                 logger.LogDebug(nameof(AppConfigurationDataPlaneEndpointBase), nameof(Authorize),
                     "Invalid or unrecognized JWT — denying access.");
+                
                 return (false, null);
             }
             
             // Global admin always passes.
-            if (token.Subject == Globals.GlobalAdminId) return (true, null);
+            if (token.Subject == Globals.GlobalAdminId)
+            {
+                context.Items[StoreContextKey] = new AppConfigurationStoreContext(storeName, subscriptionIdentifier, resourceGroupIdentifier);
+                return (true, null);
+            }
 
             if (!_authAdapter.PrincipalHasPermissions(subscriptionIdentifier, token.Subject, Permissions))
             {
@@ -97,7 +100,7 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
             }
         }
 
-        context.Items[StoreContextKey] = new AppConfigurationStoreContext(storeName, subscriptionIdentifier, rg);
+        context.Items[StoreContextKey] = new AppConfigurationStoreContext(storeName, subscriptionIdentifier, resourceGroupIdentifier);
         return (true, null);
     }
 

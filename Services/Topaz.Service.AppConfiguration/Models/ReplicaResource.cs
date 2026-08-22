@@ -32,13 +32,13 @@ internal sealed partial class ReplicaResource : ArmResource<ReplicaResourcePrope
         Properties = properties;
     }
 
-    public sealed override string Id { get; init; }
-    public sealed override string Name { get; init; }
+    public override string Id { get; init; }
+    public override string Name { get; init; }
     public override string Type { get; init; } = "Microsoft.AppConfiguration/configurationStores/replicas";
-    public sealed override string? Location { get; set; }
-    public sealed override IDictionary<string, string>? Tags { get; set; }
-    public sealed override ResourceSku? Sku { get; set; }
-    public sealed override string? Kind { get; init; }
+    public override string? Location { get; set; }
+    public override IDictionary<string, string>? Tags { get; set; }
+    public override ResourceSku? Sku { get; set; }
+    public override string? Kind { get; init; }
     public override ReplicaResourceProperties Properties { get; init; }
     public ReplicaSystemData? SystemData { get; init; }
 
