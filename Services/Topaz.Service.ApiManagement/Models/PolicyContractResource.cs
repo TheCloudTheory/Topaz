@@ -46,4 +46,10 @@ internal sealed class PolicyContractResource : ArmSubresource<PolicyContractReso
     {
         return string.IsNullOrEmpty(Properties.Value) ? (false, "Policy value cannot be null or empty") : (true, null);
     }
+    
+    public override string GetParentId()
+    {
+        var segments = Id.Split("/");
+        return segments[9];
+    }
 }

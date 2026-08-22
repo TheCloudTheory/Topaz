@@ -107,4 +107,10 @@ internal sealed class ApiContractResource : ArmSubresource<ApiContractResourcePr
 
         ETag = ContractEtag.New();
     }
+
+    public override string GetParentId()
+    {
+        var segments = Id.Split("/");
+        return segments[9];
+    }
 }

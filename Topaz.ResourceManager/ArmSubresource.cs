@@ -34,7 +34,7 @@ public abstract class ArmSubresource<T>
         return segments[^1];
     }
     
-    public string GetParentId()
+    public virtual string GetParentId()
     {
         var segments = Id.Split("/");
         return segments[^1];

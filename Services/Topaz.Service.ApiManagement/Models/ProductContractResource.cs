@@ -63,4 +63,10 @@ internal sealed class ProductContractResource : ArmSubresource<ProductContractRe
 
         ETag = ContractEtag.New();
     }
+    
+    public override string GetParentId()
+    {
+        var segments = Id.Split("/");
+        return segments[9];
+    }
 }

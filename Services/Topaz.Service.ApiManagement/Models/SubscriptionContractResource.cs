@@ -35,4 +35,10 @@ internal sealed class SubscriptionContractResource : ArmSubresource<Subscription
     {
         return Properties.OwnerId!.Split('/').Last();
     }
+    
+    public override string GetParentId()
+    {
+        var segments = Id.Split("/");
+        return segments[9];
+    }
 }

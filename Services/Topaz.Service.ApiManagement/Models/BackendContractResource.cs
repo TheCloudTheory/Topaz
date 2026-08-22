@@ -76,4 +76,10 @@ internal sealed class BackendContractResource : ArmSubresource<BackendContractRe
         Properties.Protocol = request.Properties?.Protocol ?? Properties.Protocol;
         Properties.Description = request.Properties?.Description ?? Properties.Description;
     }
+    
+    public override string GetParentId()
+    {
+        var segments = Id.Split("/");
+        return segments[9];
+    }
 }
