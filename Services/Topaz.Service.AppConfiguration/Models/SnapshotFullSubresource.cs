@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Topaz.Service.AppConfiguration.Models.Requests;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -35,5 +36,10 @@ internal sealed class SnapshotFullSubresource : SnapshotSubresource
     public override string ToString()
     {
         return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+    }
+
+    public void UpdateFrom(UpdateSnapshotRequest request)
+    {
+        Properties.UpdateFrom(request);
     }
 }

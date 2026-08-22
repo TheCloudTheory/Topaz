@@ -601,4 +601,38 @@ internal sealed class AppConfigurationServiceControlPlane(
         
         return new ControlPlaneOperationResult<SnapshotFullSubresource[]>(OperationResult.Success, snapshots);
     }
+
+    public ControlPlaneOperationResult<SnapshotFullSubresource> UpdateSnapshot(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string storeName, string snapshotName, UpdateSnapshotRequest request,
+        string ifMatch, string ifNoneMatch)
+    {
+        var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
+        if (store.Resource == null)
+        {
+            return new ControlPlaneOperationResult<SnapshotFullSubresource>(OperationResult.NotFound, null,
+                $"Store {storeName} not found", "StoreNotFound");
+        }
+
+        var snapshot = GetSnapshot(subscriptionIdentifier, resourceGroupIdentifier, storeName, snapshotName);
+        if (snapshot.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<SnapshotFullSubresource>(snapshot.Result, null, snapshot.Reason,
+                snapshot.Code);
+        }
+
+        if (!string.IsNullOrEmpty(ifMatch) &&
+            !string.Equals(snapshot.Resource!.Properties.Etag, ifMatch, StringComparison.Ordinal) ||
+            !string.IsNullOrEmpty(ifNoneMatch) && string.Equals(snapshot.Resource!.Properties.Etag, ifNoneMatch,
+                StringComparison.Ordinal))
+        {
+            return new ControlPlaneOperationResult<SnapshotFullSubresource>(OperationResult.PreconditionFailed, null);
+        }
+
+        snapshot.Resource!.UpdateFrom(request);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, snapshotName, storeName,
+            SnapshotSubresource, snapshot.Resource);
+        
+        return new ControlPlaneOperationResult<SnapshotFullSubresource>(OperationResult.Updated, snapshot.Resource);
+    }
 }

@@ -50,7 +50,8 @@ public sealed class AppConfigurationService(Pipeline eventPipeline, ITopazLogger
         new GetSnapshotEndpoint(eventPipeline, logger),
         new Endpoints.DataPlane.Snapshots.CreateSnapshotEndpoint(eventPipeline, logger),
         new Endpoints.DataPlane.Snapshots.GetSnapshotEndpoint(eventPipeline, logger),
-        new GetSnapshotsEndpoint(eventPipeline, logger)
+        new GetSnapshotsEndpoint(eventPipeline, logger),
+        new UpdateSnapshotEndpoint(eventPipeline, logger)
     ];
 }
 

@@ -69,4 +69,9 @@ internal sealed class SnapshotSubresourceProperties : TopazApiModel
         archived,
         failed
     }
+
+    public void UpdateFrom(UpdateSnapshotRequest request)
+    {
+        Status = request.Status;
+    }
 }
