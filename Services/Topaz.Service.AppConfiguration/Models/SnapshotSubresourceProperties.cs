@@ -28,8 +28,9 @@ internal sealed class SnapshotSubresourceProperties : TopazApiModel
     public long? Size { get; set; }
     
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public SnapshotStatus Status { get; set; }
+    public SnapshotStatus? Status { get; set; }
     public IDictionary<string, string>? Tags { get; set; }
+    public string? Description { get; set; }
 
     [UsedImplicitly]
     internal sealed class KeyValueFilter
@@ -44,6 +45,7 @@ internal sealed class SnapshotSubresourceProperties : TopazApiModel
         {
             CompositionType = request.Properties?.CompositionType,
             Created = DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:sszzz"),
+            Description = request.Properties?.Description,
             Etag = new ETag(DateTimeOffset.Now.Ticks.ToString()).ToString(),
             Expires = null,
             Filters = request.Properties?.Filters,
