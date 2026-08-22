@@ -570,7 +570,7 @@ internal sealed class AppConfigurationServiceControlPlane(
 
     public ControlPlaneOperationResult<SnapshotFullSubresource[]> GetSnapshots(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
-        string storeName)
+        string storeName, string? status)
     {
         var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
         if (store.Resource == null)
@@ -581,6 +581,15 @@ internal sealed class AppConfigurationServiceControlPlane(
 
         var snapshots = provider.ListSubresourcesAs<SnapshotFullSubresource>(subscriptionIdentifier,
             resourceGroupIdentifier, storeName, SnapshotSubresource);
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            snapshots =
+            [
+                .. snapshots.Where(snapshot =>
+                    snapshot.Properties.Status == Enum.Parse<SnapshotSubresourceProperties.SnapshotStatus>(status))
+            ];
+        }
         
         return new ControlPlaneOperationResult<SnapshotFullSubresource[]>(OperationResult.Success, snapshots);
     }

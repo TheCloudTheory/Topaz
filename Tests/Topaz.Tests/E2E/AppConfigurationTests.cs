@@ -574,4 +574,59 @@ public class AppConfigurationTests
             Assert.That(snapshots.First(s => s.Name == "snapshot2").ItemCount, Is.EqualTo(3));
         }
     }
+    
+    [Test]
+    public async Task AppConfiguration_DataPlane_CanCreateAndGetMultipleSnapshot_AndFilterByStatus()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-snapshot";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "prod") { Label = "production" });
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "dev") { Label = "development" });
+
+        _ = await configClient.CreateSnapshotAsync(WaitUntil.Completed, "snapshot1", new ConfigurationSnapshot([
+            new ConfigurationSettingsFilter("Env")
+        ])
+        {
+            Description = "Test description",
+            Tags =
+            {
+                {"appName", "Topaz"},
+            }
+        });
+        
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "uat") { Label = "uat" });
+        
+        _ = await configClient.CreateSnapshotAsync(WaitUntil.Completed, "snapshot2", new ConfigurationSnapshot([
+            new ConfigurationSettingsFilter("Env")
+        ])
+        {
+            Description = "Test description 2",
+            Tags =
+            {
+                {"appName", "Topaz"},
+            }
+        });
+        
+        var snapshotsArchived = await configClient.GetSnapshotsAsync(new SnapshotSelector
+        {
+            Status = { ConfigurationSnapshotStatus.Archived }
+        }).ToArrayAsync();
+        var snapshotsReady = await configClient.GetSnapshotsAsync(new SnapshotSelector
+        {
+            Status = { ConfigurationSnapshotStatus.Ready }
+        }).ToArrayAsync();
+        
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(snapshotsArchived, Has.Length.EqualTo(0));
+            Assert.That(snapshotsReady, Has.Length.EqualTo(2));
+        }
+    }
 }

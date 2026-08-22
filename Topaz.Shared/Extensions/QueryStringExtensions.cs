@@ -10,7 +10,7 @@ public static class QueryStringExtensions
     {
         value = null;
         var parsedQuery = HttpUtility.ParseQueryString(query.ToString());
-        if(parsedQuery.AllKeys.Contains(key) == false) return false;
+        if(!parsedQuery.AllKeys.Contains(key)) return false;
         
         value = parsedQuery[key];
         return true;

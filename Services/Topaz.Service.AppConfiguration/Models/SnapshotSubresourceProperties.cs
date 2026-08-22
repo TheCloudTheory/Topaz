@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json.Serialization;
 using Azure;
@@ -53,16 +54,17 @@ internal sealed class SnapshotSubresourceProperties : TopazApiModel
             Size = kvs.Sum(kv =>
                 Encoding.UTF8.GetByteCount(kv.Key) +
                 (kv.Value is null ? 0 : Encoding.UTF8.GetByteCount(kv.Value))),
-            Status = SnapshotStatus.Ready,
+            Status = SnapshotStatus.ready,
             Tags = request.Properties?.Tags
         };
     }
 
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     internal enum SnapshotStatus
     {
-        Provisioning,
-        Ready,
-        Archived,
-        Failed
+        provisioning,
+        ready,
+        archived,
+        failed
     }
 }

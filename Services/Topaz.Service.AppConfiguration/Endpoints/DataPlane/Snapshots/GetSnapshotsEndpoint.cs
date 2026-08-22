@@ -4,6 +4,7 @@ using Topaz.EventPipeline;
 using Topaz.Service.AppConfiguration.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.AppConfiguration.Endpoints.DataPlane.Snapshots;
 
@@ -16,8 +17,9 @@ internal sealed class GetSnapshotsEndpoint(Pipeline eventPipeline, ITopazLogger 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var ctx = GetStoreContext(context);
+        context.Request.QueryString.TryGetValueForKey("status", out var status);
         
-        var operation = ControlPlane.GetSnapshots(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName);
+        var operation = ControlPlane.GetSnapshots(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.StoreName, status);
         
         response.CreateJsonContentResponse(SnapshotListResultResponse.From(operation.Resource!));
         response.Content.Headers.ContentType =
