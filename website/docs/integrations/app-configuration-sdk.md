@@ -87,6 +87,73 @@ app.MapGet("/config", (IConfiguration configuration) =>
 });
 ```
 
+## Key Vault references
+
+App Configuration supports [Key Vault references](https://learn.microsoft.com/en-us/azure/azure-app-configuration/use-key-vault-references-dotnet-core) — values stored in App Configuration that point to secrets in Key Vault. Topaz emulates both services, so you can use this pattern locally without any real Azure resources.
+
+### Provision Key Vault and link secrets to App Configuration
+
+During setup, create a Key Vault and use `AddKeyValuesToStoreAsSecret` to add an App Configuration key whose value is a Key Vault reference:
+
+```csharp
+await builder.Configuration.AddTopaz(subscriptionId, Globals.GlobalAdminId)
+    // ...
+    .AddKeyVault(
+        resourceGroupIdentifier,
+        keyVaultName,
+        new KeyVaultCreateOrUpdateContent(
+            AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))),
+        secrets: new Dictionary<string, string>
+        {
+            { "secrets-generic-secret", "This is just example secret!" }
+        },
+        Globals.GlobalAdminId)
+    .AddStorageAccountConnectionStringAsSecret(
+        resourceGroupIdentifier, storageAccountName, keyVaultName,
+        "connectionstring-storageaccount", Globals.GlobalAdminId)
+    .AddKeyValuesToStoreAsSecret(
+        resourceGroupIdentifier, keyVaultName, Globals.GlobalAdminId, storeName,
+        "MyApp:Secret", "VerySecretValue");
+```
+
+### Configure the SDK to resolve Key Vault references
+
+Pass a `SecretClient` to the App Configuration SDK so it can dereference Key Vault URIs at runtime. Set `DisableChallengeResourceVerification = true` because the local Topaz certificate is self-signed:
+
+```csharp
+var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+
+builder.Configuration.AddAzureAppConfiguration(options =>
+{
+    options.ReplicaDiscoveryEnabled = true;
+    options.LoadBalancingEnabled = true;
+    options.ConfigureKeyVault(keyVaultOptions =>
+    {
+        keyVaultOptions.SetCredential(credentials);
+        keyVaultOptions.Register(new SecretClient(
+            vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName),
+            credential: credentials,
+            new SecretClientOptions
+            {
+                DisableChallengeResourceVerification = true
+            }));
+    });
+    options.Connect(new Uri(appConfigEndpoint), credentials)
+        .Select("MyApp:*")
+        .ConfigureRefresh(refresh => refresh.RegisterAll())
+        .UseFeatureFlags();
+});
+```
+
+You can also load secrets directly from Key Vault (outside of App Configuration) using `AddAzureKeyVault`:
+
+```csharp
+builder.Configuration.AddAzureKeyVault(
+    TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName),
+    new AzureLocalCredential(Globals.GlobalAdminId));
+```
+
 ## Replica support
 
 Topaz supports App Configuration replicas. Add a replica to a different region during provisioning:
