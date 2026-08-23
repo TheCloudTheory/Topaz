@@ -5,6 +5,7 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.AppConfiguration;
 using Azure.ResourceManager.AppConfiguration.Models;
 using Azure.ResourceManager.Resources;
+using Azure.Security.KeyVault.Secrets;
 using Topaz.CLI;
 using Topaz.EventPipeline;
 using Topaz.Identity;
@@ -31,6 +32,18 @@ public class AppConfigurationTests
         await Program.RunAsync(["subscription", "create", "--id", SubscriptionId.ToString(), "--name", SubscriptionName]);
         await Program.RunAsync(["group", "delete", "--name", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
         await Program.RunAsync(["group", "create", "--name", ResourceGroupName, "--location", "westeurope", "--subscription-id", SubscriptionId.ToString()]);
+        await Program.RunAsync([
+            "keyvault",
+            "create",
+            "--name",
+            "testappconf",
+            "-g",
+            ResourceGroupName,
+            "--location",
+            "westeurope",
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
     }
 
     [TearDown]
@@ -319,6 +332,36 @@ public class AppConfigurationTests
         {
             Assert.That(retrieved.Key, Is.EqualTo("MyApp:FontSize"));
             Assert.That(retrieved.Value, Is.EqualTo("16"));
+        }
+    }
+    
+    [Test]
+    public async Task AppConfiguration_DataPlane_SetAndGet_CanSetSecret()
+    {
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-dp-set";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("testappconf"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+        
+        var createSecret = await client.SetSecretAsync("secret-name", "test");
+        await configClient.SetConfigurationSettingAsync(new SecretReferenceConfigurationSetting("MyApp:Secret", createSecret.Value.Id));
+
+        var retrieved = (await configClient.GetConfigurationSettingAsync("MyApp:Secret")).Value;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(retrieved.Key, Is.EqualTo("MyApp:Secret"));
+            Assert.That(retrieved.Value, Is.EqualTo($"{{\"uri\":\"{createSecret.Value.Id}\"}}"));
+            Assert.That(retrieved.ContentType, Is.EqualTo("application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8"));
         }
     }
 
