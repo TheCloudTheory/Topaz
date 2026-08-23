@@ -3,14 +3,12 @@ using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Messaging.ServiceBus;
-using Azure.ResourceManager;
 using Azure.ResourceManager.Authorization;
 using Azure.ResourceManager.Authorization.Models;
 using Azure.ResourceManager.ContainerRegistry;
 using Azure.ResourceManager.ContainerRegistry.Models;
 using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.CosmosDB.Models;
-using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.ServiceBus;
 using Azure.ResourceManager.Storage.Models;
 using Azure.Storage.Blobs;
@@ -32,10 +30,6 @@ var registryName = builder.Configuration["Azure:ContainerRegistryName"]!;
 
 const string resourceGroupName = "rg-allinone-demo";
 const string subscriptionName = "topaz-allinone-demo";
-
-string cosmosConnectionString = string.Empty;
-string roleAssignmentId = string.Empty;
-string registryLoginServer = string.Empty;
 
 if (builder.Environment.IsDevelopment())
 {
@@ -110,7 +104,7 @@ if (builder.Environment.IsDevelopment())
     var cosmosAccount = cosmosOp.Value;
     var cosmosKeys = await cosmosAccount.GetKeysAsync().ConfigureAwait(false);
     var cosmosPrimaryKey = cosmosKeys.Value.PrimaryMasterKey!;
-    cosmosConnectionString = TopazResourceHelpers.GetCosmosDbConnectionString(cosmosAccountName, cosmosPrimaryKey);
+    TopazResourceHelpers.GetCosmosDbConnectionString(cosmosAccountName, cosmosPrimaryKey);
 
     using var cosmosClient = new CosmosClient(
         TopazResourceHelpers.GetCosmosDbAccountEndpoint(cosmosAccountName),
@@ -131,11 +125,11 @@ if (builder.Environment.IsDevelopment())
         IsAdminUserEnabled = true,
     };
 
-    var registryOp = await resourceGroup.GetContainerRegistries()
+    _ = await resourceGroup.GetContainerRegistries()
         .CreateOrUpdateAsync(WaitUntil.Completed, registryName, registryData)
         .ConfigureAwait(false);
 
-    registryLoginServer = TopazResourceHelpers.GetContainerRegistryLoginServer(registryName);
+    var registryLoginServer = TopazResourceHelpers.GetContainerRegistryLoginServer(registryName);
 
     Console.WriteLine("[Topaz] Provisioning: RBAC role assignment (Reader on resource group)...");
 
@@ -156,7 +150,7 @@ if (builder.Environment.IsDevelopment())
         .CreateOrUpdateAsync(WaitUntil.Completed, roleAssignmentName, roleAssignmentContent)
         .ConfigureAwait(false);
 
-    roleAssignmentId = roleAssignmentOp.Value.Data.Id?.ToString() ?? roleAssignmentName;
+    var roleAssignmentId = roleAssignmentOp.Value.Data.Id?.ToString() ?? roleAssignmentName;
 
     Console.WriteLine();
     var table = new Table()

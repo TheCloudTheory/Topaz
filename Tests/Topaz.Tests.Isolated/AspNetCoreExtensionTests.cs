@@ -343,4 +343,48 @@ public class AspNetCoreExtensionTests
             Assert.That(tableExists.GetRawResponse().Status, Is.EqualTo(409));
         });
     }
+    
+    [Test]
+    public async Task WhenConfigurationValueIsAddedAsSecret_ItMustBeAvailable()
+    {
+        // Arrange
+        const string storeName = "appconfigtest4";
+        const string secretName = "MyKey:Secret";
+        var subscriptionId = Guid.NewGuid();
+        var builder = new ConfigurationBuilder();
+        var objectId = Globals.GlobalAdminId;
+        var credentials = new AzureLocalCredential(objectId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(KeyVaultName), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+        
+        // Act
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, SubscriptionName, credentials)
+            .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
+            .AddStorageAccount(ResourceGroupIdentifier.From(ResourceGroupName), StorageAccountName,
+                new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs),
+                    StorageKind.StorageV2, AzureLocation.WestEurope))
+            .AddKeyVault(ResourceGroupIdentifier.From(ResourceGroupName), KeyVaultName,
+                new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+                    new KeyVaultProperties(Guid.Empty,
+                        new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))))
+            .AddConfigurationStore(ResourceGroupIdentifier.From(ResourceGroupName), storeName,
+                new AppConfigurationStoreData(AzureLocation.WestEurope, new AppConfigurationSku("Standard")))
+            .AddKeyValuesToStoreAsSecret(ResourceGroupIdentifier.From(ResourceGroupName),
+                KeyVaultName, objectId,
+                storeName, secretName,
+                "secret_value");
+        
+        var secret = await client.GetSecretAsync(secretName);
+        var configClient = new ConfigurationClient(new Uri(TopazResourceHelpers.GetAppConfigurationStoreEndpoint(storeName)), credentials);
+        var setting = await configClient.GetConfigurationSettingAsync(secretName);
+
+        // Assert
+        Assert.That(setting, Is.Not.Null);
+        Assert.That(setting.Value, Is.Not.Null);
+        Assert.That(setting.Value.Value, Is.EqualTo($"{{\"uri\":\"{secret.Value.Id}\"}}"));
+        Assert.That(setting.Value.ContentType, Is.EqualTo("application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8"));
+    }
 }
