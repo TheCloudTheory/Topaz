@@ -225,15 +225,6 @@ TODO: Azure Event Grid: MCP provisioning tool
 ### App Configuration — advanced data plane features
 
 <!--
-TODO: App Configuration: Key Vault references
-  Key-values with content type application/vnd.microsoft.appconfig.keyvaultref+json resolved on
-  GET /kv/{key}?resolve=true via the local Topaz Key Vault instance; compatible with
-  AzureAppConfigurationOptions.ConfigureKeyVault() in the .NET SDK.
-  milestone: v1.11
-  labels: enhancement, app-configuration, key-vault
--->
-
-<!--
 TODO: App Configuration: Change notification via EventGrid integration
   On any key-value write or delete, publish a Microsoft.AppConfiguration.KeyValueModified /
   Microsoft.AppConfiguration.KeyValueDeleted event to any EventGrid topic subscription wired to

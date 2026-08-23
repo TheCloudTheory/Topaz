@@ -7,6 +7,7 @@ using Azure.ResourceManager.AppConfiguration;
 using Azure.ResourceManager.AppConfiguration.Models;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Storage.Models;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Mvc;
 using Testcontainers.Topaz;
 using Topaz.AspNetCore.Extensions;
@@ -21,6 +22,7 @@ var keyVaultName = builder.Configuration["Azure:KeyVaultName"]!;
 var storageAccountName = builder.Configuration["Azure:StorageAccountName"]!;
 var storeName = builder.Configuration["Azure:StoreName"]!;
 var appConfigEndpoint = TopazResourceHelpers.GetAppConfigurationStoreEndpoint(storeName);
+var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
 
 if (builder.Environment.IsDevelopment())
 {
@@ -30,13 +32,12 @@ if (builder.Environment.IsDevelopment())
         .ConfigureAwait(false);
     
     await Task.Delay(5000);
-
-    var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+    
     var subscriptionId = Guid.NewGuid();
     const string resourceGroupName = "rg-topaz-webapp-example";
 
     var resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
-    
+
     await builder.Configuration.AddTopaz(subscriptionId, Globals.GlobalAdminId)
         .AddSubscription(subscriptionId, "topaz-webapp-example", credentials)
         .AddResourceGroup(subscriptionId, resourceGroupName, AzureLocation.WestEurope)
@@ -59,14 +60,25 @@ if (builder.Environment.IsDevelopment())
             Location = AzureLocation.NorthEurope
         })
         .AddKeyValuesToStore(resourceGroupIdentifier, storeName, "Topaz:numericValue", "12345")
-        .AddKeyValuesToStore(resourceGroupIdentifier, storeName, "Topaz:randomValue", Guid.NewGuid().ToString());
+        .AddKeyValuesToStore(resourceGroupIdentifier, storeName, "Topaz:randomValue", Guid.NewGuid().ToString())
+        .AddKeyValuesToStoreAsSecret(resourceGroupIdentifier, keyVaultName, Globals.GlobalAdminId, storeName,
+            "Topaz:Secret", "VerySecretValue");
 }
 
 builder.Configuration.AddAzureAppConfiguration(options =>
 {
     options.ReplicaDiscoveryEnabled = true;
     options.LoadBalancingEnabled = true;
-    options.Connect(new Uri(appConfigEndpoint), new Azure.Identity.DefaultAzureCredential())
+    options.ConfigureKeyVault(keyVaultOptions =>
+    {
+        keyVaultOptions.SetCredential(credentials);
+        keyVaultOptions.Register(new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName),
+            credential: credentials, new SecretClientOptions
+            {
+                DisableChallengeResourceVerification = true
+            }));
+    });
+    options.Connect(new Uri(appConfigEndpoint), credentials)
         .Select("Topaz:*")
         .ConfigureRefresh(refreshOptions =>
         {

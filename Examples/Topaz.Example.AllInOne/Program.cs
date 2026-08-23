@@ -3,12 +3,15 @@ using Azure;
 using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Messaging.ServiceBus;
+using Azure.ResourceManager.AppConfiguration;
+using Azure.ResourceManager.AppConfiguration.Models;
 using Azure.ResourceManager.Authorization;
 using Azure.ResourceManager.Authorization.Models;
 using Azure.ResourceManager.ContainerRegistry;
 using Azure.ResourceManager.ContainerRegistry.Models;
 using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.CosmosDB.Models;
+using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.ServiceBus;
 using Azure.ResourceManager.Storage.Models;
 using Azure.Storage.Blobs;
@@ -61,7 +64,7 @@ if (builder.Environment.IsDevelopment())
     var subscriptionId = Guid.NewGuid();
     var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
 
-    Console.WriteLine("[Topaz] Provisioning: Subscription + Resource Group + Storage Account + Service Bus...");
+    Console.WriteLine("[Topaz] Provisioning: Subscription + Resource Group + Storage Account + Service Bus + Key Vault + App Configuration..");
 
     var envBuilder = await builder.Configuration
         .AddTopaz(subscriptionId, Globals.GlobalAdminId)
@@ -82,7 +85,14 @@ if (builder.Environment.IsDevelopment())
             ResourceGroupIdentifier.From(resourceGroupName),
             ServiceBusNamespaceIdentifier.From(serviceBusNamespace),
             "orders",
-            new ServiceBusQueueData());
+            new ServiceBusQueueData())
+        .AddKeyVault(ResourceGroupIdentifier.From(resourceGroupName), "allinone",
+            new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+                new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))))
+        .AddConfigurationStore(ResourceGroupIdentifier.From(resourceGroupName), "allinonestore",
+            new AppConfigurationStoreData(AzureLocation.WestEurope, new AppConfigurationSku("standard")))
+        .AddKeyValuesToStoreAsSecret(ResourceGroupIdentifier.From(resourceGroupName),
+            "allinone", Guid.Empty.ToString(), "allinonestore", "MyKey:Secret", "secret_value");
 
     Console.WriteLine("[Topaz] Provisioning: Cosmos DB account + database + container...");
 
