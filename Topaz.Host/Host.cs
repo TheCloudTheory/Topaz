@@ -46,6 +46,7 @@ using Topaz.ForwardProxy;
 using Topaz.Importer;
 using Topaz.Service.ApiManagement;
 using Topaz.Service.ContainerInstances;
+using Topaz.Service.EventGrid;
 using Topaz.Service.Redis;
 using Topaz.Shared;
 
@@ -150,6 +151,7 @@ public class Host
             new ApiManagementService(_eventPipeline, _logger),
             new ContainerInstancesService(_eventPipeline, _logger),
             new ImporterService(_eventPipeline, _logger),
+            new EventGridService(_eventPipeline, _logger),
         };
 
         _logger.ConfigureIdFactory(idFactory);

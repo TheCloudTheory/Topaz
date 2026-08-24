@@ -15,6 +15,7 @@
       <ProjectReference Include="..\..\Services\Topaz.Service.ContainerRegistry\Topaz.Service.ContainerRegistry.csproj" />
       <ProjectReference Include="..\..\Services\Topaz.Service.CosmosDb\Topaz.Service.CosmosDb.csproj" />
       <ProjectReference Include="..\..\Services\Topaz.Service.Disk\Topaz.Service.Disk.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.EventGrid\Topaz.Service.EventGrid.csproj" />
       <ProjectReference Include="..\..\Services\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj" />
       <ProjectReference Include="..\..\Services\Topaz.Service.Insights\Topaz.Service.Insights.csproj" />
       <ProjectReference Include="..\..\Services\Topaz.Service.KeyVault\Topaz.Service.KeyVault.csproj" />

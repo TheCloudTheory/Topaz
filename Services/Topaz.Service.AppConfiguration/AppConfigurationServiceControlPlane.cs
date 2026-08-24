@@ -70,8 +70,10 @@ internal sealed class AppConfigurationServiceControlPlane(
     {
         var rgOp = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (rgOp.Result == OperationResult.NotFound)
+        {
             return new ControlPlaneOperationResult<ConfigurationStoreFullResource>(
                 OperationResult.NotFound, null, rgOp.Reason, rgOp.Code);
+        }
 
         var existing = provider.GetAs<ConfigurationStoreFullResource>(subscriptionIdentifier, resourceGroupIdentifier, storeName);
 

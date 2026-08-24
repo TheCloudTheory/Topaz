@@ -24,6 +24,7 @@ using Topaz.Service.Sql;
 using Topaz.Service.CosmosDb;
 using Topaz.Service.Disk;
 using Topaz.Service.AppConfiguration;
+using Topaz.Service.EventGrid;
 using Topaz.Service.Insights;
 using Topaz.Service.LogAnalytics;
 using Topaz.Service.LoadBalancer;
@@ -421,6 +422,9 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
                 case "microsoft.apimanagement/service/policies":
                     controlPlane = ApiManagementPolicyControlPlane.New(eventPipeline, logger);
+                    break;
+                case "microsoft.eventgrid/namespaces":
+                    controlPlane = EventGridControlPlane.New(eventPipeline, logger);
                     break;
                 case "microsoft.resources/deployments":
                     HandleNestedDeployment(genericResource, templateDeployment, resource, ref hasProvisioningFailed);

@@ -148,6 +148,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ContainerInst
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Importer", "Extras\Topaz.Importer\Topaz.Importer.csproj", "{3688434A-48E0-4075-BA28-77E6AC71011D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.EventGrid", "Services\Topaz.Service.EventGrid\Topaz.Service.EventGrid.csproj", "{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -908,6 +910,18 @@ Global
 		{3688434A-48E0-4075-BA28-77E6AC71011D}.Release|x64.Build.0 = Release|Any CPU
 		{3688434A-48E0-4075-BA28-77E6AC71011D}.Release|x86.ActiveCfg = Release|Any CPU
 		{3688434A-48E0-4075-BA28-77E6AC71011D}.Release|x86.Build.0 = Release|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Debug|x64.Build.0 = Debug|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Debug|x86.Build.0 = Debug|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Release|x64.ActiveCfg = Release|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Release|x64.Build.0 = Release|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Release|x86.ActiveCfg = Release|Any CPU
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -962,6 +976,7 @@ Global
 		{607F0075-2022-4D74-88C6-95C12FABA78A} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 		{BD4C1523-CF48-4896-B7F1-159B905A7DEF} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 		{C1E2207E-FD59-4A59-9AA2-9BBACD464C1C} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
+		{F0F453F1-3219-4B5B-B858-3EDC3F2CA561} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {76B3D1AF-3328-49A8-BFD0-ED7FA3933EB0}

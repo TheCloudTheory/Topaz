@@ -16,6 +16,8 @@ using Topaz.Service.CosmosDb;
 using Topaz.Service.CosmosDb.Models.Requests;
 using Topaz.Service.Disk;
 using Topaz.Service.Disk.Models.Requests;
+using Topaz.Service.EventGrid;
+using Topaz.Service.EventGrid.Models;
 using Topaz.Service.EventHub;
 using Topaz.Service.EventHub.Models.Requests;
 using Topaz.Service.Insights;
@@ -424,6 +426,15 @@ public class AzureImporterService(Pipeline eventPipeline, ITopazLogger logger)
                         () => cp.CreateOrUpdate(subscriptionIdentifier, rgId,
                             fullResource.Value.Id.Parent!.Name, fullResource.Value.Data.Name,
                             CreateOrUpdatePolicyRequest.From(fullResource.Value.Data), "*").Result, dryRun, overwrite);
+                    break;
+                }
+                case "microsoft.eventgrid/namespaces":
+                {
+                    var cp = EventGridControlPlane.New(eventPipeline, logger);
+                    TryImportResource(fullResource.Value.Data.Id, importResult,
+                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                            EventGridNamespaceResource.From(resource.Data)).Result, dryRun, overwrite);
                     break;
                 }
                 default:
