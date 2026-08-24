@@ -3477,6 +3477,184 @@
     ]
   },
   {
+    "name": "eventgrid namespace create",
+    "group": "event-grid",
+    "description": "Creates or updates an Event Grid Namespace.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Namespace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      },
+      {
+        "names": "--sku-name",
+        "description": "(Optional) SKU name (e.g. Standard).",
+        "required": false
+      },
+      {
+        "names": "--sku-capacity",
+        "description": "(Optional) SKU capacity.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create an Event Grid Namespace",
+        "command": "topaz eventgrid namespace create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-namespace\u0022 \\\n    --location \u0022westeurope\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid namespace delete",
+    "group": "event-grid",
+    "description": "Deletes an Event Grid Namespace.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Namespace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete an Event Grid Namespace",
+        "command": "topaz eventgrid namespace delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-namespace\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid namespace get",
+    "group": "event-grid",
+    "description": "Gets an Event Grid Namespace.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Namespace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get an Event Grid Namespace",
+        "command": "topaz eventgrid namespace get \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-namespace\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid namespace list",
+    "group": "event-grid",
+    "description": "Lists Event Grid Namespaces in a resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List Event Grid Namespaces in a resource group",
+        "command": "topaz eventgrid namespace list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid namespace list-by-subscription",
+    "group": "event-grid",
+    "description": "Lists Event Grid Namespaces in a subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List Event Grid Namespaces in a subscription",
+        "command": "topaz eventgrid namespace list-by-subscription \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid namespace update",
+    "group": "event-grid",
+    "description": "Updates an Event Grid Namespace.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Namespace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "--sku-name",
+        "description": "(Optional) SKU name (e.g. Standard).",
+        "required": false
+      },
+      {
+        "names": "--sku-capacity",
+        "description": "(Optional) SKU capacity.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Update an Event Grid Namespace",
+        "command": "topaz eventgrid namespace update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-namespace\u0022 \\\n    --sku-name \u0022Standard\u0022"
+      }
+    ]
+  },
+  {
     "name": "eventhubs eventhub create",
     "group": "event-hub",
     "description": "Creates new Event Hub.",
