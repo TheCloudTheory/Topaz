@@ -26,6 +26,7 @@ using Topaz.Service.CosmosDb.Commands;
 using Topaz.Service.Sql.Commands;
 using Topaz.FinOps.Commands;
 using Topaz.Importer.Commands;
+using Topaz.Service.EventGrid.Commands;
 using Topaz.Service.Insights.Commands;
 using Topaz.Service.LogAnalytics.Commands;
 
@@ -65,7 +66,8 @@ _ = new[]
     typeof(GenericInsightsCommand),
     typeof(GenericApiManagementCommand),
     typeof(GenericSeedCommand),
-    typeof(ContextSwitchCommand)
+    typeof(ContextSwitchCommand),
+    typeof(GenericEventGridCommand)
 };
 
 Console.WriteLine("Looking for commands...");

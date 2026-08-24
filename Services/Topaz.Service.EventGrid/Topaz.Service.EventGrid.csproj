@@ -11,4 +11,8 @@
       <ProjectReference Include="..\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Commands\ControlPlane\Namespace\" />
+    </ItemGroup>
+
 </Project>

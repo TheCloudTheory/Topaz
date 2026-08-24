@@ -32,6 +32,7 @@ using Topaz.FinOps.Commands;
 using Topaz.Chaos.Commands;
 using Topaz.Importer.Commands;
 using Topaz.Service.ContainerInstances.Commands;
+using Topaz.Service.EventGrid.Commands;
 using Topaz.Service.Insights.Commands;
 using Topaz.Service.Redis.Commands;
 using Topaz.Shared;
@@ -180,7 +181,8 @@ internal class Program
             typeof(GenericPublicIpAddressCommand),
             typeof(GenericRedisCommand),
             typeof(GenericContainerInstancesCommand),
-            typeof(GenericSeedCommand)
+            typeof(GenericSeedCommand),
+            typeof(GenericEventGridCommand)
         };
 
         var commands = Assembly.GetExecutingAssembly()
