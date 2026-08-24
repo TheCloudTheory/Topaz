@@ -35,7 +35,7 @@ internal sealed class ListContainerRegistriesBySubscriptionEndpoint(Pipeline eve
         var operation = _controlPlane.ListBySubscription(subscriptionIdentifier);
         var result = new ListContainerRegistriesResponse
         {
-            Value = operation.Resource!.Select(ListContainerRegistriesResponse.ContainerRegistry.From).ToArray()
+            Value = [.. operation.Resource!.Select(ListContainerRegistriesResponse.ContainerRegistry.From)]
         };
 
         response.StatusCode = HttpStatusCode.OK;

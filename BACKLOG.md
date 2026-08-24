@@ -673,3 +673,12 @@ TODO: App Configuration: Sequence number
   milestone: v1.16
   labels: enhancement, app-configuration
 -->
+
+### Event Grid - support for $filter
+
+<!--
+TODO: Event Grid: $filter support
+  Currently ListByResourceGroup and ListBySubscriptions in Event Grid doesn't support $filter parameter. Add support for it as per documentation.
+  milestone: v1.16
+  labels: enhancement, event-grid
+-->

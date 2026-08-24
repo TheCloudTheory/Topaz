@@ -11,13 +11,16 @@ namespace Topaz.Service.EventGrid;
 
 internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger logger) : IControlPlane
 {
-    public static EventGridControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(eventPipeline, logger); 
-    
+    public static EventGridControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(eventPipeline, logger);
+
     private readonly EventGridResourceProvider _provider = new(logger);
-    
+
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
-    
+
+    private readonly SubscriptionControlPlane _subscriptionControlPlane =
+        SubscriptionControlPlane.New(eventPipeline, logger);
+
     public OperationResult Deploy(GenericResource resource)
     {
         var @namespace = resource.As<EventGridNamespaceResource, EventGridNamespaceResourceProperties>();
@@ -35,7 +38,8 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
 
         try
         {
-            var result = CreateOrUpdate(@namespace.GetSubscription(), @namespace.GetResourceGroup(), @namespace.Name, @namespace);
+            var result = CreateOrUpdate(@namespace.GetSubscription(), @namespace.GetResourceGroup(), @namespace.Name,
+                @namespace);
             return result.Result is OperationResult.Created or OperationResult.Updated
                 ? OperationResult.Success
                 : OperationResult.Failed;
@@ -48,7 +52,8 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
     }
 
     public ControlPlaneOperationResult<EventGridNamespaceResource> CreateOrUpdate(
-        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName,
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string namespaceName,
         EventGridNamespaceResource request)
     {
         var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
@@ -60,7 +65,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
 
         (bool IsValid, string? Error) validation;
         var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
-        
+
         if (existing.Resource != null)
         {
             existing.Resource.UpdateFromRequest(request);
@@ -72,12 +77,14 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
             }
 
             _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, existing);
-            return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.Updated, existing.Resource);
+            return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.Updated,
+                existing.Resource);
         }
 
         var location = request.Location ?? resourceGroup.Resource!.Location!;
         var properties = EventGridNamespaceResourceProperties.FromRequest(request.Properties);
-        var resource = new EventGridNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, location, request.Tags, request.Sku, properties);
+        var resource = new EventGridNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier, namespaceName,
+            location, request.Tags, request.Sku, properties);
 
         validation = resource.Validate<EventGridNamespaceResource>();
         if (!validation.IsValid)
@@ -85,16 +92,18 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
             return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.BadRequest, null,
                 validation.Error, "BadRequest");
         }
-        
-        _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, resource, createOperation: true);
-        
+
+        _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, resource,
+            createOperation: true);
+
         return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.Created, resource);
     }
 
     public ControlPlaneOperationResult<EventGridNamespaceResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName)
     {
-        var resource = _provider.GetAs<EventGridNamespaceResource>(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
+        var resource =
+            _provider.GetAs<EventGridNamespaceResource>(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
         return resource == null
             ? new ControlPlaneOperationResult<EventGridNamespaceResource>(
                 OperationResult.NotFound, null, "Event Grid namespace not found", "ResourceNotFound")
@@ -124,18 +133,64 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
             return new ControlPlaneOperationResult<EventGridNamespaceResource>(
                 OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
         }
-        
+
         var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
         if (existing.Resource == null)
         {
             return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.NotFound, null,
                 existing.Reason, existing.Code);
         }
-        
+
         existing.Resource.UpdateFromRequest(request);
-        
-        _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, existing.Resource, createOperation: true);
-        
+
+        _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, existing.Resource,
+            createOperation: true);
+
         return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.Updated, existing.Resource);
+    }
+
+    public ControlPlaneOperationResult<EventGridNamespaceResource[]> ListByResourceGroup(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string? topFilter)
+    {
+        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroup.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<EventGridNamespaceResource[]>(
+                OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
+        }
+
+        var resources = _provider
+            .ListAs<EventGridNamespaceResource>(subscriptionIdentifier, resourceGroupIdentifier, lookForNoOfSegments: 8)
+            .Where(eg => eg.IsInResourceGroup(resourceGroupIdentifier) && eg.IsInSubscription(subscriptionIdentifier));
+
+        if (!string.IsNullOrWhiteSpace(topFilter))
+        {
+            resources = resources.Take(int.Parse(topFilter));
+        }
+
+        return new ControlPlaneOperationResult<EventGridNamespaceResource[]>(OperationResult.Success, [.. resources]);
+    }
+
+    public ControlPlaneOperationResult<EventGridNamespaceResource[]> ListBySubscription(
+        SubscriptionIdentifier subscriptionIdentifier, string? topFilter)
+    {
+        var subscription = _subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<EventGridNamespaceResource[]>(
+                OperationResult.NotFound, null, subscription.Reason, subscription.Code);
+        }
+
+        var resources = _provider
+            .ListAs<EventGridNamespaceResource>(subscriptionIdentifier, null, lookForNoOfSegments: 8)
+            .Where(eg => eg.IsInSubscription(subscriptionIdentifier));
+
+        if (!string.IsNullOrWhiteSpace(topFilter))
+        {
+            resources = resources.Take(int.Parse(topFilter));
+        }
+
+        return new ControlPlaneOperationResult<EventGridNamespaceResource[]>(OperationResult.Success, [.. resources]);
     }
 }
