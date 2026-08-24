@@ -14,6 +14,9 @@ public sealed class EventGridService(Pipeline eventPipeline, ITopazLogger logger
     public static string UniqueName => "eventgrid";
     public string Name => "Event Grid";
     public IReadOnlyCollection<IEndpointDefinition> Endpoints { get; } = [
-        new CreateOrUpdateEventGridNamespaceEndpoint(eventPipeline, logger)
+        new CreateOrUpdateEventGridNamespaceEndpoint(eventPipeline, logger),
+        new GetEventGridNamespaceEndpoint(eventPipeline, logger),
+        new DeleteEventGridNamespaceEndpoint(eventPipeline, logger),
+        new UpdateEventGridNamespaceEndpoint(eventPipeline, logger)
     ];
 }

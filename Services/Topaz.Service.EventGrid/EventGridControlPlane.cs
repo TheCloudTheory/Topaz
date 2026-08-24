@@ -100,4 +100,42 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
                 OperationResult.NotFound, null, "Event Grid namespace not found", "ResourceNotFound")
             : new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.Success, resource);
     }
+
+    public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName)
+    {
+        var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
+        if (resource.Resource == null)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound, resource.Reason, resource.Code);
+        }
+
+        _provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, softDelete: false);
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<EventGridNamespaceResource> Update(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName, EventGridNamespaceResource request)
+    {
+        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroup.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<EventGridNamespaceResource>(
+                OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
+        }
+        
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
+        if (existing.Resource == null)
+        {
+            return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.NotFound, null,
+                existing.Reason, existing.Code);
+        }
+        
+        existing.Resource.UpdateFromRequest(request);
+        
+        _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, existing.Resource, createOperation: true);
+        
+        return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.Updated, existing.Resource);
+    }
 }
