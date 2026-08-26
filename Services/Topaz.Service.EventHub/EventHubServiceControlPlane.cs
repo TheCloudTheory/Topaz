@@ -36,7 +36,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             CreateOrUpdateNetworkRuleSet(subscriptionIdentifier, resourceGroupIdentifier, @namespace, "default",
                 EventHubNetworkRuleSetSubresourceProperties.Default());
 
-            return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Created, resource, null, null);
+            return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Created, resource);
         }
 
         properties.UpdatedAt = DateTime.UtcNow;
@@ -44,7 +44,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, existingNamespace);
         EnsureDefaultNetworkRuleSet(subscriptionIdentifier, resourceGroupIdentifier, @namespace);
 
-        return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Updated, existingNamespace, null, null);
+        return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Updated, existingNamespace);
     }
 
     public ControlPlaneOperationResult<EventHubNamespaceResource> GetNamespace(
@@ -56,8 +56,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             ? new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.NotFound, null,
                 string.Format(EventHubNamespaceNotFoundMessageTemplate, namespaceIdentifier),
                 EventHubNamespaceNotFoundCode)
-            : new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Success, existingNamespace,
-                null, null);
+            : new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Success, existingNamespace);
     }
 
     public ControlPlaneOperationResult<EventHubResource> GetEventHub(
@@ -70,7 +69,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         return existingHub == null
             ? new ControlPlaneOperationResult<EventHubResource>(OperationResult.NotFound, null,
                 string.Format(EventHubNotFoundMessageTemplate, hubName), EventHubNotFoundCode)
-            : new ControlPlaneOperationResult<EventHubResource>(OperationResult.Success, existingHub, null, null);
+            : new ControlPlaneOperationResult<EventHubResource>(OperationResult.Success, existingHub);
     }
 
     public ControlPlaneOperationResult<EventHubResource[]> ListEventHubs(
@@ -91,7 +90,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         logger.LogDebug(nameof(EventHubServiceControlPlane), nameof(ListEventHubs),
             "Found {0} event hubs in namespace '{1}'.", hubs.Length, namespaceIdentifier);
 
-        return new ControlPlaneOperationResult<EventHubResource[]>(OperationResult.Success, hubs, null, null);
+        return new ControlPlaneOperationResult<EventHubResource[]>(OperationResult.Success, hubs);
     }
 
     public ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource> GetNetworkRuleSet(
@@ -113,13 +112,12 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         if (networkRuleSet != null)
         {
             return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(OperationResult.Success,
-                networkRuleSet, null, null);
+                networkRuleSet);
         }
 
         var created = CreateOrUpdateNetworkRuleSet(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier,
             networkRuleSetName, EventHubNetworkRuleSetSubresourceProperties.Default());
-        return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(created.Result, created.Resource,
-            null, null);
+        return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(created.Result, created.Resource);
     }
 
     public ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource> CreateOrUpdateNetworkRuleSet(
@@ -139,7 +137,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
                 namespaceIdentifier.Value, nameof(Subresource.NetworkRuleSets).ToLowerInvariant(), resource);
 
             return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(OperationResult.Created,
-                resource, null, null);
+                resource);
         }
 
         var updated = new EventHubNetworkRuleSetSubresource(subscriptionIdentifier, resourceGroupIdentifier,
@@ -147,8 +145,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, networkRuleSetName,
             namespaceIdentifier.Value, nameof(Subresource.NetworkRuleSets).ToLowerInvariant(), updated);
 
-        return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(OperationResult.Updated, updated,
-            null, null);
+        return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(OperationResult.Updated, updated);
     }
 
     public ControlPlaneOperationResult<EventHubResource> CreateOrUpdateEventHub(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
@@ -166,14 +163,14 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, hubName,
                 @namespace.Value, nameof(Subresource.Hubs).ToLowerInvariant(), resource);
             
-            return new ControlPlaneOperationResult<EventHubResource>(OperationResult.Created, resource, null, null);
+            return new ControlPlaneOperationResult<EventHubResource>(OperationResult.Created, resource);
         }
         
         existingHub.UpdateProperties(properties);
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, hubName,
             @namespace.Value, nameof(Subresource.Hubs).ToLowerInvariant(), existingHub);
 
-        return new ControlPlaneOperationResult<EventHubResource>(OperationResult.Updated, existingHub, null, null);
+        return new ControlPlaneOperationResult<EventHubResource>(OperationResult.Updated, existingHub);
     }
 
     public ControlPlaneOperationResult<EventHubNamespaceResource> Delete(
@@ -195,7 +192,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
 
         provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, name, namespaceName.Value,
             nameof(Subresource.Hubs).ToLowerInvariant());
-        return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Deleted, null, null, null);
+        return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Deleted, null);
     }
     
     public ControlPlaneOperationResult<EventHubNamespaceResource> DeleteNamespace(
@@ -212,7 +209,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         }
 
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, namespaceName.Value);
-        return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Deleted, null, null, null);
+        return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Deleted, null);
     }
 
     public OperationResult Deploy(GenericResource resource)
@@ -236,7 +233,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         logger.LogDebug(nameof(EventHubServiceControlPlane), nameof(ListNamespacesBySubscription),
             "Found {0} namespaces in subscription {1}.", resources.Length, subscriptionIdentifier);
 
-        return new ControlPlaneOperationResult<EventHubNamespaceResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<EventHubNamespaceResource[]>(OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<EventHubNamespaceResource[]> ListNamespaces(
@@ -250,7 +247,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         logger.LogDebug(nameof(EventHubServiceControlPlane), nameof(ListNamespaces),
             "Found {0} namespaces.", resources.Length);
 
-        return new ControlPlaneOperationResult<EventHubNamespaceResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<EventHubNamespaceResource[]>(OperationResult.Success, resources);
     }
 
     private OperationResult DeployEventHub(GenericResource resource)
