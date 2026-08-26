@@ -1,6 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.EventGrid.Models;
+using Topaz.Service.EventGrid.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -11,6 +12,8 @@ namespace Topaz.Service.EventGrid;
 
 internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger logger) : IControlPlane
 {
+    private static readonly string SharedAccessKeySubresource = nameof(Subresource.SharedAccessKeys).ToLowerInvariant();
+    
     public static EventGridControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(eventPipeline, logger);
 
     private readonly EventGridResourceProvider _provider = new(logger);
@@ -192,5 +195,32 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
         }
 
         return new ControlPlaneOperationResult<EventGridNamespaceResource[]>(OperationResult.Success, [.. resources]);
+    }
+
+    public ControlPlaneOperationResult<NamespaceSharedAccessKey[]> RegenerateKey(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string name, RegenerateNamespaceKeyRequest request)
+    {
+        var validation = request.Validate<RegenerateNamespaceKeyRequest>();
+        if (!validation.IsValid)
+        {
+            return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.BadRequest, null, validation.Error,
+                "BadRequest");
+        }
+
+        var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+        if (resource.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.NotFound, null,
+                resource.Reason, resource.Code);
+        }
+
+        var key = NamespaceSharedAccessKey.Generate(request.KeyName!);
+        _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, name, key.KeyName!,
+            SharedAccessKeySubresource, key);
+
+        var keys = _provider.ListSubresourcesAs<NamespaceSharedAccessKey>(subscriptionIdentifier,
+            resourceGroupIdentifier, name, SharedAccessKeySubresource);
+        
+        return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.Success, keys);
     }
 }

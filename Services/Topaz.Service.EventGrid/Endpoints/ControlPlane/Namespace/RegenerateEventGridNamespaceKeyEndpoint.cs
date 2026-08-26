@@ -3,6 +3,8 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.EventGrid.Models;
+using Topaz.Service.EventGrid.Models.Requests;
+using Topaz.Service.EventGrid.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -10,21 +12,21 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespace;
 
-internal sealed class CreateOrUpdateEventGridNamespaceEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class RegenerateEventGridNamespaceKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly EventGridControlPlane _controlPlane =
         EventGridControlPlane.New(eventPipeline, logger);
     
     public string[] Endpoints =>
     [
-        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}"
+        "POST subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}/regenerateKey"
     ];
 
-    public string[] Permissions => ["Microsoft.EventGrid/namespaces/write"];
+    public string[] Permissions => ["Microsoft.EventGrid/namespaces/regenerateKey/action"];
     public string ProviderNamespace => "Microsoft.EventGrid";
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
-
+    
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
@@ -36,24 +38,22 @@ internal sealed class CreateOrUpdateEventGridNamespaceEndpoint(Pipeline eventPip
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
-
+        
         using var reader = new StreamReader(context.Request.Body);
-        var request =
-            JsonSerializer.Deserialize<EventGridNamespaceResource>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+        var request = JsonSerializer.Deserialize<RegenerateNamespaceKeyRequest>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
         if (request == null)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, request);
-        if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
+        var result = _controlPlane.RegenerateKey(subscriptionIdentifier, resourceGroupIdentifier, name, request);
+        if (result.Result != OperationResult.Success || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
             return;
         }
-
-        response.CreateJsonContentResponse(result.Resource,
-            result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK);
+        
+        response.CreateJsonContentResponse(ListNamespaceKeysResponse.From(result.Resource));
     }
 }

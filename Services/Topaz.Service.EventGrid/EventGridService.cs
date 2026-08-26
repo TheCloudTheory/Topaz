@@ -10,7 +10,7 @@ public sealed class EventGridService(Pipeline eventPipeline, ITopazLogger logger
 {
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".event-grid");
-    public static IReadOnlyCollection<string>? Subresources { get; } = [];
+    public static IReadOnlyCollection<string>? Subresources { get; } = [nameof(Subresource.SharedAccessKeys).ToLowerInvariant()];
     public static string UniqueName => "eventgrid";
     public string Name => "Event Grid";
     public IReadOnlyCollection<IEndpointDefinition> Endpoints { get; } = [
