@@ -59,7 +59,7 @@ internal sealed class AppServiceSiteControlPlane(
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, siteName, resource, isCreate);
 
         return new ControlPlaneOperationResult<AppServiceSiteResource>(
-            isCreate ? OperationResult.Created : OperationResult.Updated, resource, null, null);
+            isCreate ? OperationResult.Created : OperationResult.Updated, resource);
     }
 
     public ControlPlaneOperationResult<AppServiceSiteResource> Get(
@@ -71,7 +71,7 @@ internal sealed class AppServiceSiteControlPlane(
         return resource == null
             ? new ControlPlaneOperationResult<AppServiceSiteResource>(OperationResult.NotFound, null,
                 string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
-            : new ControlPlaneOperationResult<AppServiceSiteResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<AppServiceSiteResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<AppServiceSiteConfigResource> GetSiteConfig(
@@ -84,7 +84,7 @@ internal sealed class AppServiceSiteControlPlane(
             ? new ControlPlaneOperationResult<AppServiceSiteConfigResource>(OperationResult.NotFound, null,
                 string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
             : new ControlPlaneOperationResult<AppServiceSiteConfigResource>(OperationResult.Success,
-                AppServiceSiteConfigResource.FromSite(resource), null, null);
+                AppServiceSiteConfigResource.FromSite(resource));
     }
     
     public ControlPlaneOperationResult<AppServiceSiteConfigResource> GetSiteConfig(string siteName)
@@ -92,7 +92,7 @@ internal sealed class AppServiceSiteControlPlane(
         var dnsEntry = GlobalDnsEntries.GetEntry(AppServiceSiteService.UniqueName, siteName);
         if (dnsEntry == null)
             return new ControlPlaneOperationResult<AppServiceSiteConfigResource>(
-                OperationResult.NotFound, null, null, null);
+                OperationResult.NotFound, null);
 
         var existingSubId = SubscriptionIdentifier.From(dnsEntry.Value.subscription);
         var existingRgId = dnsEntry.Value.resourceGroup != null
@@ -101,14 +101,14 @@ internal sealed class AppServiceSiteControlPlane(
 
         if (existingRgId == null)
             return new ControlPlaneOperationResult<AppServiceSiteConfigResource>(
-                OperationResult.NotFound, null, null, null);
+                OperationResult.NotFound, null);
         
         var resource = GetSiteConfig(existingSubId, existingRgId, siteName);
         return resource.Resource == null
             ? new ControlPlaneOperationResult<AppServiceSiteConfigResource>(OperationResult.NotFound, null,
                 string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
             : new ControlPlaneOperationResult<AppServiceSiteConfigResource>(OperationResult.Success,
-                resource.Resource, null, null);
+                resource.Resource);
     }
 
     public OperationResult Delete(
@@ -129,7 +129,7 @@ internal sealed class AppServiceSiteControlPlane(
     {
         var resources = provider.ListAs<AppServiceSiteResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
         return new ControlPlaneOperationResult<AppServiceSiteResource[]>(
-            OperationResult.Success, resources.ToArray(), null, null);
+            OperationResult.Success, resources.ToArray());
     }
 
     public ControlPlaneOperationResult<AppServiceSiteResource[]> ListBySubscription(
@@ -138,8 +138,7 @@ internal sealed class AppServiceSiteControlPlane(
         var resources = provider.ListAs<AppServiceSiteResource>(subscriptionIdentifier, null, null, 8);
         return new ControlPlaneOperationResult<AppServiceSiteResource[]>(
             OperationResult.Success,
-            resources.Where(r => r.IsInSubscription(subscriptionIdentifier)).ToArray(),
-            null, null);
+            resources.Where(r => r.IsInSubscription(subscriptionIdentifier)).ToArray());
     }
 
     public ControlPlaneOperationResult<CheckAppServiceSiteNameResponse> CheckNameAvailability(string siteName)
@@ -147,7 +146,7 @@ internal sealed class AppServiceSiteControlPlane(
         var dnsEntry = GlobalDnsEntries.GetEntry(AppServiceSiteService.UniqueName, siteName);
         if (dnsEntry == null)
             return new ControlPlaneOperationResult<CheckAppServiceSiteNameResponse>(
-                OperationResult.Success, new CheckAppServiceSiteNameResponse { NameAvailable = true }, null, null);
+                OperationResult.Success, new CheckAppServiceSiteNameResponse { NameAvailable = true });
 
         var existingSubId = SubscriptionIdentifier.From(dnsEntry.Value.subscription);
         var existingRgId = dnsEntry.Value.resourceGroup != null
@@ -156,12 +155,12 @@ internal sealed class AppServiceSiteControlPlane(
 
         if (existingRgId == null)
             return new ControlPlaneOperationResult<CheckAppServiceSiteNameResponse>(
-                OperationResult.Success, new CheckAppServiceSiteNameResponse { NameAvailable = true }, null, null);
+                OperationResult.Success, new CheckAppServiceSiteNameResponse { NameAvailable = true });
 
         var existing = provider.GetAs<AppServiceSiteResource>(existingSubId, existingRgId, siteName);
         if (existing == null)
             return new ControlPlaneOperationResult<CheckAppServiceSiteNameResponse>(
-                OperationResult.Success, new CheckAppServiceSiteNameResponse { NameAvailable = true }, null, null);
+                OperationResult.Success, new CheckAppServiceSiteNameResponse { NameAvailable = true });
 
         return new ControlPlaneOperationResult<CheckAppServiceSiteNameResponse>(
             OperationResult.Success,
@@ -170,8 +169,7 @@ internal sealed class AppServiceSiteControlPlane(
                 NameAvailable = false,
                 Reason = CheckAppServiceSiteNameResponse.NoAvailabilityReason.AlreadyExists,
                 Message = $"The name '{siteName}' is already in use."
-            },
-            null, null);
+            });
     }
 
     public OperationResult Deploy(GenericResource resource)
@@ -247,9 +245,9 @@ internal sealed class AppServiceSiteControlPlane(
             if (props.MinTlsVersion != null) siteConfig.MinTlsVersion = props.MinTlsVersion;
         }
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, siteName, resource, false);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, siteName, resource);
         return new ControlPlaneOperationResult<AppServiceSiteConfigResource>(
-            OperationResult.Updated, AppServiceSiteConfigResource.FromSite(resource), null, null);
+            OperationResult.Updated, AppServiceSiteConfigResource.FromSite(resource));
     }
 
     public ControlPlaneOperationResult<AppServiceAppSettingsConfigResource> UpdateAppSettings(
@@ -268,9 +266,9 @@ internal sealed class AppServiceSiteControlPlane(
             .Select(pair => new AppServiceNameValuePair { Name = pair.Key, Value = pair.Value })
             .ToArray();
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, siteName, resource, false);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, siteName, resource);
         return new ControlPlaneOperationResult<AppServiceAppSettingsConfigResource>(
-            OperationResult.Updated, AppServiceAppSettingsConfigResource.FromSite(resource), null, null);
+            OperationResult.Updated, AppServiceAppSettingsConfigResource.FromSite(resource));
     }
 
     public ControlPlaneOperationResult<AppServiceAppSettingsConfigResource> GetAppSettings(
@@ -283,7 +281,7 @@ internal sealed class AppServiceSiteControlPlane(
             ? new ControlPlaneOperationResult<AppServiceAppSettingsConfigResource>(OperationResult.NotFound, null,
                 string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
             : new ControlPlaneOperationResult<AppServiceAppSettingsConfigResource>(
-                OperationResult.Success, AppServiceAppSettingsConfigResource.FromSite(resource), null, null);
+                OperationResult.Success, AppServiceAppSettingsConfigResource.FromSite(resource));
     }
 
     public ControlPlaneOperationResult<AppServiceSlotConfigNamesResource> GetSlotConfigNames(
@@ -296,7 +294,7 @@ internal sealed class AppServiceSiteControlPlane(
             ? new ControlPlaneOperationResult<AppServiceSlotConfigNamesResource>(OperationResult.NotFound, null,
                 string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
             : new ControlPlaneOperationResult<AppServiceSlotConfigNamesResource>(
-                OperationResult.Success, AppServiceSlotConfigNamesResource.FromSite(resource), null, null);
+                OperationResult.Success, AppServiceSlotConfigNamesResource.FromSite(resource));
     }
 
     public ControlPlaneOperationResult<string> GetWebAppStacks()
@@ -306,7 +304,7 @@ internal sealed class AppServiceSiteControlPlane(
         using var stream = assembly.GetManifestResourceStream(resourceName)
                            ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' not found.");
         using var reader = new StreamReader(stream);
-        return new ControlPlaneOperationResult<string>(OperationResult.Success, reader.ReadToEnd(), null, null);
+        return new ControlPlaneOperationResult<string>(OperationResult.Success, reader.ReadToEnd());
     }
 
     public (SubscriptionIdentifier Sub, ResourceGroupIdentifier Rg, AppServiceSiteResource Site)? FindSiteByName(
@@ -340,7 +338,7 @@ internal sealed class AppServiceSiteControlPlane(
 
         var credentials = provider.ListSubresourcesAs<PublishingCredentialsResource>(subscriptionIdentifier,
             resourceGroupIdentifier, siteName, nameof(Subresource.PublishingCredentials).ToLowerInvariant());
-        return new ControlPlaneOperationResult<PublishingCredentialsResource[]>(OperationResult.Success, credentials, null, null);
+        return new ControlPlaneOperationResult<PublishingCredentialsResource[]>(OperationResult.Success, credentials);
     }
 
     public ControlPlaneOperationResult ValidateUsernameAndPassword(string siteName, string username, string password)
@@ -360,7 +358,7 @@ internal sealed class AppServiceSiteControlPlane(
 
         if (existingRgId == null)
             return new ControlPlaneOperationResult(
-                OperationResult.NotFound, null, null);
+                OperationResult.NotFound);
         
         var credentials = ListPublishingCredentials(existingSubId, existingRgId, siteName);
         if (credentials.Result == OperationResult.NotFound || credentials.Resource == null || credentials.Resource.Length == 0)
@@ -372,7 +370,7 @@ internal sealed class AppServiceSiteControlPlane(
         return credentials.Resource.Any(credential =>
             credential.Properties.PublishingUserName == username &&
             credential.Properties.PublishingPassword == password)
-            ? new ControlPlaneOperationResult(OperationResult.Success, null, null)
+            ? new ControlPlaneOperationResult(OperationResult.Success)
             : new ControlPlaneOperationResult(OperationResult.Failed, "Invalid username or password",
                 "InvalidUsernameOrPassword");
     }

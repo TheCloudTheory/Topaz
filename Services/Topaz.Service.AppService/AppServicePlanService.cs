@@ -1,4 +1,3 @@
-using Topaz.EventPipeline;
 using Topaz.Service.AppService.Endpoints.Plans;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -6,10 +5,8 @@ using Topaz.Shared;
 
 namespace Topaz.Service.AppService;
 
-public sealed class AppServicePlanService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
+public sealed class AppServicePlanService(ITopazLogger logger) : IServiceDefinition
 {
-    private readonly Pipeline _eventPipeline = eventPipeline;
-    private readonly ITopazLogger _logger = logger;
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-web-plans");
     public static IReadOnlyCollection<string>? Subresources => null;
@@ -18,11 +15,11 @@ public sealed class AppServicePlanService(Pipeline eventPipeline, ITopazLogger l
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new CreateOrUpdateAppServicePlanEndpoint(_logger),
-        new GetAppServicePlanEndpoint(_logger),
-        new DeleteAppServicePlanEndpoint(_logger),
-        new ListAppServicePlansByResourceGroupEndpoint(_logger),
-        new ListAppServicePlansBySubscriptionEndpoint(_logger),
-        new RestartAppServicePlanSitesEndpoint(_logger),
+        new CreateOrUpdateAppServicePlanEndpoint(logger),
+        new GetAppServicePlanEndpoint(logger),
+        new DeleteAppServicePlanEndpoint(logger),
+        new ListAppServicePlansByResourceGroupEndpoint(logger),
+        new ListAppServicePlansBySubscriptionEndpoint(logger),
+        new RestartAppServicePlanSitesEndpoint(logger),
     ];
 }

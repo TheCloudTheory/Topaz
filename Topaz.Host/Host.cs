@@ -137,7 +137,7 @@ public class Host
             new InsightsService(_eventPipeline, _logger),
             new EntraService(_eventPipeline, _logger),
             new ContainerRegistryService(_eventPipeline, _logger),
-            new AppServicePlanService(_eventPipeline, _logger),
+            new AppServicePlanService(_logger),
             new AppServiceSiteService(_logger),
             new AppServiceKuduService(_logger),
             new SqlService(_eventPipeline, _logger),

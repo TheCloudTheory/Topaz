@@ -54,7 +54,7 @@ internal sealed class AppServicePlanControlPlane(
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, planName, resource, isCreate);
 
         return new ControlPlaneOperationResult<AppServicePlanResource>(
-            isCreate ? OperationResult.Created : OperationResult.Updated, resource, null, null);
+            isCreate ? OperationResult.Created : OperationResult.Updated, resource);
     }
 
     public ControlPlaneOperationResult<AppServicePlanResource> Get(
@@ -66,7 +66,7 @@ internal sealed class AppServicePlanControlPlane(
         return resource == null
             ? new ControlPlaneOperationResult<AppServicePlanResource>(OperationResult.NotFound, null,
                 string.Format(NotFoundMessageTemplate, planName), NotFoundCode)
-            : new ControlPlaneOperationResult<AppServicePlanResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<AppServicePlanResource>(OperationResult.Success, resource);
     }
 
     public OperationResult Delete(
@@ -87,7 +87,7 @@ internal sealed class AppServicePlanControlPlane(
     {
         var resources = provider.ListAs<AppServicePlanResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
         return new ControlPlaneOperationResult<AppServicePlanResource[]>(
-            OperationResult.Success, resources.ToArray(), null, null);
+            OperationResult.Success, resources.ToArray());
     }
 
     public ControlPlaneOperationResult<AppServicePlanResource[]> ListBySubscription(
@@ -96,8 +96,7 @@ internal sealed class AppServicePlanControlPlane(
         var resources = provider.ListAs<AppServicePlanResource>(subscriptionIdentifier, null, null, 8);
         return new ControlPlaneOperationResult<AppServicePlanResource[]>(
             OperationResult.Success,
-            resources.Where(r => r.IsInSubscription(subscriptionIdentifier)).ToArray(),
-            null, null);
+            resources.Where(r => r.IsInSubscription(subscriptionIdentifier)).ToArray());
     }
 
     public OperationResult Deploy(GenericResource resource)
