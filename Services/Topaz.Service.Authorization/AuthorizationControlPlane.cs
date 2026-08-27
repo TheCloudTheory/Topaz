@@ -77,7 +77,7 @@ internal sealed class AuthorizationControlPlane(
 
         return new ControlPlaneOperationResult<RoleDefinitionResource?>(
             createOperation ? OperationResult.Created : OperationResult.Updated,
-            resource, null, null);
+            resource);
     }
 
     internal ControlPlaneOperationResult<RoleDefinitionResource> Get(SubscriptionIdentifier subscriptionIdentifier,
@@ -89,8 +89,7 @@ internal sealed class AuthorizationControlPlane(
             roleDefinitionProvider.GetAs<RoleDefinitionResource>(subscriptionIdentifier, null,
                 roleDefinitionIdentifier.Value);
         if (resource != null)
-            return new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.Success, resource, null,
-                null);
+            return new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.Success, resource);
 
         logger.LogDebug(nameof(AuthorizationControlPlane), nameof(Get),
             "Looking for role `{0}` in subscription `{1}` failed when looking for an exact match. Falling back to filtering using `roleName`.",
@@ -112,7 +111,7 @@ internal sealed class AuthorizationControlPlane(
             ? new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.NotFound, null,
                 string.Format(RoleDefinitionNotFoundMessageTemplate, roleDefinitionIdentifier),
                 RoleDefinitionNotFoundMessageCode)
-            : new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.Success, resource);
     }
 
     internal ControlPlaneOperationResult<RoleDefinitionResource> GetBuiltInRoleById(
@@ -126,7 +125,7 @@ internal sealed class AuthorizationControlPlane(
             ? new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.NotFound, null,
                 string.Format(RoleDefinitionNotFoundMessageTemplate, roleDefinitionIdentifier),
                 RoleDefinitionNotFoundMessageCode)
-            : new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<RoleDefinitionResource?> Delete(SubscriptionIdentifier subscriptionIdentifier,
@@ -144,7 +143,7 @@ internal sealed class AuthorizationControlPlane(
 
         roleDefinitionProvider.Delete(subscriptionIdentifier, null, roleDefinitionIdentifier.Value);
 
-        return new ControlPlaneOperationResult<RoleDefinitionResource?>(OperationResult.Success, resource, null, null);
+        return new ControlPlaneOperationResult<RoleDefinitionResource?>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<RoleAssignmentResource?> Delete(SubscriptionIdentifier subscriptionIdentifier,
@@ -161,7 +160,7 @@ internal sealed class AuthorizationControlPlane(
 
         roleAssignmentResourceProvider.Delete(subscriptionIdentifier, null, roleAssignmentName.Value.ToString());
 
-        return new ControlPlaneOperationResult<RoleAssignmentResource?>(OperationResult.Success, resource, null, null);
+        return new ControlPlaneOperationResult<RoleAssignmentResource?>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<RoleAssignmentResource?> CreateOrUpdateRoleAssignment(
@@ -199,7 +198,7 @@ internal sealed class AuthorizationControlPlane(
 
         return new ControlPlaneOperationResult<RoleAssignmentResource?>(
             createOperation ? OperationResult.Created : OperationResult.Updated,
-            resource, null, null);
+            resource);
     }
 
     public ControlPlaneOperationResult<RoleAssignmentResource?> CreateRoleAssignment(
@@ -238,7 +237,7 @@ internal sealed class AuthorizationControlPlane(
 
         return new ControlPlaneOperationResult<RoleAssignmentResource?>(
             OperationResult.Created,
-            resource, null, null);
+            resource);
     }
 
     internal ControlPlaneOperationResult<RoleAssignmentResource> Get(SubscriptionIdentifier subscriptionIdentifier,
@@ -250,7 +249,7 @@ internal sealed class AuthorizationControlPlane(
             ? new ControlPlaneOperationResult<RoleAssignmentResource>(OperationResult.NotFound, null,
                 string.Format(RoleDefinitionNotFoundMessageTemplate, roleAssignmentName),
                 RoleDefinitionNotFoundMessageCode)
-            : new ControlPlaneOperationResult<RoleAssignmentResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<RoleAssignmentResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<RoleDefinitionResource[]> ListRoleDefinitionsBySubscription(
@@ -273,7 +272,7 @@ internal sealed class AuthorizationControlPlane(
         }
 
         return new ControlPlaneOperationResult<RoleDefinitionResource[]>(OperationResult.Success,
-            filteredResources.ToArray(), null, null);
+            filteredResources.ToArray());
     }
 
     public ControlPlaneOperationResult<RoleAssignmentResource[]> ListRoleAssignmentsBySubscription(
@@ -284,7 +283,7 @@ internal sealed class AuthorizationControlPlane(
         var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
 
         return new ControlPlaneOperationResult<RoleAssignmentResource[]>(OperationResult.Success,
-            filteredResources.ToArray(), null, null);
+            filteredResources.ToArray());
     }
 
     public ControlPlaneOperationResult<RoleAssignmentResource[]> ListSubscriptionRoleAssignmentsByEntraObject(
@@ -296,7 +295,7 @@ internal sealed class AuthorizationControlPlane(
             resource.IsInSubscription(subscriptionIdentifier) && resource.Properties.PrincipalId == objectId);
 
         return new ControlPlaneOperationResult<RoleAssignmentResource[]>(OperationResult.Success,
-            filteredResources.ToArray(), null, null);
+            filteredResources.ToArray());
     }
 
     public ControlPlaneOperationResult<RoleAssignmentResource?> CreateManagementGroupRoleAssignment(
@@ -309,7 +308,7 @@ internal sealed class AuthorizationControlPlane(
         var resource = new RoleAssignmentResource(managementGroupId, roleAssignmentName.Value.ToString(), properties);
         mgRoleAssignmentProvider.CreateOrUpdate(managementGroupId, roleAssignmentName.Value.ToString(), resource);
 
-        return new ControlPlaneOperationResult<RoleAssignmentResource?>(OperationResult.Created, resource, null, null);
+        return new ControlPlaneOperationResult<RoleAssignmentResource?>(OperationResult.Created, resource);
     }
 
     public RoleAssignmentResource[] ListManagementGroupRoleAssignmentsByEntraObject(

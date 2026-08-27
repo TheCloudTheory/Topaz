@@ -47,7 +47,7 @@ public sealed class RoleAssignmentService(Pipeline eventPipeline, ITopazLogger l
                     {
                         PrincipalId = Globals.GlobalAdminId,
                         RoleDefinitionId = "8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
-                        Scope = $"/subscriptions/{data!.SubscriptionId}"
+                        Scope = $"/subscriptions/{data.SubscriptionId}"
                     }
                 }));
     }

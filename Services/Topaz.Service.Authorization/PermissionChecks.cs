@@ -9,7 +9,7 @@ internal static class PermissionChecks
         IEnumerable<RoleDefinition.Permission>? grantedPermissions,
         IEnumerable<string> requiredPermissions)
     {
-        var required = requiredPermissions?.ToArray() ?? Array.Empty<string>();
+        var required = requiredPermissions.ToArray();
 
         return (from block in grantedPermissions ?? []
             let actions = (block.Actions ?? Enumerable.Empty<string>())

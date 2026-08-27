@@ -13,7 +13,7 @@ public abstract class DataPlaneAuthorizationChecker(Pipeline eventPipeline, ITop
     /// Returns true when the caller's JWT identifies a principal that holds one of
     /// <paramref name="requiredPermissions"/> in the given subscription.
     /// </summary>
-    public virtual bool IsAuthorizedForBearer(
+    public bool IsAuthorizedForBearer(
         SubscriptionIdentifier subscriptionIdentifier,
         string[] requiredPermissions,
         string authHeader)

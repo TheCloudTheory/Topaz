@@ -14,8 +14,4 @@ public sealed class ResourceAuthorizationService : IServiceDefinition
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new ResourceAuthorizationEndpoint()
     ];
-
-    public void Bootstrap()
-    {
-    }
 }
