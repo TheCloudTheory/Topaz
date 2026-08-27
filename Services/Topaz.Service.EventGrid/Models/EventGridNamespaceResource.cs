@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using Azure.ResourceManager.Resources;
 using JetBrains.Annotations;
 using Topaz.ResourceManager;
