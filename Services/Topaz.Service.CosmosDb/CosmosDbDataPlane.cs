@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
 using Topaz.Dns;
@@ -30,7 +29,8 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     DataPlaneOperationResult<SqlDatabaseInnerResource[]> ICosmosDbDataPlane.ListDatabases(CosmosDbAccountContext ctx) => ListDatabases(ctx);
     DataPlaneOperationResult<SqlContainerInnerResource[]> ICosmosDbDataPlane.ListCollections(CosmosDbAccountContext ctx, string databaseName) => ListCollections(ctx, databaseName);
     DataPlaneOperationResult<JsonObject[]> ICosmosDbDataPlane.ListDocuments(CosmosDbAccountContext ctx, string databaseName, string collectionName) => ListDocuments(ctx, databaseName, collectionName);
-    DataPlaneOperationResult ICosmosDbDataPlane.DeleteDocument(CosmosDbAccountContext ctx, string databaseName, string collectionName, string docId, string partitionKeyHeader, string? ifMatchEtag) => DeleteDocument(ctx, databaseName, collectionName, docId, partitionKeyHeader, ifMatchEtag);
+    void ICosmosDbDataPlane.DeleteDocument(CosmosDbAccountContext ctx, string databaseName, string collectionName,
+        string docId, string partitionKeyHeader, string? ifMatchEtag) => DeleteDocument(ctx, databaseName, collectionName, docId, partitionKeyHeader, ifMatchEtag);
 
     /// <summary>
     /// Resolves the Cosmos DB account associated with the incoming request.
@@ -96,13 +96,13 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         {
             SqlDatabaseResourceProperties.UpdateFromRequest(existing.Properties, request);
             provider.CreateOrUpdateSubresource(sub, rg, databaseName, account.Name, SqlDatabasesSubresource, existing);
-            return new DataPlaneOperationResult<SqlDatabaseInnerResource>(OperationResult.Updated, existing.Properties.Resource, null, null);
+            return new DataPlaneOperationResult<SqlDatabaseInnerResource>(OperationResult.Updated, existing.Properties.Resource);
         }
 
         var props = SqlDatabaseResourceProperties.FromRequest(databaseName, request);
         var resource = new SqlDatabaseResource(sub, rg, account.Name, databaseName, props);
         provider.CreateOrUpdateSubresource(sub, rg, databaseName, account.Name, SqlDatabasesSubresource, resource);
-        return new DataPlaneOperationResult<SqlDatabaseInnerResource>(OperationResult.Created, props.Resource, null, null);
+        return new DataPlaneOperationResult<SqlDatabaseInnerResource>(OperationResult.Created, props.Resource);
     }
 
     /// <summary>Returns the inner resource for a named SQL database, or NotFound if not found.</summary>
@@ -115,7 +115,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         var database = provider.GetSubresourceAs<SqlDatabaseResource>(sub, rg, databaseName, account.Name, SqlDatabasesSubresource);
         return database == null
             ? new DataPlaneOperationResult<SqlDatabaseInnerResource>(OperationResult.NotFound, null, $"Database '{databaseName}' not found.", "DatabaseNotFound")
-            : new DataPlaneOperationResult<SqlDatabaseInnerResource>(OperationResult.Success, database.Properties.Resource, null, null);
+            : new DataPlaneOperationResult<SqlDatabaseInnerResource>(OperationResult.Success, database.Properties.Resource);
     }
 
     /// <summary>Deletes a named SQL database.</summary>
@@ -129,14 +129,15 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         if (database == null) return new DataPlaneOperationResult(OperationResult.NotFound, $"Database '{databaseName}' not found.", "DatabaseNotFound");
 
         provider.DeleteSubresource(sub, rg, databaseName, account.Name, SqlDatabasesSubresource);
-        return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
+        return new DataPlaneOperationResult(OperationResult.Deleted);
     }
 
     /// <summary>Lists all SQL databases for the account resolved from the request host.</summary>
     internal DataPlaneOperationResult<SqlDatabaseInnerResource[]> ListDatabases(CosmosDbAccountContext ctx)
     {
         var databases = provider.ListSubresourcesAs<SqlDatabaseResource>(ctx.Sub, ctx.Rg, ctx.Account.Name, SqlDatabasesSubresource);
-        return new DataPlaneOperationResult<SqlDatabaseInnerResource[]>(OperationResult.Success, databases.Where(d => d.Properties?.Resource != null).Select(d => d.Properties.Resource).ToArray(), null, null);
+        return new DataPlaneOperationResult<SqlDatabaseInnerResource[]>(OperationResult.Success,
+            [.. databases.Select(d => d.Properties.Resource)]);
     }
 
     /// <summary>
@@ -193,7 +194,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
             ConsistencyPolicy = props.ConsistencyPolicy ?? new ConsistencyPolicySettings(),
             DocumentEndpoint = props.DocumentEndpoint ?? string.Empty
         };
-        return new DataPlaneOperationResult<AccountPropertiesResponse>(OperationResult.Success, body, null, null);
+        return new DataPlaneOperationResult<AccountPropertiesResponse>(OperationResult.Success, body);
     }
 
     /// <summary>Creates a new collection and returns its inner resource representation. Returns <c>Updated</c> (→ 409) when the collection already exists.</summary>
@@ -211,7 +212,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         var parentId = SqlContainerParentId(account.Name, databaseName);
         var existing = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
         if (existing != null)
-            return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.Updated, existing.Properties.Resource, null, null);
+            return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.Updated, existing.Properties.Resource);
 
         var request = new CreateOrUpdateSqlContainerRequest
         {
@@ -232,7 +233,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         var properties = SqlContainerResourceProperties.FromRequest(collectionName, request);
         var resource = new SqlContainerResource(sub, rg, account.Name, databaseName, collectionName, properties);
         provider.CreateOrUpdateSubresource(sub, rg, collectionName, parentId, SqlContainersSubresource, resource);
-        return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.Created, properties.Resource, null, null);
+        return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.Created, properties.Resource);
     }
 
     /// <summary>Returns the inner resource for a named collection, or NotFound if not found.</summary>
@@ -246,7 +247,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
         return container == null
             ? new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.NotFound, null, $"Collection '{collectionName}' not found.", "CollectionNotFound")
-            : new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.Success, container.Properties.Resource, null, null);
+            : new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.Success, container.Properties.Resource);
     }
 
     /// <summary>Deletes a named collection.</summary>
@@ -261,7 +262,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         if (container == null) return new DataPlaneOperationResult(OperationResult.NotFound, $"Collection '{collectionName}' not found.", "CollectionNotFound");
 
         provider.DeleteSubresource(sub, rg, collectionName, parentId, SqlContainersSubresource);
-        return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
+        return new DataPlaneOperationResult(OperationResult.Deleted);
     }
 
     /// <summary>Replaces an existing collection's indexing policy and TTL. Returns NotFound if the collection does not exist.</summary>
@@ -283,7 +284,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         existing.Properties.Resource.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         provider.CreateOrUpdateSubresource(sub, rg, collectionName, parentId, SqlContainersSubresource, existing);
-        return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.Updated, existing.Properties.Resource, null, null);
+        return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.Updated, existing.Properties.Resource);
     }
 
     /// <summary>
@@ -303,7 +304,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         if (ctx == null) return null;
         var (account, sub, rg) = ctx;
 
-        byte[]? segmentBytes = null;
+        byte[]? segmentBytes;
         try { segmentBytes = Convert.FromBase64String(ridSegment); }
         catch (FormatException ex)
         {
@@ -349,7 +350,8 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
 
         var parentId = SqlContainerParentId(ctx.Account.Name, databaseName);
         var containers = provider.ListSubresourcesAs<SqlContainerResource>(ctx.Sub, ctx.Rg, parentId, SqlContainersSubresource);
-        return new DataPlaneOperationResult<SqlContainerInnerResource[]>(OperationResult.Success, containers.Where(c => c.Properties?.Resource != null).Select(c => c.Properties.Resource).ToArray(), null, null);
+        return new DataPlaneOperationResult<SqlContainerInnerResource[]>(OperationResult.Success,
+            [.. containers.Where(c => c.Properties?.Resource != null).Select(c => c.Properties.Resource)]);
     }
 
     private static string DocFileName(string docId) =>
@@ -358,7 +360,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     private static string? ExtractPartitionKeyValue(JsonObject doc, SqlContainerInnerResource container)
     {
         // PartitionKey.Paths is e.g. ["/pk"]; we only look at the first path for v1.7
-        var path = container.PartitionKey?.Paths?.FirstOrDefault();
+        var path = container.PartitionKey?.Paths.FirstOrDefault();
         if (string.IsNullOrEmpty(path)) return null;
 
         var field = path.TrimStart('/');
@@ -412,7 +414,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         var doc = DocumentItemResource.Create(body, databaseName, collectionName);
         File.WriteAllText(filePath, doc.ToJsonString());
 
-        return new DataPlaneOperationResult<JsonObject>(OperationResult.Created, doc, null, null);
+        return new DataPlaneOperationResult<JsonObject>(OperationResult.Created, doc);
     }
 
     /// <summary>Reads a single document by id. Validates the partition key header.</summary>
@@ -441,7 +443,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
             return new DataPlaneOperationResult<JsonObject>(OperationResult.BadRequest, null,
                 "The partition key value in the request header does not match the stored document.", "BadRequest");
 
-        return new DataPlaneOperationResult<JsonObject>(OperationResult.Success, doc, null, null);
+        return new DataPlaneOperationResult<JsonObject>(OperationResult.Success, doc);
     }
 
     /// <summary>Fully replaces a document. Respects <c>If-Match</c> ETag.</summary>
@@ -476,7 +478,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         DocumentItemResource.RefreshSystemFields(doc);
 
         File.WriteAllText(filePath, doc.ToJsonString());
-        return new DataPlaneOperationResult<JsonObject>(OperationResult.Updated, doc, null, null);
+        return new DataPlaneOperationResult<JsonObject>(OperationResult.Updated, doc);
     }
 
     /// <summary>Applies Cosmos DB patch operations to a document. Respects <c>If-Match</c> ETag.</summary>
@@ -534,7 +536,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
 
         DocumentItemResource.RefreshSystemFields(doc);
         File.WriteAllText(filePath, doc.ToJsonString());
-        return new DataPlaneOperationResult<JsonObject>(OperationResult.Updated, doc, null, null);
+        return new DataPlaneOperationResult<JsonObject>(OperationResult.Updated, doc);
     }
 
     /// <summary>Deletes a document. Validates the partition key header and respects <c>If-Match</c>.</summary>
@@ -572,7 +574,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         }
 
         File.Delete(filePath);
-        return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
+        return new DataPlaneOperationResult(OperationResult.Deleted);
     }
 
     /// <summary>
@@ -647,7 +649,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         };
 
         return new DataPlaneOperationResult<QueryDocumentsResponse>(
-            OperationResult.Success, response, null, null);
+            OperationResult.Success, response);
     }
 
     /// <summary>Lists all documents in a collection (full scan, no pagination).</summary>
@@ -678,6 +680,6 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
             .Select(d => d!)
             .ToArray();
 
-        return new DataPlaneOperationResult<JsonObject[]>(OperationResult.Success, docs, null, null);
+        return new DataPlaneOperationResult<JsonObject[]>(OperationResult.Success, docs);
     }
 }

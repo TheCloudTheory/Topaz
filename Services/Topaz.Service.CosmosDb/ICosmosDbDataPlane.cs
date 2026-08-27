@@ -10,5 +10,6 @@ internal interface ICosmosDbDataPlane
     DataPlaneOperationResult<SqlDatabaseInnerResource[]> ListDatabases(CosmosDbAccountContext ctx);
     DataPlaneOperationResult<SqlContainerInnerResource[]> ListCollections(CosmosDbAccountContext ctx, string databaseName);
     DataPlaneOperationResult<JsonObject[]> ListDocuments(CosmosDbAccountContext ctx, string databaseName, string collectionName);
-    DataPlaneOperationResult DeleteDocument(CosmosDbAccountContext ctx, string databaseName, string collectionName, string docId, string partitionKeyHeader, string? ifMatchEtag);
+    void DeleteDocument(CosmosDbAccountContext ctx, string databaseName, string collectionName, string docId,
+        string partitionKeyHeader, string? ifMatchEtag);
 }

@@ -16,7 +16,7 @@ public sealed class CosmosDbService(Pipeline eventPipeline, ITopazLogger logger)
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-cosmos-db");
-    public static IReadOnlyCollection<string>? Subresources => ["sqldatabases", "sqlcontainers"];
+    public static IReadOnlyCollection<string> Subresources => ["sqldatabases", "sqlcontainers"];
     public static string UniqueName => "cosmos-db";
 
     public string Name => "Azure Cosmos DB";

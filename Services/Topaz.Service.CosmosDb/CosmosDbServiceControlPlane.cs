@@ -72,7 +72,7 @@ internal sealed class CosmosDbServiceControlPlane(
                 null,
                 string.Format(DatabaseAccountNotFoundMessageTemplate, accountName),
                 DatabaseAccountNotFoundCode)
-            : new ControlPlaneOperationResult<DatabaseAccountResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<DatabaseAccountResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult<DatabaseAccountResource> CreateOrUpdate(
@@ -100,7 +100,7 @@ internal sealed class CosmosDbServiceControlPlane(
             DatabaseAccountResourceProperties.UpdateFromRequest(existing.Properties, request);
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, accountName, existing);
 
-            return new ControlPlaneOperationResult<DatabaseAccountResource>(OperationResult.Updated, existing, null, null);
+            return new ControlPlaneOperationResult<DatabaseAccountResource>(OperationResult.Updated, existing);
         }
 
         var location = new AzureLocation(request.Location ?? resourceGroupOperation.Resource!.Location!);
@@ -109,7 +109,7 @@ internal sealed class CosmosDbServiceControlPlane(
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, accountName, resource, createOperation: true);
 
-        return new ControlPlaneOperationResult<DatabaseAccountResource>(OperationResult.Created, resource, null, null);
+        return new ControlPlaneOperationResult<DatabaseAccountResource>(OperationResult.Created, resource);
     }
 
     public ControlPlaneOperationResult Delete(
@@ -141,7 +141,7 @@ internal sealed class CosmosDbServiceControlPlane(
             .Where(r => r.IsInSubscription(subscriptionIdentifier) && r.IsInResourceGroup(resourceGroupIdentifier))
             .ToArray();
 
-        return new ControlPlaneOperationResult<DatabaseAccountResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<DatabaseAccountResource[]>(OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<DatabaseAccountResource[]> ListBySubscription(
@@ -152,7 +152,7 @@ internal sealed class CosmosDbServiceControlPlane(
             .Where(r => r.IsInSubscription(subscriptionIdentifier))
             .ToArray();
 
-        return new ControlPlaneOperationResult<DatabaseAccountResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<DatabaseAccountResource[]>(OperationResult.Success, resources);
     }
 
     ControlPlaneOperationResult<DatabaseAccountResource[]> ICosmosDbControlPlane.ListBySubscription(SubscriptionIdentifier subscriptionIdentifier) =>
@@ -183,14 +183,14 @@ internal sealed class CosmosDbServiceControlPlane(
             SqlDatabaseResourceProperties.UpdateFromRequest(existing.Properties, request);
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, databaseName,
                 accountName, nameof(Subresource.SqlDatabases).ToLowerInvariant(), existing);
-            return new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Updated, existing, null, null);
+            return new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Updated, existing);
         }
 
         var properties = SqlDatabaseResourceProperties.FromRequest(databaseName, request);
         var resource = new SqlDatabaseResource(subscriptionIdentifier, resourceGroupIdentifier, accountName, databaseName, properties);
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, databaseName,
             accountName, nameof(Subresource.SqlDatabases).ToLowerInvariant(), resource);
-        return new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Created, resource, null, null);
+        return new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Created, resource);
     }
 
     public ControlPlaneOperationResult<SqlDatabaseResource> GetSqlDatabase(
@@ -208,7 +208,7 @@ internal sealed class CosmosDbServiceControlPlane(
                 OperationResult.NotFound, null,
                 $"SQL database '{databaseName}' could not be found under account '{accountName}'.",
                 "SqlDatabaseNotFound")
-            : new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Success, database, null, null);
+            : new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Success, database);
     }
 
     public ControlPlaneOperationResult DeleteSqlDatabase(
@@ -252,7 +252,7 @@ internal sealed class CosmosDbServiceControlPlane(
             subscriptionIdentifier, resourceGroupIdentifier, accountName,
             nameof(Subresource.SqlDatabases).ToLowerInvariant());
 
-        return new ControlPlaneOperationResult<SqlDatabaseResource[]>(OperationResult.Success, databases, null, null);
+        return new ControlPlaneOperationResult<SqlDatabaseResource[]>(OperationResult.Success, databases);
     }
 
     public ControlPlaneOperationResult<SqlDatabaseThroughputSettingsResponse> GetSqlDatabaseThroughput(
@@ -274,7 +274,7 @@ internal sealed class CosmosDbServiceControlPlane(
         }
 
         return new ControlPlaneOperationResult<SqlDatabaseThroughputSettingsResponse>(
-            OperationResult.Success, SqlDatabaseThroughputSettingsResponse.From(database), null, null);
+            OperationResult.Success, SqlDatabaseThroughputSettingsResponse.From(database));
     }
 
     public ControlPlaneOperationResult<SqlDatabaseThroughputSettingsResponse> UpdateSqlDatabaseThroughput(
@@ -302,7 +302,7 @@ internal sealed class CosmosDbServiceControlPlane(
             accountName, nameof(Subresource.SqlDatabases).ToLowerInvariant(), database);
 
         return new ControlPlaneOperationResult<SqlDatabaseThroughputSettingsResponse>(
-            OperationResult.Success, SqlDatabaseThroughputSettingsResponse.From(database), null, null);
+            OperationResult.Success, SqlDatabaseThroughputSettingsResponse.From(database));
     }
 
     private static string SqlContainerParentId(string accountName, string databaseName) =>
@@ -335,14 +335,14 @@ internal sealed class CosmosDbServiceControlPlane(
             SqlContainerResourceProperties.UpdateFromRequest(existing.Properties, request);
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, containerName,
                 parentId, nameof(Subresource.SqlContainers).ToLowerInvariant(), existing);
-            return new ControlPlaneOperationResult<SqlContainerResource>(OperationResult.Updated, existing, null, null);
+            return new ControlPlaneOperationResult<SqlContainerResource>(OperationResult.Updated, existing);
         }
 
         var properties = SqlContainerResourceProperties.FromRequest(containerName, request);
         var resource = new SqlContainerResource(subscriptionIdentifier, resourceGroupIdentifier, accountName, databaseName, containerName, properties);
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, containerName,
             parentId, nameof(Subresource.SqlContainers).ToLowerInvariant(), resource);
-        return new ControlPlaneOperationResult<SqlContainerResource>(OperationResult.Created, resource, null, null);
+        return new ControlPlaneOperationResult<SqlContainerResource>(OperationResult.Created, resource);
     }
 
     public ControlPlaneOperationResult<SqlContainerResource> GetSqlContainer(
@@ -362,7 +362,7 @@ internal sealed class CosmosDbServiceControlPlane(
                 OperationResult.NotFound, null,
                 $"SQL container '{containerName}' could not be found under database '{databaseName}'.",
                 "SqlContainerNotFound")
-            : new ControlPlaneOperationResult<SqlContainerResource>(OperationResult.Success, container, null, null);
+            : new ControlPlaneOperationResult<SqlContainerResource>(OperationResult.Success, container);
     }
 
     public ControlPlaneOperationResult DeleteSqlContainer(
@@ -410,7 +410,7 @@ internal sealed class CosmosDbServiceControlPlane(
             subscriptionIdentifier, resourceGroupIdentifier, parentId,
             nameof(Subresource.SqlContainers).ToLowerInvariant());
 
-        return new ControlPlaneOperationResult<SqlContainerResource[]>(OperationResult.Success, containers, null, null);
+        return new ControlPlaneOperationResult<SqlContainerResource[]>(OperationResult.Success, containers);
     }
 
     public ControlPlaneOperationResult<SqlContainerThroughputSettingsResponse> GetSqlContainerThroughput(
@@ -434,7 +434,7 @@ internal sealed class CosmosDbServiceControlPlane(
         }
 
         return new ControlPlaneOperationResult<SqlContainerThroughputSettingsResponse>(
-            OperationResult.Success, SqlContainerThroughputSettingsResponse.From(container), null, null);
+            OperationResult.Success, SqlContainerThroughputSettingsResponse.From(container));
     }
 
     public ControlPlaneOperationResult<SqlContainerThroughputSettingsResponse> UpdateSqlContainerThroughput(
@@ -464,7 +464,7 @@ internal sealed class CosmosDbServiceControlPlane(
             parentId, nameof(Subresource.SqlContainers).ToLowerInvariant(), container);
 
         return new ControlPlaneOperationResult<SqlContainerThroughputSettingsResponse>(
-            OperationResult.Success, SqlContainerThroughputSettingsResponse.From(container), null, null);
+            OperationResult.Success, SqlContainerThroughputSettingsResponse.From(container));
     }
 
     public DatabaseAccountNameAvailabilityResponse CheckNameAvailability(string accountName)
@@ -550,6 +550,6 @@ internal sealed class CosmosDbServiceControlPlane(
 
         var result = DatabaseAccountConnectionStringsResponse.FromKeys(endpoint, primaryKey, secondaryKey, primaryRoKey, secondaryRoKey);
 
-        return new ControlPlaneOperationResult<DatabaseAccountConnectionStringsResponse>(OperationResult.Success, result, null, null);
+        return new ControlPlaneOperationResult<DatabaseAccountConnectionStringsResponse>(OperationResult.Success, result);
     }
 }
