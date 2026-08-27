@@ -552,7 +552,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             return [];
         }
 
-        var metadataFiles = Directory.GetFiles(subresourcePath, "*.json", SearchOption.AllDirectories);
+        var metadataFiles = Directory.GetFiles(subresourcePath, "metadata.json", SearchOption.AllDirectories);
 
         return metadataFiles.Length == 0
             ? []
