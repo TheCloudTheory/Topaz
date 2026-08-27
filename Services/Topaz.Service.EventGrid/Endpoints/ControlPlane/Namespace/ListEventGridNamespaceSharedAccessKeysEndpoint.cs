@@ -9,7 +9,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespace;
 
-internal sealed class ListEventGridNamespaceBySubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class ListEventGridNamespaceSharedAccessKeysEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly EventGridControlPlane _controlPlane =
@@ -19,10 +19,10 @@ internal sealed class ListEventGridNamespaceBySubscriptionEndpoint(Pipeline even
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/providers/Microsoft.EventGrid/namespaces"
+        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}/listKeys"
     ];
 
-    public string[] Permissions => ["Microsoft.EventGrid/namespaces/read"];
+    public string[] Permissions => ["Microsoft.EventGrid/namespaces/listKeys/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -30,15 +30,16 @@ internal sealed class ListEventGridNamespaceBySubscriptionEndpoint(Pipeline even
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
-        _ = context.Request.QueryString.TryGetValueForKey("$top", out var topFilter);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
+        var name = context.Request.Path.Value.ExtractValueFromPath(8);
 
-        var result = _controlPlane.ListBySubscription(subscriptionIdentifier, topFilter);
+        var result = _controlPlane.ListKeys(subscriptionIdentifier, resourceGroupIdentifier, name!);
         if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
             return;
         }
 
-        response.CreateJsonContentResponse(NamespacesListResultResponse.From(result.Resource));
+        response.CreateJsonContentResponse(ListNamespaceKeysResponse.From(result.Resource));
     }
 }

@@ -98,6 +98,15 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
 
         _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, resource,
             createOperation: true);
+        
+        // Also generate and create shares access keys
+        var key1 = NamespaceSharedAccessKey.Generate("key1");
+        var key2 = NamespaceSharedAccessKey.Generate("key2");
+        
+        _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, key1.KeyName!, namespaceName,
+            SharedAccessKeySubresource, key1);
+        _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, key2.KeyName!, namespaceName,
+            SharedAccessKeySubresource, key2);
 
         return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.Created, resource);
     }
@@ -198,7 +207,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
     }
 
     public ControlPlaneOperationResult<NamespaceSharedAccessKey[]> RegenerateKey(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string name, RegenerateNamespaceKeyRequest request)
+        ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName, RegenerateNamespaceKeyRequest request)
     {
         var validation = request.Validate<RegenerateNamespaceKeyRequest>();
         if (!validation.IsValid)
@@ -207,7 +216,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
                 "BadRequest");
         }
 
-        var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+        var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
         if (resource.Result != OperationResult.Success)
         {
             return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.NotFound, null,
@@ -215,9 +224,25 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
         }
 
         var key = NamespaceSharedAccessKey.Generate(request.KeyName!);
-        _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, name, key.KeyName!,
+        _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, key.KeyName!, namespaceName,
             SharedAccessKeySubresource, key);
 
+        var keys = _provider.ListSubresourcesAs<NamespaceSharedAccessKey>(subscriptionIdentifier,
+            resourceGroupIdentifier, namespaceName, SharedAccessKeySubresource);
+        
+        return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.Success, keys);
+    }
+
+    public ControlPlaneOperationResult<NamespaceSharedAccessKey[]> ListKeys(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string name)
+    {
+        var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+        if (resource.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.NotFound, null,
+                resource.Reason, resource.Code);
+        }
+        
         var keys = _provider.ListSubresourcesAs<NamespaceSharedAccessKey>(subscriptionIdentifier,
             resourceGroupIdentifier, name, SharedAccessKeySubresource);
         

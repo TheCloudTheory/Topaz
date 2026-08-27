@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.EventGrid.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -39,6 +40,6 @@ internal sealed class ListEventGridNamespaceByResourceGroupEndpoint(Pipeline eve
             return;
         }
 
-        response.CreateJsonContentResponse(result.Resource);
+        response.CreateJsonContentResponse(NamespacesListResultResponse.From(result.Resource));
     }
 }

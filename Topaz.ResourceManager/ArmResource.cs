@@ -1,10 +1,11 @@
 using System.Text.Json;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.ResourceManager;
 
-public abstract class ArmResource<T>
+public abstract class ArmResource<T> : TopazApiModel
 {
     public abstract string Id { get; init; }
     public abstract string Name { get; init; }
@@ -36,10 +37,5 @@ public abstract class ArmResource<T>
     {
         var segments = Id.Split("/");
         return segments.Length > 4 && segments[4] == resourceGroupIdentifier.Value;
-    }
-
-    public override string ToString()
-    {
-        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
     }
 }

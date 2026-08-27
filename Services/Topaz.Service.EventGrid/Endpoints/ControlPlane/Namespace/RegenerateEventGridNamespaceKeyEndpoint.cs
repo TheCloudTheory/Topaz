@@ -19,7 +19,7 @@ internal sealed class RegenerateEventGridNamespaceKeyEndpoint(Pipeline eventPipe
     
     public string[] Endpoints =>
     [
-        "POST subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}/regenerateKey"
+        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}/regenerateKey"
     ];
 
     public string[] Permissions => ["Microsoft.EventGrid/namespaces/regenerateKey/action"];

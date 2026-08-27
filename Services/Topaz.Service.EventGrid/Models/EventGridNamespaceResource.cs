@@ -49,6 +49,7 @@ internal sealed class EventGridNamespaceResource : ArmResource<EventGridNamespac
     public void UpdateFromRequest(EventGridNamespaceResource request)
     {
         Sku = request.Sku ?? Sku;
+        Tags =  request.Tags ?? Tags;
         
         Properties.UpdateFromRequest(request.Properties);
     }
