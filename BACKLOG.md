@@ -682,3 +682,36 @@ TODO: Event Grid: $filter support
   milestone: v1.16
   labels: enhancement, event-grid
 -->
+
+### Event Grid — Namespace Topics
+
+<!--
+TODO: Event Grid: Namespace Topics CRUD
+  Implement ARM-level CRUD for Namespace Topics under Microsoft.EventGrid/namespaces:
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.EventGrid/namespaces/{namespace}/topics/{name}
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.EventGrid/namespaces/{namespace}/topics/{name}
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.EventGrid/namespaces/{namespace}/topics/{name}
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.EventGrid/namespaces/{namespace}/topics
+  Resource properties to persist: inputSchema (CloudEventSchemaV1_0), publisherType,
+  eventRetentionInDays, provisioningState (always Succeeded).
+  Prerequisite: Microsoft.EventGrid/namespaces namespace resource CRUD.
+  milestone: v1.16
+  labels: enhancement, event-grid
+-->
+
+<!--
+TODO: Event Grid: Namespace Topic Event Subscriptions (pull delivery)
+  Implement event subscriptions on namespace topics using the pull delivery model:
+  - PUT    .../topics/{name}/eventSubscriptions/{subName}
+  - GET    .../topics/{name}/eventSubscriptions/{subName}
+  - DELETE .../topics/{name}/eventSubscriptions/{subName}
+  - GET    .../topics/{name}/eventSubscriptions
+  Data-plane pull API on the namespace hostname (*.namespace.eventgrid.topaz.local.dev):
+  - POST /topics/{name}:publish — accepts CloudEvents JSON array; persists events per subscription.
+  - POST /topics/{name}/eventSubscriptions/{subName}:receive — returns up to maxEvents events with lockTokens.
+  - POST /topics/{name}/eventSubscriptions/{subName}:acknowledge — removes acknowledged events by lockToken.
+  - POST /topics/{name}/eventSubscriptions/{subName}:release — makes events available again.
+  - POST /topics/{name}/eventSubscriptions/{subName}:reject — dead-letters events by lockToken.
+  milestone: v1.16
+  labels: enhancement, event-grid
+-->
