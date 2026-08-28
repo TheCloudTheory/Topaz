@@ -7,7 +7,7 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespace;
+namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
 
 internal sealed class ListEventGridNamespaceSharedAccessKeysEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition

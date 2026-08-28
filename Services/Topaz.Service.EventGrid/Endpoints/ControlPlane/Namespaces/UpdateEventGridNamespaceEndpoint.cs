@@ -8,20 +8,23 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespace;
+namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
 
-internal sealed class CreateOrUpdateEventGridNamespaceEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class UpdateEventGridNamespaceEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : IEndpointDefinition
 {
     private readonly EventGridControlPlane _controlPlane =
         EventGridControlPlane.New(eventPipeline, logger);
-    
+
+    public string? ProviderNamespace => "Microsoft.EventGrid";
+
     public string[] Endpoints =>
     [
-        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}"
+        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}"
     ];
 
     public string[] Permissions => ["Microsoft.EventGrid/namespaces/write"];
-    public string ProviderNamespace => "Microsoft.EventGrid";
+
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
@@ -38,22 +41,26 @@ internal sealed class CreateOrUpdateEventGridNamespaceEndpoint(Pipeline eventPip
         }
 
         using var reader = new StreamReader(context.Request.Body);
-        var request =
-            JsonSerializer.Deserialize<EventGridNamespaceResource>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+        var request = JsonSerializer.Deserialize<EventGridNamespaceResource>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
         if (request == null)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, request);
-        if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
+        var result = _controlPlane.Update(subscriptionIdentifier, resourceGroupIdentifier, name, request);
+        if (result.Result == OperationResult.BadRequest)
+        {
+            response.CreateBadRequestResponse(result);
+            return;
+        }
+        
+        if (result.Result != OperationResult.Updated || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
             return;
         }
 
-        response.CreateJsonContentResponse(result.Resource,
-            result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK);
+        response.CreateJsonContentResponse(result.Resource);
     }
 }

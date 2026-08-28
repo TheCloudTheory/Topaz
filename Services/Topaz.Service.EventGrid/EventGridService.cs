@@ -1,5 +1,5 @@
 ﻿using Topaz.EventPipeline;
-using Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespace;
+using Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;

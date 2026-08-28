@@ -7,9 +7,9 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespace;
+namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
 
-internal sealed class ListEventGridNamespaceBySubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class ListEventGridNamespaceByResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly EventGridControlPlane _controlPlane =
@@ -19,7 +19,7 @@ internal sealed class ListEventGridNamespaceBySubscriptionEndpoint(Pipeline even
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/providers/Microsoft.EventGrid/namespaces"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces"
     ];
 
     public string[] Permissions => ["Microsoft.EventGrid/namespaces/read"];
@@ -30,9 +30,10 @@ internal sealed class ListEventGridNamespaceBySubscriptionEndpoint(Pipeline even
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         _ = context.Request.QueryString.TryGetValueForKey("$top", out var topFilter);
 
-        var result = _controlPlane.ListBySubscription(subscriptionIdentifier, topFilter);
+        var result = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier, topFilter);
         if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
