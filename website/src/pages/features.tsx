@@ -293,6 +293,14 @@ export default function FeaturesPage(): ReactNode {
             Topaz brings the full Azure resource and service model to your local machine —
             no cloud subscription, no network latency, no billing surprises.
           </p>
+          <div className={clsx(styles.ctaButtons, styles.heroCtaSpacing)}>
+            <Link className="button button--primary button--lg" to="/docs/intro/">
+              Get started →
+            </Link>
+            <Link className={clsx('button button--lg', styles.ctaGhButton)} href="https://github.com/TheCloudTheory/Topaz">
+              ★ Star on GitHub
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -415,10 +423,9 @@ export default function FeaturesPage(): ReactNode {
           </p>
           <div className={styles.ctaButtons}>
             <Link
-              className="button button--lg"
-              style={{background: 'white', color: '#1B63EB', fontWeight: 700}}
+              className="button button--primary button--lg"
               to="/docs/intro/">
-              Read the docs →
+              Get started →
             </Link>
             <Link
               className={clsx('button button--lg', styles.ctaGhButton)}
