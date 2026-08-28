@@ -13,7 +13,6 @@
 
     <ItemGroup>
       <Folder Include="Commands\ControlPlane\Namespace\" />
-      <Folder Include="Endpoints\ControlPlane\Topics\" />
     </ItemGroup>
 
 </Project>

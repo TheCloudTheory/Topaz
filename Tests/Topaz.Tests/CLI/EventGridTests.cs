@@ -175,4 +175,42 @@ public class EventGridTests
 
         Assert.That(code, Is.Zero);
     }
+
+    [Test]
+    public async Task EventGridTests_WhenNamespaceKeysAreListed_TheyShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "namespace",
+            "list-keys",
+            "--name",
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenNamespaceKeyIsRegenerated_ItShouldSucceed()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "namespace",
+            "regenerate-key",
+            "--name",
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
+            "--key-name",
+            "key1"
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
 }

@@ -18,6 +18,8 @@ public sealed class GenericEventGridCommand : IEmulatorCommand
                 @namespace.AddCommand<UpdateEventGridNamespaceCommand>("update");
                 @namespace.AddCommand<ListEventGridNamespaceByResourceGroupCommand>("list-resource-group");
                 @namespace.AddCommand<ListEventGridNamespaceBySubscriptionCommand>("list-subscription");
+                @namespace.AddCommand<ListEventGridNamespaceKeysCommand>("list-keys");
+                @namespace.AddCommand<RegenerateEventGridNamespaceKeyCommand>("regenerate-key");
             });
         });
     }
