@@ -39,14 +39,14 @@ internal sealed class CreateOrUpdateEventGridTopicEndpoint(Pipeline eventPipelin
 
         using var reader = new StreamReader(context.Request.Body);
         var request =
-            JsonSerializer.Deserialize<EventGridNamespaceResource>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+            JsonSerializer.Deserialize<EventGridTopicResource>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
         if (request == null)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, request);
+        var result = _controlPlane.CreateOrUpdateTopic(subscriptionIdentifier, resourceGroupIdentifier, name, request);
         if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);

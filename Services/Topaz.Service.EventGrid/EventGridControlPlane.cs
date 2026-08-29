@@ -41,7 +41,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
 
         try
         {
-            var result = CreateOrUpdate(@namespace.GetSubscription(), @namespace.GetResourceGroup(), @namespace.Name,
+            var result = CreateOrUpdateNamespace(@namespace.GetSubscription(), @namespace.GetResourceGroup(), @namespace.Name,
                 @namespace);
             return result.Result is OperationResult.Created or OperationResult.Updated
                 ? OperationResult.Success
@@ -54,7 +54,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
         }
     }
 
-    public ControlPlaneOperationResult<EventGridNamespaceResource> CreateOrUpdate(
+    public ControlPlaneOperationResult<EventGridNamespaceResource> CreateOrUpdateNamespace(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string namespaceName,
         EventGridNamespaceResource request)
@@ -67,7 +67,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
         }
 
         (bool IsValid, string? Error) validation;
-        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
+        var existing = GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
 
         if (existing.Resource != null)
         {
@@ -99,7 +99,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
         _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, resource,
             createOperation: true);
         
-        // Also generate and create shares access keys
+        // Also generate and create shared access keys
         var key1 = NamespaceSharedAccessKey.Generate("key1");
         var key2 = NamespaceSharedAccessKey.Generate("key2");
         
@@ -111,7 +111,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
         return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.Created, resource);
     }
 
-    public ControlPlaneOperationResult<EventGridNamespaceResource> Get(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<EventGridNamespaceResource> GetNamespace(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName)
     {
         var resource =
@@ -125,7 +125,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
     public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName)
     {
-        var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
+        var resource = GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
         if (resource.Resource == null)
         {
             return new ControlPlaneOperationResult(
@@ -146,7 +146,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
                 OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
         }
 
-        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
+        var existing = GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
         if (existing.Resource == null)
         {
             return new ControlPlaneOperationResult<EventGridNamespaceResource>(OperationResult.NotFound, null,
@@ -216,7 +216,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
                 "BadRequest");
         }
 
-        var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
+        var resource = GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
         if (resource.Result != OperationResult.Success)
         {
             return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.NotFound, null,
@@ -236,7 +236,7 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
     public ControlPlaneOperationResult<NamespaceSharedAccessKey[]> ListKeys(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string name)
     {
-        var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+        var resource = GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, name);
         if (resource.Result != OperationResult.Success)
         {
             return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.NotFound, null,
@@ -247,5 +247,63 @@ internal sealed class EventGridControlPlane(Pipeline eventPipeline, ITopazLogger
             resourceGroupIdentifier, name, SharedAccessKeySubresource);
         
         return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.Success, keys);
+    }
+
+    public ControlPlaneOperationResult<EventGridTopicResource> CreateOrUpdateTopic(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string topicName, EventGridTopicResource request)
+    {
+        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroup.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<EventGridTopicResource>(
+                OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
+        }
+
+        (bool IsValid, string? Error) validation;
+        var existing = GetTopic(subscriptionIdentifier, resourceGroupIdentifier, topicName);
+
+        if (existing.Resource != null)
+        {
+            existing.Resource.UpdateFromRequest(request);
+            validation = existing.Resource.Validate<EventGridTopicResource>();
+            if (!validation.IsValid)
+            {
+                return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.BadRequest, null,
+                    validation.Error, "BadRequest");
+            }
+
+            _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, topicName, existing);
+            return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.Updated,
+                existing.Resource);
+        }
+
+        var location = request.Location ?? resourceGroup.Resource!.Location!;
+        var properties = EventGridTopicResourceProperties.FromRequest(request.Properties);
+        var resource = new EventGridTopicResource(subscriptionIdentifier, resourceGroupIdentifier, topicName,
+            location, request.Tags, properties);
+
+        validation = resource.Validate<EventGridTopicResource>();
+        if (!validation.IsValid)
+        {
+            return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.BadRequest, null,
+                validation.Error, "BadRequest");
+        }
+
+        _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, topicName, resource,
+            createOperation: true);
+
+        return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.Created, resource);
+    }
+    
+    public ControlPlaneOperationResult<EventGridTopicResource> GetTopic(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string topicName)
+    {
+        var resource =
+            _provider.GetAs<EventGridTopicResource>(subscriptionIdentifier, resourceGroupIdentifier, topicName);
+        return resource == null
+            ? new ControlPlaneOperationResult<EventGridTopicResource>(
+                OperationResult.NotFound, null, "Event Grid topic not found", "ResourceNotFound")
+            : new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.Success, resource);
     }
 }

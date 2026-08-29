@@ -432,8 +432,8 @@ public class AzureImporterService(Pipeline eventPipeline, ITopazLogger logger)
                 {
                     var cp = EventGridControlPlane.New(eventPipeline, logger);
                     TryImportResource(fullResource.Value.Data.Id, importResult,
-                        () => cp.Get(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
-                        () => cp.CreateOrUpdate(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
+                        () => cp.GetNamespace(subscriptionIdentifier, rgId, fullResource.Value.Data.Name).Result,
+                        () => cp.CreateOrUpdateNamespace(subscriptionIdentifier, rgId, fullResource.Value.Data.Name,
                             EventGridNamespaceResource.From(resource.Data)).Result, dryRun, overwrite);
                     break;
                 }

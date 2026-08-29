@@ -1,5 +1,6 @@
 ﻿using Topaz.EventPipeline;
 using Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
+using Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -21,6 +22,7 @@ public sealed class EventGridService(Pipeline eventPipeline, ITopazLogger logger
         new ListEventGridNamespaceByResourceGroupEndpoint(eventPipeline, logger),
         new ListEventGridNamespaceBySubscriptionEndpoint(eventPipeline, logger),
         new RegenerateEventGridNamespaceKeyEndpoint(eventPipeline, logger),
-        new ListEventGridNamespaceSharedAccessKeysEndpoint(eventPipeline, logger)
+        new ListEventGridNamespaceSharedAccessKeysEndpoint(eventPipeline, logger),
+        new CreateOrUpdateEventGridTopicEndpoint(eventPipeline, logger)
     ];
 }

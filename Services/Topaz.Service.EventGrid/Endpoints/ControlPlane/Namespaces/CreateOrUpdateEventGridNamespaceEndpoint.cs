@@ -46,7 +46,7 @@ internal sealed class CreateOrUpdateEventGridNamespaceEndpoint(Pipeline eventPip
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, request);
+        var result = _controlPlane.CreateOrUpdateNamespace(subscriptionIdentifier, resourceGroupIdentifier, name, request);
         if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);

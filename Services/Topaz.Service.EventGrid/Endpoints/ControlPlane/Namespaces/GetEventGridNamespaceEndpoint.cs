@@ -32,7 +32,7 @@ internal sealed class GetEventGridNamespaceEndpoint(Pipeline eventPipeline, ITop
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         var name = context.Request.Path.Value.ExtractValueFromPath(8);
 
-        var result = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, name!);
+        var result = _controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, name!);
         if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
