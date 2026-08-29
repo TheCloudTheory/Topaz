@@ -11,8 +11,8 @@ namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
 internal sealed class GetEventGridNamespaceEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
-    private readonly EventGridControlPlane _controlPlane =
-        EventGridControlPlane.New(eventPipeline, logger);
+    private readonly EventGridNamespaceControlPlane _controlPlane =
+        EventGridNamespaceControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.EventGrid";
 
@@ -32,7 +32,7 @@ internal sealed class GetEventGridNamespaceEndpoint(Pipeline eventPipeline, ITop
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         var name = context.Request.Path.Value.ExtractValueFromPath(8);
 
-        var result = _controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, name!);
+        var result = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, name!);
         if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);

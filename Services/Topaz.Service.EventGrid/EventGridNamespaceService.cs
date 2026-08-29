@@ -7,13 +7,15 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventGrid;
 
-public sealed class EventGridService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
+public sealed class EventGridNamespaceService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => false;
-    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".event-grid");
-    public static IReadOnlyCollection<string>? Subresources { get; } = [nameof(Subresource.SharedAccessKeys).ToLowerInvariant()];
-    public static string UniqueName => "eventgrid";
-    public string Name => "Event Grid";
+    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".event-grid-namespace");
+    public static IReadOnlyCollection<string>? Subresources { get; } = [
+        nameof(Subresource.SharedAccessKeys).ToLowerInvariant()
+    ];
+    public static string UniqueName => "eventgrid-namespace";
+    public string Name => "Event Grid Namespaces";
     public IReadOnlyCollection<IEndpointDefinition> Endpoints { get; } = [
         new CreateOrUpdateEventGridNamespaceEndpoint(eventPipeline, logger),
         new GetEventGridNamespaceEndpoint(eventPipeline, logger),

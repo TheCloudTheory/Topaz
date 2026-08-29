@@ -151,7 +151,8 @@ public class Host
             new ApiManagementService(_eventPipeline, _logger),
             new ContainerInstancesService(_eventPipeline, _logger),
             new ImporterService(_eventPipeline, _logger),
-            new EventGridService(_eventPipeline, _logger),
+            new EventGridNamespaceService(_eventPipeline, _logger),
+            new EventGridTopicService(_eventPipeline, _logger),
         };
 
         _logger.ConfigureIdFactory(idFactory);

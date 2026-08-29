@@ -12,8 +12,8 @@ namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
 internal sealed class ListEventGridNamespaceByResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
-    private readonly EventGridControlPlane _controlPlane =
-        EventGridControlPlane.New(eventPipeline, logger);
+    private readonly EventGridNamespaceControlPlane _controlPlane =
+        EventGridNamespaceControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.EventGrid";
 

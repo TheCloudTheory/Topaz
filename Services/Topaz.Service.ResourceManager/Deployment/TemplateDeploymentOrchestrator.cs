@@ -424,7 +424,7 @@ public sealed class TemplateDeploymentOrchestrator(
                     controlPlane = ApiManagementPolicyControlPlane.New(eventPipeline, logger);
                     break;
                 case "microsoft.eventgrid/namespaces":
-                    controlPlane = EventGridControlPlane.New(eventPipeline, logger);
+                    controlPlane = EventGridNamespaceControlPlane.New(eventPipeline, logger);
                     break;
                 case "microsoft.resources/deployments":
                     HandleNestedDeployment(genericResource, templateDeployment, resource, ref hasProvisioningFailed);

@@ -12,8 +12,8 @@ namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
 
 internal sealed class CreateOrUpdateEventGridNamespaceEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly EventGridControlPlane _controlPlane =
-        EventGridControlPlane.New(eventPipeline, logger);
+    private readonly EventGridNamespaceControlPlane _controlPlane =
+        EventGridNamespaceControlPlane.New(eventPipeline, logger);
     
     public string[] Endpoints =>
     [
@@ -46,7 +46,7 @@ internal sealed class CreateOrUpdateEventGridNamespaceEndpoint(Pipeline eventPip
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdateNamespace(subscriptionIdentifier, resourceGroupIdentifier, name, request);
+        var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, request);
         if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);

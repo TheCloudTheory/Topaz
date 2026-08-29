@@ -1,0 +1,23 @@
+﻿using Topaz.EventPipeline;
+using Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics;
+using Topaz.Service.ResourceGroup;
+using Topaz.Service.Shared;
+using Topaz.Shared;
+
+namespace Topaz.Service.EventGrid;
+
+public sealed class EventGridTopicService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
+{
+    public static bool IsGlobalService => false;
+    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".event-grid-topic");
+    public static IReadOnlyCollection<string>? Subresources { get; } = [
+        nameof(Subresource.SharedAccessKeys).ToLowerInvariant()
+    ];
+    public static string UniqueName => "eventgrid-topic";
+    public string Name => "Event Grid Topics";
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints { get; } = [
+        new CreateOrUpdateEventGridTopicEndpoint(eventPipeline, logger),
+        new GetEventGridTopicEndpoint(eventPipeline, logger),
+        new DeleteEventGridTopicEndpoint(eventPipeline, logger)
+    ];
+}

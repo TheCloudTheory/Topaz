@@ -6,22 +6,22 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
+namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics;
 
-internal sealed class DeleteEventGridNamespaceEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class DeleteEventGridTopicEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
-    private readonly EventGridNamespaceControlPlane _controlPlane =
-        EventGridNamespaceControlPlane.New(eventPipeline, logger);
+    private readonly EventGridTopicControlPlane _controlPlane =
+        EventGridTopicControlPlane.New(eventPipeline, logger);
 
     public string? ProviderNamespace => "Microsoft.EventGrid";
 
     public string[] Endpoints =>
     [
-        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}"
+        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}"
     ];
 
-    public string[] Permissions => ["Microsoft.EventGrid/namespaces/delete"];
+    public string[] Permissions => ["Microsoft.EventGrid/topics/delete"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
