@@ -100,8 +100,8 @@ internal sealed class EventGridNamespaceControlPlane(Pipeline eventPipeline, ITo
             createOperation: true);
         
         // Also generate and create shared access keys
-        var key1 = NamespaceSharedAccessKey.Generate("key1");
-        var key2 = NamespaceSharedAccessKey.Generate("key2");
+        var key1 = EventGridSharedAccessKey.Generate("key1");
+        var key2 = EventGridSharedAccessKey.Generate("key2");
         
         _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, key1.KeyName!, namespaceName,
             SharedAccessKeySubresource, key1);
@@ -206,46 +206,46 @@ internal sealed class EventGridNamespaceControlPlane(Pipeline eventPipeline, ITo
         return new ControlPlaneOperationResult<EventGridNamespaceResource[]>(OperationResult.Success, [.. resources]);
     }
 
-    public ControlPlaneOperationResult<NamespaceSharedAccessKey[]> RegenerateKey(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<EventGridSharedAccessKey[]> RegenerateKey(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName, RegenerateNamespaceKeyRequest request)
     {
         var validation = request.Validate<RegenerateNamespaceKeyRequest>();
         if (!validation.IsValid)
         {
-            return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.BadRequest, null, validation.Error,
+            return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.BadRequest, null, validation.Error,
                 "BadRequest");
         }
 
         var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
         if (resource.Result != OperationResult.Success)
         {
-            return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.NotFound, null,
+            return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.NotFound, null,
                 resource.Reason, resource.Code);
         }
 
-        var key = NamespaceSharedAccessKey.Generate(request.KeyName!);
+        var key = EventGridSharedAccessKey.Generate(request.KeyName!);
         _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, key.KeyName!, namespaceName,
             SharedAccessKeySubresource, key);
 
-        var keys = _provider.ListSubresourcesAs<NamespaceSharedAccessKey>(subscriptionIdentifier,
+        var keys = _provider.ListSubresourcesAs<EventGridSharedAccessKey>(subscriptionIdentifier,
             resourceGroupIdentifier, namespaceName, SharedAccessKeySubresource);
         
-        return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.Success, keys);
+        return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.Success, keys);
     }
 
-    public ControlPlaneOperationResult<NamespaceSharedAccessKey[]> ListKeys(
+    public ControlPlaneOperationResult<EventGridSharedAccessKey[]> ListKeys(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string name)
     {
         var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
         if (resource.Result != OperationResult.Success)
         {
-            return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.NotFound, null,
+            return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.NotFound, null,
                 resource.Reason, resource.Code);
         }
         
-        var keys = _provider.ListSubresourcesAs<NamespaceSharedAccessKey>(subscriptionIdentifier,
+        var keys = _provider.ListSubresourcesAs<EventGridSharedAccessKey>(subscriptionIdentifier,
             resourceGroupIdentifier, name, SharedAccessKeySubresource);
         
-        return new ControlPlaneOperationResult<NamespaceSharedAccessKey[]>(OperationResult.Success, keys);
+        return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.Success, keys);
     }
 }

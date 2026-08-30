@@ -1,6 +1,8 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.EventGrid.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,7 +10,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics;
 
-internal sealed class DeleteEventGridTopicEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class UpdateEventGridTopicEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly EventGridTopicControlPlane _controlPlane =
@@ -18,10 +20,10 @@ internal sealed class DeleteEventGridTopicEndpoint(Pipeline eventPipeline, ITopa
 
     public string[] Endpoints =>
     [
-        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}"
+        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{namespaceName}"
     ];
 
-    public string[] Permissions => ["Microsoft.EventGrid/topics/delete"];
+    public string[] Permissions => ["Microsoft.EventGrid/topics/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -38,19 +40,27 @@ internal sealed class DeleteEventGridTopicEndpoint(Pipeline eventPipeline, ITopa
             return;
         }
 
-        var result = _controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, name);
-        if (result.Result == OperationResult.NotFound)
+        using var reader = new StreamReader(context.Request.Body);
+        var request = JsonSerializer.Deserialize<EventGridTopicResource>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+        if (request == null)
         {
-            response.StatusCode = HttpStatusCode.NotFound;
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+
+        var result = _controlPlane.Update(subscriptionIdentifier, resourceGroupIdentifier, name, request);
+        if (result.Result == OperationResult.BadRequest)
+        {
+            response.CreateBadRequestResponse(result);
             return;
         }
         
-        if (result.Result != OperationResult.Deleted)
+        if (result.Result != OperationResult.Updated || result.Resource == null)
         {
-            response.CreateErrorResponse(result);
+            response.CreateErrorResponse(result.Code!, result.Reason!);
             return;
         }
-        
-        response.CreateNoContentResponse();
+
+        response.CreateJsonContentResponse(result.Resource);
     }
 }

@@ -7,7 +7,7 @@ internal sealed class ListNamespaceKeysResponse : TopazApiModel
     public string? Key1 { get; set; }
     public string? Key2 { get; set; }
 
-    public static ListNamespaceKeysResponse From(NamespaceSharedAccessKey[] keys)
+    public static ListNamespaceKeysResponse From(EventGridSharedAccessKey[] keys)
     {
         return new ListNamespaceKeysResponse
         {

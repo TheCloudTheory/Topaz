@@ -97,6 +97,15 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
 
         _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, topicName, resource,
             createOperation: true);
+        
+        // Also generate and create shared access keys
+        var key1 = EventGridSharedAccessKey.Generate("key1");
+        var key2 = EventGridSharedAccessKey.Generate("key2");
+        
+        _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, key1.KeyName!, topicName,
+            SharedAccessKeySubresource, key1);
+        _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, key2.KeyName!, topicName,
+            SharedAccessKeySubresource, key2);
 
         return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.Created, resource);
     }
@@ -124,5 +133,30 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
 
         _provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, topicName, softDelete: false);
         return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+    
+    public ControlPlaneOperationResult<EventGridTopicResource> Update(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName, EventGridTopicResource request)
+    {
+        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroup.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<EventGridTopicResource>(
+                OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
+        }
+
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
+        if (existing.Resource == null)
+        {
+            return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.NotFound, null,
+                existing.Reason, existing.Code);
+        }
+
+        existing.Resource.UpdateFromRequest(request);
+
+        _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, existing.Resource,
+            createOperation: true);
+
+        return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.Updated, existing.Resource);
     }
 }
