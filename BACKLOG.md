@@ -174,15 +174,6 @@ TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
 ### Azure Event Grid — initial control plane and delivery
 
 <!--
-TODO: Azure Event Grid: Topic CRUD
-  Create, get, update (tags, inputSchema, publicNetworkAccess), delete, list by resource group,
-  and list by subscription; endpoint emitted as https://{name}.eventgrid.topaz.local.dev:<port>/;
-  access keys generated on creation and exposed via listKeys / regenerateKey.
-  milestone: v1.11
-  labels: enhancement, event-grid
--->
-
-<!--
 TODO: Azure Event Grid: Event Subscriptions CRUD
   Create, get, update, delete, and list event subscriptions per topic; fields: destination
   (WebHook, ServiceBus, EventHub), filter, eventDeliverySchema; persisted as subresources.
