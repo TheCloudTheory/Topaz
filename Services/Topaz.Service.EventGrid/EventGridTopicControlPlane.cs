@@ -136,7 +136,7 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
     }
     
     public ControlPlaneOperationResult<EventGridTopicResource> Update(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName, EventGridTopicResource request)
+        ResourceGroupIdentifier resourceGroupIdentifier, string topicName, EventGridTopicResource request)
     {
         var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound)
@@ -145,7 +145,7 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
                 OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
         }
 
-        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
         if (existing.Resource == null)
         {
             return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.NotFound, null,
@@ -154,9 +154,97 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
 
         existing.Resource.UpdateFromRequest(request);
 
-        _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceName, existing.Resource,
+        _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, topicName, existing.Resource,
             createOperation: true);
 
         return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.Updated, existing.Resource);
+    }
+    
+    public ControlPlaneOperationResult<EventGridTopicResource[]> ListByResourceGroup(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string? topFilter)
+    {
+        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroup.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<EventGridTopicResource[]>(
+                OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
+        }
+
+        var resources = _provider
+            .ListAs<EventGridTopicResource>(subscriptionIdentifier, resourceGroupIdentifier, lookForNoOfSegments: 8)
+            .Where(eg => eg.IsInResourceGroup(resourceGroupIdentifier) && eg.IsInSubscription(subscriptionIdentifier));
+
+        if (!string.IsNullOrWhiteSpace(topFilter))
+        {
+            resources = resources.Take(int.Parse(topFilter));
+        }
+
+        return new ControlPlaneOperationResult<EventGridTopicResource[]>(OperationResult.Success, [.. resources]);
+    }
+
+    public ControlPlaneOperationResult<EventGridTopicResource[]> ListBySubscription(
+        SubscriptionIdentifier subscriptionIdentifier, string? topFilter)
+    {
+        var subscription = _subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<EventGridTopicResource[]>(
+                OperationResult.NotFound, null, subscription.Reason, subscription.Code);
+        }
+
+        var resources = _provider
+            .ListAs<EventGridTopicResource>(subscriptionIdentifier, null, lookForNoOfSegments: 8)
+            .Where(eg => eg.IsInSubscription(subscriptionIdentifier));
+
+        if (!string.IsNullOrWhiteSpace(topFilter))
+        {
+            resources = resources.Take(int.Parse(topFilter));
+        }
+
+        return new ControlPlaneOperationResult<EventGridTopicResource[]>(OperationResult.Success, [.. resources]);
+    }
+
+    public ControlPlaneOperationResult<EventGridSharedAccessKey[]> RegenerateKey(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string topicName, RegenerateNamespaceKeyRequest request)
+    {
+        var validation = request.Validate<RegenerateNamespaceKeyRequest>();
+        if (!validation.IsValid)
+        {
+            return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.BadRequest, null, validation.Error,
+                "BadRequest");
+        }
+
+        var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
+        if (resource.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.NotFound, null,
+                resource.Reason, resource.Code);
+        }
+
+        var key = EventGridSharedAccessKey.Generate(request.KeyName!);
+        _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, key.KeyName!, topicName,
+            SharedAccessKeySubresource, key);
+
+        var keys = _provider.ListSubresourcesAs<EventGridSharedAccessKey>(subscriptionIdentifier,
+            resourceGroupIdentifier, topicName, SharedAccessKeySubresource);
+        
+        return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.Success, keys);
+    }
+
+    public ControlPlaneOperationResult<EventGridSharedAccessKey[]> ListKeys(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string name)
+    {
+        var resource = Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+        if (resource.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.NotFound, null,
+                resource.Reason, resource.Code);
+        }
+        
+        var keys = _provider.ListSubresourcesAs<EventGridSharedAccessKey>(subscriptionIdentifier,
+            resourceGroupIdentifier, name, SharedAccessKeySubresource);
+        
+        return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.Success, keys);
     }
 }

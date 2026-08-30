@@ -18,6 +18,11 @@ public sealed class EventGridTopicService(Pipeline eventPipeline, ITopazLogger l
     public IReadOnlyCollection<IEndpointDefinition> Endpoints { get; } = [
         new CreateOrUpdateEventGridTopicEndpoint(eventPipeline, logger),
         new GetEventGridTopicEndpoint(eventPipeline, logger),
-        new DeleteEventGridTopicEndpoint(eventPipeline, logger)
+        new DeleteEventGridTopicEndpoint(eventPipeline, logger),
+        new UpdateEventGridTopicEndpoint(eventPipeline, logger),
+        new RegenerateEventGridTopicKeyEndpoint(eventPipeline, logger),
+        new ListEventGridTopicByResourceGroupEndpoint(eventPipeline, logger),
+        new ListEventGridTopicBySubscriptionEndpoint(eventPipeline, logger),
+        new ListEventGridTopicSharedAccessKeysEndpoint(eventPipeline, logger)
     ];
 }

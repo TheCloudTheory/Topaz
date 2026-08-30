@@ -7,9 +7,9 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
+namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics;
 
-internal sealed class ListEventGridNamespaceSharedAccessKeysEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class ListEventGridTopicSharedAccessKeysEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly EventGridNamespaceControlPlane _controlPlane =
@@ -19,10 +19,10 @@ internal sealed class ListEventGridNamespaceSharedAccessKeysEndpoint(Pipeline ev
 
     public string[] Endpoints =>
     [
-        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}/listKeys"
+        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}/listKeys"
     ];
 
-    public string[] Permissions => ["Microsoft.EventGrid/namespaces/listKeys/action"];
+    public string[] Permissions => ["Microsoft.EventGrid/topics/listKeys/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

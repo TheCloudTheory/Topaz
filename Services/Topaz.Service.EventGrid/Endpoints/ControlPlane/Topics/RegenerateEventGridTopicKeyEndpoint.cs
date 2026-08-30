@@ -9,19 +9,19 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
+namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics;
 
-internal sealed class RegenerateEventGridNamespaceKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class RegenerateEventGridTopicKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly EventGridNamespaceControlPlane _controlPlane =
-        EventGridNamespaceControlPlane.New(eventPipeline, logger);
+    private readonly EventGridTopicControlPlane _controlPlane =
+        EventGridTopicControlPlane.New(eventPipeline, logger);
     
     public string[] Endpoints =>
     [
-        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}/regenerateKey"
+        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}/regenerateKey"
     ];
 
-    public string[] Permissions => ["Microsoft.EventGrid/namespaces/regenerateKey/action"];
+    public string[] Permissions => ["Microsoft.EventGrid/topics/regenerateKey/action"];
     public string ProviderNamespace => "Microsoft.EventGrid";
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

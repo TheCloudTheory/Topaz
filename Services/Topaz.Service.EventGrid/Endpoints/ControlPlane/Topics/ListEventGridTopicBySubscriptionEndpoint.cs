@@ -1,28 +1,30 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.EventGrid.Models;
 using Topaz.Service.EventGrid.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Shared.Models;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Namespaces;
+namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics;
 
-internal sealed class ListEventGridNamespaceSharedAccessKeysEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class ListEventGridTopicBySubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
-    private readonly EventGridNamespaceControlPlane _controlPlane =
-        EventGridNamespaceControlPlane.New(eventPipeline, logger);
+    private readonly EventGridTopicControlPlane _controlPlane =
+        EventGridTopicControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.EventGrid";
 
     public string[] Endpoints =>
     [
-        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/namespaces/{namespaceName}/listKeys"
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.EventGrid/topics"
     ];
 
-    public string[] Permissions => ["Microsoft.EventGrid/namespaces/listKeys/action"];
+    public string[] Permissions => ["Microsoft.EventGrid/topics/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -30,16 +32,16 @@ internal sealed class ListEventGridNamespaceSharedAccessKeysEndpoint(Pipeline ev
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
-        var name = context.Request.Path.Value.ExtractValueFromPath(8);
+        _ = context.Request.QueryString.TryGetValueForKey("$top", out var topFilter);
 
-        var result = _controlPlane.ListKeys(subscriptionIdentifier, resourceGroupIdentifier, name!);
+        var result = _controlPlane.ListBySubscription(subscriptionIdentifier, topFilter);
         if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
             return;
         }
 
-        response.CreateJsonContentResponse(ListEventGridKeysResponse.From(result.Resource));
+        response.CreateJsonContentResponse(
+            ResourcesListResultResponseBase<EventGridTopicResource>.From(result.Resource));
     }
 }
