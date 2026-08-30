@@ -27,6 +27,7 @@ internal sealed class EventGridTopicResourceProperties
     public DataResidencyBoundary? DataResidencyBoundary { get; set; }
 
     public string? MetricResourceId { get; set; }
+    public EventTypeInfo? EventTypeInfo { get; set; }
 
     public void UpdateFromRequest(EventGridTopicResourceProperties properties)
     {
@@ -36,6 +37,7 @@ internal sealed class EventGridTopicResourceProperties
         DisableLocalAuth = properties.DisableLocalAuth ?? DisableLocalAuth;
         MinimumTlsVersionAllowed = properties.MinimumTlsVersionAllowed ?? MinimumTlsVersionAllowed;
         DataResidencyBoundary = properties.DataResidencyBoundary ?? DataResidencyBoundary;
+        EventTypeInfo = properties.EventTypeInfo ?? EventTypeInfo;
     }
 
     public static EventGridTopicResourceProperties FromRequest(EventGridTopicResourceProperties properties)
@@ -48,8 +50,30 @@ internal sealed class EventGridTopicResourceProperties
             DisableLocalAuth = properties.DisableLocalAuth,
             MinimumTlsVersionAllowed = properties.MinimumTlsVersionAllowed,
             DataResidencyBoundary = properties.DataResidencyBoundary,
+            EventTypeInfo = properties.EventTypeInfo,
         };
     }
+}
+
+internal enum EventDefinitionKind
+{
+    Inline,
+}
+
+internal sealed class InlineEventProperties
+{
+    public string? DataSchemaUrl { get; set; }
+    public string? Description { get; set; }
+    public string? DisplayName { get; set; }
+    public string? DocumentationUrl { get; set; }
+}
+
+internal sealed class EventTypeInfo
+{
+    public Dictionary<string, InlineEventProperties>? InlineEventTypes { get; set; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public EventDefinitionKind? Kind { get; set; }
 }
 
 internal enum InputSchema

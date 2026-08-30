@@ -9,7 +9,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics;
 
-internal sealed class ListEventGridTopicSharedAccessKeysEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class ListEventGridTopicEventTypesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly EventGridTopicControlPlane _controlPlane =
@@ -19,10 +19,10 @@ internal sealed class ListEventGridTopicSharedAccessKeysEndpoint(Pipeline eventP
 
     public string[] Endpoints =>
     [
-        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}/listKeys"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{providerNamespace}/{resourceTypeName}/{resourceName}/providers/Microsoft.EventGrid/eventTypes"
     ];
 
-    public string[] Permissions => ["Microsoft.EventGrid/topics/listKeys/action"];
+    public string[] Permissions => ["Microsoft.EventGrid/topictypes/eventtypes/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -31,15 +31,15 @@ internal sealed class ListEventGridTopicSharedAccessKeysEndpoint(Pipeline eventP
     {
         var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
-        var name = context.Request.Path.Value.ExtractValueFromPath(8);
+        var topicName = context.Request.Path.Value.ExtractValueFromPath(8);
 
-        var result = _controlPlane.ListKeys(subscriptionIdentifier, resourceGroupIdentifier, name!);
+        var result = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, topicName!);
         if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
             return;
         }
 
-        response.CreateJsonContentResponse(ListEventGridKeysResponse.From(result.Resource));
+        response.CreateJsonContentResponse(EventTypesListResultResponse.From(result.Resource));
     }
 }
