@@ -78,7 +78,7 @@ public class EventGridTests
     public void EventGridTests_WhenNewNamespaceIsRequested_ItShouldBeCreated()
     {
         var namespacePath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
-            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid", NamespaceName, "metadata.json");
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid-namespace", NamespaceName, "metadata.json");
 
         Assert.That(File.Exists(namespacePath), Is.True);
     }
@@ -87,7 +87,7 @@ public class EventGridTests
     public async Task EventGridTests_WhenExistingNamespaceIsDeleted_ItShouldBeDeleted()
     {
         var namespacePath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
-            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid", NamespaceName, "metadata.json");
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid-namespace", NamespaceName, "metadata.json");
 
         var code = await Program.RunAsync([
             "eventgrid",
