@@ -3617,6 +3617,67 @@
     ]
   },
   {
+    "name": "eventgrid namespace list-keys",
+    "group": "event-grid",
+    "description": "Lists access keys for an Event Grid Namespace.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Namespace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List keys for an Event Grid Namespace",
+        "command": "topaz eventgrid namespace list-keys \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-namespace\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid namespace regenerate-key",
+    "group": "event-grid",
+    "description": "Regenerates an access key for an Event Grid Namespace.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Namespace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-k, --key-name",
+        "description": "(Required) Key name to regenerate: key1 or key2.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Regenerate the primary key for an Event Grid Namespace",
+        "command": "topaz eventgrid namespace regenerate-key \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-namespace\u0022 \\\n    --key-name \u0022key1\u0022"
+      }
+    ]
+  },
+  {
     "name": "eventgrid namespace update",
     "group": "event-grid",
     "description": "Updates an Event Grid Namespace.",

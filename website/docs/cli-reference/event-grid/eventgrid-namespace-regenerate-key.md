@@ -1,24 +1,23 @@
 ---
-sidebar_position: 8
+sidebar_position: 7
 ---
 
-# eventgrid namespace update
-Updates an Event Grid Namespace.
+# eventgrid namespace regenerate-key
+Regenerates an access key for an Event Grid Namespace.
 
 ## Options
 * `-s, --subscription-id` - (Required) (Required) Subscription ID.
 * `-n, --name` - (Required) (Required) Event Grid Namespace name.
 * `-g, --resource-group` - (Required) (Required) Resource group name.
-* `--sku-name` - (Optional) SKU name (e.g. Standard).
-* `--sku-capacity` - (Optional) SKU capacity.
+* `-k, --key-name` - (Required) (Required) Key name to regenerate: key1 or key2.
 
 ## Examples
 
-### Update an Event Grid Namespace
+### Regenerate the primary key for an Event Grid Namespace
 ```bash
-$ topaz eventgrid namespace update \
+$ topaz eventgrid namespace regenerate-key \
     --subscription-id "00000000-0000-0000-0000-000000000000" \
     --resource-group "rg-local" \
     --name "my-namespace" \
-    --sku-name "Standard"
+    --key-name "key1"
 ```
