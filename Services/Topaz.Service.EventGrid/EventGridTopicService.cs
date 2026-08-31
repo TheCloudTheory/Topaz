@@ -23,6 +23,7 @@ public sealed class EventGridTopicService(Pipeline eventPipeline, ITopazLogger l
         new RegenerateEventGridTopicKeyEndpoint(eventPipeline, logger),
         new ListEventGridTopicByResourceGroupEndpoint(eventPipeline, logger),
         new ListEventGridTopicBySubscriptionEndpoint(eventPipeline, logger),
-        new ListEventGridTopicSharedAccessKeysEndpoint(eventPipeline, logger)
+        new ListEventGridTopicSharedAccessKeysEndpoint(eventPipeline, logger),
+        new ListEventGridTopicEventTypesEndpoint(eventPipeline, logger)
     ];
 }

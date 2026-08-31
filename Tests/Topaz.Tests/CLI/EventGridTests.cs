@@ -7,6 +7,7 @@ public class EventGridTests
     private static readonly Guid SubscriptionId = Guid.Parse("4A1B2C3D-EEEE-4F5A-8BB1-3CFE44084F82");
     private const string ResourceGroupName = "test";
     private const string NamespaceName = "test-namespace";
+    private const string TopicName = "test-topic";
 
     [SetUp]
     public async Task SetUp()
@@ -65,6 +66,32 @@ public class EventGridTests
             "create",
             "--name",
             NamespaceName,
+            "--resource-group",
+            ResourceGroupName,
+            "--location",
+            "westeurope",
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "delete",
+            "--name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "create",
+            "--name",
+            TopicName,
             "--resource-group",
             ResourceGroupName,
             "--location",
@@ -203,6 +230,164 @@ public class EventGridTests
             "regenerate-key",
             "--name",
             NamespaceName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
+            "--key-name",
+            "key1"
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public void EventGridTests_WhenNewTopicIsRequested_ItShouldBeCreated()
+    {
+        var topicPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid-topic", TopicName, "metadata.json");
+
+        Assert.That(File.Exists(topicPath), Is.True);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenExistingTopicIsDeleted_ItShouldBeDeleted()
+    {
+        var topicPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid-topic", TopicName, "metadata.json");
+
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "delete",
+            "--name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(File.Exists(topicPath), Is.False);
+            Assert.That(code, Is.Zero);
+        }
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenExistingTopicIsRequested_ItShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "show",
+            "--name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenTopicsInResourceGroupAreListed_TheyShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "list-resource-group",
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenTopicsInSubscriptionAreListed_TheyShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "list-subscription",
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenExistingTopicIsUpdated_ItShouldBeUpdated()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "update",
+            "--name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
+            "--public-network-access",
+            "Disabled"
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenTopicEventTypesAreListed_TheyShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "list-event-types",
+            "--name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenTopicKeysAreListed_TheyShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "list-keys",
+            "--name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenTopicKeyIsRegenerated_ItShouldSucceed()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "regenerate-key",
+            "--name",
+            TopicName,
             "--resource-group",
             ResourceGroupName,
             "--subscription-id",
