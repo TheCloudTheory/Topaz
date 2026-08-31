@@ -114,7 +114,7 @@ public class EventGridTests
     public async Task EventGridTests_WhenExistingNamespaceIsDeleted_ItShouldBeDeleted()
     {
         var namespacePath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
-            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid-namespace", NamespaceName, "metadata.json");
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid-namespace ", NamespaceName, "metadata.json");
 
         var code = await Program.RunAsync([
             "eventgrid",
