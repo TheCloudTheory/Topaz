@@ -290,7 +290,7 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
     internal ControlPlaneOperationResult<EventSubscriptionSubresource> GetEventSubscription(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string eventSubscriptionName)
     {
-        var topicResource = Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
+        var topicResource= Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
         if (topicResource.Result != OperationResult.Success)
         {
             return new ControlPlaneOperationResult<EventSubscriptionSubresource>(OperationResult.NotFound, null,
@@ -301,5 +301,104 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
             resourceGroupIdentifier, eventSubscriptionName, topicName, EventSubscriptionSubresource);
         
         return new ControlPlaneOperationResult<EventSubscriptionSubresource>(OperationResult.Success, resource);
+    }
+
+    public ControlPlaneOperationResult DeleteEventSubscription(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string eventSubscriptionName)
+    {
+        var topicResource = Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
+        if (topicResource.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound,
+                topicResource.Reason, topicResource.Code);
+        }
+        
+        var eventSubscription= GetEventSubscription(subscriptionIdentifier, resourceGroupIdentifier, topicName,
+            eventSubscriptionName);
+        if (eventSubscription.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, 
+                eventSubscription.Reason, eventSubscription.Code);
+        }
+
+        _provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, eventSubscriptionName,
+            eventSubscriptionName, EventSubscriptionSubresource);
+        
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<EventSubscriptionSubresource[]> ListEventSubscriptions(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string topicName, string? topFilter)
+    {
+        var topicResource = Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
+        if (topicResource.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<EventSubscriptionSubresource[]>(OperationResult.NotFound, null,
+                topicResource.Reason, topicResource.Code);
+        }
+        
+        var resources = _provider
+            .ListSubresourcesAs<EventSubscriptionSubresource>(subscriptionIdentifier, resourceGroupIdentifier, topicName, EventSubscriptionSubresource);
+
+        if (!string.IsNullOrWhiteSpace(topFilter))
+        {
+            resources = [.. resources.Take(int.Parse(topFilter))];
+        }
+
+        return new ControlPlaneOperationResult<EventSubscriptionSubresource[]>(OperationResult.Success, [.. resources]);
+    }
+
+    public ControlPlaneOperationResult<EventSubscriptionSubresource> UpdateEventSubscription(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string topicName, string eventSubscriptionName, EventSubscriptionSubresourceProperties request)
+    {
+        var eventSubscription = GetEventSubscription(subscriptionIdentifier, resourceGroupIdentifier, topicName,
+            eventSubscriptionName);
+        if (eventSubscription.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<EventSubscriptionSubresource>(eventSubscription.Result, null,
+                eventSubscription.Reason, eventSubscription.Code);
+        }
+        
+        eventSubscription.Resource!.UpdateFromRequest(request);
+
+        _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, eventSubscriptionName,
+            topicName, EventSubscriptionSubresource, eventSubscription.Resource);
+        return new ControlPlaneOperationResult<EventSubscriptionSubresource>(OperationResult.Updated,
+            eventSubscription.Resource);
+    }
+
+    public ControlPlaneOperationResult<string> GetEventSubscriptionUrl(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string eventSubscriptionName)
+    {
+        var eventSubscription = GetEventSubscription(subscriptionIdentifier, resourceGroupIdentifier, topicName,
+            eventSubscriptionName);
+        if (eventSubscription.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<string>(eventSubscription.Result, null,
+                eventSubscription.Reason, eventSubscription.Code);
+        }
+
+        return new ControlPlaneOperationResult<string>(OperationResult.Success,
+            $"https://{eventSubscriptionName}.{topicName}.{GlobalSettings.EventGridDnsSuffix}");
+    }
+
+    public ControlPlaneOperationResult<DeliveryAttributeMapping[]> GetDeliveryAttributes(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string eventSubscriptionName)
+    {
+        var eventSubscription = GetEventSubscription(subscriptionIdentifier, resourceGroupIdentifier, topicName,
+            eventSubscriptionName);
+        if (eventSubscription.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<DeliveryAttributeMapping[]>(eventSubscription.Result, null,
+                eventSubscription.Reason, eventSubscription.Code);
+        }
+
+        var attributes =
+            eventSubscription.Resource!.Properties.Destination?.Properties?.DeliveryAttributeMappings?.ToArray() ??
+            [];
+        
+        return new ControlPlaneOperationResult<DeliveryAttributeMapping[]>(OperationResult.Success, attributes);
     }
 }

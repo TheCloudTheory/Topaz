@@ -556,8 +556,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
         return metadataFiles.Length == 0
             ? []
-            : metadataFiles.Select(x => JsonSerializer.Deserialize<T>(File.ReadAllText(x), GlobalSettings.JsonOptions)!)
-                .ToArray();
+            :
+            [
+                .. metadataFiles.Select(x =>
+                    JsonSerializer.Deserialize<T>(File.ReadAllText(x), GlobalSettings.JsonOptions)!)
+            ];
     }
 
     public T[] ListSubresourcesShallowAs<T>(SubscriptionIdentifier subscriptionIdentifier,
