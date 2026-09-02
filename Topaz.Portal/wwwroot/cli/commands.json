@@ -3716,6 +3716,258 @@
     ]
   },
   {
+    "name": "eventgrid topic create",
+    "group": "event-grid",
+    "description": "Creates or updates an Event Grid Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create an Event Grid Topic",
+        "command": "topaz eventgrid topic create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-topic\u0022 \\\n    --location \u0022westeurope\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic delete",
+    "group": "event-grid",
+    "description": "Deletes an Event Grid Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete an Event Grid Topic",
+        "command": "topaz eventgrid topic delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-topic\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic list",
+    "group": "event-grid",
+    "description": "Lists Event Grid Topics in a resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List Event Grid Topics in a resource group",
+        "command": "topaz eventgrid topic list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic list-by-subscription",
+    "group": "event-grid",
+    "description": "Lists Event Grid Topics in a subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List Event Grid Topics in a subscription",
+        "command": "topaz eventgrid topic list-by-subscription \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic list-event-types",
+    "group": "event-grid",
+    "description": "Lists event types for an Event Grid Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List event types for an Event Grid Topic",
+        "command": "topaz eventgrid topic list-event-types \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-topic\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic list-keys",
+    "group": "event-grid",
+    "description": "Lists access keys for an Event Grid Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List keys for an Event Grid Topic",
+        "command": "topaz eventgrid topic list-keys \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-topic\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic regenerate-key",
+    "group": "event-grid",
+    "description": "Regenerates an access key for an Event Grid Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-k, --key-name",
+        "description": "(Required) Key name to regenerate: key1 or key2.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Regenerate the primary key for an Event Grid Topic",
+        "command": "topaz eventgrid topic regenerate-key \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-topic\u0022 \\\n    --key-name \u0022key1\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic show",
+    "group": "event-grid",
+    "description": "Gets an Event Grid Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get an Event Grid Topic",
+        "command": "topaz eventgrid topic show \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-topic\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic update",
+    "group": "event-grid",
+    "description": "Updates an Event Grid Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "--public-network-access",
+        "description": "(Optional) Public network access: Enabled or Disabled.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Update an Event Grid Topic",
+        "command": "topaz eventgrid topic update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-topic\u0022 \\\n    --public-network-access \u0022Disabled\u0022"
+      }
+    ]
+  },
+  {
     "name": "eventhubs eventhub create",
     "group": "event-hub",
     "description": "Creates new Event Hub.",

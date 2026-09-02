@@ -1,25 +1,23 @@
 ---
-sidebar_position: 10
+sidebar_position: 1
 ---
 
-# eventgrid namespace create
-Creates or updates an Event Grid Namespace.
+# eventgrid topic create
+Creates or updates an Event Grid Topic.
 
 ## Options
 * `-s, --subscription-id` - (Required) (Required) Subscription ID.
-* `-n, --name` - (Required) (Required) Event Grid Namespace name.
+* `-n, --name` - (Required) (Required) Event Grid Topic name.
 * `-g, --resource-group` - (Required) (Required) Resource group name.
 * `-l, --location` - (Required) (Required) Azure region.
-* `--sku-name` - (Optional) SKU name (e.g. Standard).
-* `--sku-capacity` - (Optional) SKU capacity.
 
 ## Examples
 
-### Create an Event Grid Namespace
+### Create an Event Grid Topic
 ```bash
-$ topaz eventgrid namespace create \
+$ topaz eventgrid topic create \
     --subscription-id "00000000-0000-0000-0000-000000000000" \
     --resource-group "rg-local" \
-    --name "my-namespace" \
+    --name "my-topic" \
     --location "westeurope"
 ```
