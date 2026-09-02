@@ -13,6 +13,7 @@ namespace Topaz.Service.EventGrid;
 internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazLogger logger) : IControlPlane
 {
     private static readonly string SharedAccessKeySubresource = nameof(Subresource.SharedAccessKeys).ToLowerInvariant();
+    private static readonly string EventSubscriptionSubresource = nameof(Subresource.TopicEventSubscriptions).ToLowerInvariant();
     
     public static EventGridTopicControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(eventPipeline, logger);
 
@@ -246,5 +247,59 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
             resourceGroupIdentifier, name, SharedAccessKeySubresource);
         
         return new ControlPlaneOperationResult<EventGridSharedAccessKey[]>(OperationResult.Success, keys);
+    }
+
+    public ControlPlaneOperationResult<EventSubscriptionSubresource> CreateOrUpdateEventSubscription(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string topicName, string eventSubscriptionName, EventSubscriptionSubresourceProperties request)
+    {
+        var topicResource = Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
+        if (topicResource.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<EventSubscriptionSubresource>(OperationResult.NotFound, null,
+                topicResource.Reason, topicResource.Code);
+        }
+        
+        var eventSubscription = GetEventSubscription(subscriptionIdentifier, resourceGroupIdentifier, topicName,
+            eventSubscriptionName);
+        if (eventSubscription.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<EventSubscriptionSubresource>(OperationResult.NotFound, null,
+                eventSubscription.Reason, eventSubscription.Code);
+        }
+
+        if (eventSubscription.Resource != null)
+        {
+            eventSubscription.Resource.UpdateFromRequest(request);
+
+            _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, eventSubscriptionName,
+                topicName, EventSubscriptionSubresource, eventSubscription.Resource);
+            return new ControlPlaneOperationResult<EventSubscriptionSubresource>(OperationResult.Updated,
+                eventSubscription.Resource);
+        }
+
+        var properties = EventSubscriptionSubresourceProperties.From(request);
+        var resource = new EventSubscriptionSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName, eventSubscriptionName, properties);
+        
+        _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, eventSubscriptionName,
+            topicName, EventSubscriptionSubresource, resource);
+
+        return new ControlPlaneOperationResult<EventSubscriptionSubresource>(OperationResult.Created, resource);
+    }
+
+    internal ControlPlaneOperationResult<EventSubscriptionSubresource> GetEventSubscription(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string eventSubscriptionName)
+    {
+        var topicResource = Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
+        if (topicResource.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<EventSubscriptionSubresource>(OperationResult.NotFound, null,
+                topicResource.Reason, topicResource.Code);
+        }
+
+        var resource = _provider.GetSubresourceAs<EventSubscriptionSubresource>(subscriptionIdentifier,
+            resourceGroupIdentifier, eventSubscriptionName, topicName, EventSubscriptionSubresource);
+        
+        return new ControlPlaneOperationResult<EventSubscriptionSubresource>(OperationResult.Success, resource);
     }
 }
