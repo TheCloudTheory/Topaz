@@ -331,7 +331,14 @@ public static class GlobalSettings
     /// </summary>
     /// <remarks>
     /// This constant builds the Event Grid DNS suffix dynamically based on the host name defined in <see cref="TopazHostname"/>.
-    /// It is utilized to construct service-specific Event Grid URLs and ensures consistency across the application's integrations with Event Grid.
+    /// It is used to construct service-specific Event Grid URLs and ensures consistency across the application's integrations with Event Grid.
     /// </remarks>
     public const string EventGridDnsSuffix = $"eventgrid.{TopazHostname}";
+
+    /// <summary>
+    /// Constructs the Event Grid endpoint URL based on the provided topic name and the Event Grid DNS suffix.
+    /// </summary>
+    /// <param name="topicName">The name of the Event Grid topic for which the endpoint URL is to be constructed.</param>
+    /// <returns>A string containing the Event Grid endpoint URL.</returns>
+    public static string GetEventGridEndpoint(string topicName) => $"https://{topicName}.{EventGridDnsSuffix}:{DefaultResourceManagerPort}/";
 }

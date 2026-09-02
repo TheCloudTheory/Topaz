@@ -85,7 +85,7 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
         }
 
         var location = request.Location ?? resourceGroup.Resource!.Location!;
-        var properties = EventGridTopicResourceProperties.FromRequest(request.Properties);
+        var properties = EventGridTopicResourceProperties.FromRequest(topicName, request.Properties);
         var resource = new EventGridTopicResource(subscriptionIdentifier, resourceGroupIdentifier, topicName,
             location, request.Tags, properties);
 
