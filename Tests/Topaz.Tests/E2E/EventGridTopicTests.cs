@@ -6,6 +6,7 @@ using Azure.ResourceManager.EventGrid.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -46,11 +47,11 @@ public class EventGridTopicTests
 
         var result = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicName, data);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(result.Value.Data.Name, Is.EqualTo(TopicName));
             Assert.That(result.Value.Data.Location, Is.EqualTo(new AzureLocation("westeurope")));
-        });
+        }
     }
 
     [Test]
@@ -163,11 +164,11 @@ public class EventGridTopicTests
 
         var keys = await created.Value.GetSharedAccessKeysAsync();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(keys.Value.Key1, Is.Not.Null.And.Not.Empty);
             Assert.That(keys.Value.Key2, Is.Not.Null.And.Not.Empty);
-        });
+        }
     }
 
     [Test]
@@ -185,5 +186,66 @@ public class EventGridTopicTests
         var regenerated = await created.Value.RegenerateKeyAsync(WaitUntil.Completed, new TopicRegenerateKeyContent("key1"));
 
         Assert.That(regenerated.Value.Key1, Is.Not.EqualTo(originalKey1));
+    }
+    
+    [Test]
+    public async Task EventGridTopicSubscription_AllOperationsAreWorking()
+    {
+        const string eventSubscriptionName = "test-subscription";
+        var armClient = new ArmClient(new AzureLocalCredential(Globals.GlobalAdminId), SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+        var topics = resourceGroup.Value.GetEventGridTopics();
+        var data = new EventGridTopicData(new AzureLocation("westeurope"));
+
+        var topic = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicName, data);
+        var eventSubscription = await topic.Value.GetTopicEventSubscriptions().CreateOrUpdateAsync(WaitUntil.Completed, eventSubscriptionName, new EventGridSubscriptionData
+        {
+            Destination = new WebHookEventSubscriptionDestination
+            {
+                Endpoint = new Uri("https://example.com"),
+                MaxEventsPerBatch = 10,
+                PreferredBatchSizeInKilobytes = 64,
+                DeliveryAttributeMappings =
+                {
+                    new StaticDeliveryAttributeMapping
+                    {
+                        IsSecret = true,
+                        Name = "TestName",
+                        Value = "TestValue"
+                    },
+                    new DynamicDeliveryAttributeMapping
+                    {
+                        Name = "TestName",
+                        SourceField = "$.some.path"
+                    }
+                }
+            }
+        });
+        
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(eventSubscription.Value.Data.Name, Is.EqualTo(eventSubscriptionName));
+            Assert.That(((WebHookEventSubscriptionDestination)eventSubscription.Value.Data.Destination).Endpoint, Is.EqualTo(new Uri("https://example.com")));
+        }
+        
+        var returnedEventSubscription = await topic.Value.GetTopicEventSubscriptions().GetAsync(eventSubscriptionName);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(returnedEventSubscription.Value.Data.Name, Is.EqualTo(eventSubscriptionName));
+            Assert.That(((WebHookEventSubscriptionDestination)eventSubscription.Value.Data.Destination).Endpoint, Is.EqualTo(new Uri("https://example.com")));
+        }
+        
+        var uri = await returnedEventSubscription.Value.GetFullUriAsync(CancellationToken.None);
+        var attributes = await returnedEventSubscription.Value.GetDeliveryAttributesAsync(CancellationToken.None).ToArrayAsync();
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(uri.Value.Endpoint, Is.EqualTo(new Uri($"https://{eventSubscriptionName}.{TopicName}.{GlobalSettings.EventGridDnsSuffix}")));
+            Assert.That(attributes, Has.Length.EqualTo(2));
+        }
+
+        _ = returnedEventSubscription.Value.DeleteAsync(WaitUntil.Completed);
     }
 }

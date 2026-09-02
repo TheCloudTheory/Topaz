@@ -40,14 +40,14 @@ internal sealed class CreateOrUpdateEventGridTopicSubscriptionEndpoint(Pipeline 
 
         using var reader = new StreamReader(context.Request.Body);
         var request =
-            JsonSerializer.Deserialize<EventSubscriptionSubresourceProperties>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+            JsonSerializer.Deserialize<EventSubscriptionSubresource>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
         if (request == null)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdateEventSubscription(subscriptionIdentifier, resourceGroupIdentifier, topicName, eventSubscriptionName, request);
+        var result = _controlPlane.CreateOrUpdateEventSubscription(subscriptionIdentifier, resourceGroupIdentifier, topicName, eventSubscriptionName, request.Properties);
         if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);

@@ -174,14 +174,6 @@ TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
 ### Azure Event Grid — initial control plane and delivery
 
 <!--
-TODO: Azure Event Grid: Event Subscriptions CRUD
-  Create, get, update, delete, and list event subscriptions per topic; fields: destination
-  (WebHook, ServiceBus, EventHub), filter, eventDeliverySchema; persisted as subresources.
-  milestone: v1.11
-  labels: enhancement, event-grid
--->
-
-<!--
 TODO: Azure Event Grid: Event publishing
   POST /api/events on the topic data-plane endpoint accepts CloudEvents and EventGrid schema arrays;
   persists events and delivers synchronously to WebHook destinations via HTTP POST.
