@@ -20,7 +20,7 @@ internal sealed class ListEventGridTopicSubscriptionsEndpoint(Pipeline eventPipe
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/eventSubscriptions"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}/eventSubscriptions"
     ];
 
     public string[] Permissions => ["Microsoft.EventGrid/topics/eventSubscriptions/read"];

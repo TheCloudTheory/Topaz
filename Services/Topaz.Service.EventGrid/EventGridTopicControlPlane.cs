@@ -322,7 +322,7 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
         }
 
         _provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, eventSubscriptionName,
-            eventSubscriptionName, EventSubscriptionSubresource);
+            topicName, EventSubscriptionSubresource);
         
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }

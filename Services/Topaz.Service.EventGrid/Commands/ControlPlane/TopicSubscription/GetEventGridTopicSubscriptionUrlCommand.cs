@@ -1,0 +1,62 @@
+using JetBrains.Annotations;
+using Spectre.Console;
+using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
+using Topaz.Documentation.Command;
+
+namespace Topaz.Service.EventGrid.Commands.ControlPlane.TopicSubscription;
+
+[UsedImplicitly]
+[CommandDefinition("eventgrid topic subscription show-endpoint-url", "event-grid", "Gets the full endpoint URL for an Event Grid Topic event subscription.")]
+[CommandExample("Get the full endpoint URL for an Event Grid Topic event subscription", "topaz eventgrid topic subscription show-endpoint-url \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --topic-name \"my-topic\" \\\n    --name \"my-subscription\"")]
+public sealed class GetEventGridTopicSubscriptionUrlCommand(HttpClient httpClient, DefaultsProvider provider)
+    : TopazHttpCommand<GetEventGridTopicSubscriptionUrlCommand.GetEventGridTopicSubscriptionUrlCommandSettings>(httpClient)
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetEventGridTopicSubscriptionUrlCommandSettings settings, CancellationToken cancellationToken)
+    {
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.EventGrid/topics/{settings.TopicName}/eventSubscriptions/{settings.Name}/getFullUrl";
+        var (success, body) = await PostAsync(url, new { });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
+        return 0;
+    }
+
+    protected override ValidationResult Validate(CommandContext context, GetEventGridTopicSubscriptionUrlCommandSettings settings)
+    {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+
+        if (string.IsNullOrEmpty(settings.TopicName))
+            return ValidationResult.Error("Topic name can't be null.");
+        if (string.IsNullOrEmpty(settings.Name))
+            return ValidationResult.Error("Event subscription name can't be null.");
+        if (string.IsNullOrEmpty(settings.ResourceGroup))
+            return ValidationResult.Error("Resource group can't be null.");
+        if (string.IsNullOrEmpty(settings.SubscriptionId))
+            return ValidationResult.Error("Subscription ID can't be null.");
+        if (!Guid.TryParse(settings.SubscriptionId, out _))
+            return ValidationResult.Error("Subscription ID must be a valid GUID.");
+        return base.Validate(context, settings);
+    }
+
+    [UsedImplicitly]
+    public sealed class GetEventGridTopicSubscriptionUrlCommandSettings : CommandSettings
+    {
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
+        [CommandOption("-s|--subscription-id")]
+        public string? SubscriptionId { get; set; }
+
+        [CommandOptionDefinition("(Required) Event Grid Topic name.", required: true)]
+        [CommandOption("-t|--topic-name")]
+        public string? TopicName { get; set; }
+
+        [CommandOptionDefinition("(Required) Event subscription name.", required: true)]
+        [CommandOption("-n|--name")]
+        public string? Name { get; set; }
+
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
+        [CommandOption("-g|--resource-group")]
+        public string? ResourceGroup { get; set; }
+    }
+}

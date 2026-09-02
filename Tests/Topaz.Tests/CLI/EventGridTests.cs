@@ -8,6 +8,7 @@ public class EventGridTests
     private const string ResourceGroupName = "test";
     private const string NamespaceName = "test-namespace";
     private const string TopicName = "test-topic";
+    private const string EventSubscriptionName = "test-subscription";
 
     [SetUp]
     public async Task SetUp()
@@ -98,6 +99,38 @@ public class EventGridTests
             "westeurope",
             "--subscription-id",
             SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "subscription",
+            "delete",
+            "--name",
+            EventSubscriptionName,
+            "--topic-name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "subscription",
+            "create",
+            "--name",
+            EventSubscriptionName,
+            "--topic-name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
+            "--endpoint-url",
+            "https://example.com/webhook"
         ]);
     }
 
@@ -397,5 +430,149 @@ public class EventGridTests
         ]);
 
         Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public void EventGridTests_WhenNewTopicSubscriptionIsRequested_ItShouldBeCreated()
+    {
+        var eventSubscriptionPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid-topic", TopicName,
+            "topiceventsubscriptions", EventSubscriptionName, "metadata.json");
+
+        Assert.That(File.Exists(eventSubscriptionPath), Is.True);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenExistingTopicSubscriptionIsRequested_ItShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "subscription",
+            "show",
+            "--name",
+            EventSubscriptionName,
+            "--topic-name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenTopicSubscriptionsAreListed_TheyShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "subscription",
+            "list",
+            "--topic-name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenExistingTopicSubscriptionIsUpdated_ItShouldBeUpdated()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "subscription",
+            "update",
+            "--name",
+            EventSubscriptionName,
+            "--topic-name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
+            "--endpoint-url",
+            "https://example.com/other-webhook"
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenTopicSubscriptionUrlIsRequested_ItShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "subscription",
+            "show-endpoint-url",
+            "--name",
+            EventSubscriptionName,
+            "--topic-name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenTopicSubscriptionDeliveryAttributesAreRequested_TheyShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "subscription",
+            "show-delivery-attributes",
+            "--name",
+            EventSubscriptionName,
+            "--topic-name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenExistingTopicSubscriptionIsDeleted_ItShouldBeDeleted()
+    {
+        var eventSubscriptionPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid-topic", TopicName,
+            "topiceventsubscriptions", EventSubscriptionName, "metadata.json");
+
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "topic",
+            "subscription",
+            "delete",
+            "--name",
+            EventSubscriptionName,
+            "--topic-name",
+            TopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(File.Exists(eventSubscriptionPath), Is.False);
+            Assert.That(code, Is.Zero);
+        }
     }
 }

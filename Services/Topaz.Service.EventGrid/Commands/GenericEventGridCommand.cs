@@ -2,6 +2,7 @@ using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
 using Topaz.Service.EventGrid.Commands.ControlPlane.Namespace;
 using Topaz.Service.EventGrid.Commands.ControlPlane.Topic;
+using Topaz.Service.EventGrid.Commands.ControlPlane.TopicSubscription;
 
 namespace Topaz.Service.EventGrid.Commands;
 
@@ -34,6 +35,17 @@ public sealed class GenericEventGridCommand : IEmulatorCommand
                 topic.AddCommand<ListEventGridTopicEventTypesCommand>("list-event-types");
                 topic.AddCommand<ListEventGridTopicKeysCommand>("list-keys");
                 topic.AddCommand<RegenerateEventGridTopicKeyCommand>("regenerate-key");
+
+                topic.AddBranch("subscription", subscription =>
+                {
+                    subscription.AddCommand<CreateOrUpdateEventGridTopicSubscriptionCommand>("create");
+                    subscription.AddCommand<GetEventGridTopicSubscriptionCommand>("show");
+                    subscription.AddCommand<DeleteEventGridTopicSubscriptionCommand>("delete");
+                    subscription.AddCommand<UpdateEventGridTopicSubscriptionCommand>("update");
+                    subscription.AddCommand<ListEventGridTopicSubscriptionsCommand>("list");
+                    subscription.AddCommand<GetEventGridTopicSubscriptionUrlCommand>("show-endpoint-url");
+                    subscription.AddCommand<GetEventGridTopicSubscriptionDeliveryAttributesCommand>("show-delivery-attributes");
+                });
             });
         });
     }
