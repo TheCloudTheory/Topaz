@@ -66,6 +66,12 @@ public class AspNetCoreExtensionTests
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
+        var logs = await _container!.GetLogsAsync();
+        var stdout = logs.Stdout;
+        
+        // Dump all the logs so they can be published as workflow artifact
+        await File.WriteAllTextAsync("topaz-isolated.log", stdout);
+        
         await _container!.DisposeAsync();
     }
 
@@ -384,7 +390,10 @@ public class AspNetCoreExtensionTests
         // Assert
         Assert.That(setting, Is.Not.Null);
         Assert.That(setting.Value, Is.Not.Null);
-        Assert.That(setting.Value.Value, Is.EqualTo($"{{\"uri\":\"{secret.Value.Id}\"}}"));
-        Assert.That(setting.Value.ContentType, Is.EqualTo("application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(setting.Value.Value, Is.EqualTo($"{{\"uri\":\"{secret.Value.Id}\"}}"));
+            Assert.That(setting.Value.ContentType, Is.EqualTo("application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8"));
+        });
     }
 }

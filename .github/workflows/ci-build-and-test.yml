@@ -395,6 +395,13 @@ jobs:
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
+    - name: Publish Topaz container logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: topaz-isolated-log
+        path: '**/topaz-isolated.log'
+        if-no-files-found: ignore
     - name: Terraform Tests
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || steps.changes.outputs.terraform == 'true')
       run: |
