@@ -381,7 +381,7 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
         }
 
         return new ControlPlaneOperationResult<string>(OperationResult.Success,
-            $"https://{eventSubscriptionName}.{topicName}.{GlobalSettings.EventGridDnsSuffix}");
+            eventSubscription.Resource!.Properties.Destination?.Properties?.EndpointUrl);
     }
 
     public ControlPlaneOperationResult<DeliveryAttributeMapping[]> GetDeliveryAttributes(SubscriptionIdentifier subscriptionIdentifier,

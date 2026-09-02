@@ -242,7 +242,7 @@ public class EventGridTopicTests
         var attributes = await returnedEventSubscription.Value.GetDeliveryAttributesAsync(CancellationToken.None).ToArrayAsync();
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(uri.Value.Endpoint, Is.EqualTo(new Uri($"https://{eventSubscriptionName}.{TopicName}.{GlobalSettings.EventGridDnsSuffix}")));
+            Assert.That(uri.Value.Endpoint, Is.EqualTo(new Uri("https://example.com")));
             Assert.That(attributes, Has.Length.EqualTo(2));
         }
 
