@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 13
 ---
 
 # eventgrid topic list-event-types

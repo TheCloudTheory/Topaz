@@ -3935,6 +3935,242 @@
     ]
   },
   {
+    "name": "eventgrid topic subscription create",
+    "group": "event-grid",
+    "description": "Creates or updates an Event Grid Topic event subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-t, --topic-name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event subscription name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "--endpoint-url",
+        "description": "(Required) Webhook endpoint URL to deliver events to.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create an Event Grid Topic event subscription",
+        "command": "topaz eventgrid topic subscription create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --topic-name \u0022my-topic\u0022 \\\n    --name \u0022my-subscription\u0022 \\\n    --endpoint-url \u0022https://example.com/webhook\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic subscription delete",
+    "group": "event-grid",
+    "description": "Deletes an Event Grid Topic event subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-t, --topic-name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event subscription name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete an Event Grid Topic event subscription",
+        "command": "topaz eventgrid topic subscription delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --topic-name \u0022my-topic\u0022 \\\n    --name \u0022my-subscription\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic subscription list",
+    "group": "event-grid",
+    "description": "Lists event subscriptions for an Event Grid Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-t, --topic-name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List event subscriptions for an Event Grid Topic",
+        "command": "topaz eventgrid topic subscription list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --topic-name \u0022my-topic\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic subscription show",
+    "group": "event-grid",
+    "description": "Gets an Event Grid Topic event subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-t, --topic-name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event subscription name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get an Event Grid Topic event subscription",
+        "command": "topaz eventgrid topic subscription show \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --topic-name \u0022my-topic\u0022 \\\n    --name \u0022my-subscription\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic subscription show-delivery-attributes",
+    "group": "event-grid",
+    "description": "Gets the delivery attributes for an Event Grid Topic event subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-t, --topic-name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event subscription name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get the delivery attributes for an Event Grid Topic event subscription",
+        "command": "topaz eventgrid topic subscription show-delivery-attributes \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --topic-name \u0022my-topic\u0022 \\\n    --name \u0022my-subscription\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic subscription show-endpoint-url",
+    "group": "event-grid",
+    "description": "Gets the full endpoint URL for an Event Grid Topic event subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-t, --topic-name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event subscription name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get the full endpoint URL for an Event Grid Topic event subscription",
+        "command": "topaz eventgrid topic subscription show-endpoint-url \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --topic-name \u0022my-topic\u0022 \\\n    --name \u0022my-subscription\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid topic subscription update",
+    "group": "event-grid",
+    "description": "Updates an Event Grid Topic event subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-t, --topic-name",
+        "description": "(Required) Event Grid Topic name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event subscription name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "--endpoint-url",
+        "description": "(Optional) Webhook endpoint URL to deliver events to.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Update an Event Grid Topic event subscription",
+        "command": "topaz eventgrid topic subscription update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --topic-name \u0022my-topic\u0022 \\\n    --name \u0022my-subscription\u0022 \\\n    --endpoint-url \u0022https://example.com/webhook\u0022"
+      }
+    ]
+  },
+  {
     "name": "eventgrid topic update",
     "group": "event-grid",
     "description": "Updates an Event Grid Topic.",

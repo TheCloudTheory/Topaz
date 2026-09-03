@@ -1,5 +1,5 @@
 ---
-sidebar_position: 8
+sidebar_position: 15
 ---
 
 # eventgrid topic regenerate-key
