@@ -405,14 +405,20 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
 
     public ControlPlaneOperationResult<EventGridTopicResource> FindByName(string topicName)
     {
-        var identifiers = GlobalDnsEntries.GetEntry(EventGridTopicService.UniqueName, topicName);
-        if (identifiers == null)
+        var subscriptions = _subscriptionControlPlane.List();
+        foreach (var subscription in subscriptions.Resource!)
         {
-            return new ControlPlaneOperationResult<EventGridTopicResource>(
-                OperationResult.NotFound, null, string.Format(NotFoundMessage, topicName), NotFoundCode);
+            var topics = ListBySubscription(SubscriptionIdentifier.From(subscription.Id), null);
+            foreach (var topic in topics.Resource!)
+            {
+                if (topic.Name == topicName)
+                {
+                    return Get(SubscriptionIdentifier.From(subscription.Id), topic.GetResourceGroup(), topicName);
+                }
+            }
         }
 
-        return Get(SubscriptionIdentifier.From(identifiers.Value.subscription),
-            ResourceGroupIdentifier.From(identifiers.Value.resourceGroup!), topicName);
+        return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.NotFound, null,
+            "Event Grid topic not found", "ResourceNotFound");
     }
 }
