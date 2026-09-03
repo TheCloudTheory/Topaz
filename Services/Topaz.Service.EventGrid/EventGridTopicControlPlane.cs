@@ -1,3 +1,4 @@
+using Topaz.Dns;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.EventGrid.Models;
@@ -400,5 +401,18 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
             [];
         
         return new ControlPlaneOperationResult<DeliveryAttributeMapping[]>(OperationResult.Success, attributes);
+    }
+
+    public ControlPlaneOperationResult<EventGridTopicResource> FindByName(string topicName)
+    {
+        var identifiers = GlobalDnsEntries.GetEntry(EventGridTopicService.UniqueName, topicName);
+        if (identifiers == null)
+        {
+            return new ControlPlaneOperationResult<EventGridTopicResource>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, topicName), NotFoundCode);
+        }
+
+        return Get(SubscriptionIdentifier.From(identifiers.Value.subscription),
+            ResourceGroupIdentifier.From(identifiers.Value.resourceGroup!), topicName);
     }
 }

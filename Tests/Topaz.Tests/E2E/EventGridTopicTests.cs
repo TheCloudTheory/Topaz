@@ -1,12 +1,12 @@
 using Azure;
 using Azure.Core;
+using Azure.Messaging.EventGrid;
 using Azure.ResourceManager;
 using Azure.ResourceManager.EventGrid;
 using Azure.ResourceManager.EventGrid.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
-using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -247,5 +247,32 @@ public class EventGridTopicTests
         }
 
         _ = returnedEventSubscription.Value.DeleteAsync(WaitUntil.Completed);
+    }
+
+    [Test]
+    public async Task EventGridTopicSubscription_CanSendEventToTopicUrl()
+    {
+        var armClient = new ArmClient(new AzureLocalCredential(Globals.GlobalAdminId), SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+        var topics = resourceGroup.Value.GetEventGridTopics();
+        var data = new EventGridTopicData(new AzureLocation("westeurope"));
+
+        var topic = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicName, data);
+        var endpoint = topic.Value.Data.Endpoint;
+
+        var client = new EventGridPublisherClient(
+            endpoint,
+            new AzureLocalCredential(Globals.GlobalAdminId));
+        
+        var eventGridEvent =
+            new EventGridEvent(
+                "ExampleEventSubject",
+                "Example.EventType",
+                "1.0",
+                "This is the event data");
+        
+        await client.SendEventAsync(eventGridEvent);
     }
 }

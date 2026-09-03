@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Data.AppConfiguration" Version="1.11.0" />
+    <PackageReference Include="Azure.Messaging.EventGrid" Version="5.0.0" />
     <PackageReference Include="Azure.Messaging.EventHubs" Version="5.12.2" />
     <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.12.2" />
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.2" />
