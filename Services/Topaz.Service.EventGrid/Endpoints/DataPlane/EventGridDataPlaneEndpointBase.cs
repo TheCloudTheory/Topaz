@@ -34,6 +34,9 @@ internal class EventGridDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogg
         throw new NotImplementedException();
     }
     
+    protected static EventGridTopicContext GetEventGridContext(HttpContext context) =>
+        (EventGridTopicContext)context.Items[EventGridContextKey]!;
+    
     public (bool isAuthorized, ClaimsPrincipal? principal) Authorize(
         HttpContext context,
         HttpResponseMessage response,

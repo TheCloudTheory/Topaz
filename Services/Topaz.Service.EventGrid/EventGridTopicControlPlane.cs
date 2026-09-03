@@ -408,12 +408,12 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
         var subscriptions = _subscriptionControlPlane.List();
         foreach (var subscription in subscriptions.Resource!)
         {
-            var topics = ListBySubscription(SubscriptionIdentifier.From(subscription.Id), null);
+            var topics = ListBySubscription(SubscriptionIdentifier.From(subscription.SubscriptionId), null);
             foreach (var topic in topics.Resource!)
             {
                 if (topic.Name == topicName)
                 {
-                    return Get(SubscriptionIdentifier.From(subscription.Id), topic.GetResourceGroup(), topicName);
+                    return Get(SubscriptionIdentifier.From(subscription.SubscriptionId), topic.GetResourceGroup(), topicName);
                 }
             }
         }

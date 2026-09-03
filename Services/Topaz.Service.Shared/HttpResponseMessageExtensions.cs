@@ -78,6 +78,15 @@ public static class HttpResponseMessageExtensions
         response.Content = JsonContent.Create(error);
     }
     
+    public static void CreateErrorResponse(this HttpResponseMessage response, DataPlaneOperationResult result,
+        HttpStatusCode codeToReturn = HttpStatusCode.InternalServerError)
+    {
+        var error = new GenericErrorResponse(result.Code!, result.Reason!);
+
+        response.StatusCode = codeToReturn;
+        response.Content = JsonContent.Create(error);
+    }
+    
     public static void CreateErrorResponse<TResult>(this HttpResponseMessage response, ControlPlaneOperationResult<TResult> result,
         HttpStatusCode codeToReturn = HttpStatusCode.InternalServerError)
     {
