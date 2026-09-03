@@ -80,11 +80,14 @@ public class AspNetCoreExtensionTests
     {
         // Arrange
         const string secretName = "connectionString-storageAccount";
+        const string storageAccountName = "testsatopaz2";
+        const string keyVaultName = "testsatopaz2";
+        
         var subscriptionId = Guid.NewGuid();
         var builder = new ConfigurationBuilder();
         var objectId = Globals.GlobalAdminId;
         var credentials = new AzureLocalCredential(objectId);
-        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(KeyVaultName), credential: credentials, new SecretClientOptions
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName), credential: credentials, new SecretClientOptions
         {
             DisableChallengeResourceVerification = true
         });
@@ -93,22 +96,22 @@ public class AspNetCoreExtensionTests
         await builder.AddTopaz(subscriptionId, objectId)
             .AddSubscription(subscriptionId, SubscriptionName, credentials)
             .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
-            .AddStorageAccount(ResourceGroupIdentifier.From(ResourceGroupName), StorageAccountName,
+            .AddStorageAccount(ResourceGroupIdentifier.From(ResourceGroupName), storageAccountName,
                 new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs),
                     StorageKind.StorageV2, AzureLocation.WestEurope))
-            .AddKeyVault(ResourceGroupIdentifier.From(ResourceGroupName), KeyVaultName,
+            .AddKeyVault(ResourceGroupIdentifier.From(ResourceGroupName), keyVaultName,
                 new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
                     new KeyVaultProperties(Guid.Empty,
                         new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))))
             .AddStorageAccountConnectionStringAsSecret(ResourceGroupIdentifier.From(ResourceGroupName),
-                StorageAccountName, KeyVaultName,
+                storageAccountName, keyVaultName,
                 secretName, objectId);
         
         var secret = await client.GetSecretAsync(secretName);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
-        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(StorageAccountName);
+        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(storageAccountName);
         var key = storageAccount.Value.GetKeys().ToArray()[0];
 
         // Assert

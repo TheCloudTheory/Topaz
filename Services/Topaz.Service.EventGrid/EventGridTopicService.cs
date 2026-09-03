@@ -1,6 +1,7 @@
 ﻿using Topaz.EventPipeline;
 using Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics;
 using Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics.TopicSubscriptions;
+using Topaz.Service.EventGrid.Endpoints.DataPlane;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -40,6 +41,7 @@ public sealed class EventGridTopicService(Pipeline eventPipeline, ITopazLogger l
         new ListEventGridTopicSubscriptionsEndpoint(eventPipeline, logger),
         new UpdateEventGridTopicSubscriptionEndpoint(eventPipeline, logger),
         new GetEventGridTopicSubscriptionUrlEndpoint(eventPipeline, logger),
-        new GetEventGridTopicSubscriptionDeliveryAttributesEndpoint(eventPipeline, logger)
+        new GetEventGridTopicSubscriptionDeliveryAttributesEndpoint(eventPipeline, logger),
+        new PublishEventGridEventEndpoint(eventPipeline, logger),
     ];
 }

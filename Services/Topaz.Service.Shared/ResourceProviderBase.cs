@@ -325,7 +325,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         if (existingInstance != null && TService.IsGlobalService && createOperation && !recoverInstance)
         {
             // Verify the resource the DNS entry points to still exists on disk.
-            // If the parent resource (e.g. a resource group) was deleted, the directory is gone
+            // If the parent resource (e.g., a resource group) was deleted, the directory is gone
             // but this service's DNS entry may remain as a stale orphan. Detect this and clean
             // up so that recreation can proceed normally.
             var existingSubId = SubscriptionIdentifier.From(existingInstance.Value.subscription);
@@ -341,9 +341,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
             if (File.Exists(existingMetadata))
             {
-                _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(CreateOrUpdate),
-                    $"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
-                return;
+                throw new ResourceConflictException($"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
             }
 
             _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(CreateOrUpdate),
