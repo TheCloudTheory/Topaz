@@ -95,7 +95,7 @@ internal sealed class EventGridEventDeliveryBackgroundService(
                     {
                         case "WebHook":
                             await DeliverWebHookEvent(topic.GetSubscription(), topic.GetResourceGroup(), topic.Name,
-                                eventSubscription.Name, destination, events);
+                                eventSubscription.Name, destination, events, cancellationToken);
                             break;
                         default:
                             logger.LogWarning(
@@ -114,7 +114,8 @@ internal sealed class EventGridEventDeliveryBackgroundService(
     private async Task DeliverWebHookEvent(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string subscriptionName,
         EventSubscriptionDestination destination,
-        EventGridEventEnvelope[] data)
+        EventGridEventEnvelope[] data,
+        CancellationToken cancellationToken)
     {
         var endpointUrl = destination.Properties!.EndpointUrl;
         if (string.IsNullOrWhiteSpace(endpointUrl))
@@ -137,6 +138,6 @@ internal sealed class EventGridEventDeliveryBackgroundService(
         var message = new HttpRequestMessage(HttpMethod.Post, endpointUrl);
         message.Content = JsonContent.Create(data.Select(e => e.Event));
 
-        await client.SendAsync(message);
+        await client.SendAsync(message, cancellationToken);
     }
 }
