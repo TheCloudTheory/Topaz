@@ -80,7 +80,7 @@ internal sealed class EventGridEventDeliveryBackgroundService(
                         "Failed to list event subscriptions.");
                 }
 
-                var events = _provider.ListSubresourcesAs<EventGridEventEnvelope>(topic.GetSubscription(),
+                var events = _provider.ListSubresourcesAs<EventGridEventEnvelope<object>>(topic.GetSubscription(),
                     topic.GetResourceGroup(), topic.Name, EventSubresource);
 
                 foreach (var eventSubscription in eventSubscriptionsOperation.Resource!)
@@ -114,10 +114,10 @@ internal sealed class EventGridEventDeliveryBackgroundService(
             "Event delivery background service completed.");
     }
 
-    private async Task DeliverWebHookEvent(SubscriptionIdentifier subscriptionIdentifier,
+    private async Task DeliverWebHookEvent<TEventModel>(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, EventGridTopicResource topic, string subscriptionName,
         EventSubscriptionDestination destination,
-        EventGridEventEnvelope[] data,
+        EventGridEventEnvelope<TEventModel>[] data,
         CancellationToken cancellationToken)
     {
         var endpointUrl = destination.Properties!.EndpointUrl;
@@ -142,9 +142,9 @@ internal sealed class EventGridEventDeliveryBackgroundService(
         await SendEventDataWithDeliveryStatus(subscriptionIdentifier, resourceGroupIdentifier, topic.Name, subscriptionName, data, message, cancellationToken);
     }
 
-    private async Task SendEventDataWithDeliveryStatus(SubscriptionIdentifier subscriptionIdentifier,
+    private async Task SendEventDataWithDeliveryStatus<TEventModel>(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string subscriptionName,
-        EventGridEventEnvelope[] data, HttpRequestMessage message, CancellationToken cancellationToken)
+        EventGridEventEnvelope<TEventModel>[] data, HttpRequestMessage message, CancellationToken cancellationToken)
     {
         message.Content = JsonContent.Create(data.Select(e => e.Event));
 
@@ -184,12 +184,13 @@ internal sealed class EventGridEventDeliveryBackgroundService(
             {
                 return;
             }
-        
+
             var validationResponse =
                 await response.Content.ReadFromJsonAsync<EventGridValidationEventResponse>(
                     cancellationToken: cancellationToken);
 
-            if (response.IsSuccessStatusCode && validationResponse!.ValidationResponse == validationEvent.Data?.ValidationCode)
+            if (response.IsSuccessStatusCode &&
+                validationResponse!.ValidationResponse == validationEvent.Data?.ValidationCode)
             {
                 _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
                     topicName, ValidatedSubscriptionSubresource,
@@ -198,7 +199,9 @@ internal sealed class EventGridEventDeliveryBackgroundService(
         }
         catch (Exception ex)
         {
-            logger.LogError(nameof(EventGridEventDeliveryBackgroundService), nameof(HandleSubscriptionValidationRequest), $"Error while handling subscription validation request: {ex.Message}");
+            logger.LogError(nameof(EventGridEventDeliveryBackgroundService),
+                nameof(HandleSubscriptionValidationRequest),
+                $"Error while handling subscription validation request: {ex.Message}");
             throw;
         }
     }

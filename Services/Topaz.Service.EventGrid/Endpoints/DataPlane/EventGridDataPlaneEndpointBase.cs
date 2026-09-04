@@ -18,12 +18,12 @@ internal class EventGridDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogg
     private static readonly object EventGridContextKey = new();
     
     private readonly AzureAuthorizationAdapter _authAdapter = new(eventPipeline, logger);
+    private readonly EventGridTopicControlPlane _controlPlane = EventGridTopicControlPlane.New(eventPipeline, logger);
     
-    protected readonly EventGridTopicControlPlane ControlPlane = EventGridTopicControlPlane.New(eventPipeline, logger);
     protected readonly EventGridDataPlane DataPlane = EventGridDataPlane.New(EventGridTopicControlPlane.New(eventPipeline, logger), logger);
     
     public virtual string[] Endpoints => [];
-    public string[] Permissions => [];
+    public virtual string[] Permissions => [];
     public string ProviderNamespace => "Microsoft.EventGrid";
     public string RequiredHostServiceLabel => "eventgrid";
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
@@ -53,7 +53,7 @@ internal class EventGridDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogg
             return (false, null);
         }
 
-        var eventGridOperation = ControlPlane.FindByName(eventGridName);
+        var eventGridOperation = _controlPlane.FindByName(eventGridName);
         if (eventGridOperation.Result == OperationResult.NotFound || eventGridOperation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
@@ -73,7 +73,7 @@ internal class EventGridDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogg
         // Bearer tokens (Topaz CLI / Entra ID) bypass HMAC validation.
         // Note that HMAC validation will be bypassed if `DisableLocalAuth` is set to `true`
         if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) && !topic.Properties.DisableLocalAuth!.Value &&
-            !TryValidateHmac(authHeader, context, ControlPlane.ListKeys(subscriptionIdentifier, resourceGroupIdentifier, eventGridName).Resource, logger))
+            !TryValidateHmac(authHeader, context, _controlPlane.ListKeys(subscriptionIdentifier, resourceGroupIdentifier, eventGridName).Resource, logger))
         {
             return (false, null);
         }

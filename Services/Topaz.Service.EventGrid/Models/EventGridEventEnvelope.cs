@@ -1,14 +1,22 @@
 namespace Topaz.Service.EventGrid.Models;
 
-internal sealed class EventGridEventEnvelope
+internal sealed class EventGridEventEnvelope<TEventModel>
 {
-    public EventGridEventSchema? Event { get; init; }
+    public TEventModel? Event { get; init; }
     public int DeliveryAttempt { get; set; }
     public bool IsDelivered { get; set; }
 
-    public static EventGridEventEnvelope From(EventGridEventSchema message)
+    public static EventGridEventEnvelope<EventGridEventSchema> From(EventGridEventSchema message)
     {
-        return new EventGridEventEnvelope
+        return new EventGridEventEnvelope<EventGridEventSchema>
+        {
+            Event = message
+        };
+    }
+
+    public static EventGridEventEnvelope<EventGridCloudEventSchema> From(EventGridCloudEventSchema message)
+    {
+        return new EventGridEventEnvelope<EventGridCloudEventSchema>
         {
             Event = message
         };

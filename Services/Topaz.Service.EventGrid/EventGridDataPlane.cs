@@ -18,7 +18,7 @@ internal sealed class EventGridDataPlane(
     
     private readonly EventGridTopicResourceProvider _provider = new(logger);
 
-    public async Task<DataPlaneOperationResult> PublishEventGridEvent(SubscriptionIdentifier subscriptionIdentifier,
+    public DataPlaneOperationResult PublishEventGridEvent(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string topicName, EventGridEventSchema[] data)
     {
         var topicOperation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
@@ -44,7 +44,38 @@ internal sealed class EventGridDataPlane(
         foreach (var message in data)
         {
             _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, message.Id!, topicName,
-                EventSubresource,EventGridEventEnvelope.From(message));
+                EventSubresource,EventGridEventEnvelope<EventGridEventSchema>.From(message));
+        }
+        
+        return new DataPlaneOperationResult(OperationResult.Success);
+    }
+
+    public DataPlaneOperationResult PublishCloudEvent(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string topicName, EventGridCloudEventSchema[] data)
+    {
+        var topicOperation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
+        if (topicOperation.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult(OperationResult.NotFound, topicOperation.Reason, topicOperation.Code);
+        }
+
+        if (data.Length > 5000)
+        {
+            return new DataPlaneOperationResult(OperationResult.Conflict,
+                "A batch can contain a maximum of 5,000 events.", "Conflict");
+        }
+        
+        const uint maxPayloadSizeInMbs = 1024 * 1024;
+        var payloadSize = JsonSerializer.SerializeToUtf8Bytes(data).Length;
+        if(payloadSize > maxPayloadSizeInMbs)
+        {
+            return new DataPlaneOperationResult(OperationResult.Conflict,
+                "A batch can contain a maximum of 1 MB.", "Conflict");
+        }
+
+        foreach (var message in data)
+        {
+            _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, message.Id, topicName,
+                EventSubresource,EventGridEventEnvelope<EventGridCloudEventSchema>.From(message));
         }
         
         return new DataPlaneOperationResult(OperationResult.Success);

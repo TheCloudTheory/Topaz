@@ -8,22 +8,24 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventGrid.Endpoints.DataPlane;
 
-internal sealed class PublishEventGridEventEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class PublishCloudEventEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : EventGridDataPlaneEndpointBase(eventPipeline, logger)
 {
-    public override string[] Endpoints => ["POST /api/events"];
+    public override string[] Endpoints => ["POST /"];
     
     public override string[] Permissions => ["Microsoft.EventGrid/events/send/action"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
+        var isBatch = context.Request.Headers.ContainsKey("application/cloudevents-batch+json");
         var ctx = GetEventGridContext(context);
 
         using var reader = new StreamReader(context.Request.Body);
-        var data =
-            JsonSerializer.Deserialize<EventGridEventSchema[]>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+        var data = isBatch ?
+            JsonSerializer.Deserialize<EventGridCloudEventSchema[]>(reader.ReadToEnd(), GlobalSettings.JsonOptions)
+            : [JsonSerializer.Deserialize<EventGridCloudEventSchema>(reader.ReadToEnd(), GlobalSettings.JsonOptions)!];
 
-        var result = DataPlane.PublishEventGridEvent(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier,
+        var result = DataPlane.PublishCloudEvent(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier,
             ctx.TopicName, data!);
         if (result.Result != OperationResult.Success)
         {
