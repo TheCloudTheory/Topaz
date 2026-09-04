@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Azure;
 using Azure.Core;
+using Azure.Messaging;
 using Azure.Messaging.EventGrid;
 using Azure.ResourceManager;
 using Azure.ResourceManager.EventGrid;
@@ -299,6 +300,12 @@ public class EventGridTopicTests
                     "This is the event data");
 
             await client.SendEventAsync(eventGridEvent, listenerCts.Token);
+            
+            var cloudEvent = new CloudEvent("Topaz.Tests", "Example.EventType.CE", new BinaryData([
+                .. "This is the event data"u8
+            ]), "text/plain");
+            
+            await client.SendEventAsync(cloudEvent, listenerCts.Token);
 
             // Delivery happens via a periodic background poller, so poll until the event arrives, or we time out.
             var deadline = DateTime.UtcNow.AddSeconds(30);
@@ -316,8 +323,9 @@ public class EventGridTopicTests
             listenerCts.Dispose();
         }
         
-        Assert.That(receivedEvents, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(receivedEvents, Is.Not.Null.And.Count.EqualTo(2));
         Assert.That(receivedEvents![0].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType"));
+        Assert.That(receivedEvents![1].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType.CE"));
     }
     
     private static int GetFreeTcpPort()
