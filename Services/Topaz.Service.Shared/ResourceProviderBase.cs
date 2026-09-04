@@ -535,10 +535,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
                 $"You can't get a subresource '{subresource}' for a parent service which doesn't define that subresource.");
         }
         
-        if (parentId.Contains("..") || parentId.Contains('\\'))
+        if (parentId.Contains("..") || parentId.Contains('\\') || subresource.Contains("..") || subresource.Contains('/') || subresource.Contains('\\'))
+        {
             throw new InvalidOperationException("Identifier contains forbidden characters.");
-        if (subresource.Contains("..") || subresource.Contains('/') || subresource.Contains('\\'))
-            throw new InvalidOperationException("Identifier contains forbidden characters.");
+        }
+        
         var subresourcePath = Path.Combine(BaseEmulatorPath,
             GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), parentId,
             subresource);
@@ -552,13 +553,22 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
         var metadataFiles = Directory.GetFiles(subresourcePath, "metadata.json", SearchOption.AllDirectories);
 
-        return metadataFiles.Length == 0
-            ? []
-            :
-            [
-                .. metadataFiles.Select(x =>
-                    JsonSerializer.Deserialize<T>(File.ReadAllText(x), GlobalSettings.JsonOptions)!)
-            ];
+        try
+        {
+            return metadataFiles.Length == 0
+                ? []
+                :
+                [
+                    .. metadataFiles.Select(x =>
+                        JsonSerializer.Deserialize<T>(File.ReadAllText(x), GlobalSettings.JsonOptions)!)
+                ];
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(nameof(ResourceProviderBase<>), nameof(ListSubresourcesAs),
+                $"Failed to deserialize metadata file: {ex.Message}");
+            throw;
+        }
     }
 
     public T[] ListSubresourcesShallowAs<T>(SubscriptionIdentifier subscriptionIdentifier,

@@ -276,6 +276,9 @@ public class Host
 
         // Wait for cancellation
         await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+        
+        // Cleanup
+        Client.Dispose();
     }
 
     private void Bootstrap()
@@ -551,9 +554,6 @@ public class Host
             .Build();
 
         await host.StartAsync(cancellationToken);
-        
-        // Cleanup
-        Client.Dispose();
     }
 
     private X509Certificate2 LoadCertificate()

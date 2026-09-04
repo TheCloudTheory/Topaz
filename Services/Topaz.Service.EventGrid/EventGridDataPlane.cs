@@ -44,7 +44,7 @@ internal sealed class EventGridDataPlane(
         foreach (var message in data)
         {
             _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, message.Id!, topicName,
-                EventSubresource, JsonSerializer.Serialize(EventGridEventEnvelope.From(message), GlobalSettings.JsonOptions));
+                EventSubresource,EventGridEventEnvelope.From(message));
         }
         
         return new DataPlaneOperationResult(OperationResult.Success);

@@ -1,3 +1,7 @@
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Text.Json;
 using Azure;
 using Azure.Core;
 using Azure.Messaging.EventGrid;
@@ -258,22 +262,103 @@ public class EventGridTopicTests
 
         var topics = resourceGroup.Value.GetEventGridTopics();
         var data = new EventGridTopicData(new AzureLocation("westeurope"));
-
         var topic = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicName, data);
-        var endpoint = topic.Value.Data.Endpoint;
+        
+        // Start a local webhook receiver. Listener/cts are disposed manually below, after the
+        // background task is awaited, so no closure captures a variable disposed by an outer `using`.
+        List<JsonElement>? receivedEvents = null;
+        var listenerCts = new CancellationTokenSource();
+        var listener = new HttpListener();
+        var port = GetFreeTcpPort();
+        listener.Prefixes.Add($"http://localhost:{port}/webhook/");
+        listener.Start();
 
-        var client = new EventGridPublisherClient(
-            endpoint,
-            new AzureLocalCredential(Globals.GlobalAdminId));
+        var listenerTask = RunWebhookListener(listener, listenerCts.Token, events => receivedEvents = events);
         
-        var eventGridEvent =
-            new EventGridEvent(
-                "ExampleEventSubject",
-                "Example.EventType",
-                "1.0",
-                "This is the event data");
+        try
+        {
+            await topic.Value.GetTopicEventSubscriptions().CreateOrUpdateAsync(WaitUntil.Completed,
+                "test-subscription", new EventGridSubscriptionData
+                {
+                    Destination = new WebHookEventSubscriptionDestination
+                    {
+                        Endpoint = new Uri($"http://localhost:{port}/webhook/")
+                    }
+                }, listenerCts.Token);
+
+            var endpoint = topic.Value.Data.Endpoint;
+            var client = new EventGridPublisherClient(
+                endpoint,
+                new AzureLocalCredential(Globals.GlobalAdminId));
+
+            var eventGridEvent =
+                new EventGridEvent(
+                    "ExampleEventSubject",
+                    "Example.EventType",
+                    "1.0",
+                    "This is the event data");
+
+            await client.SendEventAsync(eventGridEvent, listenerCts.Token);
+
+            // Delivery happens via a periodic background poller, so poll until the event arrives, or we time out.
+            var deadline = DateTime.UtcNow.AddSeconds(30);
+            while (receivedEvents == null && DateTime.UtcNow < deadline)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(500), listenerCts.Token);
+            }
+        }
+        finally
+        {
+            await listenerCts.CancelAsync();
+            listener.Stop();
+            await listenerTask;
+            listener.Close();
+            listenerCts.Dispose();
+        }
         
-        await client.SendEventAsync(eventGridEvent);
+        Assert.That(receivedEvents, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(receivedEvents![0].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType"));
+    }
+    
+    private static int GetFreeTcpPort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
+    }
+
+    private static async Task RunWebhookListener(HttpListener listener, CancellationToken token,
+        Action<List<JsonElement>?> setReceivedEvents)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            HttpListenerContext context;
+            try { context = await listener.GetContextAsync().WaitAsync(token); }
+            catch (OperationCanceledException) { break; }
+            catch (Exception) when (token.IsCancellationRequested) { break; }
+
+            using var reader = new StreamReader(context.Request.InputStream);
+            var body = await reader.ReadToEndAsync(token);
+
+            if (body.Contains("Microsoft.EventGrid.SubscriptionValidationEvent"))
+            {
+                var validationCode = JsonDocument.Parse(body).RootElement.EnumerateArray().First()
+                    .GetProperty("data").GetProperty("validationCode").GetString();
+                var responseBody = JsonSerializer.Serialize(new { validationResponse = validationCode });
+                var buffer = Encoding.UTF8.GetBytes(responseBody);
+                context.Response.ContentType = "application/json";
+                await context.Response.OutputStream.WriteAsync(buffer, token);
+            }
+            else
+            {
+                setReceivedEvents(JsonSerializer.Deserialize<List<JsonElement>>(body));
+            }
+
+            context.Response.StatusCode = 200;
+            context.Response.Close();
+        }
     }
     
     [Test]
