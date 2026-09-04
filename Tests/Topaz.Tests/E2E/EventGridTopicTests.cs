@@ -275,4 +275,61 @@ public class EventGridTopicTests
         
         await client.SendEventAsync(eventGridEvent);
     }
+    
+    [Test]
+    public async Task EventGridTopicSubscription_IfMoreThat5000EventsAreSent_ItShouldFail()
+    {
+        var armClient = new ArmClient(new AzureLocalCredential(Globals.GlobalAdminId), SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+        var topics = resourceGroup.Value.GetEventGridTopics();
+        var data = new EventGridTopicData(new AzureLocation("westeurope"));
+
+        var topic = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicName, data);
+        var endpoint = topic.Value.Data.Endpoint;
+
+        var client = new EventGridPublisherClient(
+            endpoint,
+            new AzureLocalCredential(Globals.GlobalAdminId));
+        
+        var events = new List<EventGridEvent>();
+        for (var i = 0; i <= 5000; i++)
+        {
+            events.Add(new EventGridEvent(
+                "ExampleEventSubject",
+                "Example.EventType",
+                "1.0",
+                "This is the event data"));
+        }
+        
+        Assert.ThrowsAsync<RequestFailedException>(() => client.SendEventsAsync(events), "A batch can contain a maximum of 5,000 events.");
+    }
+    
+    [Test]
+    public async Task EventGridTopicSubscription_IfPayloadExceedsOneMegabyte_ItShouldFail()
+    {
+        var armClient = new ArmClient(new AzureLocalCredential(Globals.GlobalAdminId), SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+        var topics = resourceGroup.Value.GetEventGridTopics();
+        var topicData = new EventGridTopicData(new AzureLocation("westeurope"));
+
+        var topic = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicName, topicData);
+        var endpoint = topic.Value.Data.Endpoint;
+
+        var client = new EventGridPublisherClient(
+            endpoint,
+            new AzureLocalCredential(Globals.GlobalAdminId));
+        
+        var data = new string('a', 1024 * 1024);
+        var @event = new EventGridEvent(
+            "ExampleEventSubject",
+            "Example.EventType",
+            "1.0",
+            data);
+        
+        Assert.ThrowsAsync<RequestFailedException>(() => client.SendEventAsync(@event), "A batch can contain a maximum of 1 MB.");
+    }
 }
