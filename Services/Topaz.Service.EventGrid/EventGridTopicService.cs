@@ -19,6 +19,7 @@ public sealed class EventGridTopicService(Pipeline eventPipeline, ITopazLogger l
     [
         nameof(Subresource.SharedAccessKeys).ToLowerInvariant(),
         nameof(Subresource.TopicEventSubscriptions).ToLowerInvariant(),
+        nameof(Subresource.Events).ToLowerInvariant(),
     ];
 
     public static string UniqueName => "eventgrid-topic";

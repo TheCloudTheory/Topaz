@@ -1,6 +1,8 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.EventGrid.Models;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -14,7 +16,11 @@ internal sealed class PublishEventGridEventEndpoint(Pipeline eventPipeline, ITop
     {
         var ctx = GetEventGridContext(context);
         
-        var result = DataPlane.PublishEventGridEvent(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.TopicName);
+        using var reader = new StreamReader(context.Request.Body);
+        var data =
+            JsonSerializer.Deserialize<EventGridEventSchema[]>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+        
+        var result = DataPlane.PublishEventGridEvent(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier, ctx.TopicName, data!);
         if (result.Result != OperationResult.Success)
         {
             response.CreateErrorResponse(result);
