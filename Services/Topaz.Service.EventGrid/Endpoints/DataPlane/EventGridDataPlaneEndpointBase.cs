@@ -31,12 +31,11 @@ internal class EventGridDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogg
     
     public virtual void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        throw new NotImplementedException();
     }
     
     public virtual Task GetResponseAsync(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
     
     protected static EventGridTopicContext GetEventGridContext(HttpContext context) =>

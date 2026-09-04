@@ -34,7 +34,7 @@ public class HealthEndpointTests
             Assert.That(json["runningMode"]!.GetValue<string>(), Is.EqualTo("Standalone"));
             Assert.That(json["httpsConnectProxyAvailable"]!.GetValue<bool>(), Is.True);
             Assert.That(json["acrDockerExecutorAvailable"]!.GetValue<bool>(), Is.True);
-            Assert.That(json["backgroundServices"]!.AsArray(), Has.Count.EqualTo(6));
+            Assert.That(json["backgroundServices"]!.AsArray(), Has.Count.EqualTo(7));
 
             // Wait for background services to execute and fetch the response again
             await Task.Delay(TimeSpan.FromSeconds(60));
