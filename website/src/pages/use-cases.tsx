@@ -433,7 +433,7 @@ function Hero() {
           </Link>
           <Link
             className="button button--secondary button--lg"
-            to="/features"
+            to="/features/"
           >
             Explore features
           </Link>
