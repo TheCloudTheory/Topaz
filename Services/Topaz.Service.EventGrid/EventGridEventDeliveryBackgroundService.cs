@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Topaz.Service.EventGrid.Models;
+using Topaz.Service.EventGrid.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
@@ -16,6 +17,7 @@ internal sealed class EventGridEventDeliveryBackgroundService(
 {
     private static readonly string ValidatedSubscriptionSubresource =
         nameof(Subresource.ValidatedSubscriptions).ToLowerInvariant();
+
     private static readonly string EventSubresource =
         nameof(Subresource.Events).ToLowerInvariant();
 
@@ -23,7 +25,7 @@ internal sealed class EventGridEventDeliveryBackgroundService(
 
     public string Name => "Event Grid Event Delivery";
     public DateTimeOffset? ExecutedAt { get; private set; }
-    
+
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         logger.LogDebug(nameof(EventGridEventDeliveryBackgroundService), nameof(StartAsync),
@@ -49,7 +51,7 @@ internal sealed class EventGridEventDeliveryBackgroundService(
             "Starting event delivery background service.");
 
         var subscriptions = subscriptionControlPlane.List();
-        if(subscriptions.Result != OperationResult.Success)
+        if (subscriptions.Result != OperationResult.Success)
         {
             logger.LogError(nameof(EventGridEventDeliveryBackgroundService), nameof(DeliverEvents),
                 "Failed to list subscriptions.");
@@ -59,7 +61,7 @@ internal sealed class EventGridEventDeliveryBackgroundService(
         foreach (var subscription in subscriptions.Resource!)
         {
             var topicsOperation = controlPlane.ListBySubscription(subscription.ToSubscriptionIdentifier(), null);
-            if(topicsOperation.Result != OperationResult.Success)
+            if (topicsOperation.Result != OperationResult.Success)
             {
                 logger.LogError(nameof(EventGridEventDeliveryBackgroundService), nameof(DeliverEvents),
                     "Failed to list topics.");
@@ -69,7 +71,8 @@ internal sealed class EventGridEventDeliveryBackgroundService(
             foreach (var topic in topicsOperation.Resource!)
             {
                 var eventSubscriptionsOperation =
-                    controlPlane.ListEventSubscriptions(topic.GetSubscription(), topic.GetResourceGroup(), topic.Name, null);
+                    controlPlane.ListEventSubscriptions(topic.GetSubscription(), topic.GetResourceGroup(), topic.Name,
+                        null);
 
                 if (eventSubscriptionsOperation.Result != OperationResult.Success)
                 {
@@ -105,7 +108,7 @@ internal sealed class EventGridEventDeliveryBackgroundService(
                 }
             }
         }
-        
+
         ExecutedAt = DateTimeOffset.UtcNow;
         logger.LogDebug(nameof(EventGridEventDeliveryBackgroundService), nameof(DeliverEvents),
             "Event delivery background service completed.");
@@ -128,16 +131,67 @@ internal sealed class EventGridEventDeliveryBackgroundService(
             resourceGroupIdentifier, subscriptionName, topicName, ValidatedSubscriptionSubresource);
 
         // Event Grid always validates the destination endpoint URL.
-        // If there's no validated subscription, first we need to send validation request.
+        // If there's no validated subscription, first we need to send a validation request.
+        var message = new HttpRequestMessage(HttpMethod.Post, endpointUrl);
         if (validatedSubscription == null)
         {
-            throw new InvalidOperationException(
-                "Event Grid topic subscription destination is not validated.");
+            await HandleSubscriptionValidationRequest(subscriptionIdentifier, resourceGroupIdentifier, topicName, subscriptionName, message, cancellationToken);
+            return;
         }
+        
+        await SendEventDataWithDeliveryStatus(subscriptionIdentifier, resourceGroupIdentifier, topicName, subscriptionName, data, message, cancellationToken);
+    }
 
-        var message = new HttpRequestMessage(HttpMethod.Post, endpointUrl);
+    private async Task SendEventDataWithDeliveryStatus(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string subscriptionName,
+        EventGridEventEnvelope[] data, HttpRequestMessage message, CancellationToken cancellationToken)
+    {
         message.Content = JsonContent.Create(data.Select(e => e.Event));
 
-        await client.SendAsync(message, cancellationToken);
+        var response = await client.SendAsync(message, cancellationToken);
+        if (response.IsSuccessStatusCode)
+        {
+            foreach (var envelope in data)
+            {
+                envelope.IsDelivered = true;
+                _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
+                    topicName, EventSubresource, envelope);
+            }
+
+            return;
+        }
+        
+        foreach (var envelope in data)
+        {
+            envelope.DeliveryAttempt++;
+            _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
+                topicName, EventSubresource, envelope);
+        }
+    }
+
+    private async Task HandleSubscriptionValidationRequest(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string subscriptionName,
+        HttpRequestMessage message, CancellationToken cancellationToken)
+    {
+        var validationEvent = EventGridValidationEvent.New();
+        message.Content = JsonContent.Create(validationEvent);
+
+        var response = await client.SendAsync(message, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return;
+        }
+        
+        var validationResponse =
+            await response.Content.ReadFromJsonAsync<EventGridValidationEventResponse>(
+                cancellationToken: cancellationToken);
+
+        if (response.IsSuccessStatusCode && validationResponse!.ValidationResponse == validationEvent.ValidationCode)
+        {
+            _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
+                topicName, ValidatedSubscriptionSubresource,
+                new ValidatedEventSubscription(topicName, subscriptionName));
+        }
     }
 }
