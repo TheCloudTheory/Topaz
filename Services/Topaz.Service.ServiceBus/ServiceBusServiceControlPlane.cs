@@ -67,16 +67,15 @@ internal sealed class ServiceBusServiceControlPlane(
 
             CreateOrUpdateNamespaceAuthorizationRule(subscriptionIdentifier, resourceGroupIdentifier, @namespace,
                 "RootManageSharedAccessKey",
-                new Models.Requests.CreateOrUpdateServiceBusAuthorizationRuleRequest
+                new CreateOrUpdateServiceBusAuthorizationRuleRequest
                 {
-                    Properties = new Models.Requests.CreateOrUpdateServiceBusAuthorizationRuleRequestProperties
+                    Properties = new CreateOrUpdateServiceBusAuthorizationRuleRequestProperties
                     {
                         Rights = ["Listen", "Manage", "Send"]
                     }
                 });
 
-            return new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.Created, resource, null,
-                null);
+            return new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.Created, resource);
         }
 
         properties.CreatedOn = existingNamespace.Properties.CreatedOn;
@@ -90,8 +89,7 @@ internal sealed class ServiceBusServiceControlPlane(
         };
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, updatedResource);
 
-        return new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.Updated, updatedResource,
-            null, null);
+        return new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.Updated, updatedResource);
     }
 
     public ControlPlaneOperationResult DeleteNamespace(SubscriptionIdentifier subscriptionIdentifier,
@@ -108,7 +106,7 @@ internal sealed class ServiceBusServiceControlPlane(
         }
 
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, serviceBusNamespaceIdentifier.Value);
-        return new ControlPlaneOperationResult(OperationResult.Deleted, null, null);
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
     public ControlPlaneOperationResult<ServiceBusNamespaceResource> GetNamespace(
@@ -124,8 +122,7 @@ internal sealed class ServiceBusServiceControlPlane(
         return existingNamespace == null
             ? new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.NotFound, null,
                 string.Format(ServiceBusNamespaceNotFoundMessageTemplate, namespaceIdentifier), ServiceBusNamespaceNotFoundCode)
-            : new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.Success, existingNamespace,
-                null, null);
+            : new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.Success, existingNamespace);
     }
 
     public ControlPlaneOperationResult<ServiceBusNetworkRuleSetSubresource> GetNetworkRuleSet(
@@ -147,7 +144,7 @@ internal sealed class ServiceBusServiceControlPlane(
         if (networkRuleSet != null)
         {
             return new ControlPlaneOperationResult<ServiceBusNetworkRuleSetSubresource>(OperationResult.Success,
-                networkRuleSet, null, null);
+                networkRuleSet);
         }
 
         var defaultProperties = ServiceBusNetworkRuleSetSubresourceProperties.Default();
@@ -156,8 +153,7 @@ internal sealed class ServiceBusServiceControlPlane(
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, networkRuleSetName,
             namespaceIdentifier.Value, nameof(Subresource.NetworkRuleSets).ToLowerInvariant(), created);
 
-        return new ControlPlaneOperationResult<ServiceBusNetworkRuleSetSubresource>(OperationResult.Success, created,
-            null, null);
+        return new ControlPlaneOperationResult<ServiceBusNetworkRuleSetSubresource>(OperationResult.Success, created);
     }
 
     public ControlPlaneOperationResult<ServiceBusQueueResource> CreateOrUpdateQueue(
@@ -185,8 +181,7 @@ internal sealed class ServiceBusServiceControlPlane(
 
             ServiceBusService.OnQueueCreated?.Invoke(queueName);
 
-            return new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.Created, resource, null,
-                null);
+            return new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.Created, resource);
         }
 
         ServiceBusQueueResourceProperties.UpdateFromRequest(existingQueue, request);
@@ -194,8 +189,7 @@ internal sealed class ServiceBusServiceControlPlane(
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, queueName, @namespace.Value,
             nameof(Subresource.Queues).ToLowerInvariant(), existingQueue);
 
-        return new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.Updated, existingQueue, null,
-            null);
+        return new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.Updated, existingQueue);
     }
 
     public ControlPlaneOperationResult DeleteQueue(SubscriptionIdentifier subscriptionIdentifier,
@@ -222,8 +216,7 @@ internal sealed class ServiceBusServiceControlPlane(
         return existingQueue == null
             ? new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.NotFound, null,
                 ServiceBusQueueNotFoundMessageTemplate, ServiceBusQueueNotFoundCode)
-            : new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.Success, existingQueue, null,
-                null);
+            : new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.Success, existingQueue);
     }
 
     public OperationResult Deploy(GenericResource resource)
@@ -278,8 +271,7 @@ internal sealed class ServiceBusServiceControlPlane(
         return existingTopic == null
             ? new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.NotFound, null,
                 string.Format(ServiceBusTopicNotFoundMessageTemplate, topicName), ServiceBusTopicNotFoundCode)
-            : new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Success, existingTopic, null,
-                null);
+            : new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Success, existingTopic);
     }
 
     public ControlPlaneOperationResult<ServiceBusTopicResource> CreateOrUpdateTopic(
@@ -307,8 +299,7 @@ internal sealed class ServiceBusServiceControlPlane(
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName,
                 namespaceIdentifier.Value, nameof(Subresource.Topics).ToLowerInvariant(), resource);
 
-            return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Created, resource, null,
-                null);
+            return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Created, resource);
         }
 
         ServiceBusTopicResourceProperties.UpdateFromRequest(existingTopic, request);
@@ -316,8 +307,7 @@ internal sealed class ServiceBusServiceControlPlane(
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName,
             namespaceIdentifier.Value, nameof(Subresource.Topics).ToLowerInvariant(), existingTopic);
 
-        return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Updated, existingTopic, null,
-            null);
+        return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Updated, existingTopic);
     }
 
     public static (OperationResult result, SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier?
@@ -364,8 +354,7 @@ internal sealed class ServiceBusServiceControlPlane(
             CreateOrUpdateRule(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier,
                 topicName, subscriptionName, "$Default", ServiceBusRuleResourceProperties.DefaultTrueFilter());
 
-            return new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Created, resource,
-                null, null);
+            return new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Created, resource);
         }
 
         ServiceBusSubscriptionResourceProperties.UpdateFromRequest(existingSubscription, request);
@@ -374,7 +363,7 @@ internal sealed class ServiceBusServiceControlPlane(
             parentId, nameof(Subresource.Subscriptions).ToLowerInvariant(), existingSubscription);
 
         return new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Updated,
-            existingSubscription, null, null);
+            existingSubscription);
     }
 
     public ServiceBusEntityType GetEntityType(SubscriptionIdentifier subscriptionIdentifier,
@@ -428,8 +417,7 @@ internal sealed class ServiceBusServiceControlPlane(
             ? new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.NotFound, null,
                 ServiceBusSubscriptionNotFoundMessageTemplate, ServiceBusSubscriptionNotFoundCode)
             : new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Success,
-                existingSubscription, null,
-                null);
+                existingSubscription);
     }
 
     internal ControlPlaneOperationResult<ServiceBusSubscriptionResource[]> ListSubscriptions(
@@ -441,7 +429,7 @@ internal sealed class ServiceBusServiceControlPlane(
             nameof(Subresource.Subscriptions).ToLowerInvariant());
 
         return new ControlPlaneOperationResult<ServiceBusSubscriptionResource[]>(OperationResult.Success,
-            subscriptions, null, null);
+            subscriptions);
     }
 
     public ControlPlaneOperationResult DeleteTopic(SubscriptionIdentifier subscriptionIdentifier,
@@ -490,7 +478,7 @@ internal sealed class ServiceBusServiceControlPlane(
         logger.LogDebug(nameof(ServiceBusServiceControlPlane), nameof(ListNamespacesBySubscription),
             "Found {0} namespaces in subscription {1}.", resources.Length, subscriptionIdentifier);
 
-        return new ControlPlaneOperationResult<ServiceBusNamespaceResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<ServiceBusNamespaceResource[]>(OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<ServiceBusNamespaceResource[]> ListNamespaces(
@@ -513,7 +501,7 @@ internal sealed class ServiceBusServiceControlPlane(
         var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
 
         return new ControlPlaneOperationResult<ServiceBusNamespaceResource[]>(OperationResult.Success,
-            filteredResources.ToArray(), null, null);
+            filteredResources.ToArray());
     }
 
     public ControlPlaneOperationResult<ServiceBusQueueResource[]> ListQueues(
@@ -538,7 +526,7 @@ internal sealed class ServiceBusServiceControlPlane(
         logger.LogDebug(nameof(ServiceBusServiceControlPlane), nameof(ListQueues), "Found {0} queues.", queues.Length);
 
         return new ControlPlaneOperationResult<ServiceBusQueueResource[]>(OperationResult.Success,
-            queues.ToArray(), null, null);
+            queues.ToArray());
     }
 
     public ControlPlaneOperationResult<ServiceBusTopicResource[]> ListTopics(
@@ -563,7 +551,7 @@ internal sealed class ServiceBusServiceControlPlane(
         logger.LogDebug(nameof(ServiceBusServiceControlPlane), nameof(ListTopics), "Found {0} queues.", queues.Length);
 
         return new ControlPlaneOperationResult<ServiceBusTopicResource[]>(OperationResult.Success,
-            queues.ToArray(), null, null);
+            queues.ToArray());
     }
 
     private static string RulesParentId(ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, string subscriptionName) =>
@@ -589,7 +577,7 @@ internal sealed class ServiceBusServiceControlPlane(
             parentId, nameof(Subresource.Rules).ToLowerInvariant(), resource);
 
         return new ControlPlaneOperationResult<ServiceBusRuleResource>(
-            existing == null ? OperationResult.Created : OperationResult.Updated, resource, null, null);
+            existing == null ? OperationResult.Created : OperationResult.Updated, resource);
     }
 
     public ControlPlaneOperationResult<ServiceBusRuleResource> GetRule(
@@ -607,7 +595,7 @@ internal sealed class ServiceBusServiceControlPlane(
         return rule == null
             ? new ControlPlaneOperationResult<ServiceBusRuleResource>(OperationResult.NotFound, null,
                 $"Rule '{ruleName}' not found.", "RuleNotFound")
-            : new ControlPlaneOperationResult<ServiceBusRuleResource>(OperationResult.Success, rule, null, null);
+            : new ControlPlaneOperationResult<ServiceBusRuleResource>(OperationResult.Success, rule);
     }
 
     public OperationResult DeleteRule(
@@ -640,7 +628,7 @@ internal sealed class ServiceBusServiceControlPlane(
         var rules = provider.ListSubresourcesAs<ServiceBusRuleResource>(subscriptionIdentifier,
             resourceGroupIdentifier, parentId, nameof(Subresource.Rules).ToLowerInvariant());
 
-        return new ControlPlaneOperationResult<ServiceBusRuleResource[]>(OperationResult.Success, rules, null, null);
+        return new ControlPlaneOperationResult<ServiceBusRuleResource[]>(OperationResult.Success, rules);
     }
 
     // ── Authorization Rules ────────────────────────────────────────────────────
@@ -649,109 +637,109 @@ internal sealed class ServiceBusServiceControlPlane(
     private static string QueueAuthRuleParentId(ServiceBusNamespaceIdentifier ns, string queue) => $"{ns.Value}/queues/{queue}";
     private static string TopicAuthRuleParentId(ServiceBusNamespaceIdentifier ns, string topic) => $"{ns.Value}/topics/{topic}";
 
-    private Models.ServiceBusAuthorizationRuleResource BuildAuthRule(
+    private ServiceBusAuthorizationRuleResource BuildAuthRule(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
-        string ruleName, Models.Requests.CreateOrUpdateServiceBusAuthorizationRuleRequest request,
+        string ruleName, CreateOrUpdateServiceBusAuthorizationRuleRequest request,
         string armIdSuffix,
-        Models.ServiceBusAuthorizationRuleResource? existing)
+        ServiceBusAuthorizationRuleResource? existing)
     {
         if (existing != null)
         {
-            Models.ServiceBusAuthorizationRuleResourceProperties.UpdateFromRequest(existing, request);
+            ServiceBusAuthorizationRuleResourceProperties.UpdateFromRequest(existing, request);
             return existing;
         }
         var rights = request.Properties?.Rights ?? ["Listen", "Send"];
-        var props = Models.ServiceBusAuthorizationRuleResourceProperties.Create(ruleName, rights);
-        return new Models.ServiceBusAuthorizationRuleResource(sub, rg, ruleName, props, armIdSuffix);
+        var props = ServiceBusAuthorizationRuleResourceProperties.Create(ruleName, rights);
+        return new ServiceBusAuthorizationRuleResource(sub, rg, ruleName, props, armIdSuffix);
     }
 
     // Namespace
-    public ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource> CreateOrUpdateNamespaceAuthorizationRule(
+    public ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource> CreateOrUpdateNamespaceAuthorizationRule(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string ruleName,
-        Models.Requests.CreateOrUpdateServiceBusAuthorizationRuleRequest request)
+        CreateOrUpdateServiceBusAuthorizationRuleRequest request)
     {
-        var existing = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, ns.Value, AuthRules);
+        var existing = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, ns.Value, AuthRules);
         var resource = BuildAuthRule(sub, rg, ruleName, request, $"namespaces/{ns.Value}", existing);
         provider.CreateOrUpdateSubresource(sub, rg, ruleName, ns.Value, AuthRules, resource);
-        return new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource>(
-            existing == null ? OperationResult.Created : OperationResult.Updated, resource, null, null);
+        return new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource>(
+            existing == null ? OperationResult.Created : OperationResult.Updated, resource);
     }
 
-    public ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource> GetNamespaceAuthorizationRule(
+    public ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource> GetNamespaceAuthorizationRule(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string ruleName)
     {
-        var rule = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, ns.Value, AuthRules);
+        var rule = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, ns.Value, AuthRules);
         return rule == null
-            ? new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound")
-            : new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource>(OperationResult.Success, rule, null, null);
+            ? new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound")
+            : new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource>(OperationResult.Success, rule);
     }
 
     public ControlPlaneOperationResult DeleteNamespaceAuthorizationRule(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string ruleName)
     {
-        if (provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, ns.Value, AuthRules) == null)
+        if (provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, ns.Value, AuthRules) == null)
             return new ControlPlaneOperationResult(OperationResult.NotFound, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound");
         provider.DeleteSubresource(sub, rg, ruleName, ns.Value, AuthRules);
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
-    public ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource[]> ListNamespaceAuthorizationRules(
+    public ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource[]> ListNamespaceAuthorizationRules(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg, ServiceBusNamespaceIdentifier ns)
     {
-        var rules = provider.ListSubresourcesAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ns.Value, AuthRules);
-        return new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource[]>(OperationResult.Success, rules, null, null);
+        var rules = provider.ListSubresourcesAs<ServiceBusAuthorizationRuleResource>(sub, rg, ns.Value, AuthRules);
+        return new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource[]>(OperationResult.Success, rules);
     }
 
     public ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse> ListNamespaceAuthorizationRuleKeys(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string ruleName)
     {
-        var rule = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, ns.Value, AuthRules);
+        var rule = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, ns.Value, AuthRules);
         if (rule == null)
             return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound");
         var keys = Models.Responses.ListKeysServiceBusNamespaceResponse.For(ns.Value, ruleName, rule.Properties.PrimaryKey, rule.Properties.SecondaryKey);
-        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys, null, null);
+        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys);
     }
 
     public ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse> RegenerateNamespaceAuthorizationRuleKeys(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string ruleName,
-        Models.Requests.RegenerateServiceBusAuthorizationRuleKeysRequest request)
+        RegenerateServiceBusAuthorizationRuleKeysRequest request)
     {
-        var rule = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, ns.Value, AuthRules);
+        var rule = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, ns.Value, AuthRules);
         if (rule == null)
             return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound");
         RegenerateKey(rule.Properties, request.KeyType);
         provider.CreateOrUpdateSubresource(sub, rg, ruleName, ns.Value, AuthRules, rule);
         var keys = Models.Responses.ListKeysServiceBusNamespaceResponse.For(ns.Value, ruleName, rule.Properties.PrimaryKey, rule.Properties.SecondaryKey);
-        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys, null, null);
+        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys);
     }
 
     // Queue
-    public ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource> CreateOrUpdateQueueAuthorizationRule(
+    public ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource> CreateOrUpdateQueueAuthorizationRule(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string queueName, string ruleName,
-        Models.Requests.CreateOrUpdateServiceBusAuthorizationRuleRequest request)
+        CreateOrUpdateServiceBusAuthorizationRuleRequest request)
     {
         var parentId = QueueAuthRuleParentId(ns, queueName);
-        var existing = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules);
+        var existing = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules);
         var resource = BuildAuthRule(sub, rg, ruleName, request, $"namespaces/{ns.Value}/queues/{queueName}", existing);
         provider.CreateOrUpdateSubresource(sub, rg, ruleName, parentId, AuthRules, resource);
-        return new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource>(
-            existing == null ? OperationResult.Created : OperationResult.Updated, resource, null, null);
+        return new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource>(
+            existing == null ? OperationResult.Created : OperationResult.Updated, resource);
     }
 
-    public ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource> GetQueueAuthorizationRule(
+    public ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource> GetQueueAuthorizationRule(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string queueName, string ruleName)
     {
-        var rule = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, QueueAuthRuleParentId(ns, queueName), AuthRules);
+        var rule = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, QueueAuthRuleParentId(ns, queueName), AuthRules);
         return rule == null
-            ? new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound")
-            : new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource>(OperationResult.Success, rule, null, null);
+            ? new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound")
+            : new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource>(OperationResult.Success, rule);
     }
 
     public ControlPlaneOperationResult DeleteQueueAuthorizationRule(
@@ -759,68 +747,68 @@ internal sealed class ServiceBusServiceControlPlane(
         ServiceBusNamespaceIdentifier ns, string queueName, string ruleName)
     {
         var parentId = QueueAuthRuleParentId(ns, queueName);
-        if (provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules) == null)
+        if (provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules) == null)
             return new ControlPlaneOperationResult(OperationResult.NotFound, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound");
         provider.DeleteSubresource(sub, rg, ruleName, parentId, AuthRules);
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
-    public ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource[]> ListQueueAuthorizationRules(
+    public ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource[]> ListQueueAuthorizationRules(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string queueName)
     {
-        var rules = provider.ListSubresourcesAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, QueueAuthRuleParentId(ns, queueName), AuthRules);
-        return new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource[]>(OperationResult.Success, rules, null, null);
+        var rules = provider.ListSubresourcesAs<ServiceBusAuthorizationRuleResource>(sub, rg, QueueAuthRuleParentId(ns, queueName), AuthRules);
+        return new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource[]>(OperationResult.Success, rules);
     }
 
     public ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse> ListQueueAuthorizationRuleKeys(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string queueName, string ruleName)
     {
-        var rule = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, QueueAuthRuleParentId(ns, queueName), AuthRules);
+        var rule = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, QueueAuthRuleParentId(ns, queueName), AuthRules);
         if (rule == null)
             return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound");
         var keys = Models.Responses.ListKeysServiceBusNamespaceResponse.For(ns.Value, ruleName, rule.Properties.PrimaryKey, rule.Properties.SecondaryKey);
-        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys, null, null);
+        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys);
     }
 
     public ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse> RegenerateQueueAuthorizationRuleKeys(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string queueName, string ruleName,
-        Models.Requests.RegenerateServiceBusAuthorizationRuleKeysRequest request)
+        RegenerateServiceBusAuthorizationRuleKeysRequest request)
     {
         var parentId = QueueAuthRuleParentId(ns, queueName);
-        var rule = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules);
+        var rule = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules);
         if (rule == null)
             return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound");
         RegenerateKey(rule.Properties, request.KeyType);
         provider.CreateOrUpdateSubresource(sub, rg, ruleName, parentId, AuthRules, rule);
         var keys = Models.Responses.ListKeysServiceBusNamespaceResponse.For(ns.Value, ruleName, rule.Properties.PrimaryKey, rule.Properties.SecondaryKey);
-        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys, null, null);
+        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys);
     }
 
     // Topic
-    public ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource> CreateOrUpdateTopicAuthorizationRule(
+    public ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource> CreateOrUpdateTopicAuthorizationRule(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string topicName, string ruleName,
-        Models.Requests.CreateOrUpdateServiceBusAuthorizationRuleRequest request)
+        CreateOrUpdateServiceBusAuthorizationRuleRequest request)
     {
         var parentId = TopicAuthRuleParentId(ns, topicName);
-        var existing = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules);
+        var existing = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules);
         var resource = BuildAuthRule(sub, rg, ruleName, request, $"namespaces/{ns.Value}/topics/{topicName}", existing);
         provider.CreateOrUpdateSubresource(sub, rg, ruleName, parentId, AuthRules, resource);
-        return new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource>(
-            existing == null ? OperationResult.Created : OperationResult.Updated, resource, null, null);
+        return new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource>(
+            existing == null ? OperationResult.Created : OperationResult.Updated, resource);
     }
 
-    public ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource> GetTopicAuthorizationRule(
+    public ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource> GetTopicAuthorizationRule(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string topicName, string ruleName)
     {
-        var rule = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, TopicAuthRuleParentId(ns, topicName), AuthRules);
+        var rule = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, TopicAuthRuleParentId(ns, topicName), AuthRules);
         return rule == null
-            ? new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound")
-            : new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource>(OperationResult.Success, rule, null, null);
+            ? new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound")
+            : new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource>(OperationResult.Success, rule);
     }
 
     public ControlPlaneOperationResult DeleteTopicAuthorizationRule(
@@ -828,47 +816,47 @@ internal sealed class ServiceBusServiceControlPlane(
         ServiceBusNamespaceIdentifier ns, string topicName, string ruleName)
     {
         var parentId = TopicAuthRuleParentId(ns, topicName);
-        if (provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules) == null)
+        if (provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules) == null)
             return new ControlPlaneOperationResult(OperationResult.NotFound, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound");
         provider.DeleteSubresource(sub, rg, ruleName, parentId, AuthRules);
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
-    public ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource[]> ListTopicAuthorizationRules(
+    public ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource[]> ListTopicAuthorizationRules(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string topicName)
     {
-        var rules = provider.ListSubresourcesAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, TopicAuthRuleParentId(ns, topicName), AuthRules);
-        return new ControlPlaneOperationResult<Models.ServiceBusAuthorizationRuleResource[]>(OperationResult.Success, rules, null, null);
+        var rules = provider.ListSubresourcesAs<ServiceBusAuthorizationRuleResource>(sub, rg, TopicAuthRuleParentId(ns, topicName), AuthRules);
+        return new ControlPlaneOperationResult<ServiceBusAuthorizationRuleResource[]>(OperationResult.Success, rules);
     }
 
     public ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse> ListTopicAuthorizationRuleKeys(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string topicName, string ruleName)
     {
-        var rule = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, TopicAuthRuleParentId(ns, topicName), AuthRules);
+        var rule = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, TopicAuthRuleParentId(ns, topicName), AuthRules);
         if (rule == null)
             return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound");
         var keys = Models.Responses.ListKeysServiceBusNamespaceResponse.For(ns.Value, ruleName, rule.Properties.PrimaryKey, rule.Properties.SecondaryKey);
-        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys, null, null);
+        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys);
     }
 
     public ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse> RegenerateTopicAuthorizationRuleKeys(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         ServiceBusNamespaceIdentifier ns, string topicName, string ruleName,
-        Models.Requests.RegenerateServiceBusAuthorizationRuleKeysRequest request)
+        RegenerateServiceBusAuthorizationRuleKeysRequest request)
     {
         var parentId = TopicAuthRuleParentId(ns, topicName);
-        var rule = provider.GetSubresourceAs<Models.ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules);
+        var rule = provider.GetSubresourceAs<ServiceBusAuthorizationRuleResource>(sub, rg, ruleName, parentId, AuthRules);
         if (rule == null)
             return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.NotFound, null, $"Authorization rule '{ruleName}' not found.", "AuthorizationRuleNotFound");
         RegenerateKey(rule.Properties, request.KeyType);
         provider.CreateOrUpdateSubresource(sub, rg, ruleName, parentId, AuthRules, rule);
         var keys = Models.Responses.ListKeysServiceBusNamespaceResponse.For(ns.Value, ruleName, rule.Properties.PrimaryKey, rule.Properties.SecondaryKey);
-        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys, null, null);
+        return new ControlPlaneOperationResult<Models.Responses.ListKeysServiceBusNamespaceResponse>(OperationResult.Success, keys);
     }
 
-    private static void RegenerateKey(Models.ServiceBusAuthorizationRuleResourceProperties props, string? keyType)
+    private static void RegenerateKey(ServiceBusAuthorizationRuleResourceProperties props, string? keyType)
     {
         if (keyType == "SecondaryKey")
             props.SecondaryKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
