@@ -4,5 +4,6 @@ internal enum Subresource
 {
     SharedAccessKeys,
     TopicEventSubscriptions,
-    Events
+    Events,
+    ValidatedSubscriptions
 }

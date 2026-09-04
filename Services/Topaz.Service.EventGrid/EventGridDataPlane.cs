@@ -6,13 +6,19 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventGrid;
 
-internal sealed class EventGridDataPlane(EventGridTopicControlPlane controlPlane, ITopazLogger logger)
+internal sealed class EventGridDataPlane(
+    EventGridTopicControlPlane controlPlane,
+    ITopazLogger logger)
 {
-    public static EventGridDataPlane New(EventGridTopicControlPlane controlPlane, ITopazLogger logger) => new(controlPlane, logger);
+    private static readonly string EventSubresource =
+        nameof(Subresource.Events).ToLowerInvariant();
+    
+    public static EventGridDataPlane New(EventGridTopicControlPlane controlPlane,
+        ITopazLogger logger) => new(controlPlane, logger);
     
     private readonly EventGridTopicResourceProvider _provider = new(logger);
 
-    public DataPlaneOperationResult PublishEventGridEvent(SubscriptionIdentifier subscriptionIdentifier,
+    public async Task<DataPlaneOperationResult> PublishEventGridEvent(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string topicName, EventGridEventSchema[] data)
     {
         var topicOperation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
@@ -33,6 +39,12 @@ internal sealed class EventGridDataPlane(EventGridTopicControlPlane controlPlane
         {
             return new DataPlaneOperationResult(OperationResult.Conflict,
                 "A batch can contain a maximum of 1 MB.", "Conflict");
+        }
+
+        foreach (var message in data)
+        {
+            _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, message.Id!, topicName,
+                EventSubresource, JsonSerializer.Serialize(EventGridEventEnvelope.From(message), GlobalSettings.JsonOptions));
         }
         
         return new DataPlaneOperationResult(OperationResult.Success);

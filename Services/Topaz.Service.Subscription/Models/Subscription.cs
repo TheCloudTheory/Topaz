@@ -54,4 +54,9 @@ public sealed class Subscription
         DisplayName = request.SubscriptionName;
         Tags = request.Tags ?? new Dictionary<string, string>();
     }
+    
+    public SubscriptionIdentifier ToSubscriptionIdentifier()
+    {
+        return new SubscriptionIdentifier(Guid.Parse(SubscriptionId));
+    }
 }

@@ -59,6 +59,8 @@ public class Host
         var env = Environment.GetEnvironmentVariable("TOPAZ_CONTAINERIZED");
         return env == "true";
     }
+    
+    private static readonly HttpClient Client = new();
 
     private static readonly List<Thread> Threads = [];
 
@@ -242,7 +244,9 @@ public class Host
                 TimeSpan.FromSeconds(30)),
             new AppConfigurationSoftDeletePurgeScheduler(subscriptionControlPlane,
                 AppConfigurationServiceControlPlane.New(_eventPipeline, _logger),
-                GlobalSettings.SoftDeletePurgeSchedulerInterval, _logger)
+                GlobalSettings.SoftDeletePurgeSchedulerInterval, _logger),
+            new EventGridEventDeliveryBackgroundService(SubscriptionControlPlane.New(_eventPipeline, _logger),
+                EventGridTopicControlPlane.New(_eventPipeline, _logger), Client, _logger, TimeSpan.FromSeconds(10))
         };
 
         InFlightMessageStore.SetRuleLoader(
@@ -547,6 +551,9 @@ public class Host
             .Build();
 
         await host.StartAsync(cancellationToken);
+        
+        // Cleanup
+        Client.Dispose();
     }
 
     private X509Certificate2 LoadCertificate()

@@ -34,6 +34,11 @@ internal class EventGridDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogg
         throw new NotImplementedException();
     }
     
+    public virtual Task GetResponseAsync(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        throw new NotImplementedException();
+    }
+    
     protected static EventGridTopicContext GetEventGridContext(HttpContext context) =>
         (EventGridTopicContext)context.Items[EventGridContextKey]!;
     
