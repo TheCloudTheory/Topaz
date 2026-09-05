@@ -77,7 +77,7 @@ internal sealed class EventGridDataPlane(
             foreach (var message in events!)
             {
                 _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, message.Id, topicName,
-                    EventSubresource,EventGridEventEnvelope<EventGridEventSchema>.From(message));
+                    EventSubresource,EventGridEventEnvelope<EventGridCloudEventSchema>.From(message));
             }
         }
 

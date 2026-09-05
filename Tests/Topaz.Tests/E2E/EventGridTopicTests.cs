@@ -273,14 +273,20 @@ public class EventGridTopicTests
         
         // Start a local webhook receiver. Listener/cts are disposed manually below, after the
         // background task is awaited, so no closure captures a variable disposed by an outer `using`.
-        List<JsonElement>? receivedEvents = null;
+        var receivedEvents = new List<JsonElement>();
         var listenerCts = new CancellationTokenSource();
         var listener = new HttpListener();
         var port = GetFreeTcpPort();
         listener.Prefixes.Add($"http://localhost:{port}/webhook/");
         listener.Start();
 
-        var listenerTask = RunWebhookListener(listener, listenerCts.Token, events => receivedEvents = events);
+        var listenerTask = RunWebhookListener(listener, listenerCts.Token, events =>
+        {
+            if (events != null)
+            {
+                receivedEvents.AddRange(events);
+            }
+        });
         
         try
         {
@@ -346,7 +352,7 @@ public class EventGridTopicTests
         
         Assert.That(receivedEvents, Is.Not.Null.And.Count.EqualTo(2));
         Assert.That(receivedEvents![0].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType"));
-        Assert.That(receivedEvents![1].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType.CE"));
+        Assert.That(receivedEvents[1].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType.CE"));
     }
     
     private static int GetFreeTcpPort()

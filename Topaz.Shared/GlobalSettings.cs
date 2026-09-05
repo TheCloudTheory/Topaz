@@ -339,6 +339,7 @@ public static class GlobalSettings
     /// Constructs the Event Grid endpoint URL based on the provided topic name and the Event Grid DNS suffix.
     /// </summary>
     /// <param name="topicName">The name of the Event Grid topic for which the endpoint URL is to be constructed.</param>
+    /// <param name="subscriptionId">ID of the subscription where the topic was created.</param>
     /// <returns>A string containing the Event Grid endpoint URL.</returns>
-    public static string GetEventGridEndpoint(string topicName) => $"https://{topicName}.{EventGridDnsSuffix}:{DefaultResourceManagerPort}/";
+    public static string GetEventGridEndpoint(string topicName, string subscriptionId) => $"https://{topicName}-{subscriptionId.Split('-')[0]}.{EventGridDnsSuffix}:{DefaultResourceManagerPort}/";
 }

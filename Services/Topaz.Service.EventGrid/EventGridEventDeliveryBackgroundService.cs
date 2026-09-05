@@ -81,8 +81,10 @@ internal sealed class EventGridEventDeliveryBackgroundService(
                 }
 
                 var events = _provider.ListSubresourcesAs<EventGridEventEnvelope<object>>(topic.GetSubscription(),
-                    topic.GetResourceGroup(), topic.Name, EventSubresource);
+                    topic.GetResourceGroup(), topic.Name, EventSubresource).Where(envelope => !envelope.IsDelivered).ToArray();
 
+                logger.LogDebug(nameof(EventGridEventDeliveryBackgroundService), nameof(DeliverEvents), $"Found {events.Length} events not delivered for {topic.Name}.");
+                
                 foreach (var eventSubscription in eventSubscriptionsOperation.Resource!)
                 {
                     var destination = eventSubscription.Properties.Destination;
@@ -146,11 +148,16 @@ internal sealed class EventGridEventDeliveryBackgroundService(
         ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string subscriptionName,
         EventGridEventEnvelope<TEventModel>[] data, HttpRequestMessage message, CancellationToken cancellationToken)
     {
+        logger.LogDebug(nameof(EventGridEventDeliveryBackgroundService), nameof(SendEventDataWithDeliveryStatus),
+            $"Attempting to send {data.Length} events for {subscriptionName} subscription of {topicName} topic.");
+        
         message.Content = JsonContent.Create(data.Select(e => e.Event));
 
         var response = await client.SendAsync(message, cancellationToken);
         if (response.IsSuccessStatusCode)
         {
+            logger.LogDebug(nameof(EventGridEventDeliveryBackgroundService), nameof(SendEventDataWithDeliveryStatus), $"Events delivered successfully to {subscriptionName} subscription of {topicName}.");
+            
             foreach (var envelope in data)
             {
                 envelope.IsDelivered = true;
@@ -160,6 +167,9 @@ internal sealed class EventGridEventDeliveryBackgroundService(
 
             return;
         }
+
+        logger.LogDebug(nameof(EventGridEventDeliveryBackgroundService), nameof(SendEventDataWithDeliveryStatus),
+            $"Failed to deliver events to subscription of {subscriptionName} subscription of {topicName}.");
         
         foreach (var envelope in data)
         {
@@ -195,7 +205,16 @@ internal sealed class EventGridEventDeliveryBackgroundService(
                 _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
                     topicName, ValidatedSubscriptionSubresource,
                     new ValidatedEventSubscription(topicName, subscriptionName));
+
+                logger.LogInformation(nameof(EventGridEventDeliveryBackgroundService),
+                    nameof(HandleSubscriptionValidationRequest),
+                    $"Validated {subscriptionName} subscription for {topicId} topic.");
+                
+                return;
             }
+
+            logger.LogError(nameof(EventGridEventDeliveryBackgroundService),
+                nameof(HandleSubscriptionValidationRequest), $"Couldn't validate WebHook subscription endpoint.");
         }
         catch (Exception ex)
         {

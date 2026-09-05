@@ -1,4 +1,3 @@
-using Topaz.Dns;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.EventGrid.Models;
@@ -86,7 +85,7 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
         }
 
         var location = request.Location ?? resourceGroup.Resource!.Location!;
-        var properties = EventGridTopicResourceProperties.FromRequest(topicName, request.Properties);
+        var properties = EventGridTopicResourceProperties.FromRequest(topicName, request.Properties, subscriptionIdentifier);
         var resource = new EventGridTopicResource(subscriptionIdentifier, resourceGroupIdentifier, topicName,
             location, request.Tags, properties);
 
@@ -403,21 +402,22 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
         return new ControlPlaneOperationResult<DeliveryAttributeMapping[]>(OperationResult.Success, attributes);
     }
 
-    public ControlPlaneOperationResult<EventGridTopicResource> FindByName(string topicName)
+    public ControlPlaneOperationResult<EventGridTopicResource> FindByName(string topicName,
+        string eventGridSubscriptionPrefix)
     {
         var subscriptions = _subscriptionControlPlane.List();
-        foreach (var subscription in subscriptions.Resource!)
+        var subscription =
+            subscriptions.Resource!.Single(sub => sub.SubscriptionId.StartsWith(eventGridSubscriptionPrefix));
+        
+        var topics = ListBySubscription(SubscriptionIdentifier.From(subscription.SubscriptionId), null);
+        foreach (var topic in topics.Resource!)
         {
-            var topics = ListBySubscription(SubscriptionIdentifier.From(subscription.SubscriptionId), null);
-            foreach (var topic in topics.Resource!)
+            if (topic.Name == topicName)
             {
-                if (topic.Name == topicName)
-                {
-                    return Get(SubscriptionIdentifier.From(subscription.SubscriptionId), topic.GetResourceGroup(), topicName);
-                }
+                return Get(SubscriptionIdentifier.From(subscription.SubscriptionId), topic.GetResourceGroup(), topicName);
             }
         }
-
+        
         return new ControlPlaneOperationResult<EventGridTopicResource>(OperationResult.NotFound, null,
             "Event Grid topic not found", "ResourceNotFound");
     }

@@ -46,14 +46,18 @@ internal class EventGridDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogg
         HttpResponseMessage response,
         IArmAuthorizationChecker armAuthChecker)
     {
-        var eventGridName = context.Request.Host.Host.Split('.')[0];
-        if (string.IsNullOrEmpty(eventGridName))
+        var eventGridId = context.Request.Host.Host.Split('.')[0];
+        var eventGridIdSegments = eventGridId.Split('-');
+        var eventGridSubscriptionPrefix = eventGridIdSegments.Last();
+        var eventGridName = eventGridId.Replace("-" + eventGridSubscriptionPrefix, "");
+        
+        if (string.IsNullOrEmpty(eventGridName) || string.IsNullOrEmpty(eventGridSubscriptionPrefix))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return (false, null);
         }
 
-        var eventGridOperation = _controlPlane.FindByName(eventGridName);
+        var eventGridOperation = _controlPlane.FindByName(eventGridName, eventGridSubscriptionPrefix);
         if (eventGridOperation.Result == OperationResult.NotFound || eventGridOperation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventGrid.Models;
@@ -41,11 +42,11 @@ internal sealed class EventGridTopicResourceProperties
         EventTypeInfo = properties.EventTypeInfo ?? EventTypeInfo;
     }
 
-    public static EventGridTopicResourceProperties FromRequest(string topicName, EventGridTopicResourceProperties properties)
+    public static EventGridTopicResourceProperties FromRequest(string topicName, EventGridTopicResourceProperties properties, SubscriptionIdentifier subscriptionIdentifier)
     {
         return new EventGridTopicResourceProperties
         {
-            Endpoint = $"{GlobalSettings.GetEventGridEndpoint(topicName)}api/events",
+            Endpoint = $"{GlobalSettings.GetEventGridEndpoint(topicName, subscriptionIdentifier.Value.ToString())}api/events",
             PublicNetworkAccess = properties.PublicNetworkAccess,
             InboundIpRules = properties.InboundIpRules,
             InputSchema = properties.InputSchema,
