@@ -45,6 +45,5 @@ public sealed class EventGridTopicService(Pipeline eventPipeline, ITopazLogger l
         new GetEventGridTopicSubscriptionUrlEndpoint(eventPipeline, logger),
         new GetEventGridTopicSubscriptionDeliveryAttributesEndpoint(eventPipeline, logger),
         new PublishEventGridEventEndpoint(eventPipeline, logger),
-        new PublishCloudEventEndpoint(eventPipeline, logger)
     ];
 }

@@ -23,6 +23,7 @@ public class EventGridTopicTests
     private const string SubscriptionName = "sub-eventgrid-topic-test";
     private const string ResourceGroupName = "test-eventgrid-topic";
     private const string TopicName = "test-topic";
+    private const string TopicNameCloudEvent = "test-topic-ce";
 
     [SetUp]
     public async Task SetUp()
@@ -263,7 +264,12 @@ public class EventGridTopicTests
 
         var topics = resourceGroup.Value.GetEventGridTopics();
         var data = new EventGridTopicData(new AzureLocation("westeurope"));
-        var topic = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicName, data);
+        var dataCloudEvent = new EventGridTopicData(new AzureLocation("westeurope"))
+        {
+            InputSchema = EventGridInputSchema.CloudEventSchemaV1_0
+        };
+        var topicEventGridSchema = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicName, data);
+        var topicCloudEventSchema = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicNameCloudEvent, dataCloudEvent);
         
         // Start a local webhook receiver. Listener/cts are disposed manually below, after the
         // background task is awaited, so no closure captures a variable disposed by an outer `using`.
@@ -278,7 +284,16 @@ public class EventGridTopicTests
         
         try
         {
-            await topic.Value.GetTopicEventSubscriptions().CreateOrUpdateAsync(WaitUntil.Completed,
+            await topicEventGridSchema.Value.GetTopicEventSubscriptions().CreateOrUpdateAsync(WaitUntil.Completed,
+                "test-subscription", new EventGridSubscriptionData
+                {
+                    Destination = new WebHookEventSubscriptionDestination
+                    {
+                        Endpoint = new Uri($"http://localhost:{port}/webhook/")
+                    }
+                }, listenerCts.Token);
+            
+            await topicCloudEventSchema.Value.GetTopicEventSubscriptions().CreateOrUpdateAsync(WaitUntil.Completed,
                 "test-subscription", new EventGridSubscriptionData
                 {
                     Destination = new WebHookEventSubscriptionDestination
@@ -287,9 +302,15 @@ public class EventGridTopicTests
                     }
                 }, listenerCts.Token);
 
-            var endpoint = topic.Value.Data.Endpoint;
+            var endpoint = topicEventGridSchema.Value.Data.Endpoint;
+            var endpointCloudEvent = topicCloudEventSchema.Value.Data.Endpoint;
+            
             var client = new EventGridPublisherClient(
                 endpoint,
+                new AzureLocalCredential(Globals.GlobalAdminId));
+            
+            var clientCloudEvent = new EventGridPublisherClient(
+                endpointCloudEvent,
                 new AzureLocalCredential(Globals.GlobalAdminId));
 
             var eventGridEvent =
@@ -305,7 +326,7 @@ public class EventGridTopicTests
                 .. "This is the event data"u8
             ]), "text/plain");
             
-            await client.SendEventAsync(cloudEvent, listenerCts.Token);
+            await clientCloudEvent.SendEventAsync(cloudEvent, listenerCts.Token);
 
             // Delivery happens via a periodic background poller, so poll until the event arrives, or we time out.
             var deadline = DateTime.UtcNow.AddSeconds(30);
