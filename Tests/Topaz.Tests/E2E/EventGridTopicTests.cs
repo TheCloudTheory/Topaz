@@ -336,7 +336,7 @@ public class EventGridTopicTests
 
             // Delivery happens via a periodic background poller, so poll until the event arrives, or we time out.
             var deadline = DateTime.UtcNow.AddSeconds(30);
-            while (receivedEvents == null && DateTime.UtcNow < deadline)
+            while (receivedEvents.Count < 4 && DateTime.UtcNow < deadline)
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(500), listenerCts.Token);
             }
@@ -350,9 +350,11 @@ public class EventGridTopicTests
             listenerCts.Dispose();
         }
         
-        Assert.That(receivedEvents, Is.Not.Null.And.Count.EqualTo(2));
-        Assert.That(receivedEvents![0].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType"));
-        Assert.That(receivedEvents[1].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType.CE"));
+        Assert.That(receivedEvents, Is.Not.Null.And.Count.EqualTo(4));
+        Assert.That(receivedEvents[0].GetProperty("eventType").GetString(), Is.EqualTo("Microsoft.EventGrid.SubscriptionValidationEvent"));
+        Assert.That(receivedEvents[1].GetProperty("eventType").GetString(), Is.EqualTo("Microsoft.EventGrid.SubscriptionValidationEvent"));
+        Assert.That(receivedEvents[2].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType"));
+        Assert.That(receivedEvents[3].GetProperty("type").GetString(), Is.EqualTo("Example.EventType.CE"));
     }
     
     private static int GetFreeTcpPort()
@@ -386,10 +388,8 @@ public class EventGridTopicTests
                 context.Response.ContentType = "application/json";
                 await context.Response.OutputStream.WriteAsync(buffer, token);
             }
-            else
-            {
-                setReceivedEvents(JsonSerializer.Deserialize<List<JsonElement>>(body));
-            }
+
+            setReceivedEvents(JsonSerializer.Deserialize<List<JsonElement>>(body));
 
             context.Response.StatusCode = 200;
             context.Response.Close();
