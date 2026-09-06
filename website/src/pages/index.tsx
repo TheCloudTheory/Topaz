@@ -48,6 +48,7 @@ const SERVICES = [
   {name: 'Private Endpoints', sub: 'Control Plane'},
   {name: 'Redis Cache', sub: 'Control Plane'},
   {name: 'API Management', sub: 'Control Plane'},
+  {name: 'Event Grid', sub: 'Topics · Subscriptions · Event Publishing'}
 ];
 
 const INTEGRATIONS = [

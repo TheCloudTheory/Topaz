@@ -39,12 +39,13 @@ Cosmos DB|✅|✅
 Azure Disk|✅|🚧
 Azure Load Balancer|✅|N/A
 Public IP Address|✅|N/A
-Azure App Configuration|✅|🚧
+Azure App Configuration|✅|✅
 Log Analytics|✅|🚧
 Application Insights|✅|🚧
 Private Endpoints|✅|N/A
 Redis Cache|✅|🚧
-API Management|🚧|🚧
+API Management|✅|🚧
+Event Grid|✅|✅
 
 ✅ - fully supported (stable)
 

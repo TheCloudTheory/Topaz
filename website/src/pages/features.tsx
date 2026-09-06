@@ -48,6 +48,7 @@ const SERVICES: Service[] = [
   { abbr: 'PE',   bg: '#1B63EB', name: 'Private Endpoint',         description: 'Private endpoint resources and DNS integration', preview: true },
   { abbr: 'RC',   bg: '#0078D4', name: 'Azure Redis Cache', description: 'Redis cache control plane and data-plane emulation', preview: true},
   { abbr: 'APM',  bg: '#E8751A', name: 'Azure API Management', description: 'API Management service control plane and API gateway emulation', preview: true},
+  { abbr: 'EG',   bg: '#2900f7', name: 'Azure Event Grid',         description: 'Topics, Subscriptions, and Event Publishing', preview: true }
 ];
 
 const TOOLING: Service[] = [
