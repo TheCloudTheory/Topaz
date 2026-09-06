@@ -181,12 +181,6 @@ TODO: Azure Event Grid: System Topics CRUD
   labels: enhancement, event-grid
 -->
 
-<!--
-TODO: Azure Event Grid: MCP provisioning tool
-  Add CreateEventGridTopic MCP tool; extend GetConnectionStrings with Event Grid endpoint and key.
-  milestone: v1.11
-  labels: enhancement, event-grid, mcp
--->
 
 ### App Configuration — advanced data plane features
 
