@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Topaz.EventPipeline.Events;
 using Topaz.Service.EventGrid.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -81,6 +82,11 @@ internal sealed class EventGridDataPlane(
             }
         }
 
+        return new DataPlaneOperationResult(OperationResult.Success);
+    }
+
+    public DataPlaneOperationResult PublishEvent(EventGridEventPublishedEventData data)
+    {
         return new DataPlaneOperationResult(OperationResult.Success);
     }
 }
