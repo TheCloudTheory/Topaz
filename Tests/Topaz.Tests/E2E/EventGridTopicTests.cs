@@ -266,7 +266,7 @@ public class EventGridTopicTests
         var data = new EventGridTopicData(new AzureLocation("westeurope"));
         var dataCloudEvent = new EventGridTopicData(new AzureLocation("westeurope"))
         {
-            InputSchema = EventGridInputSchema.CloudEventSchemaV1_0
+            InputSchema = EventGridInputSchema.EventGridSchema
         };
         var topicEventGridSchema = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicName, data);
         var topicCloudEventSchema = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicNameCloudEvent, dataCloudEvent);
