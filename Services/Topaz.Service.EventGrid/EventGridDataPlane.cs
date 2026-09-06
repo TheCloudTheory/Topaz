@@ -50,8 +50,8 @@ internal sealed class EventGridDataPlane(
         var payloadSize = JsonSerializer.SerializeToUtf8Bytes(data).Length;
         if(payloadSize > maxPayloadSizeInMbs)
         {
-            return new DataPlaneOperationResult(OperationResult.BadRequest,
-                "A batch can contain a maximum of 1 MB.", "BadRequest");
+            return new DataPlaneOperationResult(OperationResult.TooLarge,
+                "A batch can contain a maximum of 1 MB.", "PayloadTooLarge");
         }
 
         if (inputSchema == InputSchema.EventGridSchema)

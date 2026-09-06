@@ -12,5 +12,6 @@ public enum OperationResult
     Conflict,
     PreconditionFailed,
     Accepted,
-    Purged
+    Purged,
+    TooLarge
 }

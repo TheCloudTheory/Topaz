@@ -23,12 +23,17 @@ internal sealed class PublishEventGridEventEndpoint(Pipeline eventPipeline, ITop
 
         var result = DataPlane.PublishEvent(ctx.SubscriptionIdentifier, ctx.ResourceGroupIdentifier,
             ctx.TopicName, json, eventSchemaTypeHeader.ToString());
-        if (result.Result == OperationResult.BadRequest)
-        {
-            response.CreateErrorResponse(result, HttpStatusCode.BadRequest);
-            return;
-        }
         
+        switch (result.Result)
+        {
+            case OperationResult.BadRequest:
+                response.CreateErrorResponse(result, HttpStatusCode.BadRequest);
+                return;
+            case OperationResult.TooLarge:
+                response.CreateErrorResponse(result, HttpStatusCode.RequestEntityTooLarge);
+                return;
+        }
+
         if (result.Result != OperationResult.Success)
         {
             response.CreateErrorResponse(result);
