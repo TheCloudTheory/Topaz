@@ -347,24 +347,4 @@ internal sealed class EventGridSystemTopicControlPlane(Pipeline eventPipeline, I
         
         return new ControlPlaneOperationResult<DeliveryAttributeMapping[]>(OperationResult.Success, attributes);
     }
-
-    public ControlPlaneOperationResult<EventGridSystemTopicResource> FindByName(string topicName,
-        string eventGridSubscriptionPrefix)
-    {
-        var subscriptions = _subscriptionControlPlane.List();
-        var subscription =
-            subscriptions.Resource!.Single(sub => sub.SubscriptionId.StartsWith(eventGridSubscriptionPrefix));
-        
-        var topics = ListBySubscription(SubscriptionIdentifier.From(subscription.SubscriptionId), null);
-        foreach (var topic in topics.Resource!)
-        {
-            if (topic.Name == topicName)
-            {
-                return Get(SubscriptionIdentifier.From(subscription.SubscriptionId), topic.GetResourceGroup(), topicName);
-            }
-        }
-        
-        return new ControlPlaneOperationResult<EventGridSystemTopicResource>(OperationResult.NotFound, null,
-            "Event Grid topic not found", "ResourceNotFound");
-    }
 }

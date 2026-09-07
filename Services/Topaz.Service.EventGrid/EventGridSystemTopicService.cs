@@ -1,6 +1,8 @@
 ﻿using Topaz.EventPipeline;
 using Topaz.EventPipeline.Events;
 using Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics.SystemTopics;
+using Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics.SystemTopicSubscriptions;
+using Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics.TopicSubscriptions;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -31,7 +33,14 @@ public sealed class EventGridSystemTopicService(Pipeline eventPipeline, ITopazLo
         new DeleteEventGridSystemTopicEndpoint(eventPipeline, logger),
         new ListEventGridSystemTopicByResourceGroupEndpoint(eventPipeline, logger),
         new ListEventGridSystemTopicBySubscriptionEndpoint(eventPipeline, logger),
-        new UpdateEventGridSystemTopicEndpoint(eventPipeline, logger)
+        new UpdateEventGridSystemTopicEndpoint(eventPipeline, logger),
+        new CreateOrUpdateEventGridSystemTopicSubscriptionEndpoint(eventPipeline, logger),
+        new DeleteEventGridSystemTopicSubscriptionEndpoint(eventPipeline, logger),
+        new GetEventGridSystemTopicSubscriptionEndpoint(eventPipeline, logger),
+        new GetEventGridTopicSubscriptionUrlEndpoint(eventPipeline, logger),
+        new GetEventGridSystemTopicSubscriptionDeliveryAttributesEndpoint(eventPipeline, logger),
+        new ListEventGridSystemTopicSubscriptionsEndpoint(eventPipeline, logger),
+        new UpdateEventGridSystemTopicSubscriptionEndpoint(eventPipeline, logger)
     ];
 
     public void Register()
