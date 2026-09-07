@@ -1,3 +1,5 @@
+using Topaz.EventPipeline.Events;
+
 namespace Topaz.Service.EventGrid.Models;
 
 internal sealed class EventGridEventEnvelope<TEventModel>
@@ -19,6 +21,14 @@ internal sealed class EventGridEventEnvelope<TEventModel>
         return new EventGridEventEnvelope<EventGridCloudEventSchema>
         {
             Event = message
+        };
+    }
+
+    public static EventGridEventEnvelope<EventGridEventSchema> From(EventGridEventPublishedEventData message)
+    {
+        return new EventGridEventEnvelope<EventGridEventSchema>
+        {
+            Event = EventGridEventSchema.From(message)
         };
     }
 }

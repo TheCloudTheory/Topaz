@@ -1,28 +1,37 @@
 using System.Text.Json;
+using Topaz.EventPipeline;
 using Topaz.EventPipeline.Events;
 using Topaz.Service.EventGrid.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventGrid;
 
 internal sealed class EventGridDataPlane(
-    EventGridTopicControlPlane controlPlane,
+    EventGridTopicControlPlane topicControlPlane,
+    EventGridSystemTopicControlPlane systemTopicControlPlane,
+    Pipeline eventPipeline,
     ITopazLogger logger)
 {
     private static readonly string EventSubresource =
         nameof(Subresource.Events).ToLowerInvariant();
 
     public static EventGridDataPlane New(EventGridTopicControlPlane controlPlane,
-        ITopazLogger logger) => new(controlPlane, logger);
+        EventGridSystemTopicControlPlane systemTopicControlPlane,
+        Pipeline eventPipeline,
+        ITopazLogger logger) => new(controlPlane, systemTopicControlPlane, eventPipeline, logger);
 
     private readonly EventGridTopicResourceProvider _provider = new(logger);
+
+    private readonly SubscriptionControlPlane _subscriptionControlPlane =
+        SubscriptionControlPlane.New(eventPipeline, logger);
 
     public DataPlaneOperationResult PublishEvent(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string topicName, string data, string contentTypeHeaderValue)
     {
-        var topicOperation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
+        var topicOperation = topicControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, topicName);
         if (topicOperation.Result != OperationResult.Success)
         {
             return new DataPlaneOperationResult(OperationResult.NotFound, topicOperation.Reason, topicOperation.Code);
@@ -46,10 +55,10 @@ internal sealed class EventGridDataPlane(
             return new DataPlaneOperationResult(OperationResult.BadRequest,
                 "A batch can contain a maximum of 5,000 events.", "BadRequest");
         }
-        
+
         const uint maxPayloadSizeInMbs = 1024 * 1024;
         var payloadSize = JsonSerializer.SerializeToUtf8Bytes(data).Length;
-        if(payloadSize > maxPayloadSizeInMbs)
+        if (payloadSize > maxPayloadSizeInMbs)
         {
             return new DataPlaneOperationResult(OperationResult.TooLarge,
                 "A batch can contain a maximum of 1 MB.", "PayloadTooLarge");
@@ -57,10 +66,12 @@ internal sealed class EventGridDataPlane(
 
         if (inputSchema == InputSchema.EventGridSchema)
         {
-            foreach (var message in JsonSerializer.Deserialize<EventGridEventSchema[]>(data, GlobalSettings.JsonOptions)!)
+            foreach (var message in
+                     JsonSerializer.Deserialize<EventGridEventSchema[]>(data, GlobalSettings.JsonOptions)!)
             {
-                _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, message.Id!, topicName,
-                    EventSubresource,EventGridEventEnvelope<EventGridEventSchema>.From(message));
+                _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, message.Id!,
+                    topicName,
+                    EventSubresource, EventGridEventEnvelope<EventGridEventSchema>.From(message));
             }
         }
 
@@ -74,11 +85,12 @@ internal sealed class EventGridDataPlane(
                 [
                     JsonSerializer.Deserialize<EventGridCloudEventSchema>(data, GlobalSettings.JsonOptions)!
                 ];
-            
+
             foreach (var message in events!)
             {
-                _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, message.Id, topicName,
-                    EventSubresource,EventGridEventEnvelope<EventGridCloudEventSchema>.From(message));
+                _provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, message.Id,
+                    topicName,
+                    EventSubresource, EventGridEventEnvelope<EventGridCloudEventSchema>.From(message));
             }
         }
 
@@ -87,6 +99,35 @@ internal sealed class EventGridDataPlane(
 
     public DataPlaneOperationResult PublishEvent(EventGridEventPublishedEventData data)
     {
+        var subscriptions = _subscriptionControlPlane.List();
+        if (subscriptions.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult(subscriptions.Result, subscriptions.Reason, subscriptions.Code);
+        }
+
+        var envelope = EventGridEventEnvelope<EventGridEventSchema>.From(data);
+
+        foreach (var subscription in subscriptions.Resource!)
+        {
+            var systemTopics =
+                systemTopicControlPlane.ListBySubscription(SubscriptionIdentifier.From(subscription.SubscriptionId),
+                    null);
+
+            if (systemTopics.Result != OperationResult.Success)
+            {
+                logger.LogError(nameof(EventGridDataPlane), nameof(PublishEvent),
+                    $"Failed to fetch system topics for subscription {subscription.SubscriptionId}.");
+                continue;
+            }
+
+            foreach (var topic in systemTopics.Resource!)
+            {
+                _provider.CreateOrUpdateSubresource(topic.GetSubscription(), topic.GetResourceGroup(), envelope.Event!.Id!,
+                    topic.Name,
+                    EventSubresource, envelope);
+            }
+        }
+
         return new DataPlaneOperationResult(OperationResult.Success);
     }
 }

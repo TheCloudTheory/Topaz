@@ -1,3 +1,5 @@
+using Topaz.EventPipeline.Events;
+
 namespace Topaz.Service.EventGrid.Models;
 
 internal sealed class EventGridEventSchema
@@ -10,4 +12,19 @@ internal sealed class EventGridEventSchema
     public object? Data { get; init; }
     public string? DataVersion { get; init; }
     public string? MetadataVersion { get; init; }
+
+    public static EventGridEventSchema From(EventGridEventPublishedEventData message)
+    {
+        return new EventGridEventSchema
+        {
+            Id = Guid.NewGuid().ToString(),
+            Subject = message.Subject,
+            Topic = message.ResourceId,
+            EventType = message.EventType,
+            EventTime = DateTimeOffset.Now.ToString("O"),
+            Data = message.Data,
+            DataVersion = message.DataVersion,
+            MetadataVersion = message.MetadataVersion
+        };
+    }
 }

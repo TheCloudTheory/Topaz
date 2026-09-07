@@ -19,8 +19,12 @@ internal class EventGridDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogg
     
     private readonly AzureAuthorizationAdapter _authAdapter = new(eventPipeline, logger);
     private readonly EventGridTopicControlPlane _controlPlane = EventGridTopicControlPlane.New(eventPipeline, logger);
-    
-    protected readonly EventGridDataPlane DataPlane = EventGridDataPlane.New(EventGridTopicControlPlane.New(eventPipeline, logger), logger);
+
+    protected readonly EventGridDataPlane DataPlane =
+        EventGridDataPlane.New(
+            EventGridTopicControlPlane.New(eventPipeline, logger), 
+            EventGridSystemTopicControlPlane.New(eventPipeline, logger),
+            eventPipeline, logger);
     
     public virtual string[] Endpoints => [];
     public virtual string[] Permissions => [];

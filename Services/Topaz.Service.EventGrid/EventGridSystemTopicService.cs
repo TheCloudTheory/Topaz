@@ -45,7 +45,11 @@ public sealed class EventGridSystemTopicService(Pipeline eventPipeline, ITopazLo
 
     public void Register()
     {
-        var dataPlane = EventGridDataPlane.New(EventGridTopicControlPlane.New(eventPipeline, logger), logger);
+        var dataPlane = EventGridDataPlane.New(
+            EventGridTopicControlPlane.New(eventPipeline, logger), 
+            EventGridSystemTopicControlPlane.New(eventPipeline, logger),
+            eventPipeline,
+            logger);
         
         eventPipeline.RegisterHandler<EventGridEventPublishedEvent>(EventGridEventPublishedEvent.EventName,
             data => dataPlane.PublishEvent(data!.Data));
