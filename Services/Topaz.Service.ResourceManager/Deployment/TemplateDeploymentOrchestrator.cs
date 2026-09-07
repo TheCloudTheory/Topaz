@@ -426,6 +426,12 @@ public sealed class TemplateDeploymentOrchestrator(
                 case "microsoft.eventgrid/namespaces":
                     controlPlane = EventGridNamespaceControlPlane.New(eventPipeline, logger);
                     break;
+                case "microsoft.eventgrid/topics":
+                    controlPlane = EventGridTopicControlPlane.New(eventPipeline, logger);
+                    break;
+                case "microsoft.eventgrid/systemTopics":
+                    controlPlane = EventGridSystemTopicControlPlane.New(eventPipeline, logger);
+                    break;
                 case "microsoft.resources/deployments":
                     HandleNestedDeployment(genericResource, templateDeployment, resource, ref hasProvisioningFailed);
                     break;
