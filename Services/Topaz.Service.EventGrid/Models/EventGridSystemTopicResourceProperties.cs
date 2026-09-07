@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.EventGrid.Models;
 
@@ -17,5 +18,15 @@ internal sealed class EventGridSystemTopicResourceProperties
         MetricResourceId = request.MetricResourceId ?? MetricResourceId;
         Source = request.Source ?? Source;
         TopicType = request.TopicType ?? TopicType;
+    }
+
+    public static EventGridSystemTopicResourceProperties FromRequest(EventGridSystemTopicResourceProperties request)
+    {
+        return new EventGridSystemTopicResourceProperties
+        {
+            MetricResourceId = request.MetricResourceId,
+            Source = request.Source,
+            TopicType = request.TopicType
+        };
     }
 }

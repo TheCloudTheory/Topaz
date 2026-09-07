@@ -8,22 +8,22 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics;
+namespace Topaz.Service.EventGrid.Endpoints.ControlPlane.Topics.SystemTopics;
 
-internal sealed class UpdateEventGridTopicEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class UpdateEventGridSystemTopicEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
-    private readonly EventGridTopicControlPlane _controlPlane =
-        EventGridTopicControlPlane.New(eventPipeline, logger);
+    private readonly EventGridSystemTopicControlPlane _controlPlane =
+        EventGridSystemTopicControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.EventGrid";
 
     public string[] Endpoints =>
     [
-        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}"
+        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/systemTopics/{topicName}"
     ];
 
-    public string[] Permissions => ["Microsoft.EventGrid/topics/write"];
+    public string[] Permissions => ["Microsoft.EventGrid/systemTopics/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -41,7 +41,7 @@ internal sealed class UpdateEventGridTopicEndpoint(Pipeline eventPipeline, ITopa
         }
 
         using var reader = new StreamReader(context.Request.Body);
-        var request = JsonSerializer.Deserialize<EventGridTopicResource>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
+        var request = JsonSerializer.Deserialize<EventGridSystemTopicResource>(reader.ReadToEnd(), GlobalSettings.JsonOptions);
         if (request == null)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
