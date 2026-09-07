@@ -334,8 +334,10 @@ public class EventGridTopicTests
             
             await clientCloudEvent.SendEventAsync(cloudEvent, listenerCts.Token);
 
-            // Delivery happens via a periodic background poller, so poll until the event arrives, or we time out.
-            var deadline = DateTime.UtcNow.AddSeconds(30);
+            // Delivery happens via a periodic (10s) background poller which only ticks after a full
+            // interval elapses, so on slower/loaded CI runners a couple of ticks can easily exceed 30s.
+            // Give it a generous margin to avoid flaky failures while still failing fast when broken.
+            var deadline = DateTime.UtcNow.AddSeconds(90);
             while (receivedEvents.Count < 4 && DateTime.UtcNow < deadline)
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(500), listenerCts.Token);
