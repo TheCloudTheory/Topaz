@@ -9,6 +9,8 @@ using Azure.Messaging.EventGrid;
 using Azure.ResourceManager;
 using Azure.ResourceManager.EventGrid;
 using Azure.ResourceManager.EventGrid.Models;
+using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -456,5 +458,40 @@ public class EventGridTopicTests
             data);
         
         Assert.ThrowsAsync<RequestFailedException>(() => client.SendEventAsync(@event), "A batch can contain a maximum of 1 MB.");
+    }
+    
+    [Test]
+    public async Task EventGridTopic_DeployedViaArmTemplate_ServiceAndChildResourcesExist()
+    {
+        const string namespaceName = "topaz-egns";
+        const string topicName = "topic1";
+        const string systemTopicName = "systemtopic1";
+        var armClient = new ArmClient(new AzureLocalCredential(Globals.GlobalAdminId), SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+        await resourceGroup.Value.GetArmDeployments().CreateOrUpdateAsync(
+            WaitUntil.Completed,
+            "deploy-eventgrid-test",
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-eventgrid.json")),
+                Parameters = BinaryData.FromObjectAsJson(new
+                {
+                    systemTopicSource = new { value = "serviceName" }
+                })
+            }));
+
+        var eventGridNamespace = (await resourceGroup.Value.GetEventGridNamespaces().GetAsync(namespaceName)).Value;
+        var topic = (await resourceGroup.Value.GetEventGridTopicAsync(topicName)).Value;
+        var systemTopic = (await resourceGroup.Value.GetSystemTopicAsync(systemTopicName)).Value;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(eventGridNamespace.Data.Name, Is.EqualTo(namespaceName));
+            Assert.That(topic.Data.Name, Is.EqualTo(topicName));
+            Assert.That(systemTopic.Data.Name, Is.EqualTo(systemTopicName));
+            Assert.That(systemTopic.Data.Source.ToString(), Is.EqualTo("serviceName"));
+        }
     }
 }

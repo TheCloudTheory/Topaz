@@ -429,7 +429,7 @@ public sealed class TemplateDeploymentOrchestrator(
                 case "microsoft.eventgrid/topics":
                     controlPlane = EventGridTopicControlPlane.New(eventPipeline, logger);
                     break;
-                case "microsoft.eventgrid/systemTopics":
+                case "microsoft.eventgrid/systemtopics":
                     controlPlane = EventGridSystemTopicControlPlane.New(eventPipeline, logger);
                     break;
                 case "microsoft.resources/deployments":
