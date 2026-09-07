@@ -266,7 +266,7 @@ public class EventGridTopicTests
         var data = new EventGridTopicData(new AzureLocation("westeurope"));
         var dataCloudEvent = new EventGridTopicData(new AzureLocation("westeurope"))
         {
-            InputSchema = EventGridInputSchema.EventGridSchema
+            InputSchema = EventGridInputSchema.CloudEventSchemaV1_0
         };
         var topicEventGridSchema = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicName, data);
         var topicCloudEventSchema = await topics.CreateOrUpdateAsync(WaitUntil.Completed, TopicNameCloudEvent, dataCloudEvent);
@@ -351,10 +351,13 @@ public class EventGridTopicTests
         }
         
         Assert.That(receivedEvents, Is.Not.Null.And.Count.EqualTo(4));
-        Assert.That(receivedEvents[0].GetProperty("eventType").GetString(), Is.EqualTo("Microsoft.EventGrid.SubscriptionValidationEvent"));
-        Assert.That(receivedEvents[1].GetProperty("eventType").GetString(), Is.EqualTo("Microsoft.EventGrid.SubscriptionValidationEvent"));
-        Assert.That(receivedEvents[2].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType"));
-        Assert.That(receivedEvents[3].GetProperty("type").GetString(), Is.EqualTo("Example.EventType.CE"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(receivedEvents[0].GetProperty("eventType").GetString(), Is.EqualTo("Microsoft.EventGrid.SubscriptionValidationEvent"));
+            Assert.That(receivedEvents[1].GetProperty("eventType").GetString(), Is.EqualTo("Microsoft.EventGrid.SubscriptionValidationEvent"));
+            Assert.That(receivedEvents[3].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType"));
+            Assert.That(receivedEvents[2].GetProperty("type").GetString(), Is.EqualTo("Example.EventType.CE"));
+        }
     }
     
     private static int GetFreeTcpPort()
