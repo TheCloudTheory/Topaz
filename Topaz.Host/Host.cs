@@ -155,6 +155,7 @@ public class Host
             new ImporterService(_eventPipeline, _logger),
             new EventGridNamespaceService(_eventPipeline, _logger),
             new EventGridTopicService(_eventPipeline, _logger),
+            new EventGridSystemTopicService(_eventPipeline, _logger)
         };
 
         _logger.ConfigureIdFactory(idFactory);
