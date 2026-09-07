@@ -1,9 +1,9 @@
 ---
-sidebar_position: 26
+sidebar_position: 20
 ---
 
-# eventgrid namespace list
-Lists Event Grid Namespaces in a resource group.
+# eventgrid system-topic list
+Lists Event Grid System Topics in a resource group.
 
 ## Options
 * `-s, --subscription-id` - (Required) (Required) Subscription ID.
@@ -11,9 +11,9 @@ Lists Event Grid Namespaces in a resource group.
 
 ## Examples
 
-### List Event Grid Namespaces in a resource group
+### List Event Grid System Topics in a resource group
 ```bash
-$ topaz eventgrid namespace list \
+$ topaz eventgrid system-topic list \
     --subscription-id "00000000-0000-0000-0000-000000000000" \
     --resource-group "rg-local"
 ```

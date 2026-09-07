@@ -3716,6 +3716,174 @@
     ]
   },
   {
+    "name": "eventgrid system-topic create",
+    "group": "event-grid",
+    "description": "Creates or updates an Event Grid System Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid System Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      },
+      {
+        "names": "--source",
+        "description": "(Optional) Resource ID of the source of events.",
+        "required": false
+      },
+      {
+        "names": "--topic-type",
+        "description": "(Optional) Topic type of the source.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create an Event Grid System Topic",
+        "command": "topaz eventgrid system-topic create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-system-topic\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --source \u0022/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-local/providers/Microsoft.Storage/storageAccounts/mystorage\u0022 \\\n    --topic-type \u0022Microsoft.Storage.StorageAccounts\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid system-topic delete",
+    "group": "event-grid",
+    "description": "Deletes an Event Grid System Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid System Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete an Event Grid System Topic",
+        "command": "topaz eventgrid system-topic delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-system-topic\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid system-topic list",
+    "group": "event-grid",
+    "description": "Lists Event Grid System Topics in a resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List Event Grid System Topics in a resource group",
+        "command": "topaz eventgrid system-topic list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid system-topic list-by-subscription",
+    "group": "event-grid",
+    "description": "Lists Event Grid System Topics in a subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List Event Grid System Topics in a subscription",
+        "command": "topaz eventgrid system-topic list-by-subscription \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid system-topic show",
+    "group": "event-grid",
+    "description": "Gets an Event Grid System Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid System Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get an Event Grid System Topic",
+        "command": "topaz eventgrid system-topic show \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-system-topic\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventgrid system-topic update",
+    "group": "event-grid",
+    "description": "Updates an Event Grid System Topic.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Grid System Topic name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Update an Event Grid System Topic",
+        "command": "topaz eventgrid system-topic update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-system-topic\u0022 \\\n    --tags \u0022env=prod\u0022"
+      }
+    ]
+  },
+  {
     "name": "eventgrid topic create",
     "group": "event-grid",
     "description": "Creates or updates an Event Grid Topic.",

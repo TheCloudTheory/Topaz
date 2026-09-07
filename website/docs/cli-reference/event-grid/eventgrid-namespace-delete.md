@@ -1,5 +1,5 @@
 ---
-sidebar_position: 18
+sidebar_position: 24
 ---
 
 # eventgrid namespace delete
