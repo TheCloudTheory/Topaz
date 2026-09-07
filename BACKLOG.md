@@ -171,16 +171,6 @@ TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
 
 ## v1.11
 
-### Azure Event Grid — initial control plane and delivery
-
-<!--
-TODO: Azure Event Grid: System Topics CRUD
-  Create, get, delete, and list Microsoft.EventGrid/systemTopics; source and topicType stored and
-  returned verbatim; event subscriptions on system topics follow the same model as custom topics.
-  milestone: v1.11
-  labels: enhancement, event-grid
--->
-
 
 ### App Configuration — advanced data plane features
 
