@@ -9,6 +9,7 @@ public class EventGridTests
     private const string NamespaceName = "test-namespace";
     private const string TopicName = "test-topic";
     private const string EventSubscriptionName = "test-subscription";
+    private const string SystemTopicName = "test-system-topic";
 
     [SetUp]
     public async Task SetUp()
@@ -131,6 +132,36 @@ public class EventGridTests
             SubscriptionId.ToString(),
             "--endpoint-url",
             "https://example.com/webhook"
+        ]);
+
+        await Program.RunAsync([
+            "eventgrid",
+            "system-topic",
+            "delete",
+            "--name",
+            SystemTopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "eventgrid",
+            "system-topic",
+            "create",
+            "--name",
+            SystemTopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--location",
+            "westeurope",
+            "--subscription-id",
+            SubscriptionId.ToString(),
+            "--source",
+            "/subscriptions/4a1b2c3d-eeee-4f5a-8bb1-3cfe44084f82/resourceGroups/test/providers/Microsoft.Storage/storageAccounts/mystorage",
+            "--topic-type",
+            "Microsoft.Storage.StorageAccounts"
         ]);
     }
 
@@ -574,5 +605,105 @@ public class EventGridTests
             Assert.That(File.Exists(eventSubscriptionPath), Is.False);
             Assert.That(code, Is.Zero);
         }
+    }
+
+    [Test]
+    public void EventGridTests_WhenNewSystemTopicIsRequested_ItShouldBeCreated()
+    {
+        var systemTopicPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid-system-topic", SystemTopicName, "metadata.json");
+
+        Assert.That(File.Exists(systemTopicPath), Is.True);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenExistingSystemTopicIsDeleted_ItShouldBeDeleted()
+    {
+        var systemTopicPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".event-grid-system-topic", SystemTopicName, "metadata.json");
+
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "system-topic",
+            "delete",
+            "--name",
+            SystemTopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(File.Exists(systemTopicPath), Is.False);
+            Assert.That(code, Is.Zero);
+        }
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenExistingSystemTopicIsRequested_ItShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "system-topic",
+            "show",
+            "--name",
+            SystemTopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenSystemTopicsInResourceGroupAreListed_TheyShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "system-topic",
+            "list-resource-group",
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenSystemTopicsInSubscriptionAreListed_TheyShouldBeReturned()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "system-topic",
+            "list-subscription",
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
+    }
+
+    [Test]
+    public async Task EventGridTests_WhenExistingSystemTopicIsUpdated_ItShouldBeUpdated()
+    {
+        var code = await Program.RunAsync([
+            "eventgrid",
+            "system-topic",
+            "update",
+            "--name",
+            SystemTopicName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.Zero);
     }
 }
