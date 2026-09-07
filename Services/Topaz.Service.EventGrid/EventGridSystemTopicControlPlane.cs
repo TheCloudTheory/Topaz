@@ -77,7 +77,7 @@ internal sealed class EventGridSystemTopicControlPlane(Pipeline eventPipeline, I
                     validation.Error, "BadRequest");
             }
 
-            _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, topicName, existing);
+            _provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, topicName, existing.Resource);
             return new ControlPlaneOperationResult<EventGridSystemTopicResource>(OperationResult.Updated,
                 existing.Resource);
         }

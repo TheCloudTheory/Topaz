@@ -47,13 +47,18 @@ internal sealed class CreateOrUpdateEventGridTopicEndpoint(Pipeline eventPipelin
         }
 
         var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, request);
+        if (result.Result == OperationResult.BadRequest)
+        {
+            response.CreateBadRequestResponse(result);
+            return;
+        }
+        
         if (result.Result is not (OperationResult.Created or OperationResult.Updated) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
             return;
         }
 
-        response.CreateJsonContentResponse(result.Resource,
-            result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK);
+        response.CreateJsonContentResponse(result.Resource, HttpStatusCode.Created);
     }
 }

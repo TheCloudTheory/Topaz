@@ -45,6 +45,7 @@ public sealed class CreateEventGridTool
         {
             InputSchema = new EventGridInputSchema(inputSchema)
         };
+        
         var operation = await resourceGroup.Value.GetEventGridTopics()
             .CreateOrUpdateAsync(WaitUntil.Completed, topicName, data)
             .ConfigureAwait(false);
