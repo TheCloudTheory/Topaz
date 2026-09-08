@@ -51,7 +51,7 @@ public sealed class EventGridSystemTopicService(Pipeline eventPipeline, ITopazLo
             eventPipeline,
             logger);
         
-        eventPipeline.RegisterHandler<EventGridEventPublishedEvent>(EventGridEventPublishedEvent.EventName,
-            data => dataPlane.PublishEvent(data!.Data));
+        eventPipeline.RegisterHandler<EventGridEventPublishedEventData>(EventGridEventPublishedEvent.EventName,
+            data => dataPlane.PublishEvent(data!));
     }
 }
