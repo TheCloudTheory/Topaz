@@ -28,7 +28,7 @@ internal sealed class AppConfigurationServiceControlPlane(
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
-    private readonly AppConfigurationDataPlane _dataPlane = AppConfigurationDataPlane.New(provider, logger);
+    private readonly AppConfigurationDataPlane _dataPlane = AppConfigurationDataPlane.New(provider, eventPipeline, logger);
 
     public static AppConfigurationServiceControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new AppConfigurationResourceProvider(logger), logger);

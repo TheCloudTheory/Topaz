@@ -1,3 +1,5 @@
+using Topaz.EventPipeline;
+using Topaz.EventPipeline.Events;
 using Topaz.Service.AppConfiguration.Models;
 using Topaz.Service.AppConfiguration.Models.DataPlane;
 using Topaz.Service.Shared;
@@ -5,18 +7,49 @@ using Topaz.Shared;
 
 namespace Topaz.Service.AppConfiguration;
 
-internal sealed class AppConfigurationDataPlane(AppConfigurationResourceProvider provider,
+internal sealed class AppConfigurationDataPlane(
+    AppConfigurationResourceProvider provider,
+    Pipeline eventPipeline,
     ITopazLogger logger)
 {
     private const string SnapshotDataSubresource = "snapshots-data";
-    
-    public static AppConfigurationDataPlane New(AppConfigurationResourceProvider provider, ITopazLogger logger) =>
-        new(provider, logger);
+
+    public static AppConfigurationDataPlane New(AppConfigurationResourceProvider provider, Pipeline eventPipeline,
+        ITopazLogger logger) =>
+        new(provider, eventPipeline, logger);
 
     public DataPlaneOperationResult SaveSnapshot(SnapshotSubresource snapshot, AppConfigurationKeyValue[] kvs)
     {
+        var existing = provider.GetSubresourceAs<SnapshotSubresource>(snapshot.GetSubscription(), snapshot.GetResourceGroup(),
+            snapshot.Name, snapshot.GetParentId(), SnapshotDataSubresource);
+        
+        var eventType = "Microsoft.AppConfiguration.SnapshotCreated";
+        if (existing != null)
+        {
+            eventType = "Microsoft.AppConfiguration.SnapshotUpdated";
+        }
+        
         provider.CreateOrUpdateSubresource(snapshot.GetSubscription(), snapshot.GetResourceGroup(),
             snapshot.Name, snapshot.GetParentId(), SnapshotDataSubresource, kvs);
+
+        eventPipeline.TriggerEvent<EventGridEventPublishedEventData, EventGridEventPublishedEvent>(
+            new EventGridEventPublishedEvent
+            {
+                Data = new EventGridEventPublishedEventData
+                {
+                    ResourceId = snapshot.GetParentId(),
+                    Data = new
+                    {
+                        Name = snapshot.Name,
+                        etag = snapshot.Properties.Etag,
+                        syncToken = "topaz=MA==;sn=1"
+                    },
+                    Subject = $"https://{snapshot.GetParentId()}.{GlobalSettings.AppConfigurationDnsSuffix}/snapshots/{snapshot.Name}",
+                    EventType = eventType,
+                    DataVersion = "1",
+                    MetadataVersion = "1"
+                }
+            });
 
         return new DataPlaneOperationResult(OperationResult.Success);
     }
@@ -32,8 +65,9 @@ internal sealed class AppConfigurationDataPlane(AppConfigurationResourceProvider
         }
 
         var totalSize = snapshots.Sum(s => s.Properties.Size).GetValueOrDefault() + snapshot.Properties.Size;
-        logger.LogDebug(nameof(AppConfigurationDataPlane), nameof(CanCreateSnapshot), "Total size of snapshots: {0}", totalSize);
-        
+        logger.LogDebug(nameof(AppConfigurationDataPlane), nameof(CanCreateSnapshot), "Total size of snapshots: {0}",
+            totalSize);
+
         // App Configuration has a different quota for snapshots depending on the SKU.
         const long oneMegabyte = 1024 * 1024 * 1024;
         var map = new[]
@@ -43,14 +77,14 @@ internal sealed class AppConfigurationDataPlane(AppConfigurationResourceProvider
             ("standard", oneMegabyte * 1024),
             ("premium", oneMegabyte * 1024 * 4)
         };
-        
+
         var quota = map.Single(item => item.Item1 == sku).Item2;
         if (totalSize > quota)
         {
             return new DataPlaneOperationResult<bool>(OperationResult.Conflict, false,
                 "App Configuration quota for snapshots is exceeded.", "QuotaExceeded");
         }
-        
+
         return new DataPlaneOperationResult<bool>(OperationResult.Success, true);
     }
 
