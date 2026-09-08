@@ -172,18 +172,6 @@ TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
 ## v1.11
 
 
-### App Configuration — advanced data plane features
-
-<!--
-TODO: App Configuration: Change notification via EventGrid integration
-  On any key-value write or delete, publish a Microsoft.AppConfiguration.KeyValueModified /
-  Microsoft.AppConfiguration.KeyValueDeleted event to any EventGrid topic subscription wired to
-  the store's system topic.
-  Prerequisite: Event Grid system topics and event publishing (above).
-  milestone: v1.11
-  labels: enhancement, app-configuration, event-grid
--->
-
 ### Application Insights & Log Analytics — richer KQL
 
 <!--

@@ -365,13 +365,43 @@ internal sealed class AppConfigurationServiceControlPlane(
             });
     }
 
-    public AppConfigurationKeyValue? DeleteKv(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string storeName,
+    public AppConfigurationKeyValue? DeleteKv(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storeName,
         string key, string? label)
     {
         var id = AppConfigurationKeyValue.ToFileId(key, label);
-        var existing = provider.GetSubresourceAs<AppConfigurationKeyValue>(sub, rg, id, storeName, KvSubresource);
-        if (existing == null) return null;
-        provider.DeleteSubresource(sub, rg, id, storeName, KvSubresource);
+        var existing = provider.GetSubresourceAs<AppConfigurationKeyValue>(subscriptionIdentifier,
+            resourceGroupIdentifier, id, storeName, KvSubresource);
+        if (existing == null)
+        {
+            return null;
+        }
+
+        var store = Get(subscriptionIdentifier, resourceGroupIdentifier, storeName);
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, id, storeName, KvSubresource);
+        
+        eventPipeline.TriggerEvent<EventGridEventPublishedEventData, EventGridEventPublishedEvent>(
+            new EventGridEventPublishedEvent
+            {
+                Data = new EventGridEventPublishedEventData
+                {
+                    ResourceId = store.Resource!.Id,
+                    Data = new
+                    {
+                        key,
+                        label,
+                        etag = existing.Etag,
+                        syncToken = "topaz=MA==;sn=1"
+                    },
+                    Subject = string.IsNullOrWhiteSpace(label)
+                        ? $"https://{storeName}.{GlobalSettings.AppConfigurationDnsSuffix}/kv/{key}"
+                        : $"https://{storeName}.{GlobalSettings.AppConfigurationDnsSuffix}/kv/{key}?label={label}",
+                    EventType = "Microsoft.AppConfiguration.KeyValueDeleted",
+                    DataVersion = "1",
+                    MetadataVersion = "1"
+                }
+            });
+        
         return existing;
     }
 
