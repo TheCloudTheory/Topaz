@@ -26,6 +26,45 @@ topaz eventgrid system-topic create \
 
 Once created, subscribing to it (`system-topic subscription create` with a WebHook destination) is enough to start receiving events for activity on the referenced resource — no explicit publish call is ever made by your application code.
 
+## End-to-end flow
+
+```mermaid
+sequenceDiagram
+    participant Svc as Azure service<br/>(Storage, App Configuration, ...)
+    participant Pipe as Event pipeline<br/>(Topaz.EventPipeline)
+    participant SysTopic as EventGridSystemTopicService
+    participant Data as EventGridDataPlane
+    participant Store as System topic<br/>event store
+    participant Bg as EventGridEventDeliveryBackgroundService
+    participant Hook as Subscriber WebHook
+
+    Svc->>Pipe: TriggerEvent(EventGridEventPublishedEvent)
+    Pipe->>SysTopic: dispatch to registered handler
+    SysTopic->>Data: PublishEvent(data)
+    Data->>Data: list subscriptions and their system topics
+    Data->>Store: record event as "not delivered"<br/>on each system topic
+
+    loop On every timer tick
+        Bg->>Store: read undelivered events per topic
+        alt subscription not yet validated
+            Bg->>Hook: POST SubscriptionValidationEvent
+            Hook-->>Bg: echo validation code
+            Bg->>Store: mark subscription as validated
+        else subscription validated
+            Bg->>Hook: POST pending events
+            alt 2xx response
+                Hook-->>Bg: success
+                Bg->>Store: mark events as delivered
+            else non-2xx / failure
+                Hook-->>Bg: error
+                Bg->>Store: increment delivery attempt, retry next tick
+            end
+        end
+    end
+```
+
+The producing service never talks to Event Grid directly — it only announces a fact on the shared pipeline. Everything from fan-out to system topics, through the validation handshake, to at-least-once delivery is owned by the Event Grid service itself.
+
 ## The internal event pipeline
 
 Topaz's services don't call the Event Grid data plane directly when something changes. Instead, they raise events on a shared, in-process **event pipeline** (`Topaz.EventPipeline`). Any service that wants to notify Event Grid of a state change — for example App Configuration, after a key-value is set or deleted — triggers an `EventGridEventPublishedEvent`:
