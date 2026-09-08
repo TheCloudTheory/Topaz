@@ -37,7 +37,7 @@ internal sealed class AppConfigurationDataPlane(
             {
                 Data = new EventGridEventPublishedEventData
                 {
-                    ResourceId = snapshot.GetParentId(),
+                    ResourceId = snapshot.Id,
                     Data = new
                     {
                         Name = snapshot.Name,

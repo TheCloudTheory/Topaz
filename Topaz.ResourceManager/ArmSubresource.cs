@@ -40,6 +40,12 @@ public abstract class ArmSubresource<T>
         return segments[^1];
     }
 
+    public virtual string GetParentResourceId()
+    {
+        var segments = Id.Split("/");
+        return string.Join("/", segments.Take(segments.Length - 1));
+    }
+
     public override string ToString()
     {
         return JsonSerializer.Serialize(this, GetType(), GlobalSettings.JsonOptions);
