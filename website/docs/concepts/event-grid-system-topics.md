@@ -87,13 +87,10 @@ eventPipeline.TriggerEvent<EventGridEventPublishedEventData, EventGridEventPubli
 
 1. List every subscription known to Topaz.
 2. For each subscription, list its system topics.
-3. Write the event as a subresource under each system topic, marked as not yet delivered.
+3. Skip any system topic whose `source` doesn't match the ARM resource ID (`ResourceId`) that raised the event.
+4. Write the event as a subresource under each matching system topic, marked as not yet delivered.
 
-This decouples the service that produced the event (Storage, App Configuration, Key Vault, and so on) from Event Grid entirely — the producing service has no knowledge of which system topics or subscriptions exist. It only announces "something happened," and Event Grid's own code fans that announcement out.
-
-:::note
-Topaz's current implementation stores the event against every system topic in the subscription rather than filtering by the topic's `source` and `topicType`. This is a known simplification — see [Service emulation design](./service-emulation-design.md) for how Topaz treats gaps like this.
-:::
+This decouples the service that produced the event (Storage, App Configuration, Key Vault, and so on) from Event Grid entirely — the producing service has no knowledge of which system topics or subscriptions exist. It only announces "something happened," and Event Grid's own code routes it to the system topics registered against that specific resource, the same way real Azure routes events by the topic's `source`.
 
 ## Delivery to subscribers
 
