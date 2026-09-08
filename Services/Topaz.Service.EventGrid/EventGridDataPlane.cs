@@ -122,6 +122,12 @@ internal sealed class EventGridDataPlane(
 
             foreach (var topic in systemTopics.Resource!)
             {
+                // Event can be delivered only to the topic which was created for this particular resource
+                if (topic.Properties.Source != data.ResourceId)
+                {
+                    continue;
+                }
+                
                 _provider.CreateOrUpdateSubresource(topic.GetSubscription(), topic.GetResourceGroup(), envelope.Event!.Id!,
                     topic.Name,
                     EventSubresource, envelope);
