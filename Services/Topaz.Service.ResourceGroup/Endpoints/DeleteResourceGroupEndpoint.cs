@@ -29,7 +29,7 @@ public class DeleteResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger lo
         var resourceGroupOperation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound)
         {
-            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceGroupNotFoundCode, resourceGroupIdentifier.Value);
+            response.CreateNotFoundResponse(resourceGroupOperation);
             return;
         }
 
