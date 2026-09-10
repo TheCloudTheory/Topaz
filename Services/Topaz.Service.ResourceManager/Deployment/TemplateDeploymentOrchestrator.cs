@@ -514,14 +514,25 @@ public sealed class TemplateDeploymentOrchestrator(
                 return;
             }
 
-            // Extract resourceGroup property
-            if (!resourceObj.TryGetValue("resourceGroup", out var rgElement))
+            // A nested deployment only carries 'resourceGroup' when it targets a different one. Bicep
+            // omits it for a module deployed into its parent's resource group — the common case, and
+            // what every `module x 'y.bicep' = {...}` without an explicit scope compiles to. Falling
+            // back to the parent's group makes those deploy instead of being silently skipped.
+            var parentIdParts = parentDeployment.Id.TrimStart('/').Split('/');
+            var parentRgName = parentIdParts.Length > 3 && parentIdParts[2] == "resourceGroups"
+                ? parentIdParts[3]
+                : null;
+
+            var nestedRgName = resourceObj.TryGetValue("resourceGroup", out var rgElement)
+                ? rgElement.GetString()
+                : parentRgName;
+
+            if (nestedRgName is null)
             {
-                logger.LogWarning($"Nested deployment '{genericResource.Name}' has no 'resourceGroup' property; subscription-scoped nested deployments are not yet supported.");
+                logger.LogWarning($"Nested deployment '{genericResource.Name}' has no 'resourceGroup' property and its parent is not resource-group scoped; subscription-scoped nested deployments are not yet supported.");
                 return;
             }
 
-            var nestedRgName = rgElement.GetString();
             if (string.IsNullOrWhiteSpace(nestedRgName))
             {
                 logger.LogWarning($"Nested deployment '{genericResource.Name}' has empty 'resourceGroup' property.");
@@ -564,7 +575,6 @@ public sealed class TemplateDeploymentOrchestrator(
                 : "Incremental";
 
             // Step 2: Resolve nested context identifiers
-            var parentIdParts = parentDeployment.Id.TrimStart('/').Split('/');
             var nestedSubId = parentIdParts.Length > 1 && parentIdParts[0] == "subscriptions"
                 ? SubscriptionIdentifier.From(parentIdParts[1])
                 : throw new InvalidOperationException($"Cannot extract subscription ID from parent deployment ID: {parentDeployment.Id}");
