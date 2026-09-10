@@ -519,7 +519,9 @@ internal sealed class ServiceBusServiceControlPlane(
                 namespacesOperation.Reason, namespacesOperation.Code);
         }
 
-        var queues = provider.ListSubresourcesAs<ServiceBusQueueResource>(subscriptionIdentifier,
+        // Shallow: a queue's authorization rules live in folders under the queue, and a recursive
+        // listing returns each of them as though it were another queue.
+        var queues = provider.ListSubresourcesShallowAs<ServiceBusQueueResource>(subscriptionIdentifier,
             resourceGroupIdentifier, serviceBusNamespaceIdentifier.Value,
             nameof(Subresource.Queues).ToLowerInvariant());
 
@@ -544,14 +546,16 @@ internal sealed class ServiceBusServiceControlPlane(
                 namespacesOperation.Reason, namespacesOperation.Code);
         }
 
-        var queues = provider.ListSubresourcesAs<ServiceBusTopicResource>(subscriptionIdentifier,
+        // Shallow: subscriptions, their rules and the topic's authorization rules are all stored in
+        // folders under the topic, and a recursive listing returns every one of them as a topic.
+        var topics = provider.ListSubresourcesShallowAs<ServiceBusTopicResource>(subscriptionIdentifier,
             resourceGroupIdentifier, serviceBusNamespaceIdentifier.Value,
             nameof(Subresource.Topics).ToLowerInvariant());
 
-        logger.LogDebug(nameof(ServiceBusServiceControlPlane), nameof(ListTopics), "Found {0} queues.", queues.Length);
+        logger.LogDebug(nameof(ServiceBusServiceControlPlane), nameof(ListTopics), "Found {0} topics.", topics.Length);
 
         return new ControlPlaneOperationResult<ServiceBusTopicResource[]>(OperationResult.Success,
-            queues.ToArray());
+            topics.ToArray());
     }
 
     private static string RulesParentId(ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, string subscriptionName) =>
