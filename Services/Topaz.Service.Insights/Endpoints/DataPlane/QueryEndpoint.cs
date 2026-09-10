@@ -74,15 +74,21 @@ internal sealed class QueryEndpoint(Pipeline eventPipeline, ITopazLogger logger)
         }
 
         var result = _dataPlane.Query(ikey, queryText);
-        if (result.Result != OperationResult.Success || result.Resource == null)
+        if (result.Result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        if(result.Result != OperationResult.Success)
+        {
+            response.CreateErrorResponse(result);
             return;
         }
 
         var wire = new
         {
-            tables = result.Resource.Tables.Select(t => new
+            tables = result.Resource!.Tables.Select(t => new
             {
                 name = t.Name,
                 columns = t.Columns.Select(c => new { name = c.Name, type = c.Type }).ToArray(),

@@ -88,12 +88,22 @@ internal sealed class ApplicationInsightsDataPlane(
                 null, "Component not found", "ComponentNotFound");
         }
 
-        var component = componentResult.Resource;
-        var result = KqlQueryExecutor.Execute(
-            queryText,
-            tableName => provider.LoadTelemetry(
-                component.GetSubscription(), component.GetResourceGroup(), component.Name, tableName));
+        try
+        {
+            var component = componentResult.Resource;
+            var result = KqlQueryExecutor.Execute(
+                queryText,
+                tableName => provider.LoadTelemetry(
+                    component.GetSubscription(), component.GetResourceGroup(), component.Name, tableName));
 
-        return new DataPlaneOperationResult<QueryResult>(OperationResult.Success, result);
+            return new DataPlaneOperationResult<QueryResult>(OperationResult.Success, result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(nameof(ApplicationInsightsDataPlane), nameof(Query),
+                $"Error during performing Application Insights query: {ex.Message}. {ex.StackTrace}");
+            
+            return new DataPlaneOperationResult<QueryResult>(OperationResult.Failed, null);
+        }
     }
 }

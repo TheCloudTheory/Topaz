@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ApplicationInsights;
 using Azure.ResourceManager.Resources;
@@ -162,7 +163,7 @@ public class InsightsIngestionTests
         Assert.That((int)response.StatusCode, Is.EqualTo(200));
 
         var body = await response.Content.ReadAsStringAsync();
-        using var doc = System.Text.Json.JsonDocument.Parse(body);
+        using var doc = JsonDocument.Parse(body);
         var root = doc.RootElement;
 
         using (Assert.EnterMultipleScope())
@@ -170,8 +171,8 @@ public class InsightsIngestionTests
             Assert.That(root.TryGetProperty("itemsReceived", out _), Is.True, "Response must contain 'itemsReceived'");
             Assert.That(root.TryGetProperty("itemsAccepted", out _), Is.True, "Response must contain 'itemsAccepted'");
             Assert.That(!root.TryGetProperty("errors", out var errors) ||
-                        errors.ValueKind == System.Text.Json.JsonValueKind.Null ||
-                        errors.ValueKind == System.Text.Json.JsonValueKind.Array,
+                        errors.ValueKind == JsonValueKind.Null ||
+                        errors.ValueKind == JsonValueKind.Array,
                 "errors must be null or an array");
         }
     }
@@ -229,13 +230,14 @@ public class InsightsIngestionTests
         await Http.PostAsync($"{ingestionEndpoint}/v2/track", content);
     }
 
-    private async Task<System.Text.Json.JsonDocument> RunQuery(string ingestionEndpoint, string ikey, string query)
+    private async Task<JsonDocument> RunQuery(string ingestionEndpoint, string ikey, string query)
     {
-        var body = System.Text.Json.JsonSerializer.Serialize(new { query });
+        var body = JsonSerializer.Serialize(new { query });
         using var content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
         var response = await Http.PostAsync($"{ingestionEndpoint}/v1/apps/{ikey}/query", content);
         response.EnsureSuccessStatusCode();
-        return System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync());
     }
 
     [Test]
@@ -458,10 +460,7 @@ public class InsightsIngestionTests
         var (ikey, ingestionEndpoint) = await GetComponentKeys();
         await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/ago-invalid");
 
-        using var doc = await RunQuery(ingestionEndpoint, ikey,
-            "requests | where timestamp > ago(1x)");
-        var table = doc.RootElement.GetProperty("tables")[0];
-
-        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
+        Assert.ThrowsAsync<HttpRequestException>(async () => await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp > ago(1x)"));
     }
 }
