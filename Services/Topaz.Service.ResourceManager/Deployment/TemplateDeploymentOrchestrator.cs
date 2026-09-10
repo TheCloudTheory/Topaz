@@ -66,7 +66,7 @@ public sealed class TemplateDeploymentOrchestrator(
         {
             resource.Id = new TemplateGenericProperty<string>
             {
-                Value = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/{resource.Type.Value}/{resource.Name.Value}"
+                Value = ArmResourceId.Build($"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}", resource.Type.Value, resource.Name.Value)
             };
         }
 
@@ -108,7 +108,7 @@ public sealed class TemplateDeploymentOrchestrator(
             {
                 resource.Id = new TemplateGenericProperty<string>
                 {
-                    Value = $"/subscriptions/{subscriptionIdentifier}/providers/{resource.Type.Value}/{resource.Name.Value}"
+                    Value = ArmResourceId.Build($"/subscriptions/{subscriptionIdentifier}", resource.Type.Value, resource.Name.Value)
                 };
             }
         }
@@ -140,7 +140,7 @@ public sealed class TemplateDeploymentOrchestrator(
         {
             resource.Id = new TemplateGenericProperty<string>
             {
-                Value = $"/providers/{resource.Type.Value}/{resource.Name.Value}"
+                Value = ArmResourceId.Build(string.Empty, resource.Type.Value, resource.Name.Value)
             };
         }
 
@@ -171,7 +171,7 @@ public sealed class TemplateDeploymentOrchestrator(
         {
             resource.Id = new TemplateGenericProperty<string>
             {
-                Value = $"/providers/{resource.Type.Value}/{resource.Name.Value}"
+                Value = ArmResourceId.Build(string.Empty, resource.Type.Value, resource.Name.Value)
             };
         }
 
