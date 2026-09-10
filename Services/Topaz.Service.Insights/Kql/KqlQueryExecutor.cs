@@ -76,6 +76,32 @@ internal static partial class KqlQueryExecutor
                         string.Equals(r[field]?.GetValue<string>(), value, StringComparison.OrdinalIgnoreCase))
                 ];
             }
+            
+            // where <field> < "<value>"
+            var ltMatch = LessThanRegex().Match(predicate);
+            if (ltMatch.Success)
+            {
+                var field = eqMatch.Groups[1].Value;
+                var value = eqMatch.Groups[2].Value;
+                return
+                [
+                    .. rows.Where(r =>
+                        r[field]!.GetValue<object>().AsComparableObject().IsLessThan(value))
+                ];
+            }
+            
+            // where <field> > "<value>"
+            var gtMatch = GreaterThanRegex().Match(predicate);
+            if (gtMatch.Success)
+            {
+                var field = eqMatch.Groups[1].Value;
+                var value = eqMatch.Groups[2].Value;
+                return
+                [
+                    .. rows.Where(r =>
+                        r[field]!.GetValue<object>().AsComparableObject().IsGreaterThan(value))
+                ];
+            }
 
             // where <field> contains "<value>"
             var containsMatch = ContainsRegex().Match(predicate);
@@ -248,6 +274,18 @@ internal static partial class KqlQueryExecutor
     
     [GeneratedRegex("""^(\w+)\s*==\s*"([^"]*)"$""")]
     private static partial Regex EqualsRegex();
+    
+    [GeneratedRegex("""^(\w+)\s*<\s*"([^"]*)"$""")]
+    private static partial Regex LessThanRegex();
+    
+    [GeneratedRegex("""^(\w+)\s*<=\s*"([^"]*)"$""")]
+    private static partial Regex LowerThanOrEqualRegex();
+    
+    [GeneratedRegex("""^(\w+)\s*>\s*"([^"]*)"$""")]
+    private static partial Regex GreaterThanRegex();
+    
+    [GeneratedRegex("""^(\w+)\s*>=\s*"([^"]*)"$""")]
+    private static partial Regex GreaterThanOrEqualRegex();
     
     [GeneratedRegex(@"^(\w+)\s*(asc|desc)?$", RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex OrderingRegex();

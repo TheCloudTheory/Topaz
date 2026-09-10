@@ -382,4 +382,86 @@ public class InsightsIngestionTests
 
         Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
     }
+
+    [Test]
+    public async Task Query_WhereTimestampGreaterThanAgo_ReturnsRecentlyIngestedRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/ago-recent");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp > ago(1h)");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_WhereTimestampGreaterThanAgoWithMinutes_ReturnsRecentlyIngestedRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/ago-minutes");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp > ago(5m)");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_WhereTimestampLessThanAgo_ExcludesRecentlyIngestedRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/ago-excluded");
+
+        // A row ingested moments ago cannot be older than "ago(1d)" in the past.
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp < ago(1d)");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
+    }
+
+    [Test]
+    public async Task Query_WhereTimestampGreaterThanAgoZero_ExcludesPastRows()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/ago-zero");
+
+        // ago(0) resolves to "now"; nothing ingested before this instant should qualify.
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp > ago(0)");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
+    }
+
+    [Test]
+    public async Task Query_WhereAgoCombinedWithNameFilter_ReturnsOnlyMatchingRecentRows()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/ago-and-name");
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/other-name");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp > ago(1h) | where name == \"GET /api/ago-and-name\"");
+        var table = doc.RootElement.GetProperty("tables")[0];
+        var rows = table.GetProperty("rows");
+
+        Assert.That(rows.GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_WhereAgoInvalidTimespanLiteral_ReturnsEmptyResult()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/ago-invalid");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp > ago(1x)");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
+    }
 }
