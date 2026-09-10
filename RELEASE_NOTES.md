@@ -23,6 +23,14 @@ Topaz now correctly enforces RBAC authorization for all implemented data-plane o
 ### App Configuration Snapshots API
 Topaz supports both control plane and data plane operations on App Configuration snapshots. This includes capturing key-values based on the provided snapshot filter.
 
+### Event Grid control & data plane
+Topaz now supports control plane and data plane of Azure Event Grid. It's possible to manage custom and system topics and their subscription. Additionally, Topaz will deliver Event Grid events according to the service semantics (i.e. including validation events).
+
+### KQL handling improvements
+Topaz got a number of improvements for handling KQL queries:
+
+- support for `bin()` function in `summarize`
+
 ## Bug Fixes
 
 - Fixed nullable `Content` handling and added async overload in the internal Router, preventing potential null reference errors on certain request paths.
