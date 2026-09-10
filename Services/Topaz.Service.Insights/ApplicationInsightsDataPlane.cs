@@ -83,8 +83,10 @@ internal sealed class ApplicationInsightsDataPlane(
     {
         var componentResult = controlPlane.GetByInstrumentationKey(instrumentationKey);
         if (componentResult.Result != OperationResult.Success || componentResult.Resource == null)
+        {
             return new DataPlaneOperationResult<QueryResult>(OperationResult.NotFound,
                 null, "Component not found", "ComponentNotFound");
+        }
 
         var component = componentResult.Resource;
         var result = KqlQueryExecutor.Execute(

@@ -28,10 +28,19 @@ public class InsightsIngestionTests
     public async Task SetUp()
     {
         await Program.RunAsync(["subscription", "delete", "--id", SubscriptionId.ToString()]);
-        await Program.RunAsync(["subscription", "create", "--id", SubscriptionId.ToString(), "--name", SubscriptionName]);
-        await Program.RunAsync(["group", "delete", "--name", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
-        await Program.RunAsync(["group", "create", "--name", ResourceGroupName, "--location", "westeurope", "--subscription-id", SubscriptionId.ToString()]);
-        await Program.RunAsync(["insights", "component", "create", "--name", ComponentName, "--resource-group", ResourceGroupName, "--subscription-id", SubscriptionId.ToString(), "--location", "westeurope"]);
+        await Program.RunAsync(
+            ["subscription", "create", "--id", SubscriptionId.ToString(), "--name", SubscriptionName]);
+        await Program.RunAsync([
+            "group", "delete", "--name", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()
+        ]);
+        await Program.RunAsync([
+            "group", "create", "--name", ResourceGroupName, "--location", "westeurope", "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+        await Program.RunAsync([
+            "insights", "component", "create", "--name", ComponentName, "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString(), "--location", "westeurope"
+        ]);
 
         // Build the connection string from the component name directly.
         // The ingestion endpoint is deterministic from the component name; Topaz does not
@@ -175,7 +184,7 @@ public class InsightsIngestionTests
 
         // Minimal NDJSON envelope matching the Application Insights wire format.
         var payload = $"{{\"iKey\":\"{invalidKey}\",\"data\":{{\"baseType\":\"RequestData\",\"baseData\":{{}}}}}}";
-        
+
         using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/x-json-stream");
 
         var response = await Http.PostAsync($"{ingestionEndpoint}/v2/track", content);
@@ -214,7 +223,8 @@ public class InsightsIngestionTests
 
     private async Task IngestRequestViaHttp(string ikey, string ingestionEndpoint, string requestName)
     {
-        var payload = $"{{\"iKey\":\"{ikey}\",\"time\":\"{DateTimeOffset.UtcNow:O}\",\"data\":{{\"baseType\":\"RequestData\",\"baseData\":{{\"name\":\"{requestName}\",\"duration\":\"00:00:00.100\",\"responseCode\":\"200\",\"success\":true}}}}}}";
+        var payload =
+            $"{{\"iKey\":\"{ikey}\",\"time\":\"{DateTimeOffset.UtcNow:O}\",\"data\":{{\"baseType\":\"RequestData\",\"baseData\":{{\"name\":\"{requestName}\",\"duration\":\"00:00:00.100\",\"responseCode\":\"200\",\"success\":true}}}}}}";
         using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/x-json-stream");
         await Http.PostAsync($"{ingestionEndpoint}/v2/track", content);
     }
@@ -302,8 +312,74 @@ public class InsightsIngestionTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(table.GetProperty("name").GetString(), Is.EqualTo("PrimaryResult"));
-            Assert.That(table.GetProperty("rows").GetArrayLength(), Is.EqualTo(0));
+            Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
         }
     }
-}
 
+    [Test]
+    public async Task Query_SummarizeCountByBin_GroupsRowsIntoTimeBuckets()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/bin-1");
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/bin-2");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | summarize count() by bin(timestamp, 1h)");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(table.GetProperty("name").GetString(), Is.EqualTo("PrimaryResult"));
+            Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+        }
+    }
+
+    [Test]
+    public async Task Query_SummarizeCountByBinAndField_GroupsByCompositeKey()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/composite");
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/composite");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | summarize count() by name, bin(timestamp, 5m)");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_SummarizeCountByBin_RoundsTimestampsToBucketBoundary()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/rounding");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | summarize count() by bin(timestamp, 1h)");
+        var table = doc.RootElement.GetProperty("tables")[0];
+        var columns = table.GetProperty("columns").EnumerateArray()
+            .Select((c, i) => (name: c.GetProperty("name").GetString()!, index: i))
+            .ToList();
+        var binIdx = columns.FirstOrDefault(c => c.name == "timestamp").index;
+
+        var bucket = table.GetProperty("rows")[0][binIdx].GetDateTimeOffset();
+        
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(bucket.Minute, Is.Zero);
+            Assert.That(bucket.Second, Is.Zero);
+        }
+    }
+
+    [Test]
+    public async Task Query_SummarizeBinOnUnknownColumn_ReturnsEmptyResult()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "unknownTable | summarize count() by bin(timestamp, 1h)");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
+    }
+}
