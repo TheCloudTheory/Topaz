@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json;
 using System.Xml.Linq;
 using Azure.Core;
 using Topaz.Dns;
@@ -18,6 +19,8 @@ internal sealed class ServiceBusServiceControlPlane(
     SubscriptionControlPlane subscriptionControlPlane,
     ITopazLogger logger) : IControlPlane
 {
+    private const string DefaultRuleName = "$Default";
+
     private const string ServiceBusNamespaceNotFoundCode = "ServiceBusNamespaceNotFound";
 
     private const string ServiceBusNamespaceNotFoundMessageTemplate =
@@ -221,9 +224,103 @@ internal sealed class ServiceBusServiceControlPlane(
 
     public OperationResult Deploy(GenericResource resource)
     {
-        return resource.Type == "Microsoft.ServiceBus/namespaces"
-            ? DeployServiceBusNamespace(resource)
-            : DeployServiceBusQueue(resource);
+        return resource.Type?.ToLowerInvariant() switch
+        {
+            "microsoft.servicebus/namespaces/topics" => DeployServiceBusTopic(resource),
+            "microsoft.servicebus/namespaces/topics/subscriptions" => DeployServiceBusSubscription(resource),
+            "microsoft.servicebus/namespaces/topics/subscriptions/rules" => DeployServiceBusRule(resource),
+            "microsoft.servicebus/namespaces/queues" => DeployServiceBusQueue(resource),
+            _ => DeployServiceBusNamespace(resource)
+        };
+    }
+
+    /// <summary>
+    /// A child entity's ARM name is the whole path from the namespace down — <c>ns/topic/sub/rule</c> —
+    /// so the segments, not the id, are what identify its parents.
+    /// </summary>
+    private static string[] NameSegments(GenericResource resource) =>
+        (resource.Name ?? string.Empty).Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+    private static TProps? PropertiesAs<TProps>(GenericResource resource) where TProps : class =>
+        JsonSerializer.Deserialize<TProps>(
+            JsonSerializer.Serialize(resource.Properties, GlobalSettings.JsonOptions), GlobalSettings.JsonOptions);
+
+    private OperationResult DeployServiceBusTopic(GenericResource resource)
+    {
+        var segments = NameSegments(resource);
+        if (segments.Length != 2)
+        {
+            logger.LogError($"Couldn't parse `{resource.Name}` as a Service Bus topic name.");
+            return OperationResult.Failed;
+        }
+
+        var result = CreateOrUpdateTopic(resource.GetSubscription(), resource.GetResourceGroup(),
+            ServiceBusNamespaceIdentifier.From(segments[0]), segments[1],
+            new CreateOrUpdateServiceBusTopicRequest
+            {
+                Properties = PropertiesAs<CreateOrUpdateServiceBusTopicRequestProperties>(resource)
+            });
+
+        return result.Result;
+    }
+
+    private OperationResult DeployServiceBusSubscription(GenericResource resource)
+    {
+        var segments = NameSegments(resource);
+        if (segments.Length != 3)
+        {
+            logger.LogError($"Couldn't parse `{resource.Name}` as a Service Bus subscription name.");
+            return OperationResult.Failed;
+        }
+
+        var result = CreateOrUpdateSubscription(resource.GetSubscription(), resource.GetResourceGroup(),
+            ServiceBusNamespaceIdentifier.From(segments[0]), segments[2],
+            new CreateOrUpdateServiceBusSubscriptionRequest
+            {
+                Properties = PropertiesAs<CreateOrUpdateServiceBusSubscriptionRequestProperties>(resource)
+            },
+            segments[1]);
+
+        return result.Result;
+    }
+
+    private OperationResult DeployServiceBusRule(GenericResource resource)
+    {
+        var segments = NameSegments(resource);
+        if (segments.Length != 4)
+        {
+            logger.LogError($"Couldn't parse `{resource.Name}` as a Service Bus rule name.");
+            return OperationResult.Failed;
+        }
+
+        var properties = PropertiesAs<ServiceBusRuleResourceProperties>(resource);
+        if (properties == null)
+        {
+            logger.LogError($"Rule `{resource.Name}` carries no filter properties.");
+            return OperationResult.Failed;
+        }
+
+        var subscription = resource.GetSubscription();
+        var resourceGroup = resource.GetResourceGroup();
+        var @namespace = ServiceBusNamespaceIdentifier.From(segments[0]);
+
+        var result = CreateOrUpdateRule(subscription, resourceGroup, @namespace,
+            segments[1], segments[2], segments[3], properties);
+
+        // A template that declares its own rule means the subscription filters. Leaving the
+        // auto-created $Default true-filter beside it matches everything — MatchesAny returns on the
+        // first match — so the declared filter would be dead weight. The first explicit rule replaces it.
+        if (segments[3] != DefaultRuleName)
+        {
+            var existingDefault = GetRule(subscription, resourceGroup, @namespace,
+                segments[1], segments[2], DefaultRuleName);
+            if (existingDefault is { Result: OperationResult.Success, Resource.Properties.FilterType: "True" })
+            {
+                DeleteRule(subscription, resourceGroup, @namespace, segments[1], segments[2], DefaultRuleName);
+            }
+        }
+
+        return result.Result;
     }
 
     private OperationResult DeployServiceBusQueue(GenericResource resource)
@@ -352,7 +449,7 @@ internal sealed class ServiceBusServiceControlPlane(
                 parentId, nameof(Subresource.Subscriptions).ToLowerInvariant(), resource);
 
             CreateOrUpdateRule(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier,
-                topicName, subscriptionName, "$Default", ServiceBusRuleResourceProperties.DefaultTrueFilter());
+                topicName, subscriptionName, DefaultRuleName, ServiceBusRuleResourceProperties.DefaultTrueFilter());
 
             return new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Created, resource);
         }

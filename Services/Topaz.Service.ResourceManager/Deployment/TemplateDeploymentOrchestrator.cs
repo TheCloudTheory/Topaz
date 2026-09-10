@@ -379,6 +379,10 @@ public sealed class TemplateDeploymentOrchestrator(
                     controlPlane = EventHubServiceControlPlane.New(logger);
                     break;
                 case "microsoft.servicebus/namespaces":
+                case "microsoft.servicebus/namespaces/queues":
+                case "microsoft.servicebus/namespaces/topics":
+                case "microsoft.servicebus/namespaces/topics/subscriptions":
+                case "microsoft.servicebus/namespaces/topics/subscriptions/rules":
                     controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
                     break;
                 case "microsoft.storage/storageaccounts":
