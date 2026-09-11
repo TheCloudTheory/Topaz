@@ -31,6 +31,10 @@ Topaz got a number of improvements for handling KQL queries:
 
 - support for `bin()` function in `summarize`
 
+### Azure App Service improvements
+
+- updated the list of supported web stacks to reflect the recent Azure changes
+
 ## Bug Fixes
 
 - Fixed nullable `Content` handling and added async overload in the internal Router, preventing potential null reference errors on certain request paths.

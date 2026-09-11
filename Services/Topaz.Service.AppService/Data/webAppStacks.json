@@ -10,6 +10,48 @@
         "preferredOs": "Windows",
         "majorVersions": [
           {
+            "displayText": ".NET 11",
+            "value": "11",
+            "minorVersions": [
+              {
+                "displayText": ".NET 11",
+                "value": "11.0",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "DOTNETCORE|11.0",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "11.0.x" }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": ".NET 10",
+            "value": "10",
+            "minorVersions": [
+              {
+                "displayText": ".NET 10",
+                "value": "10.0",
+                "stackSettings": {
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "dotnet|10",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "10.0.x" }
+                  },
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "DOTNETCORE|10.0",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "10.0.x" }
+                  }
+                }
+              }
+            ]
+          },
+          {
             "displayText": ".NET 9",
             "value": "9",
             "minorVersions": [
@@ -18,7 +60,7 @@
                 "value": "9.0",
                 "stackSettings": {
                   "windowsRuntimeSettings": {
-                    "runtimeVersion": "v9.0",
+                    "runtimeVersion": "dotnet|9",
                     "remoteDebuggingSupported": false,
                     "appInsightsSettings": { "isSupported": true },
                     "gitHubActionSettings": { "isSupported": true, "supportedVersion": "9.0.x" }
@@ -42,7 +84,7 @@
                 "value": "8.0",
                 "stackSettings": {
                   "windowsRuntimeSettings": {
-                    "runtimeVersion": "v8.0",
+                    "runtimeVersion": "dotnet|8",
                     "remoteDebuggingSupported": false,
                     "appInsightsSettings": { "isSupported": true },
                     "gitHubActionSettings": { "isSupported": true, "supportedVersion": "8.0.x" }
@@ -52,6 +94,36 @@
                     "remoteDebuggingSupported": false,
                     "appInsightsSettings": { "isSupported": true },
                     "gitHubActionSettings": { "isSupported": true, "supportedVersion": "8.0.x" }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "ASP.NET",
+            "value": "aspnet",
+            "minorVersions": [
+              {
+                "displayText": "ASP.NET V4.8",
+                "value": "4.8",
+                "stackSettings": {
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "ASPNET|V4.8",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "ASP.NET V3.5",
+                "value": "3.5",
+                "stackSettings": {
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "ASPNET|V3.5",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": false }
                   }
                 }
               }
@@ -70,6 +142,48 @@
         "preferredOs": "Linux",
         "majorVersions": [
           {
+            "displayText": "Node 26",
+            "value": "26",
+            "minorVersions": [
+              {
+                "displayText": "Node 26",
+                "value": "26.0",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "NODE|26",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "26.x" }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "Node 24",
+            "value": "24",
+            "minorVersions": [
+              {
+                "displayText": "Node 24 LTS",
+                "value": "24-lts",
+                "stackSettings": {
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "NODE|24LTS",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "24.x" }
+                  },
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "NODE|24-lts",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "24.x" }
+                  }
+                }
+              }
+            ]
+          },
+          {
             "displayText": "Node 22",
             "value": "22",
             "minorVersions": [
@@ -78,7 +192,7 @@
                 "value": "22-lts",
                 "stackSettings": {
                   "windowsRuntimeSettings": {
-                    "runtimeVersion": "~22",
+                    "runtimeVersion": "NODE|22LTS",
                     "remoteDebuggingSupported": false,
                     "appInsightsSettings": { "isSupported": true },
                     "gitHubActionSettings": { "isSupported": true, "supportedVersion": "22.x" }
@@ -88,30 +202,6 @@
                     "remoteDebuggingSupported": false,
                     "appInsightsSettings": { "isSupported": true },
                     "gitHubActionSettings": { "isSupported": true, "supportedVersion": "22.x" }
-                  }
-                }
-              }
-            ]
-          },
-          {
-            "displayText": "Node 20",
-            "value": "20",
-            "minorVersions": [
-              {
-                "displayText": "Node 20 LTS",
-                "value": "20-lts",
-                "stackSettings": {
-                  "windowsRuntimeSettings": {
-                    "runtimeVersion": "~20",
-                    "remoteDebuggingSupported": false,
-                    "appInsightsSettings": { "isSupported": true },
-                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "20.x" }
-                  },
-                  "linuxRuntimeSettings": {
-                    "runtimeVersion": "NODE|20-lts",
-                    "remoteDebuggingSupported": false,
-                    "appInsightsSettings": { "isSupported": true },
-                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "20.x" }
                   }
                 }
               }
@@ -133,6 +223,42 @@
             "displayText": "Python 3",
             "value": "3",
             "minorVersions": [
+              {
+                "displayText": "Python 3.15",
+                "value": "3.15",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "PYTHON|3.15",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "3.15" }
+                  }
+                }
+              },
+              {
+                "displayText": "Python 3.14",
+                "value": "3.14",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "PYTHON|3.14",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "3.14" }
+                  }
+                }
+              },
+              {
+                "displayText": "Python 3.13",
+                "value": "3.13",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "PYTHON|3.13",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "3.13" }
+                  }
+                }
+              },
               {
                 "displayText": "Python 3.12",
                 "value": "3.12",
@@ -156,6 +282,18 @@
                     "gitHubActionSettings": { "isSupported": true, "supportedVersion": "3.11" }
                   }
                 }
+              },
+              {
+                "displayText": "Python 3.10",
+                "value": "3.10",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "PYTHON|3.10",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "3.10" }
+                  }
+                }
               }
             ]
           }
@@ -176,6 +314,30 @@
             "value": "8",
             "minorVersions": [
               {
+                "displayText": "PHP 8.5",
+                "value": "8.5",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "PHP|8.5",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "PHP 8.4",
+                "value": "8.4",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "PHP|8.4",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
                 "displayText": "PHP 8.3",
                 "value": "8.3",
                 "stackSettings": {
@@ -189,6 +351,534 @@
                     "runtimeVersion": "8.3",
                     "remoteDebuggingSupported": false,
                     "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "PHP 8.2",
+                "value": "8.2",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "PHP|8.2",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "/providers/Microsoft.Web/webAppStacks/java",
+      "name": "java",
+      "type": "Microsoft.Web/webAppStacks",
+      "properties": {
+        "displayText": "Java",
+        "value": "java",
+        "preferredOs": "Linux",
+        "majorVersions": [
+          {
+            "displayText": "Java 25",
+            "value": "25",
+            "minorVersions": [
+              {
+                "displayText": "Java 25",
+                "value": "25",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JAVA|25-java25",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "JAVA|25",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "Java 21",
+            "value": "21",
+            "minorVersions": [
+              {
+                "displayText": "Java 21",
+                "value": "21",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JAVA|21-java21",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "JAVA|21",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "Java 17",
+            "value": "17",
+            "minorVersions": [
+              {
+                "displayText": "Java 17",
+                "value": "17",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JAVA|17-java17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "JAVA|17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "Java 11",
+            "value": "11",
+            "minorVersions": [
+              {
+                "displayText": "Java 11",
+                "value": "11",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JAVA|11-java11",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "JAVA|11",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "Java 8",
+            "value": "8",
+            "minorVersions": [
+              {
+                "displayText": "Java 8",
+                "value": "8",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JAVA|8-jre8",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "JAVA|8",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "/providers/Microsoft.Web/webAppStacks/jbosseap",
+      "name": "jbosseap",
+      "type": "Microsoft.Web/webAppStacks",
+      "properties": {
+        "displayText": "JBoss EAP",
+        "value": "jbosseap",
+        "preferredOs": "Linux",
+        "majorVersions": [
+          {
+            "displayText": "JBoss EAP 8.1.0.1",
+            "value": "8.1.0.1",
+            "minorVersions": [
+              {
+                "displayText": "JBoss EAP 8.1.0.1 (Java 21)",
+                "value": "8.1.0.1-java21",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JBOSSEAP|8.1.0.1-java21",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "JBoss EAP 8.1.0.1 (Java 17)",
+                "value": "8.1.0.1-java17",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JBOSSEAP|8.1.0.1-java17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "JBoss EAP 8",
+            "value": "8",
+            "minorVersions": [
+              {
+                "displayText": "JBoss EAP 8 (Java 21)",
+                "value": "8-java21",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JBOSSEAP|8-java21",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "JBoss EAP 8 (Java 17)",
+                "value": "8-java17",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JBOSSEAP|8-java17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "JBoss EAP 8 (Java 11)",
+                "value": "8-java11",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JBOSSEAP|8-java11",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "JBoss EAP 7",
+            "value": "7",
+            "minorVersions": [
+              {
+                "displayText": "JBoss EAP 7 (Java 17)",
+                "value": "7-java17",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JBOSSEAP|7-java17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "JBoss EAP 7 (Java 11)",
+                "value": "7-java11",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JBOSSEAP|7-java11",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "JBoss EAP 7 (Java 8)",
+                "value": "7-java8",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "JBOSSEAP|7-java8",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "/providers/Microsoft.Web/webAppStacks/tomcat",
+      "name": "tomcat",
+      "type": "Microsoft.Web/webAppStacks",
+      "properties": {
+        "displayText": "Tomcat",
+        "value": "tomcat",
+        "preferredOs": "Linux",
+        "majorVersions": [
+          {
+            "displayText": "Tomcat 11.0",
+            "value": "11.0",
+            "minorVersions": [
+              {
+                "displayText": "Tomcat 11.0 (Java 25)",
+                "value": "11.0-java25",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|11.0-java25",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|11.0-java25",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "Tomcat 11.0 (Java 21)",
+                "value": "11.0-java21",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|11.0-java21",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|11.0-java21",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "Tomcat 11.0 (Java 17)",
+                "value": "11.0-java17",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|11.0-java17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|11.0-java17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "Tomcat 11.0 (Java 11)",
+                "value": "11.0-java11",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|11.0-java11",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "Tomcat 10.1",
+            "value": "10.1",
+            "minorVersions": [
+              {
+                "displayText": "Tomcat 10.1 (Java 25)",
+                "value": "10.1-java25",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|10.1-java25",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|10.1-java25",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "Tomcat 10.1 (Java 21)",
+                "value": "10.1-java21",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|10.1-java21",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|10.1-java21",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "Tomcat 10.1 (Java 17)",
+                "value": "10.1-java17",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|10.1-java17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|10.1-java17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "Tomcat 10.1 (Java 11)",
+                "value": "10.1-java11",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|10.1-java11",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|10.1-java11",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "Tomcat 9.0",
+            "value": "9.0",
+            "minorVersions": [
+              {
+                "displayText": "Tomcat 9.0 (Java 25)",
+                "value": "9.0-java25",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|9.0-java25",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|9.0-java25",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "Tomcat 9.0 (Java 21)",
+                "value": "9.0-java21",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|9.0-java21",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|9.0-java21",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "Tomcat 9.0 (Java 17)",
+                "value": "9.0-java17",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|9.0-java17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|9.0-java17",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "Tomcat 9.0 (Java 11)",
+                "value": "9.0-java11",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|9.0-java11",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|9.0-java11",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              },
+              {
+                "displayText": "Tomcat 9.0 (Java 8)",
+                "value": "9.0-jre8",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|9.0-jre8",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "TOMCAT|9.0-java8",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
                     "gitHubActionSettings": { "isSupported": false }
                   }
                 }
