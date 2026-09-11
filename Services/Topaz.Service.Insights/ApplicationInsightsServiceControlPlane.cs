@@ -136,6 +136,63 @@ internal sealed class ApplicationInsightsServiceControlPlane(
         return new ControlPlaneOperationResult<ApplicationInsightsComponentResource>(OperationResult.Updated, existing, null, null);
     }
 
+    public ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures> GetBillingFeatures(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name)
+    {
+        var component = provider.GetAs<ApplicationInsightsComponentResource>(sub, rg, name);
+        if (component == null)
+            return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode);
+
+        var cap = provider.GetDataVolumeCap(sub, rg, name) ?? new ApplicationInsightsComponentDataVolumeCap();
+        return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
+            OperationResult.Success, BuildBillingFeatures(component, cap), null, null);
+    }
+
+    public ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures> UpdateBillingFeatures(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name,
+        UpdateBillingFeaturesRequest request)
+    {
+        var component = provider.GetAs<ApplicationInsightsComponentResource>(sub, rg, name);
+        if (component == null)
+            return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode);
+
+        var cap = provider.GetDataVolumeCap(sub, rg, name) ?? new ApplicationInsightsComponentDataVolumeCap();
+
+        if (request.DataVolumeCap != null)
+        {
+            var requested = request.DataVolumeCap;
+            cap.Cap = requested.Cap ?? cap.Cap;
+            cap.ResetTime = requested.ResetTime ?? cap.ResetTime;
+            cap.WarningThreshold = requested.WarningThreshold ?? cap.WarningThreshold;
+            cap.StopSendNotificationWhenHitCap =
+                requested.StopSendNotificationWhenHitCap ?? cap.StopSendNotificationWhenHitCap;
+            cap.StopSendNotificationWhenHitThreshold =
+                requested.StopSendNotificationWhenHitThreshold ?? cap.StopSendNotificationWhenHitThreshold;
+            cap.MaxHistoryCap = requested.MaxHistoryCap ?? cap.MaxHistoryCap;
+        }
+
+        provider.CreateOrUpdateDataVolumeCap(sub, rg, name, cap);
+
+        return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
+            OperationResult.Updated, BuildBillingFeatures(component, cap), null, null);
+    }
+
+    private static ApplicationInsightsComponentBillingFeatures BuildBillingFeatures(
+        ApplicationInsightsComponentResource component,
+        ApplicationInsightsComponentDataVolumeCap dataVolumeCap) =>
+        new()
+        {
+            CurrentBillingFeatures =
+                ApplicationInsightsComponentBillingFeatures.GetPlanForRetention(component.Properties.RetentionInDays),
+            DataVolumeCap = dataVolumeCap
+        };
+
     public ControlPlaneOperationResult<ApplicationInsightsComponentResource[]> ListByResourceGroup(
         SubscriptionIdentifier sub,
         ResourceGroupIdentifier rg)

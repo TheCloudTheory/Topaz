@@ -29,4 +29,14 @@ public class ApplicationInsightsTests : AzureRmBatchFixture
         var connectionString = GetOutput<string>("insights_connection_string");
         Assert.That(connectionString, Does.Contain("InstrumentationKey=").And.Contain(key));
     }
+
+    [Test]
+    public void ApplicationInsights_DailyDataCap_IsPersisted()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(GetOutput<double>("insights_daily_data_cap_in_gb"), Is.EqualTo(200));
+            Assert.That(GetOutput<bool>("insights_daily_data_cap_notifications_disabled"), Is.True);
+        });
+    }
 }

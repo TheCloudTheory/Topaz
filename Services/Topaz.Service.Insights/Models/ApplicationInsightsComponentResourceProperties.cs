@@ -5,6 +5,8 @@ namespace Topaz.Service.Insights.Models;
 
 public sealed class ApplicationInsightsComponentResourceProperties
 {
+    private const int DefaultRetentionInDays = 90;
+
     public string? ApplicationType { get; set; }
     public string? FlowType { get; set; }
     public string? RequestSource { get; set; }
@@ -21,7 +23,7 @@ public sealed class ApplicationInsightsComponentResourceProperties
     [UsedImplicitly] public string ProvisioningState => "Succeeded";
 
     public string IngestionMode { get; set; } = "LogAnalytics";
-    public int RetentionInDays { get; set; } = 90;
+    public int RetentionInDays { get; set; } = DefaultRetentionInDays;
     public string PublicNetworkAccessForIngestion { get; set; } = "Enabled";
     
     [JsonPropertyName("WorkspaceResourceId")]
@@ -43,6 +45,7 @@ public sealed class ApplicationInsightsComponentResourceProperties
             InstrumentationKey = key,
             ConnectionString = $"InstrumentationKey={key};IngestionEndpoint={ingestionEndpoint};LiveEndpoint={liveEndpoint}",
             IngestionMode = source?.IngestionMode ?? "LogAnalytics",
+            RetentionInDays = source?.RetentionInDays ?? DefaultRetentionInDays,
             WorkspaceResourceId = source?.WorkspaceResourceId,
         };
     }

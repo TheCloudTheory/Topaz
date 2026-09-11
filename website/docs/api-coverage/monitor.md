@@ -36,6 +36,15 @@ This page tracks which Azure Monitor and Application Insights REST API operation
 | Purge | ❌ |
 | Get Purge Status | ❌ |
 
+### Component Current Billing Features
+
+> [REST reference](https://learn.microsoft.com/en-us/rest/api/application-insights/component-current-billing-features?view=rest-application-insights-2020-02-02)
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Get | ✅ | `CurrentBillingFeatures` is derived from the component's `retentionInDays` (Basic for ≤ 30 days, Enterprise above) |
+| Update | ✅ | Persists `DataVolumeCap`; properties omitted from the request keep their previous values |
+
 ---
 
 ## Data Plane

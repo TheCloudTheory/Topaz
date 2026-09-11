@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Topaz.Service.Insights.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -10,6 +12,8 @@ internal sealed class ApplicationInsightsResourceProvider(ITopazLogger logger)
     private readonly ITopazLogger _logger = logger;
 
     private const string TelemetryPathFormat = "{0}/{1}/{2}.json";
+
+    private const string BillingFeaturesFileName = "billingfeatures.json";
 
     internal string GetTelemetryPath(string tableName, DateTime date, string id) =>
         string.Format(TelemetryPathFormat, tableName, date.ToString("yyyy-MM-dd"), id);
@@ -52,4 +56,39 @@ internal sealed class ApplicationInsightsResourceProvider(ITopazLogger logger)
         return Directory.EnumerateFiles(searchRoot, "*.json", SearchOption.AllDirectories)
             .Select(File.ReadAllText);
     }
+
+    public void CreateOrUpdateDataVolumeCap(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string componentName,
+        ApplicationInsightsComponentDataVolumeCap dataVolumeCap)
+    {
+        var file = GetBillingFeaturesPath(subscriptionIdentifier, resourceGroupIdentifier, componentName);
+
+        _logger.LogDebug(nameof(ApplicationInsightsResourceProvider), nameof(CreateOrUpdateDataVolumeCap),
+            "Saving data volume cap to {0}.", file);
+
+        File.WriteAllText(file, JsonSerializer.Serialize(dataVolumeCap, GlobalSettings.JsonOptions));
+    }
+
+    public ApplicationInsightsComponentDataVolumeCap? GetDataVolumeCap(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string componentName)
+    {
+        var file = GetBillingFeaturesPath(subscriptionIdentifier, resourceGroupIdentifier, componentName);
+        if (!File.Exists(file)) return null;
+
+        var content = File.ReadAllText(file);
+        return string.IsNullOrEmpty(content)
+            ? null
+            : JsonSerializer.Deserialize<ApplicationInsightsComponentDataVolumeCap>(content, GlobalSettings.JsonOptions);
+    }
+
+    private string GetBillingFeaturesPath(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string componentName) =>
+        Path.Combine(GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, componentName),
+            BillingFeaturesFileName);
 }
