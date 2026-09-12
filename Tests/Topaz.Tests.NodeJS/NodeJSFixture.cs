@@ -58,6 +58,9 @@ public class NodeJSFixture
         await _containerTopaz.StartAsync().ConfigureAwait(false);
 
         await WaitForContainerReady(_containerTopaz, 8899).ConfigureAwait(false);
+        // The HTTP webserver comes up before the AMQP listener (Host.StartAsync starts them in that
+        // order), so also wait for 8889 to avoid a race on slower/contended CI runners.
+        await WaitForContainerReady(_containerTopaz, 8889).ConfigureAwait(false);
 
         var topazIp = _containerTopaz.IpAddress;
 
