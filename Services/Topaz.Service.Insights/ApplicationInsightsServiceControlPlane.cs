@@ -1,6 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.Insights.Models;
+using Topaz.Service.Insights.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -16,6 +17,8 @@ internal sealed class ApplicationInsightsServiceControlPlane(
     ITopazLogger logger) : IControlPlane
 {
     private const string NotFoundCode = "ResourceNotFound";
+    private const string BillingFeaturesSubresource = "currentbillingfeatures";
+    private const string BillingFeaturesId = "current";
     private const string NotFoundMessage = "Application Insights component '{0}' could not be found";
 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
@@ -146,9 +149,8 @@ internal sealed class ApplicationInsightsServiceControlPlane(
             return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
                 OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode);
 
-        var cap = provider.GetDataVolumeCap(sub, rg, name) ?? new ApplicationInsightsComponentDataVolumeCap();
         return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
-            OperationResult.Success, BuildBillingFeatures(component, cap), null, null);
+            OperationResult.Success, BuildBillingFeatures(component, GetDataVolumeCap(sub, rg, name)), null, null);
     }
 
     public ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures> UpdateBillingFeatures(
@@ -162,7 +164,7 @@ internal sealed class ApplicationInsightsServiceControlPlane(
             return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
                 OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode);
 
-        var cap = provider.GetDataVolumeCap(sub, rg, name) ?? new ApplicationInsightsComponentDataVolumeCap();
+        var cap = GetDataVolumeCap(sub, rg, name);
 
         if (request.DataVolumeCap != null)
         {
@@ -177,11 +179,18 @@ internal sealed class ApplicationInsightsServiceControlPlane(
             cap.MaxHistoryCap = requested.MaxHistoryCap ?? cap.MaxHistoryCap;
         }
 
-        provider.CreateOrUpdateDataVolumeCap(sub, rg, name, cap);
+        provider.CreateOrUpdateSubresource(sub, rg, BillingFeaturesId, name, BillingFeaturesSubresource, cap);
 
         return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
             OperationResult.Updated, BuildBillingFeatures(component, cap), null, null);
     }
+
+    private ApplicationInsightsComponentDataVolumeCap GetDataVolumeCap(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name) =>
+        provider.GetSubresourceAs<ApplicationInsightsComponentDataVolumeCap>(
+            sub, rg, BillingFeaturesId, name, BillingFeaturesSubresource) ?? new ApplicationInsightsComponentDataVolumeCap();
 
     private static ApplicationInsightsComponentBillingFeatures BuildBillingFeatures(
         ApplicationInsightsComponentResource component,

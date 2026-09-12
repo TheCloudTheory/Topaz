@@ -1,4 +1,4 @@
-namespace Topaz.Service.Insights.Models;
+namespace Topaz.Service.Insights.Models.Requests;
 
 internal sealed class UpdateBillingFeaturesRequest
 {

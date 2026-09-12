@@ -2,7 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
-using Topaz.Service.Insights.Models;
+using Topaz.Service.Insights.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
