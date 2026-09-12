@@ -117,7 +117,7 @@ Python `azure-eventhub` cannot receive events from Topaz without a server-side f
 
 **Workaround:** apply the frame-padding patches in your test setup (see `Topaz.Tests.Python/tests/conftest.py` for a reference implementation). These patches intercept decoded frames and pad them to the full AMQP field count before the client library processes them.
 
-### Planned fix — v1.7-beta
+### Planned fix — v1.11
 
 Investigate whether AMQPNetLite can be patched — either via a subclass override or a post-encode buffer rewrite — to append trailing null bytes to every performative so the encoded frame length matches the full field count defined by the AMQP 1.0 spec for each performative type (Open, Begin, Attach, Transfer, Flow, Disposition, Detach, End, Close). This would make Topaz's output match the real Azure broker without replacing the entire AMQP stack. If patching is not feasible, evaluate replacing AMQPNetLite with a fully spec-compliant implementation (e.g. [Apache Qpid Proton .NET](https://qpid.apache.org/proton/)) that always encodes explicit nulls. Success criterion: Python `azure-eventhub` and `azure-servicebus` tests pass without any monkey-patching.
 
@@ -149,36 +149,6 @@ Templates that express subresources as standalone entries deploy the parent reso
 **Workaround:** use the inline subresource syntax instead of standalone child entries. For example, declare subnets inside `properties.subnets` of the VNet resource rather than as separate `Microsoft.Network/virtualNetworks/subnets` entries.
 
 ### No fix planned
-
-## ARM Deployments — `reference()` expressions in outputs are not evaluated
-
-**Affected services:** Azure Resource Manager (`Microsoft.Resources/deployments`)
-
-Deployment output values may contain ARM template language expressions including `reference()` to fetch properties of deployed resources. Topaz's template processing engine (Azure SDK's `TemplateDeploymentEngine`) evaluates most common template expressions: `parameters()`, `variables()`, `resourceId()`, `concat()`, and others. However, `reference()` requires a runtime round-trip to the resource provider to read deployed resource state — a capability Topaz has deferred.
-
-When a deployment completes, Topaz serializes the template's `outputs` map directly into the `DeploymentResourceProperties.Outputs` field. Any output value containing a raw `reference()` call (e.g. `"[reference('storageAccountId').primaryEndpoints.blob]"`) will appear as a literal string expression rather than the evaluated property value.
-
-### Impact
-
-Deployments with output values that use `reference()` will see those outputs returned as unevaluated expression strings instead of actual resource property values. Callers that read `deployment.Properties.Outputs` will receive the template syntax (e.g. `"[reference(...)]"`) rather than resolved data.
-
-Deployments with outputs using only `parameters()`, `variables()`, `resourceId()`, `concat()`, `uniqueString()`, or literal values work correctly.
-
-**Workaround:** none required as of v1.8.
-
-### Fixed in v1.8
-
-`TemplateDeploymentOrchestrator.RouteDeployment` now collects all `reference()` calls from the outputs map, resolves them by reading from the respective control planes, and substitutes the evaluated values back into the outputs before calling `SetOutputs()`.
-
-The following `reference()` patterns are supported:
-
-- `reference(resourceId('TYPE', 'NAME'), 'API-VERSION').property` — 2-arg `resourceId`
-- `reference(resourceId('SUB', 'RG', 'TYPE', 'NAME'), 'API-VERSION').property` — 4-arg `resourceId` (sub/rg overrides are accepted but ignored; the calling deployment's own subscription and resource group are always used for the lookup)
-- `reference(extensionResourceId(scope, 'TYPE', 'NAME')).property` — `extensionResourceId` (scope is ignored)
-
-The following pattern is **not** supported and will still return `null`:
-
-- `reference()` nested inside another function call, e.g. `concat(reference(...).prop, '-suffix')` — the outer expression cannot be re-evaluated once `reference()` is resolved to a value.
 
 ## Key Vault — `wrapKey`/`unwrapKey` for `oct` keys does not implement RFC 3394 AES Key Wrap
 
@@ -237,42 +207,6 @@ Topaz emulates the secondary read endpoints (`{accountName}-secondary.*`) for ac
 ### Remaining limitations
 
 - **No real separate secondary data store** — there is a single in-process data store. The replication lag is simulated by filtering list and query results by write timestamp, not by maintaining a separate snapshot.
-
----
-
-## Cosmos DB SQL queries — GROUP BY not supported
-
-**Affected services:** Azure Cosmos DB (data-plane SQL API — query engine)
-
-The SQL query engine introduced in v1.7-beta supports global aggregates (`COUNT`, `SUM`, `MIN`, `MAX`, `AVG`) applied to the entire filtered result set, but does not support the `GROUP BY` clause. Queries that include `GROUP BY` return `400 Bad Request`.
-
-### Impact
-
-Queries such as `SELECT c.category, COUNT(1) FROM c GROUP BY c.category` cannot be evaluated. Applications that partition aggregate results by a field value will fail against Topaz.
-
-**Workaround:** perform grouping in application code after fetching all matching documents with a `WHERE` filter, or split into multiple targeted queries — one per partition value.
-
-### Planned fix — v1.9-preview
-
-Extend the query engine to partition filtered documents by the `GROUP BY` field before applying aggregate functions and return one result row per unique value.
-
----
-
-## Cosmos DB SQL queries — ORDER BY on aggregate output not supported
-
-**Affected services:** Azure Cosmos DB (data-plane SQL API — query engine)
-
-The query engine supports `ORDER BY` on regular document fields but not on computed aggregate columns. A query such as `SELECT c.category, COUNT(1) AS cnt FROM c GROUP BY c.category ORDER BY cnt DESC` is not supported.
-
-### Impact
-
-Aggregate result sets cannot be sorted server-side. Applications that require ordered aggregate output must sort results in application code after receiving them.
-
-**Workaround:** sort aggregate results in application code after receiving them from Topaz.
-
-### Planned fix — v1.9-preview
-
-Extend the query engine to apply `ORDER BY` to aggregate output rows after `GROUP BY` evaluation. Prerequisite: `GROUP BY` support.
 
 ---
 
