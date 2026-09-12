@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.ServiceBus.Models;
+using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -39,8 +40,9 @@ internal sealed class CreateOrUpdateServiceBusRuleEndpoint(Pipeline eventPipelin
 
         using var reader = new StreamReader(context.Request.Body);
         var content = reader.ReadToEnd();
-        var properties = JsonSerializer.Deserialize<ServiceBusRuleResourceProperties>(content,
-            GlobalSettings.JsonOptions) ?? ServiceBusRuleResourceProperties.DefaultTrueFilter();
+        var request = JsonSerializer.Deserialize<CreateOrUpdateServiceBusRuleRequest>(content,
+            GlobalSettings.JsonOptions);
+        var properties = request?.Properties ?? ServiceBusRuleResourceProperties.DefaultTrueFilter();
 
         var operation = _controlPlane.CreateOrUpdateRule(subscriptionIdentifier, resourceGroupIdentifier,
             namespaceName, topicName, subscriptionName, ruleName, properties);

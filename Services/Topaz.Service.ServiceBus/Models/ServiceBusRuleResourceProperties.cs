@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Topaz.Service.ServiceBus.Models;
 
 public sealed class ServiceBusSqlRuleFilter
@@ -15,7 +17,15 @@ public sealed class ServiceBusCorrelationRuleFilter
     public string? ReplyTo { get; set; }
     public string? ReplyToSessionId { get; set; }
     public string? SessionId { get; set; }
+
+    /// <summary>
+    /// The message Subject. ARM calls this <c>label</c> — there is no <c>subject</c> in the
+    /// correlationFilter contract — so a rule deployed from a template that filters on the native
+    /// Subject binds nothing without this name.
+    /// </summary>
+    [JsonPropertyName("label")]
     public string? Subject { get; set; }
+
     public string? To { get; set; }
     public bool RequiresPreprocessing { get; set; } = true;
     public Dictionary<string, string>? Properties { get; set; }
