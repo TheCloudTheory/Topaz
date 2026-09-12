@@ -240,6 +240,14 @@ public class InsightsIngestionTests
         return JsonDocument.Parse(await response.Content.ReadAsStringAsync());
     }
 
+    private async Task IngestDependencyViaHttp(string ikey, string ingestionEndpoint, string requestName, string target)
+    {
+        var payload =
+            $"{{\"iKey\":\"{ikey}\",\"time\":\"{DateTimeOffset.UtcNow:O}\",\"data\":{{\"baseType\":\"RemoteDependencyData\",\"baseData\":{{\"name\":\"{requestName}\",\"target\":\"{target}\",\"type\":\"HTTP\",\"duration\":\"00:00:00.050\",\"success\":true}}}}}}";
+        using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/x-json-stream");
+        await Http.PostAsync($"{ingestionEndpoint}/v2/track", content);
+    }
+
     [Test]
     public async Task Query_AfterIngestingRequest_TakeReturnsOneRow()
     {
@@ -462,5 +470,54 @@ public class InsightsIngestionTests
 
         Assert.ThrowsAsync<HttpRequestException>(async () => await RunQuery(ingestionEndpoint, ikey,
             "requests | where timestamp > ago(1x)"));
+    }
+
+    [Test]
+    public async Task Query_InnerUniqueJoinOnName_ReturnsCombinedRowPerMatchingKey()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string name = "GET /api/join-key";
+
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, name);
+        await IngestDependencyViaHttp(ikey, ingestionEndpoint, name, "downstream-service");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | join dependencies on name");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_InnerUniqueJoinOnName_DeduplicatesMultipleRightMatches()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string name = "GET /api/join-dedup";
+
+        // innerunique keeps at most one right-side match per left row, unlike a plain inner join.
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, name);
+        await IngestDependencyViaHttp(ikey, ingestionEndpoint, name, "service-a");
+        await IngestDependencyViaHttp(ikey, ingestionEndpoint, name, "service-b");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"requests | where name == \"{name}\" | join dependencies on name");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_InnerUniqueJoinOnName_ExcludesUnmatchedLeftRows()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string unmatchedName = "GET /api/join-unmatched";
+
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, unmatchedName);
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"requests | where name == \"{unmatchedName}\" | join dependencies on name");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
     }
 }

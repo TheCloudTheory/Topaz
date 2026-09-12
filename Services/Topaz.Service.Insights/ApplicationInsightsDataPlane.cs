@@ -20,7 +20,7 @@ internal sealed class ApplicationInsightsDataPlane(
             ["ExceptionData"] = "exceptions",
             ["EventData"] = "customEvents",
             ["MetricData"] = "customMetrics",
-            ["DependencyData"] = "dependencies",
+            ["RemoteDependencyData"] = "dependencies",
         };
 
     public static ApplicationInsightsDataPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
@@ -32,8 +32,10 @@ internal sealed class ApplicationInsightsDataPlane(
     {
         var componentResult = controlPlane.GetByInstrumentationKey(instrumentationKey);
         if (componentResult.Result != OperationResult.Success || componentResult.Resource == null)
+        {
             return new DataPlaneOperationResult<IngestionEnvelope>(OperationResult.NotFound,
                 null, "Component not found", "ComponentNotFound");
+        }
 
         var component = componentResult.Resource;
         var sub = component.GetSubscription();
@@ -47,22 +49,27 @@ internal sealed class ApplicationInsightsDataPlane(
             try
             {
                 var node = JsonNode.Parse(line);
-                if (node == null) continue;
 
-                var baseType = node["data"]?["baseType"]?.GetValue<string>();
+                var baseType = node?["data"]?["baseType"]?.GetValue<string>();
                 if (baseType == null || !BaseTypeToTable.TryGetValue(baseType, out var tableName))
+                {
                     continue;
+                }
 
                 // Flatten: promote data.baseData fields to top level for query ease
-                var envelope = new JsonObject();
-                envelope["timestamp"] = node["time"]?.GetValue<string>() ?? DateTimeOffset.UtcNow.ToString("O");
-                envelope["iKey"] = node["iKey"]?.GetValue<string>();
+                var envelope = new JsonObject
+                {
+                    ["timestamp"] = node!["time"]?.GetValue<string>() ?? DateTimeOffset.UtcNow.ToString("O"),
+                    ["iKey"] = node["iKey"]?.GetValue<string>()
+                };
 
                 var baseData = node["data"]?["baseData"];
                 if (baseData is JsonObject bd)
                 {
                     foreach (var prop in bd)
+                    {
                         envelope[prop.Key] = prop.Value?.DeepClone();
+                    }
                 }
 
                 provider.SaveTelemetry(sub, rg, component.Name, tableName, envelope.ToJsonString());

@@ -30,6 +30,8 @@ Topaz now supports control plane and data plane of Azure Event Grid. It's possib
 Topaz got a number of improvements for handling KQL queries:
 
 - support for `bin()` function in `summarize`
+- support go `ago()`
+- support for joins: `innerunique`
 
 ### Azure App Service improvements
 

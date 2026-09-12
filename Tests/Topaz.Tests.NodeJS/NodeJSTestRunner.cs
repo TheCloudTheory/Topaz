@@ -8,7 +8,7 @@ namespace Topaz.Tests.NodeJS;
 /// the test method name describes the service / scenario being tested.
 /// </summary>
 [Explicit]
-public class NodeJSTestRunner
+public class NodeJsTestRunner
 {
     [Test]
     public async Task NodeJS_ServiceBusTests()

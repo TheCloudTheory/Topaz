@@ -55,6 +55,10 @@ internal static partial class KqlQueryExecutor
                 if (int.TryParse(compiled["take ".Length..].Trim(), out var n))
                     rows = [.. rows.Take(n)];
             }
+            else if(compiled.StartsWith("join ", StringComparison.OrdinalIgnoreCase))
+            {
+                rows = ApplyJoin(rows, compiled["join ".Length..].Trim(), tableLoader);
+            }
         }
 
         // Derive columns from union of all field names
@@ -169,6 +173,37 @@ internal static partial class KqlQueryExecutor
                 return obj;
             })
         ];
+    }
+    
+    private static List<JsonObject> ApplyJoin(List<JsonObject> rows, string columns, Func<string, IEnumerable<string>> tableLoader)
+    {
+        var defaultJoinMatch = InnerUniqueJoinRegex().Match(columns);
+        if (defaultJoinMatch.Success)
+        {
+            var joinTable = defaultJoinMatch.Groups[1].Value;
+            var column = defaultJoinMatch.Groups[3].Value;
+            var joinedTableRows = tableLoader(joinTable).Select(json =>
+                {
+                    try
+                    {
+                        return JsonNode.Parse(json) as JsonObject;
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                })
+                .OfType<JsonObject>()
+                .ToList();
+            
+            return
+            [
+                .. rows.Join(joinedTableRows, leftRow => leftRow[column]?.GetValue<string>(),
+                    rightRow => rightRow[column]?.GetValue<string>(), (leftRow, _) => leftRow).Distinct()
+            ];
+        }
+
+        return rows;
     }
 
     private static List<JsonObject> ApplySummarize(List<JsonObject> rows, string expression)
@@ -338,4 +373,7 @@ internal static partial class KqlQueryExecutor
 
     [GeneratedRegex(@"ago\s*\(\s*([^)]+?)\s*\)", RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex AgoRegex();
+    
+    [GeneratedRegex(@"^(\w+)\s+on\s+(\$left\.)?(\w+)$", RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex InnerUniqueJoinRegex();
 }
