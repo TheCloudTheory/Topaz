@@ -230,7 +230,7 @@ internal sealed class ResourceManagerControlPlane(
             {
                 resource.Id = new TemplateGenericProperty<string>
                 {
-                    Value = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/{resource.Type.Value}/{resource.Name.Value}"
+                    Value = ArmResourceId.Build($"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}", resource.Type.Value, resource.Name.Value)
                 };
             }
 
@@ -318,7 +318,7 @@ internal sealed class ResourceManagerControlPlane(
             var afterNodes = new Dictionary<string, JsonNode>(StringComparer.OrdinalIgnoreCase);
             foreach (var r in template.Resources)
             {
-                var id = $"/providers/{r.Type.Value}/{r.Name.Value}";
+                var id = ArmResourceId.Build(string.Empty, r.Type.Value, r.Name.Value);
                 var node = JsonNode.Parse(r.ToJson());
                 if (node == null) continue;
                 StripArmExpressionsFromNode(node);
@@ -385,7 +385,7 @@ internal sealed class ResourceManagerControlPlane(
         {
             var id = isSubscriptionScope
                 ? BuildSubscriptionScopeId(subscriptionIdentifier, r.Type.Value, r.Name.Value)
-                : $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/{r.Type.Value}/{r.Name.Value}";
+                : ArmResourceId.Build($"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}", r.Type.Value, r.Name.Value);
 
             var node = JsonNode.Parse(r.ToJson());
             if (node == null) continue;
@@ -538,7 +538,7 @@ internal sealed class ResourceManagerControlPlane(
         SubscriptionIdentifier subscriptionIdentifier, string type, string name) =>
         type.Equals("Microsoft.Resources/resourceGroups", StringComparison.OrdinalIgnoreCase)
             ? $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{name}"
-            : $"/subscriptions/{subscriptionIdentifier}/providers/{type}/{name}";
+            : ArmResourceId.Build($"/subscriptions/{subscriptionIdentifier}", type, name);
 
     private IEnumerable<GenericResource> CollectResourcesAtSubscriptionScope(
         SubscriptionIdentifier subscriptionIdentifier)

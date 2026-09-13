@@ -110,7 +110,8 @@ internal sealed class ApiContractResource : ArmSubresource<ApiContractResourcePr
 
     public override string GetParentId()
     {
+        // The APIM instance name: /…/providers/Microsoft.ApiManagement/service/{apim}/{child}/{name}
         var segments = Id.Split("/");
-        return segments[9];
+        return segments[8];
     }
 }
