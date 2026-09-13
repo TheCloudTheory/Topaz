@@ -31,11 +31,15 @@ Topaz got a number of improvements for handling KQL queries:
 
 - support for `bin()` function in `summarize`
 - support go `ago()`
-- support for joins: `innerunique`
+- support for joins: `innerunique`, `inner`, `leftouter`, `rightouter`, `fullouter`
 
 ### Azure App Service improvements
 
 - updated the list of supported web stacks to reflect the recent Azure changes
+
+### Application Insights improvements
+
+- Added support for `/currentbillingfeatures` endpoint
 
 ## Bug Fixes
 

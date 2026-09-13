@@ -177,11 +177,33 @@ internal static partial class KqlQueryExecutor
     
     private static List<JsonObject> ApplyJoin(List<JsonObject> rows, string columns, Func<string, IEnumerable<string>> tableLoader)
     {
-        var defaultJoinMatch = InnerUniqueJoinRegex().Match(columns);
+        var defaultJoinMatch = DefaultJoinRegex().Match(columns);
         if (defaultJoinMatch.Success)
         {
-            var joinTable = defaultJoinMatch.Groups[1].Value;
-            var column = defaultJoinMatch.Groups[3].Value;
+            var joinedTableRows = tableLoader(defaultJoinMatch.Groups[1].Value).Select(json =>
+                {
+                    try
+                    {
+                        return JsonNode.Parse(json) as JsonObject;
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                })
+                .OfType<JsonObject>()
+                
+                .ToList();
+            return PerformInnerUniqueJoin(rows, joinedTableRows, defaultJoinMatch.Groups[3].Value);
+        }
+        
+        var joinWithKindMatch = JoinWithKindRegex().Match(columns);
+        if (joinWithKindMatch.Success)
+        {
+            var kind = joinWithKindMatch.Groups[1].Value.ToLowerInvariant();
+            var joinTable = joinWithKindMatch.Groups[2].Value;
+            var column = joinWithKindMatch.Groups[4].Value;
+            
             var joinedTableRows = tableLoader(joinTable).Select(json =>
                 {
                     try
@@ -195,15 +217,72 @@ internal static partial class KqlQueryExecutor
                 })
                 .OfType<JsonObject>()
                 .ToList();
-            
-            return
-            [
-                .. rows.Join(joinedTableRows, leftRow => leftRow[column]?.GetValue<string>(),
-                    rightRow => rightRow[column]?.GetValue<string>(), (leftRow, _) => leftRow).Distinct()
-            ];
+
+            switch (kind)
+            {
+                case "innerunique":
+                    return PerformInnerUniqueJoin(rows, joinedTableRows, column);
+                case "inner":
+                    return PerformInnerJoin(rows, joinedTableRows, column);
+                case "leftouter":
+                    return PerformLeftOuterJoin(rows, joinedTableRows, column);
+                case "rightouter":
+                    return PerformRightOuterJoin(rows, joinedTableRows, column);
+                case "fullouter":
+                    return PerformFullOuterJoin(rows, joinedTableRows, column);
+            }
         }
 
         return rows;
+    }
+
+    private static List<JsonObject> PerformFullOuterJoin(List<JsonObject> rows, List<JsonObject> joinedTableRows, string column)
+    {
+        var leftOuter = PerformLeftOuterJoin(rows, joinedTableRows, column);
+        var unmatchedRight = joinedTableRows.Where(right =>
+            rows.All(left => left[column]?.GetValue<string>() != right[column]?.GetValue<string>()));
+
+        return [.. leftOuter, .. unmatchedRight];
+    }
+
+    private static List<JsonObject> PerformRightOuterJoin(List<JsonObject> rows, List<JsonObject> joinedTableRows, string column)
+    {
+        // Every right row must survive; unmatched right rows have no left counterpart to fall back to.
+        return
+        [
+            .. joinedTableRows.GroupJoin(rows, rightRow => rightRow[column]?.GetValue<string>(),
+                    leftRow => leftRow[column]?.GetValue<string>(), (rightRow, matchedLeftRows) => (rightRow, matchedLeftRows))
+                .SelectMany(x => x.matchedLeftRows.DefaultIfEmpty(), (x, leftRow) => leftRow ?? x.rightRow)
+        ];
+    }
+
+    private static List<JsonObject> PerformLeftOuterJoin(List<JsonObject> rows, List<JsonObject> joinedTableRows, string column)
+    {
+        // Every left row must survive; unmatched left rows have no right counterpart to fall back to.
+        return
+        [
+            .. rows.GroupJoin(joinedTableRows, leftRow => leftRow[column]?.GetValue<string>(),
+                    rightRow => rightRow[column]?.GetValue<string>(), (leftRow, matchedRightRows) => (leftRow, matchedRightRows))
+                .SelectMany(x => x.matchedRightRows.DefaultIfEmpty(), (x, _) => x.leftRow)
+        ];
+    }
+
+    private static List<JsonObject> PerformInnerJoin(List<JsonObject> rows, List<JsonObject> joinedTableRows, string column)
+    {
+        return
+        [
+            .. rows.Join(joinedTableRows, leftRow => leftRow[column]?.GetValue<string>(),
+                rightRow => rightRow[column]?.GetValue<string>(), (leftRow, _) => leftRow)
+        ];
+    }
+
+    private static List<JsonObject> PerformInnerUniqueJoin(List<JsonObject> rows, List<JsonObject> joinedTableRows, string column)
+    {
+        return
+        [
+            .. rows.Join(joinedTableRows, leftRow => leftRow[column]?.GetValue<string>(),
+                rightRow => rightRow[column]?.GetValue<string>(), (leftRow, _) => leftRow).Distinct()
+        ];
     }
 
     private static List<JsonObject> ApplySummarize(List<JsonObject> rows, string expression)
@@ -375,5 +454,8 @@ internal static partial class KqlQueryExecutor
     private static partial Regex AgoRegex();
     
     [GeneratedRegex(@"^(\w+)\s+on\s+(\$left\.)?(\w+)$", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex InnerUniqueJoinRegex();
+    private static partial Regex DefaultJoinRegex();
+    
+    [GeneratedRegex(@"^kind\s*=\s*(\w+)\s+(\w+)\s+on\s+(\$left\.)?(\w+)$", RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex JoinWithKindRegex();
 }

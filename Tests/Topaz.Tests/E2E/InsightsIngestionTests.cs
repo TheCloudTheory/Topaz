@@ -520,4 +520,124 @@ public class InsightsIngestionTests
 
         Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
     }
+
+    [Test]
+    public async Task Query_LeftOuterJoinOnName_IncludesMatchedRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string name = "GET /api/join-leftouter-matched";
+
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, name);
+        await IngestDependencyViaHttp(ikey, ingestionEndpoint, name, "downstream-service");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"requests | where name == \"{name}\" | join kind=leftouter dependencies on name");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_LeftOuterJoinOnName_PreservesUnmatchedLeftRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string unmatchedName = "GET /api/join-leftouter-unmatched";
+
+        // Unlike inner/innerunique, leftouter must keep the left row even without a right-side match.
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, unmatchedName);
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"requests | where name == \"{unmatchedName}\" | join kind=leftouter dependencies on name");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_RightOuterJoinOnName_IncludesMatchedRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string name = "GET /api/join-rightouter-matched";
+
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, name);
+        await IngestDependencyViaHttp(ikey, ingestionEndpoint, name, "downstream-service");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"requests | where name == \"{name}\" | join kind=rightouter dependencies on name");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_RightOuterJoinOnName_PreservesUnmatchedRightRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string unmatchedName = "GET /api/join-rightouter-unmatched";
+
+        // A dependency with no matching request must still surface via rightouter.
+        await IngestDependencyViaHttp(ikey, ingestionEndpoint, unmatchedName, "orphaned-service");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"requests | join kind=rightouter dependencies on name");
+        var table = doc.RootElement.GetProperty("tables")[0];
+        var columns = table.GetProperty("columns").EnumerateArray()
+            .Select((c, i) => (name: c.GetProperty("name").GetString()!, index: i))
+            .ToList();
+        var nameIdx = columns.FirstOrDefault(c => c.name == "name").index;
+        var names = table.GetProperty("rows").EnumerateArray().Select(row => row[nameIdx].GetString());
+
+        Assert.That(names, Does.Contain(unmatchedName));
+    }
+
+    [Test]
+    public async Task Query_FullOuterJoinOnName_IncludesMatchedRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string name = "GET /api/join-fullouter-matched";
+
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, name);
+        await IngestDependencyViaHttp(ikey, ingestionEndpoint, name, "downstream-service");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"requests | where name == \"{name}\" | join kind=fullouter dependencies on name");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_FullOuterJoinOnName_PreservesUnmatchedLeftRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string unmatchedName = "GET /api/join-fullouter-left-unmatched";
+
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, unmatchedName);
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"requests | where name == \"{unmatchedName}\" | join kind=fullouter dependencies on name");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_FullOuterJoinOnName_PreservesUnmatchedRightRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string unmatchedName = "GET /api/join-fullouter-right-unmatched";
+
+        await IngestDependencyViaHttp(ikey, ingestionEndpoint, unmatchedName, "orphaned-service");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | join kind=fullouter dependencies on name");
+        var table = doc.RootElement.GetProperty("tables")[0];
+        var columns = table.GetProperty("columns").EnumerateArray()
+            .Select((c, i) => (name: c.GetProperty("name").GetString()!, index: i))
+            .ToList();
+        var nameIdx = columns.FirstOrDefault(c => c.name == "name").index;
+        var names = table.GetProperty("rows").EnumerateArray().Select(row => row[nameIdx].GetString());
+
+        Assert.That(names, Does.Contain(unmatchedName));
+    }
 }
