@@ -12,6 +12,8 @@ The CLA grants TheCloudTheory the right to include your contribution in both the
 
 > The CLA process is currently being set up. Until it is in place, open your PR and a maintainer will follow up with you directly. Do not let this stop you from contributing.
 
+**Free features guarantee.** Any new feature contributed by an external contributor will remain available free of charge to all users, unless the contribution is made to an area of Topaz that is already part of a paid/commercial offering — in that case, the existing paid terms for that area continue to apply.
+
 ## Getting started
 
 **Prerequisites:** .NET 10 SDK, Docker (for integration tests).
