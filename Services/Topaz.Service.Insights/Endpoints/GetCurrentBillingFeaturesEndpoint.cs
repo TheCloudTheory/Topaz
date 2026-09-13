@@ -1,12 +1,19 @@
-using System.Text.Json.Serialization;
+using System.Net;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Insights.Endpoints;
 
-internal sealed class GetCurrentBillingFeaturesEndpoint : IEndpointDefinition
+internal sealed class GetCurrentBillingFeaturesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : IEndpointDefinition
 {
+    private readonly ApplicationInsightsServiceControlPlane _controlPlane =
+        ApplicationInsightsServiceControlPlane.New(eventPipeline, logger);
+
     public string? ProviderNamespace => "microsoft.insights";
 
     public string[] Endpoints =>
@@ -21,36 +28,23 @@ internal sealed class GetCurrentBillingFeaturesEndpoint : IEndpointDefinition
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        response.CreateJsonContentResponse(new CurrentBillingFeaturesResponse());
-    }
+        var sub = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var rg = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
+        var name = context.Request.Path.Value.ExtractValueFromPath(8);
 
-    private sealed class CurrentBillingFeaturesResponse : TopazApiModel
-    {
-        [JsonPropertyName("CurrentBillingFeatures")]
-        public string[] CurrentBillingFeatures { get; } = ["Basic"];
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
 
-        [JsonPropertyName("DataVolumeCap")]
-        public DataVolumeCap DataVolumeCap { get; } = new();
-    }
+        var result = _controlPlane.GetBillingFeatures(sub, rg, name);
+        if (result.Result == OperationResult.NotFound || result.Resource == null)
+        {
+            response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
+            return;
+        }
 
-    private sealed class DataVolumeCap
-    {
-        [JsonPropertyName("Cap")]
-        public double Cap { get; } = 100;
-
-        [JsonPropertyName("ResetTime")]
-        public int ResetTime { get; } = 0;
-
-        [JsonPropertyName("WarningThreshold")]
-        public int WarningThreshold { get; } = 90;
-
-        [JsonPropertyName("StopSendNotificationWhenHitThreshold")]
-        public bool StopSendNotificationWhenHitThreshold { get; } = false;
-
-        [JsonPropertyName("StopSendNotificationWhenHitCap")]
-        public bool StopSendNotificationWhenHitCap { get; } = false;
-
-        [JsonPropertyName("MaxHistoryCap")]
-        public double MaxHistoryCap { get; } = 500;
+        response.CreateJsonContentResponse(result.Resource);
     }
 }

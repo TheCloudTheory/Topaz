@@ -222,4 +222,89 @@ public class InsightsTests
             Assert.That(component.Data.ConnectionString, Does.Contain("InstrumentationKey="));
         }
     }
+
+    [Test]
+    public async Task Insights_GetBillingFeatures_ReturnsBasicPlanForDefaultRetention()
+    {
+        var client = CreateClient();
+        var rg = await GetResourceGroup(client);
+        const string componentName = "e2e-insights-billing-basic";
+
+        var data = MinimalComponentData();
+        data.RetentionInDays = 30;
+        await rg.GetApplicationInsightsComponents().CreateOrUpdateAsync(WaitUntil.Completed, componentName, data);
+
+        var component = (await rg.GetApplicationInsightsComponents().GetAsync(componentName)).Value;
+        var billingFeatures = (await component.GetComponentCurrentBillingFeatureAsync()).Value;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(billingFeatures.CurrentBillingFeatures, Does.Contain("Basic"));
+            Assert.That(billingFeatures.CurrentBillingFeatures, Does.Not.Contain("Application Insights Enterprise"));
+            Assert.That(billingFeatures.DataVolumeCap.Cap, Is.EqualTo(100));
+        }
+    }
+
+    [Test]
+    public async Task Insights_GetBillingFeatures_ReturnsEnterprisePlanWhenRetentionExceedsThirtyDays()
+    {
+        var client = CreateClient();
+        var rg = await GetResourceGroup(client);
+        const string componentName = "e2e-insights-billing-enterprise";
+
+        var data = MinimalComponentData();
+        data.RetentionInDays = 90;
+        await rg.GetApplicationInsightsComponents().CreateOrUpdateAsync(WaitUntil.Completed, componentName, data);
+
+        var component = (await rg.GetApplicationInsightsComponents().GetAsync(componentName)).Value;
+        var billingFeatures = (await component.GetComponentCurrentBillingFeatureAsync()).Value;
+
+        Assert.That(billingFeatures.CurrentBillingFeatures, Does.Contain("Application Insights Enterprise"));
+    }
+
+    [Test]
+    public async Task Insights_UpdateBillingFeatures_DataVolumeCapIsPersisted()
+    {
+        var client = CreateClient();
+        var rg = await GetResourceGroup(client);
+        const string componentName = "e2e-insights-billing-update";
+
+        await rg.GetApplicationInsightsComponents()
+            .CreateOrUpdateAsync(WaitUntil.Completed, componentName, MinimalComponentData());
+
+        var component = (await rg.GetApplicationInsightsComponents().GetAsync(componentName)).Value;
+
+        var update = new ApplicationInsightsComponentBillingFeatures
+        {
+            DataVolumeCap = new ApplicationInsightsComponentDataVolumeCap
+            {
+                Cap = 200,
+                IsStopSendNotificationWhenHitCap = true
+            }
+        };
+
+        var updated = (await component.UpdateComponentCurrentBillingFeatureAsync(update)).Value;
+        var reloaded = (await component.GetComponentCurrentBillingFeatureAsync()).Value;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(updated.DataVolumeCap.Cap, Is.EqualTo(200));
+            Assert.That(reloaded.DataVolumeCap.Cap, Is.EqualTo(200));
+            Assert.That(reloaded.DataVolumeCap.IsStopSendNotificationWhenHitCap, Is.True);
+            Assert.That(reloaded.DataVolumeCap.WarningThreshold, Is.EqualTo(90));
+        }
+    }
+
+    [Test]
+    public void Insights_GetBillingFeatures_ForMissingComponent_Fails()
+    {
+        var client = CreateClient();
+        var component = client.GetApplicationInsightsComponentResource(
+            ApplicationInsightsComponentResource.CreateResourceIdentifier(
+                SubscriptionId.ToString(), ResourceGroupName, "e2e-insights-billing-missing"));
+
+        Assert.That(
+            async () => await component.GetComponentCurrentBillingFeatureAsync(),
+            Throws.InstanceOf<RequestFailedException>());
+    }
 }

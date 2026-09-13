@@ -755,16 +755,20 @@ resource "azurerm_resource_group" "insights_rg" {
 }
 
 resource "azurerm_application_insights" "insights" {
-  name                = "tf-rm-insights"
-  resource_group_name = azurerm_resource_group.insights_rg.name
-  location            = azurerm_resource_group.insights_rg.location
-  application_type    = "web"
+  name                                 = "tf-rm-insights"
+  resource_group_name                  = azurerm_resource_group.insights_rg.name
+  location                             = azurerm_resource_group.insights_rg.location
+  application_type                     = "web"
+  daily_data_cap_in_gb                 = 200
+  daily_data_cap_notifications_disabled = true
 }
 
 output "insights_name"               { value = azurerm_application_insights.insights.name }
 output "insights_application_type"   { value = azurerm_application_insights.insights.application_type }
 output "insights_instrumentation_key" { value = nonsensitive(azurerm_application_insights.insights.instrumentation_key) }
 output "insights_connection_string"  { value = nonsensitive(azurerm_application_insights.insights.connection_string) }
+output "insights_daily_data_cap_in_gb" { value = azurerm_application_insights.insights.daily_data_cap_in_gb }
+output "insights_daily_data_cap_notifications_disabled" { value = azurerm_application_insights.insights.daily_data_cap_notifications_disabled }
 
 # ── Availability Set ──────────────────────────────────────────────────────────
 

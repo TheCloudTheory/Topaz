@@ -11,7 +11,7 @@ public sealed class InsightsService(Pipeline eventPipeline, ITopazLogger logger)
 {
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".insights");
-    public static IReadOnlyCollection<string>? Subresources => null;
+    public static IReadOnlyCollection<string>? Subresources => ["currentbillingfeatures"];
     public static string UniqueName => "insights";
     public string Name => "Insights";
 
@@ -20,8 +20,8 @@ public sealed class InsightsService(Pipeline eventPipeline, ITopazLogger logger)
         new InsightsServiceEndpoint(),
         new CreateOrUpdateComponentEndpoint(eventPipeline, logger),
         new GetComponentEndpoint(eventPipeline, logger),
-        new GetCurrentBillingFeaturesEndpoint(),
-        new PutCurrentBillingFeaturesEndpoint(),
+        new GetCurrentBillingFeaturesEndpoint(eventPipeline, logger),
+        new PutCurrentBillingFeaturesEndpoint(eventPipeline, logger),
         new DeleteComponentEndpoint(eventPipeline, logger),
         new UpdateComponentEndpoint(eventPipeline, logger),
         new ListComponentsByResourceGroupEndpoint(eventPipeline, logger),

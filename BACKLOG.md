@@ -597,21 +597,6 @@ TODO: Log Analytics: Query API authentication (Bearer token)
   labels: enhancement, log-analytics, security
 -->
 
-<!--
-TODO: Application Insights: currentbillingfeatures endpoint — real billing logic
-  The GET .../components/{name}/currentbillingfeatures endpoint currently returns a static
-  stub (Basic tier, 100 GB cap). Enhance it to reflect the component's actual configuration:
-  - Derive CurrentBillingFeatures from the component's retentionInDays: "Basic" for ≤ 30 days,
-    "Application Insights Enterprise" for > 30 days.
-  - Persist DataVolumeCap (Cap, WarningThreshold, StopSendNotificationWhenHitCap,
-    StopSendNotificationWhenHitThreshold) alongside the component resource so that a
-    companion PATCH .../currentbillingfeatures endpoint can update it.
-  - Implement PATCH .../currentbillingfeatures (see PutCurrentBillingFeaturesEndpoint.cs) to accept and persist DataVolumeCap changes,
-    matching the real Azure API used by the azurerm_application_insights resource's
-    daily_data_cap_in_gb and daily_data_cap_notifications_disabled settings.
-  labels: enhancement, application-insights, good first issue
--->
-
 ### App Configuration — replicas and sequence number
 
 <!--

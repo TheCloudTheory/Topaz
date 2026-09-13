@@ -92,4 +92,55 @@ public class ApplicationInsightsTests : TopazFixture
                 });
             });
     }
+
+    [Test]
+    public async Task AppInsights_BillingFeatures_ReflectComponentRetention()
+    {
+        const string resourceGroup = $"{ResourceGroup}-billing";
+        const string componentName = $"{ComponentName}-billing";
+
+        await RunAzureCliCommand($"az group create -l westeurope -n {resourceGroup}");
+        await RunAzureCliCommand(
+            $"az monitor app-insights component create --app {componentName} -g {resourceGroup} -l westeurope --kind web --retention-time 30");
+
+        await RunAzureCliCommand(
+            $"az monitor app-insights component billing show --app {componentName} -g {resourceGroup}",
+            response =>
+            {
+                var features = response["currentBillingFeatures"]!.AsArray().Select(f => f!.GetValue<string>()).ToArray();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(features, Does.Contain("Basic"));
+                    Assert.That(features, Does.Not.Contain("Application Insights Enterprise"));
+                    Assert.That(response["dataVolumeCap"]!["cap"]!.GetValue<double>(), Is.EqualTo(100));
+                });
+            });
+    }
+
+    [Test]
+    public async Task AppInsights_BillingFeaturesUpdate_DataVolumeCapIsPersisted()
+    {
+        const string resourceGroup = $"{ResourceGroup}-billing-update";
+        const string componentName = $"{ComponentName}-billing-update";
+
+        await RunAzureCliCommand($"az group create -l westeurope -n {resourceGroup}");
+        await RunAzureCliCommand(
+            $"az monitor app-insights component create --app {componentName} -g {resourceGroup} -l westeurope --kind web");
+
+        await RunAzureCliCommand(
+            $"az monitor app-insights component billing update --app {componentName} -g {resourceGroup} --cap 200 --stop");
+
+        await RunAzureCliCommand(
+            $"az monitor app-insights component billing show --app {componentName} -g {resourceGroup}",
+            response =>
+            {
+                var dataVolumeCap = response["dataVolumeCap"]!;
+                Assert.Multiple(() =>
+                {
+                    Assert.That(dataVolumeCap["cap"]!.GetValue<double>(), Is.EqualTo(200));
+                    Assert.That(dataVolumeCap["stopSendNotificationWhenHitCap"]!.GetValue<bool>(), Is.True);
+                    Assert.That(dataVolumeCap["warningThreshold"]!.GetValue<int>(), Is.EqualTo(90));
+                });
+            });
+    }
 }

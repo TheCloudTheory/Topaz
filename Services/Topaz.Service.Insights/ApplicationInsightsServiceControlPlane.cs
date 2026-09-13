@@ -1,6 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.Insights.Models;
+using Topaz.Service.Insights.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -16,6 +17,8 @@ internal sealed class ApplicationInsightsServiceControlPlane(
     ITopazLogger logger) : IControlPlane
 {
     private const string NotFoundCode = "ResourceNotFound";
+    private const string BillingFeaturesSubresource = "currentbillingfeatures";
+    private const string BillingFeaturesId = "current";
     private const string NotFoundMessage = "Application Insights component '{0}' could not be found";
 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
@@ -135,6 +138,69 @@ internal sealed class ApplicationInsightsServiceControlPlane(
         provider.CreateOrUpdate(sub, rg, name, existing);
         return new ControlPlaneOperationResult<ApplicationInsightsComponentResource>(OperationResult.Updated, existing, null, null);
     }
+
+    public ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures> GetBillingFeatures(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name)
+    {
+        var component = provider.GetAs<ApplicationInsightsComponentResource>(sub, rg, name);
+        if (component == null)
+            return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode);
+
+        return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
+            OperationResult.Success, BuildBillingFeatures(component, GetDataVolumeCap(sub, rg, name)), null, null);
+    }
+
+    public ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures> UpdateBillingFeatures(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name,
+        UpdateBillingFeaturesRequest request)
+    {
+        var component = provider.GetAs<ApplicationInsightsComponentResource>(sub, rg, name);
+        if (component == null)
+            return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode);
+
+        var cap = GetDataVolumeCap(sub, rg, name);
+
+        if (request.DataVolumeCap != null)
+        {
+            var requested = request.DataVolumeCap;
+            cap.Cap = requested.Cap ?? cap.Cap;
+            cap.ResetTime = requested.ResetTime ?? cap.ResetTime;
+            cap.WarningThreshold = requested.WarningThreshold ?? cap.WarningThreshold;
+            cap.StopSendNotificationWhenHitCap =
+                requested.StopSendNotificationWhenHitCap ?? cap.StopSendNotificationWhenHitCap;
+            cap.StopSendNotificationWhenHitThreshold =
+                requested.StopSendNotificationWhenHitThreshold ?? cap.StopSendNotificationWhenHitThreshold;
+            cap.MaxHistoryCap = requested.MaxHistoryCap ?? cap.MaxHistoryCap;
+        }
+
+        provider.CreateOrUpdateSubresource(sub, rg, BillingFeaturesId, name, BillingFeaturesSubresource, cap);
+
+        return new ControlPlaneOperationResult<ApplicationInsightsComponentBillingFeatures>(
+            OperationResult.Updated, BuildBillingFeatures(component, cap), null, null);
+    }
+
+    private ApplicationInsightsComponentDataVolumeCap GetDataVolumeCap(
+        SubscriptionIdentifier sub,
+        ResourceGroupIdentifier rg,
+        string name) =>
+        provider.GetSubresourceAs<ApplicationInsightsComponentDataVolumeCap>(
+            sub, rg, BillingFeaturesId, name, BillingFeaturesSubresource) ?? new ApplicationInsightsComponentDataVolumeCap();
+
+    private static ApplicationInsightsComponentBillingFeatures BuildBillingFeatures(
+        ApplicationInsightsComponentResource component,
+        ApplicationInsightsComponentDataVolumeCap dataVolumeCap) =>
+        new()
+        {
+            CurrentBillingFeatures =
+                ApplicationInsightsComponentBillingFeatures.GetPlanForRetention(component.Properties.RetentionInDays),
+            DataVolumeCap = dataVolumeCap
+        };
 
     public ControlPlaneOperationResult<ApplicationInsightsComponentResource[]> ListByResourceGroup(
         SubscriptionIdentifier sub,
