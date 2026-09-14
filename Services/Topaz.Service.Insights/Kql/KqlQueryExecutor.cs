@@ -7,26 +7,29 @@ namespace Topaz.Service.Insights.Kql;
 
 internal static partial class KqlQueryExecutor
 {
+    private static readonly HashSet<string> BuiltInEmptyTables =
+        new(StringComparer.OrdinalIgnoreCase) { "AzureActivity", "AzureDiagnostics" };
+    
     public static QueryResult Execute(string queryText, Func<string, IEnumerable<string>> tableLoader)
     {
         queryText = queryText.Trim();
+        
         var pipes = queryText.Split('|');
-
         var tableName = pipes[0].Trim();
-        var rows = tableLoader(tableName)
-            .Select(json =>
-            {
-                try
-                {
-                    return JsonNode.Parse(json) as JsonObject;
-                }
-                catch
-                {
-                    return null;
-                }
-            })
-            .OfType<JsonObject>()
-            .ToList();
+        
+        // union TableA, TableB or union (TableA | ...), (TableB | ...)
+        List<JsonObject> rows;
+        if (tableName.StartsWith("union ", StringComparison.OrdinalIgnoreCase))
+        {
+            var tableNames = tableName["union ".Length..]
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => t.Trim());
+            rows = [.. tableNames.SelectMany(t => LoadTable(t, tableLoader))];
+        }
+        else
+        {
+            rows = [.. LoadTable(tableName, tableLoader)];
+        }
 
         var operators = pipes.Skip(1).Select(p => p.Trim()).ToList();
 
@@ -45,6 +48,10 @@ internal static partial class KqlQueryExecutor
             else if (compiled.StartsWith("summarize ", StringComparison.OrdinalIgnoreCase))
             {
                 rows = ApplySummarize(rows, compiled["summarize ".Length..].Trim());
+            }
+            else if (compiled.StartsWith("extend ", StringComparison.OrdinalIgnoreCase))
+            {
+                rows = ApplyExtend(rows, compiled["extend ".Length..].Trim());
             }
             else if (compiled.StartsWith("order by ", StringComparison.OrdinalIgnoreCase))
             {
@@ -72,6 +79,37 @@ internal static partial class KqlQueryExecutor
         ).ToArray();
 
         return new QueryResult([new QueryResultTable("PrimaryResult", columns, resultRows)]);
+    }
+    
+    private static List<JsonObject> LoadTable(
+        string tableName,
+        Func<string, IEnumerable<string>> tableLoader)
+    {
+        if (BuiltInEmptyTables.Contains(tableName))
+            return [];
+
+        return
+        [
+            .. tableLoader(tableName)
+                .SelectMany(json =>
+                {
+                    try
+                    {
+                        var node = JsonNode.Parse(json);
+                        // Stored as JSON array (batch ingestion) or single object
+                        return node switch
+                        {
+                            JsonArray arr => arr.OfType<JsonObject>(),
+                            JsonObject obj => (IEnumerable<JsonObject>)[obj],
+                            _ => []
+                        };
+                    }
+                    catch (Exception)
+                    {
+                        return [];
+                    }
+                })
+        ];
     }
 
     private static string CompileFunctions(string op)
@@ -184,7 +222,7 @@ internal static partial class KqlQueryExecutor
             ];
         }
         
-        var notBetweenMatch = BetweenRegex().Match(predicate);
+        var notBetweenMatch = NotBetweenRegex().Match(predicate);
         if (notBetweenMatch.Success)
         {
             var field = notBetweenMatch.Groups[1].Value;
@@ -443,6 +481,34 @@ internal static partial class KqlQueryExecutor
             _ => throw new FormatException($"Unrecognized timespan unit in '{literal}'")
         };
     }
+    
+    private static List<JsonObject> ApplyExtend(List<JsonObject> rows, string expression)
+    {
+        // alias = field or alias = 'literal'
+        var extendMatch = ExtendRegex().Match(expression);
+        if (!extendMatch.Success)
+        {
+            return rows;
+        }
+        
+        var alias = extendMatch.Groups[1].Value;
+        var valueExpr = extendMatch.Groups[2].Value.Trim();
+
+        return
+        [
+            .. rows.Select(r =>
+            {
+                var clone = JsonNode.Parse(r.ToJsonString())!.AsObject();
+                if (valueExpr.StartsWith('"') && valueExpr.EndsWith('"'))
+                    clone[alias] = JsonValue.Create(valueExpr[1..^1]);
+                else if (r[valueExpr] != null)
+                    clone[alias] = r[valueExpr]?.DeepClone();
+                else
+                    clone[alias] = JsonValue.Create(valueExpr);
+                return clone;
+            })
+        ];
+    }
 
     private static List<JsonObject> ApplyOrderBy(List<JsonObject> rows, string expression)
     {
@@ -515,4 +581,8 @@ internal static partial class KqlQueryExecutor
         """^(\w+)\s+!between\s*\(\s*("[^"]*"|[^\s.]+)\s*\.\.\s*("[^"]*"|[^\s.]+)\s*\)$""",
         RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex NotBetweenRegex();
+    
+    [GeneratedRegex(@"^(\w+)\s+between\s+\(([\d.]+)\s*\.\.\s*([\d.]+)\)", RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex ExtendRegex();
+    
 }

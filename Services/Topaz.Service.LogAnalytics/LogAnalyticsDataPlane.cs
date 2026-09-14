@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Topaz.EventPipeline;
+using Topaz.Service.Insights.Kql;
+using Topaz.Service.Insights.Models;
 using Topaz.Service.LogAnalytics.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -60,7 +62,7 @@ internal sealed class LogAnalyticsDataPlane(
 
         provider.SaveIngestedData(workspace.GetSubscription(), workspace.GetResourceGroup(), workspace.Name, ApplyTypeSuffixes(data), dir);
 
-        return new DataPlaneOperationResult(OperationResult.Success, null, null);
+        return new DataPlaneOperationResult(OperationResult.Success);
     }
 
     // Azure Data Collector API appends type suffixes to every user-defined field:
@@ -113,13 +115,15 @@ internal sealed class LogAnalyticsDataPlane(
         return sfx is "_s" or "_d" or "_b" or "_t" or "_g";
     }
 
-    public DataPlaneOperationResult<LogAnalyticsQueryResult> QueryData(string? workspaceId, string query)
+    public DataPlaneOperationResult<QueryResult> QueryData(string? workspaceId, string query)
     {
         var subscriptions = subscriptionControlPlane.List();
         if (subscriptions.Result != OperationResult.Success || subscriptions.Resource == null ||
             subscriptions.Resource.Length == 0)
-            return new DataPlaneOperationResult<LogAnalyticsQueryResult>(
+        {
+            return new DataPlaneOperationResult<QueryResult>(
                 OperationResult.Failed, null, "No subscriptions found", "NoSubscriptionsFound");
+        }
 
         WorkspaceResource? workspace = null;
         foreach (var subscription in subscriptions.Resource)
@@ -131,18 +135,20 @@ internal sealed class LogAnalyticsDataPlane(
         }
 
         if (workspace == null)
-            return new DataPlaneOperationResult<LogAnalyticsQueryResult>(
+        {
+            return new DataPlaneOperationResult<QueryResult>(
                 OperationResult.NotFound, null, "Workspace not found", "WorkspaceNotFound");
+        }
 
-        var sub = workspace.GetSubscription();
-        var rg = workspace.GetResourceGroup();
-        var name = workspace.Name;
+        var subscriptionIdentifier = workspace.GetSubscription();
+        var resourceGroupIdentifier = workspace.GetResourceGroup();
+        var workspaceName = workspace.Name;
 
         var result = KqlQueryExecutor.Execute(
             query,
-            tableName => provider.LoadIngestedData(sub, rg, name, tableName));
+            tableName => provider.LoadIngestedData(subscriptionIdentifier, resourceGroupIdentifier, workspaceName, tableName));
 
-        return new DataPlaneOperationResult<LogAnalyticsQueryResult>(
-            OperationResult.Success, result, null, null);
+        return new DataPlaneOperationResult<QueryResult>(
+            OperationResult.Success, result);
     }
 }

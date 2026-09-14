@@ -65,6 +65,7 @@ internal sealed class QueryWorkspaceEndpoint(Pipeline eventPipeline, ITopazLogge
             }).ToArray()
         };
 
+        
         var json = JsonSerializer.Serialize(wire, GlobalSettings.JsonOptions);
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(json);
