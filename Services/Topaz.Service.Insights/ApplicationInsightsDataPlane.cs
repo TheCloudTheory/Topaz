@@ -100,8 +100,10 @@ internal sealed class ApplicationInsightsDataPlane(
             var component = componentResult.Resource;
             var result = KqlQueryExecutor.Execute(
                 queryText,
-                tableName => provider.LoadTelemetry(
-                    component.GetSubscription(), component.GetResourceGroup(), component.Name, tableName));
+                component.Name,
+                (workspaceName, tableName) => provider.LoadTelemetry(
+                    component.GetSubscription(), component.GetResourceGroup(), workspaceName, tableName),
+                ResolveWorkspaceName);
 
             return new DataPlaneOperationResult<QueryResult>(OperationResult.Success, result);
         }
@@ -112,5 +114,11 @@ internal sealed class ApplicationInsightsDataPlane(
             
             return new DataPlaneOperationResult<QueryResult>(OperationResult.Failed, null);
         }
+    }
+    
+    private string ResolveWorkspaceName(string workspaceRef)
+    {
+        return workspaceRef;
+
     }
 }

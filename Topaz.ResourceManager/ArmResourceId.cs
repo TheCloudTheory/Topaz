@@ -5,21 +5,14 @@ namespace Topaz.ResourceManager;
 public static class ArmResourceId
 {
     /// <summary>
-    /// Builds the ARM id for a resource from its type and name, which interleave: type
-    /// <c>Microsoft.ServiceBus/namespaces/topics</c> with name <c>ns/topic</c> gives
-    /// <c>{scope}/providers/Microsoft.ServiceBus/namespaces/ns/topics/topic</c>.
-    ///
-    /// <para>
-    /// Concatenating the two instead puts a type keyword where a resource name belongs, so every
-    /// child lookup resolves against the wrong parent. Only resources whose type has a single
-    /// segment after the provider are unaffected, which is why this is invisible until a template
-    /// declares a child resource.
-    /// </para>
+    /// Constructs an Azure Resource Manager (ARM) resource ID based on the provided scope, type, and name.
+    /// The resulting ID adheres to the ARM resource ID structure, including handling of provider namespaces
+    /// and paired type/name segments.
     /// </summary>
-    /// <param name="scope">
-    /// The id prefix the resource hangs off, with no trailing slash — for example
-    /// <c>/subscriptions/{id}/resourceGroups/{name}</c>, or an empty string at tenant scope.
-    /// </param>
+    /// <param name="scope">The base scope of the resource, such as a subscription or resource group path.</param>
+    /// <param name="type">The type of the resource, including provider namespace and resource types (e.g., "Microsoft.Storage/storageAccounts").</param>
+    /// <param name="name">The name of the resource or hierarchy of resource names for nested resources.</param>
+    /// <returns>A fully qualified ARM resource ID as a string.</returns>
     public static string Build(string scope, string? type, string? name)
     {
         var typeSegments = (type ?? string.Empty).Split('/', StringSplitOptions.RemoveEmptyEntries);

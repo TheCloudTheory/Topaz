@@ -33,6 +33,7 @@ Topaz got a number of improvements for handling KQL queries:
 - support go `ago()`
 - support for joins: `innerunique`, `inner`, `leftouter`, `rightouter`, `fullouter`
 - support for `between` and `!between` operators
+- support for `workspace()` function 
 
 ### Azure App Service improvements
 

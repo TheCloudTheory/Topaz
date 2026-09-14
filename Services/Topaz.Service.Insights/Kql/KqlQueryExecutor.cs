@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using Topaz.Service.Insights.Models;
 
 namespace Topaz.Service.Insights.Kql;
@@ -10,7 +9,7 @@ internal static partial class KqlQueryExecutor
     private static readonly HashSet<string> BuiltInEmptyTables =
         new(StringComparer.OrdinalIgnoreCase) { "AzureActivity", "AzureDiagnostics" };
     
-    public static QueryResult Execute(string queryText, Func<string, IEnumerable<string>> tableLoader)
+    public static QueryResult Execute(string queryText, string workspaceName, Func<string, string, IEnumerable<string>> tableLoader, Func<string, string> workspaceNameResolver)
     {
         queryText = queryText.Trim();
         
@@ -24,11 +23,23 @@ internal static partial class KqlQueryExecutor
             var tableNames = tableName["union ".Length..]
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
                 .Select(t => t.Trim());
-            rows = [.. tableNames.SelectMany(t => LoadTable(t, tableLoader))];
+            rows = [.. tableNames.SelectMany(t =>
+            {
+                if (t.StartsWith("workspace(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return LoadWorkspace(t, tableLoader, workspaceNameResolver);
+                }
+                
+                return LoadTable(t, workspaceName, tableLoader);
+            })];
+        }
+        else if(tableName.StartsWith("workspace(", StringComparison.OrdinalIgnoreCase))
+        {
+            rows = [.. LoadWorkspace(tableName, tableLoader, workspaceNameResolver)];
         }
         else
         {
-            rows = [.. LoadTable(tableName, tableLoader)];
+            rows = [.. LoadTable(tableName, workspaceName, tableLoader)];
         }
 
         var operators = pipes.Skip(1).Select(p => p.Trim()).ToList();
@@ -64,7 +75,11 @@ internal static partial class KqlQueryExecutor
             }
             else if(compiled.StartsWith("join ", StringComparison.OrdinalIgnoreCase))
             {
-                rows = ApplyJoin(rows, compiled["join ".Length..].Trim(), tableLoader);
+                rows = ApplyJoin(rows, compiled["join ".Length..].Trim(),  workspaceName, tableLoader);
+            }
+            else if(compiled.StartsWith("workspace(", StringComparison.OrdinalIgnoreCase))
+            {
+                rows = ApplyWorkspace(rows, compiled, tableLoader);
             }
         }
 
@@ -80,17 +95,17 @@ internal static partial class KqlQueryExecutor
 
         return new QueryResult([new QueryResultTable("PrimaryResult", columns, resultRows)]);
     }
-    
-    private static List<JsonObject> LoadTable(
-        string tableName,
-        Func<string, IEnumerable<string>> tableLoader)
+
+    private static List<JsonObject> LoadTable(string tableName,
+        string workspaceName,
+        Func<string, string, IEnumerable<string>> tableLoader)
     {
         if (BuiltInEmptyTables.Contains(tableName))
             return [];
 
         return
         [
-            .. tableLoader(tableName)
+            .. tableLoader(workspaceName, tableName)
                 .SelectMany(json =>
                 {
                     try
@@ -110,6 +125,20 @@ internal static partial class KqlQueryExecutor
                     }
                 })
         ];
+    }
+    
+    private static IEnumerable<JsonObject> LoadWorkspace(string workspaceReference,
+        Func<string, string, IEnumerable<string>> tableLoader, Func<string, string> workspaceNameResolver)
+    {
+        var workspaceMatch = WorkspaceRegex().Match(workspaceReference);
+        if (!workspaceMatch.Success) return [];
+        
+        var workspaceId = workspaceMatch.Groups[1].Value;
+        var workspaceResourceId = workspaceMatch.Groups[2].Value;
+        var tableName = workspaceReference.Replace(workspaceMatch.Captures[0].Value, string.Empty).Split(".")[1];
+        var workspaceName = workspaceNameResolver(string.IsNullOrWhiteSpace(workspaceId) ? workspaceResourceId : workspaceId);
+
+        return LoadTable(tableName, workspaceName, tableLoader);
     }
 
     private static string CompileFunctions(string op)
@@ -257,12 +286,12 @@ internal static partial class KqlQueryExecutor
         ];
     }
     
-    private static List<JsonObject> ApplyJoin(List<JsonObject> rows, string columns, Func<string, IEnumerable<string>> tableLoader)
+    private static List<JsonObject> ApplyJoin(List<JsonObject> rows, string columns, string workspaceName, Func<string, string, IEnumerable<string>> tableLoader)
     {
         var defaultJoinMatch = DefaultJoinRegex().Match(columns);
         if (defaultJoinMatch.Success)
         {
-            var joinedTableRows = tableLoader(defaultJoinMatch.Groups[1].Value).Select(json =>
+            var joinedTableRows = tableLoader(workspaceName, defaultJoinMatch.Groups[1].Value).Select(json =>
                 {
                     try
                     {
@@ -286,7 +315,7 @@ internal static partial class KqlQueryExecutor
             var joinTable = joinWithKindMatch.Groups[2].Value;
             var column = joinWithKindMatch.Groups[4].Value;
             
-            var joinedTableRows = tableLoader(joinTable).Select(json =>
+            var joinedTableRows = tableLoader(workspaceName, joinTable).Select(json =>
                 {
                     try
                     {
@@ -365,6 +394,17 @@ internal static partial class KqlQueryExecutor
             .. rows.Join(joinedTableRows, leftRow => leftRow[column]?.GetValue<string>(),
                 rightRow => rightRow[column]?.GetValue<string>(), (leftRow, _) => leftRow).Distinct()
         ];
+    }
+    
+    private static List<JsonObject> ApplyWorkspace(List<JsonObject> rows, string expression, Func<string, string, IEnumerable<string>> tableLoader)
+    {
+        var workspaceMatch = WorkspaceRegex().Match(expression);
+        if (workspaceMatch.Success)
+        {
+            
+        }
+
+        return rows;
     }
 
     private static List<JsonObject> ApplySummarize(List<JsonObject> rows, string expression)
@@ -523,66 +563,4 @@ internal static partial class KqlQueryExecutor
             ? [.. rows.OrderByDescending(r => r[field]?.GetValue<string>())]
             : [.. rows.OrderBy(r => r[field]?.GetValue<string>())];
     }
-
-    [GeneratedRegex("""^(\w+)\s+startswith\s+"([^"]*)"$""", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex StartsWithRegex();
-
-    [GeneratedRegex("""^(\w+)\s+contains\s+"([^"]*)"$""", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex ContainsRegex();
-
-    [GeneratedRegex("""^(\w+)\s*==\s*"([^"]*)"$""")]
-    private static partial Regex EqualsRegex();
-
-    [GeneratedRegex("""^(\w+)\s*<\s*"([^"]*)"$""")]
-    private static partial Regex LessThanRegex();
-
-    [GeneratedRegex("""^(\w+)\s*<=\s*"([^"]*)"$""")]
-    private static partial Regex LowerThanOrEqualRegex();
-
-    [GeneratedRegex("""^(\w+)\s*>\s*"([^"]*)"$""")]
-    private static partial Regex GreaterThanRegex();
-
-    [GeneratedRegex("""^(\w+)\s*>=\s*"([^"]*)"$""")]
-    private static partial Regex GreaterThanOrEqualRegex();
-
-    [GeneratedRegex(@"^(\w+)\s*(asc|desc)?$", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex OrderingRegex();
-
-    [GeneratedRegex(@"^count\(\)$", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex CountRegex();
-
-    [GeneratedRegex(@"^count\(\)\s+by\s+(\w+)$", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex CountByRegex();
-
-    [GeneratedRegex(@"^count\(\)\s+by\s+bin\s*\(\s*(\w+)\s*,\s*([^)]+?)\s*\)$", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex CountByBinRegex();
-
-    [GeneratedRegex(@"^(\d+(?:\.\d+)?)(ms|d|h|m|s)$", RegexOptions.IgnoreCase, "pl-PL")]
-    private static partial Regex TimespanRegex();
-
-    [GeneratedRegex(@"ago\s*\(\s*([^)]+?)\s*\)", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex AgoRegex();
-    
-    [GeneratedRegex(@"datetime\s*\(\s*([^)]+?)\s*\)", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex DateTimeRegex();
-    
-    [GeneratedRegex(@"^(\w+)\s+on\s+(\$left\.)?(\w+)$", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex DefaultJoinRegex();
-    
-    [GeneratedRegex(@"^kind\s*=\s*(\w+)\s+(\w+)\s+on\s+(\$left\.)?(\w+)$", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex JoinWithKindRegex();
-    
-    [GeneratedRegex(
-        """^(\w+)\s+between\s*\(\s*("[^"]*"|[^\s.]+)\s*\.\.\s*("[^"]*"|[^\s.]+)\s*\)$""",
-        RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex BetweenRegex();
-    
-    [GeneratedRegex(
-        """^(\w+)\s+!between\s*\(\s*("[^"]*"|[^\s.]+)\s*\.\.\s*("[^"]*"|[^\s.]+)\s*\)$""",
-        RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex NotBetweenRegex();
-    
-    [GeneratedRegex(@"^(\w+)\s+between\s+\(([\d.]+)\s*\.\.\s*([\d.]+)\)", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex ExtendRegex();
-    
 }

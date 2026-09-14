@@ -17,8 +17,11 @@ internal sealed class LogAnalyticsServiceControlPlane(
     private const string NotFoundCode = "ResourceNotFound";
     private const string NotFoundMessage = "Workspace '{0}' could not be found";
 
+    private readonly SubscriptionControlPlane _subscriptionControlPlane =
+        SubscriptionControlPlane.New(eventPipeline, logger);
+
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
-        new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
+        ResourceGroupControlPlane.New(eventPipeline, logger);
 
     public static LogAnalyticsServiceControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new WorkspaceResourceProvider(logger), logger);
@@ -79,7 +82,7 @@ internal sealed class LogAnalyticsServiceControlPlane(
                 existing.Properties.PublicNetworkAccessForQuery = request.Properties.PublicNetworkAccessForQuery;
 
             provider.CreateOrUpdate(sub, rg, name, existing);
-            return new ControlPlaneOperationResult<WorkspaceResource>(OperationResult.Updated, existing, null, null);
+            return new ControlPlaneOperationResult<WorkspaceResource>(OperationResult.Updated, existing);
         }
 
         var location = request.Location ?? rgOp.Resource!.Location!;
@@ -87,7 +90,7 @@ internal sealed class LogAnalyticsServiceControlPlane(
         var resource = new WorkspaceResource(sub, rg, name, location, request.Tags, properties);
 
         provider.CreateOrUpdate(sub, rg, name, resource, createOperation: true);
-        return new ControlPlaneOperationResult<WorkspaceResource>(OperationResult.Created, resource, null, null);
+        return new ControlPlaneOperationResult<WorkspaceResource>(OperationResult.Created, resource);
     }
 
     public ControlPlaneOperationResult<WorkspaceResource> Get(
@@ -99,7 +102,7 @@ internal sealed class LogAnalyticsServiceControlPlane(
         return resource == null
             ? new ControlPlaneOperationResult<WorkspaceResource>(
                 OperationResult.NotFound, null, string.Format(NotFoundMessage, name), NotFoundCode)
-            : new ControlPlaneOperationResult<WorkspaceResource>(OperationResult.Success, resource, null, null);
+            : new ControlPlaneOperationResult<WorkspaceResource>(OperationResult.Success, resource);
     }
 
     public ControlPlaneOperationResult Delete(
@@ -132,7 +135,7 @@ internal sealed class LogAnalyticsServiceControlPlane(
 
         existing.Properties.UpdateFromRequest(request);
         provider.CreateOrUpdate(sub, rg, name, existing);
-        return new ControlPlaneOperationResult<WorkspaceResource>(OperationResult.Updated, existing, null, null);
+        return new ControlPlaneOperationResult<WorkspaceResource>(OperationResult.Updated, existing);
     }
 
     public ControlPlaneOperationResult<WorkspaceResource[]> ListByResourceGroup(
@@ -142,7 +145,7 @@ internal sealed class LogAnalyticsServiceControlPlane(
         var resources = provider.ListAs<WorkspaceResource>(sub, rg, lookForNoOfSegments: 8)
             .Where(r => r.IsInSubscription(sub) && r.IsInResourceGroup(rg))
             .ToArray();
-        return new ControlPlaneOperationResult<WorkspaceResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<WorkspaceResource[]>(OperationResult.Success, resources);
     }
 
     public ControlPlaneOperationResult<WorkspaceResource[]> ListBySubscription(
@@ -151,6 +154,35 @@ internal sealed class LogAnalyticsServiceControlPlane(
         var resources = provider.ListAs<WorkspaceResource>(sub, null, lookForNoOfSegments: 8)
             .Where(r => r.IsInSubscription(sub))
             .ToArray();
-        return new ControlPlaneOperationResult<WorkspaceResource[]>(OperationResult.Success, resources, null, null);
+        return new ControlPlaneOperationResult<WorkspaceResource[]>(OperationResult.Success, resources);
+    }
+
+    public ControlPlaneOperationResult<WorkspaceResource> GetByWorkspaceId(string workspaceId)
+    {
+        var subscriptions = _subscriptionControlPlane.List();
+        if (subscriptions.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult<WorkspaceResource>(subscriptions.Result, null, subscriptions.Reason, subscriptions.Code);
+        }
+        
+        foreach (var subscription in subscriptions.Resource!)
+        {
+            var workspaces = ListBySubscription(SubscriptionIdentifier.From(subscription.SubscriptionId));
+            if (workspaces.Result != OperationResult.Success)
+            {
+                logger.LogError(nameof(LogAnalyticsServiceControlPlane), nameof(GetByWorkspaceId),
+                    "Failed to list workspaces in subscription {0}: {1}", subscription.SubscriptionId,
+                    workspaces.Reason);
+                continue;
+            }
+            
+            var workspace = workspaces.Resource!.SingleOrDefault(w => w.Properties.WorkspaceId == workspaceId);
+            if (workspace != null)
+            {
+                return new ControlPlaneOperationResult<WorkspaceResource>(OperationResult.Success, workspace);
+            }
+        }
+
+        return new ControlPlaneOperationResult<WorkspaceResource>(OperationResult.NotFound, null, string.Format(NotFoundMessage, workspaceId));
     }
 }

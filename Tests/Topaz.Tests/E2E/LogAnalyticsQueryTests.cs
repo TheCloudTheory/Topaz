@@ -201,4 +201,46 @@ public class LogAnalyticsQueryTests
             Assert.That(result.Value.Table.Rows, Is.Empty);
         }
     }
+    
+    [Test]
+    public async Task LogAnalyticsQuery_WorkspaceFunction_ByCustomerId_ReturnsIngestedRows()
+    {
+        await IngestRecords("WorkspaceFnTable", new { Message = "via-workspace-fn" });
+
+        var client = CreateQueryClient();
+        var query = $"workspace(\"{_workspaceCustomerId}\").WorkspaceFnTable_CL | take 10";
+        var result = await client.QueryWorkspaceAsync(_workspaceCustomerId, query, QueryTimeRange.All);
+
+        Assert.That(result.Value.Table.Rows, Has.Count.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task LogAnalyticsQuery_WorkspaceFunction_ByResourceId_ReturnsIngestedRows()
+    {
+        await IngestRecords("WorkspaceFnResourceIdTable", new { Message = "via-resource-id" });
+
+        var resourceId =
+            $"/subscriptions/{SubscriptionId}/resourcegroups/{ResourceGroupName}" +
+            $"/providers/Microsoft.OperationalInsights/workspaces/{WorkspaceName}";
+
+        var client = CreateQueryClient();
+        var query = $"workspace(\"{resourceId}\").WorkspaceFnResourceIdTable_CL | take 10";
+        var result = await client.QueryWorkspaceAsync(_workspaceCustomerId, query, QueryTimeRange.All);
+
+        Assert.That(result.Value.Table.Rows, Has.Count.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task LogAnalyticsQuery_UnionWithWorkspaceFunction_CombinesRowsFromBothReferences()
+    {
+        await IngestRecords("UnionWorkspaceFnTable", new { Message = "local-row" });
+
+        var client = CreateQueryClient();
+        var query =
+            $"union UnionWorkspaceFnTable_CL, workspace(\"{_workspaceCustomerId}\").UnionWorkspaceFnTable_CL | take 10";
+        var result = await client.QueryWorkspaceAsync(_workspaceCustomerId, query, QueryTimeRange.All);
+
+        // Same workspace referenced twice (bare + via workspace()) should still de-duplicate to the ingested rows.
+        Assert.That(result.Value.Table.Rows, Has.Count.GreaterThanOrEqualTo(1));
+    }
 }

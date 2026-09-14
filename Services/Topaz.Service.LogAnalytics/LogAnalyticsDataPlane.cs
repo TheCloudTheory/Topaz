@@ -142,13 +142,45 @@ internal sealed class LogAnalyticsDataPlane(
 
         var subscriptionIdentifier = workspace.GetSubscription();
         var resourceGroupIdentifier = workspace.GetResourceGroup();
-        var workspaceName = workspace.Name;
 
         var result = KqlQueryExecutor.Execute(
             query,
-            tableName => provider.LoadIngestedData(subscriptionIdentifier, resourceGroupIdentifier, workspaceName, tableName));
+            workspace.Name,
+            (workspaceName, tableName) => provider.LoadIngestedData(subscriptionIdentifier, resourceGroupIdentifier, workspaceName, tableName),
+            ResolveWorkspaceName);
 
         return new DataPlaneOperationResult<QueryResult>(
             OperationResult.Success, result);
+    }
+
+    private string ResolveWorkspaceName(string workspaceRef)
+    {
+        if (Guid.TryParse(workspaceRef, out var workspaceId))
+        {
+            var resultByWorkspaceId = controlPlane.GetByWorkspaceId(workspaceId.ToString());
+            if (resultByWorkspaceId.Result == OperationResult.Success)
+            {
+                return resultByWorkspaceId.Resource!.Name;
+            }
+            
+            logger.LogError(nameof(LogAnalyticsDataPlane), nameof(ResolveWorkspaceName), resultByWorkspaceId.Reason!, resultByWorkspaceId.Code);
+            throw new InvalidOperationException(resultByWorkspaceId.Reason!);
+
+        }
+
+        var segments = workspaceRef.Split('/');
+        var workspaceName = segments[^1];
+        var subscriptionIdentifier = SubscriptionIdentifier.From(segments[2]);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(segments[4]);
+        var workspace = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, workspaceName);
+
+        if (workspace.Result == OperationResult.Success)
+        {
+            return workspace.Resource!.Name;
+        }
+        
+        logger.LogError(nameof(LogAnalyticsDataPlane), nameof(ResolveWorkspaceName), workspace.Reason!, workspace.Code);
+        throw new InvalidOperationException(workspace.Reason!);
+
     }
 }
