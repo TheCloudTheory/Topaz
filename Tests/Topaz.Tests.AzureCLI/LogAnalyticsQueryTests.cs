@@ -73,11 +73,9 @@ public class LogAnalyticsQueryTests : TopazFixture
             response =>
             {
                 var tables = response.AsArray();
+                
                 Assert.That(tables, Is.Not.Null);
-                Assert.That(tables!.Count, Is.GreaterThanOrEqualTo(1));
-                var primaryTable = tables![0]!;
-                Assert.That(primaryTable["name"]!.GetValue<string>(), Is.EqualTo("PrimaryResult"));
-                Assert.That(primaryTable["rows"]!.AsArray(), Is.Empty);
+                Assert.That(tables, Is.Empty);
             }, skipIfWarning: true);
     }
 
@@ -92,13 +90,9 @@ public class LogAnalyticsQueryTests : TopazFixture
             response =>
             {
                 var tables = response.AsArray();
+                
                 Assert.That(tables, Is.Not.Null);
-                var primaryTable = tables![0]!;
-                Assert.Multiple(() =>
-                {
-                    Assert.That(primaryTable["name"]!.GetValue<string>(), Is.EqualTo("PrimaryResult"));
-                    Assert.That(primaryTable["rows"]!.AsArray(), Is.Empty);
-                });
+                Assert.That(tables, Is.Empty);
             }, skipIfWarning: true);
     }
 
@@ -115,7 +109,7 @@ public class LogAnalyticsQueryTests : TopazFixture
             {
                 var tables = response.AsArray();
                 Assert.That(tables, Is.Not.Null);
-                Assert.That(tables![0]!["name"]!.GetValue<string>(), Is.EqualTo("PrimaryResult"));
+                Assert.That(tables[0]!["TableName"]!.GetValue<string>(), Is.EqualTo("PrimaryResult"));
             });
     }
 
@@ -132,8 +126,7 @@ public class LogAnalyticsQueryTests : TopazFixture
             response =>
             {
                 var tables = response.AsArray();
-                var rows = tables![0]!["rows"]!.AsArray();
-                Assert.That(rows!.Count, Is.GreaterThanOrEqualTo(2));
+                Assert.That(tables, Has.Count.GreaterThanOrEqualTo(2));
             });
     }
 
@@ -149,8 +142,8 @@ public class LogAnalyticsQueryTests : TopazFixture
             $"az monitor log-analytics query -w {customerId} --analytics-query \"CliTakeTable_CL | take 2\"",
             response =>
             {
-                var rows = response.AsArray()![0]!["rows"]!.AsArray();
-                Assert.That(rows!, Has.Count.EqualTo(2));
+                var rows = response.AsArray();
+                Assert.That(rows, Has.Count.EqualTo(2));
             }, skipIfWarning: true);
     }
 
@@ -166,8 +159,8 @@ public class LogAnalyticsQueryTests : TopazFixture
             $"az monitor log-analytics query -w {customerId} --analytics-query \"CliWhereTable_CL | where Level_s == 'Error'\"",
             response =>
             {
-                var rows = response.AsArray()![0]!["rows"]!.AsArray();
-                Assert.That(rows!.Count, Is.GreaterThanOrEqualTo(1));
+                var rows = response.AsArray();
+                Assert.That(rows, Is.Not.Empty);
             });
     }
 
@@ -182,13 +175,9 @@ public class LogAnalyticsQueryTests : TopazFixture
             response =>
             {
                 var tables = response.AsArray();
+                
                 Assert.That(tables, Is.Not.Null);
-                var primaryTable = tables![0]!;
-                Assert.Multiple(() =>
-                {
-                    Assert.That(primaryTable["name"]!.GetValue<string>(), Is.EqualTo("PrimaryResult"));
-                    Assert.That(primaryTable["rows"]!.AsArray(), Is.Empty);
-                });
+                Assert.That(tables, Is.Empty);
             });
     }
 }
