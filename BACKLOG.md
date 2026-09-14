@@ -648,3 +648,12 @@ TODO: Application Insights: mv-expand support
   milestone: v1.16
   labels: enhancement, kql, application-insights
 -->
+
+### Azure Resource Manager – Subscription and tenant limits
+
+<!--
+TODO: Azure Resource Manager: remaining requests 
+  Introduce response headers for rate-limiting. They must be based on the defaults, and all operations must substract the number of requests from the remaining requests.
+  milestone: v1.16
+  labels: enhancement, arm, limits-and-quotas
+-->
