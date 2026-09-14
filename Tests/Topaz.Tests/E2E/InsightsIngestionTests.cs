@@ -236,7 +236,7 @@ public class InsightsIngestionTests
         using var content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
         var response = await Http.PostAsync($"{ingestionEndpoint}/v1/apps/{ikey}/query", content);
         response.EnsureSuccessStatusCode();
-        
+
         return JsonDocument.Parse(await response.Content.ReadAsStringAsync());
     }
 
@@ -373,7 +373,7 @@ public class InsightsIngestionTests
         var binIdx = columns.FirstOrDefault(c => c.name == "timestamp").index;
 
         var bucket = table.GetProperty("rows")[0][binIdx].GetDateTimeOffset();
-        
+
         using (Assert.EnterMultipleScope())
         {
             Assert.That(bucket.Minute, Is.Zero);
@@ -639,5 +639,70 @@ public class InsightsIngestionTests
         var names = table.GetProperty("rows").EnumerateArray().Select(row => row[nameIdx].GetString());
 
         Assert.That(names, Does.Contain(unmatchedName));
+    }
+
+    [Test]
+    public async Task Query_WhereTimestampBetweenAgoRange_ReturnsRecentlyIngestedRow()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/between-in-range");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp between (ago(1h) .. ago(0))");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_WhereTimestampBetweenAgoRange_ExcludesRowOutsideRange()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/between-out-of-range");
+
+        // A row ingested just now cannot fall inside a window that ended a day ago.
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp between (ago(2d) .. ago(1d))");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
+    }
+    
+    [Test]
+    public async Task Query_WhereTimestampNotBetweenAgoRange_IncludesRowInsideRange()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/not-between-in-range");
+        
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp !between (ago(2d) .. ago(1d))");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_WhereBetweenCombinedWithNameFilter_ReturnsOnlyMatchingRows()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/between-and-name");
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/between-other-name");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp between (ago(1h) .. ago(0)) | where name == \"GET /api/between-and-name\"");
+        var table = doc.RootElement.GetProperty("tables")[0];
+        var rows = table.GetProperty("rows");
+
+        Assert.That(rows.GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_WhereBetweenInvalidTimespanLiteral_ReturnsEmptyResult()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/between-invalid");
+
+        Assert.ThrowsAsync<HttpRequestException>(async () => await RunQuery(ingestionEndpoint, ikey,
+            "requests | where timestamp between (ago(1x) .. ago(0))"));
     }
 }

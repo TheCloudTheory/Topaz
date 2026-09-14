@@ -87,6 +87,16 @@ internal static partial class KqlQueryExecutor
             });
         }
         
+        var dateTimeMatch = DateTimeRegex().Match(op);
+        if (dateTimeMatch.Success)
+        {
+            op = DateTimeRegex().Replace(op, match =>
+            {
+                var dateTime = DateTimeOffset.Parse(match.Groups[1].Value);
+                return $"\"{dateTime:O}\"";
+            });
+        }
+        
         return op;
     }
 
@@ -154,6 +164,40 @@ internal static partial class KqlQueryExecutor
             [
                 .. rows.Where(r =>
                     r[field]?.GetValue<string>().StartsWith(value, StringComparison.OrdinalIgnoreCase) == true)
+            ];
+        }
+        
+        var betweenMatch = BetweenRegex().Match(predicate);
+        if (betweenMatch.Success)
+        {
+            var field = betweenMatch.Groups[1].Value;
+            var low = betweenMatch.Groups[2].Value.Trim('"');
+            var high = betweenMatch.Groups[3].Value.Trim('"');
+            
+            return
+            [
+                .. rows.Where(r =>
+                {
+                    var val = r[field]!.GetValue<object>().AsComparableObject();
+                    return !val.IsLessThan(low) && !val.IsGreaterThan(high);
+                })
+            ];
+        }
+        
+        var notBetweenMatch = BetweenRegex().Match(predicate);
+        if (notBetweenMatch.Success)
+        {
+            var field = notBetweenMatch.Groups[1].Value;
+            var low = notBetweenMatch.Groups[2].Value.Trim('"');
+            var high = notBetweenMatch.Groups[3].Value.Trim('"');
+            
+            return
+            [
+                .. rows.Where(r =>
+                {
+                    var val = r[field]!.GetValue<object>().AsComparableObject();
+                    return val.IsLessThan(low) || val.IsGreaterThan(high);
+                })
             ];
         }
 
@@ -453,9 +497,22 @@ internal static partial class KqlQueryExecutor
     [GeneratedRegex(@"ago\s*\(\s*([^)]+?)\s*\)", RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex AgoRegex();
     
+    [GeneratedRegex(@"datetime\s*\(\s*([^)]+?)\s*\)", RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex DateTimeRegex();
+    
     [GeneratedRegex(@"^(\w+)\s+on\s+(\$left\.)?(\w+)$", RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex DefaultJoinRegex();
     
     [GeneratedRegex(@"^kind\s*=\s*(\w+)\s+(\w+)\s+on\s+(\$left\.)?(\w+)$", RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex JoinWithKindRegex();
+    
+    [GeneratedRegex(
+        """^(\w+)\s+between\s*\(\s*("[^"]*"|[^\s.]+)\s*\.\.\s*("[^"]*"|[^\s.]+)\s*\)$""",
+        RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex BetweenRegex();
+    
+    [GeneratedRegex(
+        """^(\w+)\s+!between\s*\(\s*("[^"]*"|[^\s.]+)\s*\.\.\s*("[^"]*"|[^\s.]+)\s*\)$""",
+        RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex NotBetweenRegex();
 }

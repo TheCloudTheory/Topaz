@@ -175,14 +175,6 @@ TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
 ### Application Insights & Log Analytics — richer KQL
 
 <!--
-TODO: Application Insights / Log Analytics: Extended KQL operators
-  Add join (inner/leftouter), mv-expand, bin(), ago(), and time-range filter (between, datetime())
-  to both the Application Insights query API and Log Analytics query API introduced in v1.9.
-  milestone: v1.11
-  labels: enhancement, application-insights, log-analytics
--->
-
-<!--
 TODO: Log Analytics: Cross-workspace query
   POST /v1/workspaces/{id}/query accepts a workspaces() expression referencing other emulated
   Log Analytics workspaces within the same Topaz instance.
@@ -646,4 +638,13 @@ TODO: Event Grid: Namespace Topic Event Subscriptions (pull delivery)
   - POST /topics/{name}/eventSubscriptions/{subName}:reject — dead-letters events by lockToken.
   milestone: v1.16
   labels: enhancement, event-grid
+-->
+
+### Application Insights – KQL improvements
+
+<!--
+TODO: Application Insights: mv-expand support
+  Improve KQL support by adding support for mv-expand operator.
+  milestone: v1.16
+  labels: enhancement, kql, application-insights
 -->
