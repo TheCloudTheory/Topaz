@@ -171,17 +171,6 @@ TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
 
 ## v1.11
 
-
-### Application Insights & Log Analytics — richer KQL
-
-<!--
-TODO: Log Analytics: Cross-workspace query
-  POST /v1/workspaces/{id}/query accepts a workspaces() expression referencing other emulated
-  Log Analytics workspaces within the same Topaz instance.
-  milestone: v1.11
-  labels: enhancement, log-analytics
--->
-
 ### Azure Redis Cache — data plane
 
 <!--
@@ -647,6 +636,13 @@ TODO: Application Insights: mv-expand support
   Improve KQL support by adding support for mv-expand operator.
   milestone: v1.16
   labels: enhancement, kql, application-insights
+-->
+
+<!--
+TODO: Application Insights: app() support
+  Add support for `app()` function. So it's possible to perform cross-workspace queries. Reference the existing implementation of `workspace()` function.
+  milestone: v1.16
+  labels: enhancement, kql, application-insights, good first issue
 -->
 
 ### Azure Resource Manager – Subscription and tenant limits
