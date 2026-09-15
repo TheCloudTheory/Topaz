@@ -1,5 +1,4 @@
 using System.Net.Sockets;
-using System.Text;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
@@ -29,6 +28,6 @@ internal sealed class Resp2ProtocolListenerEndpoint(Pipeline eventPipeline, ITop
         }
 
         var response = _handler.Handle(receiveBuffer, noOfBytes);
-        await socket.SendAsync(Encoding.UTF8.GetBytes(string.Join("\r\n", response) + "\r\n"));
+        await socket.SendAsync(response);
     }
 }
