@@ -1,0 +1,301 @@
+using Azure;
+using Azure.Security.KeyVault.Secrets;
+using Topaz.CLI;
+using Topaz.Identity;
+using Topaz.ResourceManager;
+
+namespace Topaz.Tests.E2E.KeyVault;
+
+public class KeyVaultTests
+{
+    private static readonly Guid SubscriptionId = Guid.Parse("0B3C7E76-4569-442A-A858-D2BA2FE522BB");
+    
+    private const string SubscriptionName = "sub-test";
+    private const string ResourceGroupName = "test";
+    
+    [SetUp]
+    public async Task SetUp()
+    {
+        await Program.RunAsync(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            SubscriptionId.ToString()
+        ]);
+        
+        await Program.RunAsync(
+        [
+            "subscription",
+            "create",
+            "--id",
+            SubscriptionId.ToString(),
+            "--name",
+            SubscriptionName
+        ]);
+
+        await Program.RunAsync([
+            "group",
+            "delete",
+            "--name",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "group",
+            "create",
+            "--name",
+            ResourceGroupName,
+            "--location",
+            "westeurope",
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+
+        await Program.RunAsync([
+            "keyvault",
+            "delete",
+            "--name",
+            "test",
+            "-g",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
+        ]);
+        
+        await Program.RunAsync([
+            "keyvault",
+            "create",
+            "--name",
+            "test",
+            "-g",
+            ResourceGroupName,
+            "--location",
+            "westeurope",
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+    }
+
+    [Test]
+    public void KeyVaultTests_WhenSecretIsCreated_ItShouldBePossibleToFetch()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        var createSecret = client.SetSecret("secret-name", "test");
+        var secret = client.GetSecret("secret-name");
+        
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(secret.Value.Value, Is.EqualTo("test"));
+            Assert.That(createSecret.Value.Value, Is.EqualTo("test"));
+            Assert.That(secret.Value.Id, Is.Not.Null);
+        });
+    }
+    
+    [Test]
+    public void KeyVaultTests_WhenSecretIsNotCreated_ItShouldNotBePossibleToFetch()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
+        {
+            DisableChallengeResourceVerification = true
+        });
+        
+        // Assert
+        Assert.Throws<RequestFailedException>(() => client.GetSecret("secret-name-not-existing"));
+    }
+    
+    [Test]
+    public void KeyVaultTests_WhenSecretIsCreatedTwice_ItShouldHaveTwoVersions()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        var createSecret = client.SetSecret("secret-name", "test");
+        var createSecretSecond = client.SetSecret("secret-name", "test2");
+        var secret = client.GetSecret("secret-name");
+        var originalSecret = client.GetSecret("secret-name", createSecret.Value.Properties.Version);
+        
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(secret.Value.Value, Is.EqualTo("test2"));
+            Assert.That(createSecret.Value.Value, Is.EqualTo("test"));
+            Assert.That(secret.Value.Id, Is.Not.Null);
+            Assert.That(createSecretSecond.Value.Id, Is.Not.Null);
+            Assert.That(originalSecret.Value.Value, Is.EqualTo("test"));
+        });
+    }
+    
+    [Test]
+    public void KeyVaultTests_WhenListOfSecretsIsRequested_TheyMustBeReturned()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
+        {
+            DisableChallengeResourceVerification = true
+        });
+        var existingSecrets = client.GetPropertiesOfSecrets().ToArray();
+        foreach (var secret in existingSecrets)
+        {
+            client.StartDeleteSecret(secret.Name);
+        }
+
+        // Act
+        var secret1 = client.SetSecret("secret-one", "test");
+        var secret2 = client.SetSecret("secret-two", "test");
+        var secrets = client.GetPropertiesOfSecrets().ToArray();
+        
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(secrets, Has.Length.EqualTo(2));
+            Assert.That(secrets[0].Id, Is.Not.Null);
+            Assert.That(secrets[1].Id, Is.Not.Null);
+        });
+    }
+    
+    [Test]
+    public void KeyVaultTests_WhenMultipleSecretsAreDeleted_TheyShouldAllBeListableAsDeleted()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        client.SetSecret("deleted-secret-a", "value-a");
+        client.SetSecret("deleted-secret-b", "value-b");
+        var deleteOpA = client.StartDeleteSecret("deleted-secret-a");
+        var deleteOpB = client.StartDeleteSecret("deleted-secret-b");
+        deleteOpA.WaitForCompletion();
+        deleteOpB.WaitForCompletion();
+
+        var deletedSecrets = client.GetDeletedSecrets().ToArray();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deletedSecrets.Any(s => s.Name == "deleted-secret-a"), Is.True);
+            Assert.That(deletedSecrets.Any(s => s.Name == "deleted-secret-b"), Is.True);
+            Assert.That(deletedSecrets.All(s => s.DeletedOn != null), Is.True);
+            Assert.That(deletedSecrets.All(s => s.ScheduledPurgeDate != null), Is.True);
+        });
+    }
+
+    [Test]
+    public void KeyVaultTests_WhenSecretIsDeleted_ItShouldBeRetrievableAsDeletedSecret()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        client.SetSecret("secret-deleted", "secret-value");
+        var deleteOp = client.StartDeleteSecret("secret-deleted");
+        deleteOp.WaitForCompletion();
+
+        var deletedSecret = client.GetDeletedSecret("secret-deleted");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deletedSecret.Value.Name, Is.EqualTo("secret-deleted"));
+            Assert.That(deletedSecret.Value.Value, Is.EqualTo("secret-value"));
+            Assert.That(deletedSecret.Value.DeletedOn, Is.Not.Null);
+            Assert.That(deletedSecret.Value.ScheduledPurgeDate, Is.Not.Null);
+        });
+    }
+    
+    [Test]
+    public void KeyVaultTests_WhenSecretIsDeleted_ItShouldBeRecoverable()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        client.SetSecret("secret-to-recover", "original-value");
+        var deleteOp = client.StartDeleteSecret("secret-to-recover");
+        deleteOp.WaitForCompletion();
+
+        var recoverOp = client.StartRecoverDeletedSecret("secret-to-recover");
+        recoverOp.WaitForCompletion();
+
+        var recovered = client.GetSecret("secret-to-recover");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(recovered.Value.Name, Is.EqualTo("secret-to-recover"));
+            Assert.That(recovered.Value.Value, Is.EqualTo("original-value"));
+        });
+    }
+
+    [Test]
+    public void KeyVaultTests_WhenSecretIsRecovered_ItShouldNoLongerAppearInDeletedSecrets()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        client.SetSecret("secret-recover-cleanup", "some-value");
+        var deleteOp = client.StartDeleteSecret("secret-recover-cleanup");
+        deleteOp.WaitForCompletion();
+
+        var recoverOp = client.StartRecoverDeletedSecret("secret-recover-cleanup");
+        recoverOp.WaitForCompletion();
+
+        var deletedSecrets = client.GetDeletedSecrets().ToArray();
+
+        // Assert
+        Assert.That(deletedSecrets.Any(s => s.Name == "secret-recover-cleanup"), Is.False);
+    }
+
+    [Test]
+    public void KeyVaultTests_SecretIsRemoved_ThenItShouldNoLongerBeAvailable()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        client.SetSecret("secret-one", "test");
+        client.StartDeleteSecret("secret-one");
+        
+        // Assert
+        Assert.Throws<RequestFailedException>(() => client.GetSecret("secret-one"));
+    }
+}
