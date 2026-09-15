@@ -31,6 +31,6 @@ public sealed class RedisService(Pipeline eventPipeline, ITopazLogger logger) : 
         new GetFirewallRuleEndpoint(eventPipeline, logger),
         new DeleteFirewallRuleEndpoint(eventPipeline, logger),
         new ListFirewallRulesEndpoint(eventPipeline, logger),
-        new Resp2ProtocolListenerEndpoint()
+        new Resp2ProtocolListenerEndpoint(eventPipeline, logger)
     ];
 }

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
+using Topaz.Shared;
 
 namespace Topaz.Service.Redis.Models;
 
@@ -47,7 +48,7 @@ internal sealed class RedisResourceProperties
 
     internal void ConfigureHostname(string name)
     {
-        HostName = $"{name}.redis.cache.topaz.local.dev";
+        HostName = GlobalSettings.GetRedisEndpoint(name);
     }
 }
 

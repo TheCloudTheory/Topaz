@@ -71,8 +71,14 @@ public interface IEndpointDefinition
     {
         return Task.CompletedTask;
     }
-    
-    public virtual Task HandleTcpConnection(Socket socket)
+
+    /// <summary>
+    /// Handles an incoming TCP connection for the specific endpoint.
+    /// The implementation processes the received data from the provided socket.
+    /// </summary>
+    /// <param name="socket">The socket representing the accepted TCP connection.</param>
+    /// <returns>A task that represents the asynchronous operation of handling the TCP connection.</returns>
+    public Task HandleTcpConnection(Socket socket)
     {
         return Task.CompletedTask;
     }

@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Logging;
+
 namespace Topaz.Shared;
 
-public interface ITopazLogger
+public interface ITopazLogger : ILogger
 {
     LogLevel LogLevel { get; }
     

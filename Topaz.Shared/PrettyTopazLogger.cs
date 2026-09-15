@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Spectre.Console;
 
 namespace Topaz.Shared;
@@ -146,5 +147,46 @@ public sealed class PrettyTopazLogger : ITopazLogger
     private Guid GetCorrelationId()
     {
         return _idFactory?.Get() ?? Guid.Empty;
+    }
+
+    public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    {
+        switch (logLevel)
+        {
+            case Microsoft.Extensions.Logging.LogLevel.Critical:
+                LogError(exception!);
+                break;
+
+            case Microsoft.Extensions.Logging.LogLevel.Trace:
+                LogInformation(formatter(state, exception));
+                break;
+            case Microsoft.Extensions.Logging.LogLevel.Debug:
+                LogDebug(formatter(state, exception));
+                break;
+            case Microsoft.Extensions.Logging.LogLevel.Information:
+                LogInformation(formatter(state, exception));
+                break;
+            case Microsoft.Extensions.Logging.LogLevel.Warning:
+                LogWarning(formatter(state, exception));
+                break;
+            case Microsoft.Extensions.Logging.LogLevel.Error:
+                LogError(formatter(state, exception));
+                break;
+            case Microsoft.Extensions.Logging.LogLevel.None:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
+        }
+            
+    }
+
+    public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel)
+    {
+        return true;
+    }
+
+    public IDisposable BeginScope<TState>(TState state) where TState : notnull
+    {
+        throw new NotImplementedException();
     }
 }

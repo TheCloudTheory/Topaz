@@ -342,4 +342,7 @@ public static class GlobalSettings
     /// <param name="subscriptionId">ID of the subscription where the topic was created.</param>
     /// <returns>A string containing the Event Grid endpoint URL.</returns>
     public static string GetEventGridEndpoint(string topicName, string subscriptionId) => $"https://{topicName}-{subscriptionId.Split('-')[0]}.{EventGridDnsSuffix}:{DefaultResourceManagerPort}/";
+    
+    public const int RedisPort = 6379;
+    public static string GetRedisEndpoint(string redisName) => $"{redisName}.redis.cache.topaz.local.dev:{RedisPort}";
 }
