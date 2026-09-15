@@ -18,7 +18,15 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         AuthStart,
         HelloStart,
         AuthBulkString,
-        HelloBulkString
+        HelloBulkString,
+        ClientStart,
+        ClientBulkString,
+        ClientSetNameStart,
+        ClientSetInfoStart,
+        ClientSetNameBulkString,
+        ClientSetInfoKeyBulkString,
+        ClientSetInfoValueBulkString,
+        ClientSetInfoValueStart
     }
 
     private static readonly IDictionary<char, TokenType> SpecialTokens = new Dictionary<char, TokenType>
@@ -62,7 +70,9 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
             logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle), $"Received line: {line}");
             
             var firstChar = line[0];
-            if (SpecialTokens.TryGetValue(firstChar, out var tokenType) && currentToken != TokenType.AuthStart && currentToken != TokenType.HelloStart)
+            if (SpecialTokens.TryGetValue(firstChar, out var tokenType) && currentToken != TokenType.AuthStart &&
+                currentToken != TokenType.HelloStart && currentToken != TokenType.ClientStart &&
+                currentToken != TokenType.ClientSetNameStart && currentToken != TokenType.ClientSetInfoStart && currentToken != TokenType.ClientSetInfoValueStart)
             {
                 currentToken = tokenType;
                 continue;
@@ -86,6 +96,30 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 continue;
             }
 
+            if (currentToken == TokenType.ClientStart)
+            {
+                currentToken = TokenType.ClientBulkString;
+                continue;
+            }
+            
+            if (currentToken == TokenType.ClientSetNameStart)
+            {
+                currentToken = TokenType.ClientSetNameBulkString;
+                continue;
+            }
+            
+            if (currentToken == TokenType.ClientSetInfoStart)
+            {
+                currentToken = TokenType.ClientSetInfoKeyBulkString;
+                continue;
+            }
+            
+            if (currentToken == TokenType.ClientSetInfoValueStart)
+            {
+                currentToken = TokenType.ClientSetInfoValueBulkString;
+                continue;
+            }
+
             if(currentToken == TokenType.AuthBulkString)
             {
                 var key = line;
@@ -101,6 +135,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 
                 // Reset the current token
                 currentToken = TokenType.NoOp;
+                continue;
             }
 
             if (currentToken == TokenType.HelloBulkString)
@@ -110,6 +145,53 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 
                 responses.Add(new[] {"server".AsBulkString(), "topaz".AsBulkString(), "version".AsBulkString(), "1.0".AsBulkString() }.AsRespMap());
                 currentToken = TokenType.NoOp;
+                continue;
+            }
+
+            if (currentToken == TokenType.ClientBulkString)
+            {
+                var command = line;
+                if (command == "SETNAME")
+                {
+                    currentToken = TokenType.ClientSetNameStart;
+                    continue;
+                }
+                
+                if(command == "SETINFO")
+                {
+                    currentToken = TokenType.ClientSetInfoStart;
+                    continue;
+                }
+            }
+
+            if (currentToken == TokenType.ClientSetNameBulkString)
+            {
+                var name = line;
+                logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle), $"Received client name: {name}");
+
+                responses.Add("+OK".AsBulkString());
+                currentToken = TokenType.NoOp;
+                
+                continue;
+            }
+
+            if (currentToken == TokenType.ClientSetInfoKeyBulkString)
+            {
+                var key = line;
+                logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle), $"Received client info key: {key}");
+                
+                currentToken = TokenType.ClientSetInfoValueStart;
+                continue;
+            }
+            
+            if (currentToken == TokenType.ClientSetInfoValueBulkString)
+            {
+                var value = line;
+                logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle), $"Received client info key: {value}");
+                
+                responses.Add("+OK".AsBulkString());
+                currentToken = TokenType.NoOp;
+                continue;
             }
 
             if (currentToken == TokenType.Array)
@@ -131,6 +213,11 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 {
                     currentToken = TokenType.HelloStart;
                     continue;
+                }
+
+                if (str == "CLIENT")
+                {
+                    currentToken = TokenType.ClientStart;
                 }
             }
         }
