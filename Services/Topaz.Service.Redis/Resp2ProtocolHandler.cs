@@ -26,7 +26,8 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         ClientSetNameBulkString,
         ClientSetInfoKeyBulkString,
         ClientSetInfoValueBulkString,
-        ClientSetInfoValueStart
+        ClientSetInfoValueStart,
+        ClientIdStart
     }
 
     private static readonly IDictionary<char, TokenType> SpecialTokens = new Dictionary<char, TokenType>
@@ -72,7 +73,8 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
             var firstChar = line[0];
             if (SpecialTokens.TryGetValue(firstChar, out var tokenType) && currentToken != TokenType.AuthStart &&
                 currentToken != TokenType.HelloStart && currentToken != TokenType.ClientStart &&
-                currentToken != TokenType.ClientSetNameStart && currentToken != TokenType.ClientSetInfoStart && currentToken != TokenType.ClientSetInfoValueStart)
+                currentToken != TokenType.ClientSetNameStart && currentToken != TokenType.ClientSetInfoStart &&
+                currentToken != TokenType.ClientSetInfoValueStart && currentToken != TokenType.ClientIdStart)
             {
                 currentToken = tokenType;
                 continue;
@@ -119,6 +121,14 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 currentToken = TokenType.ClientSetInfoValueBulkString;
                 continue;
             }
+            
+            if(currentToken == TokenType.ClientIdStart)
+            {
+                // Just return a fake client ID
+                responses.Add("1".AsBulkString());
+                currentToken = TokenType.NoOp;
+                continue;
+            }
 
             if(currentToken == TokenType.AuthBulkString)
             {
@@ -160,6 +170,12 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 if(command == "SETINFO")
                 {
                     currentToken = TokenType.ClientSetInfoStart;
+                    continue;
+                }
+
+                if (command == "ID")
+                {
+                    currentToken = TokenType.ClientIdStart;
                     continue;
                 }
             }
