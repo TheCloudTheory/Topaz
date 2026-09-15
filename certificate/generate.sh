@@ -43,7 +43,8 @@ openssl req \
   echo "DNS.16 = *.ods.opinsights.${PARENT}${SUFFIX}"; \
   echo "DNS.17 = *.applicationinsights.${PARENT}${SUFFIX}"; \
   echo "DNS.18 = api.loganalytics.${PARENT}${SUFFIX}"; \
-  echo "DNS.19 = *.eventgrid.${PARENT}${SUFFIX}")
+  echo "DNS.19 = *.eventgrid.${PARENT}${SUFFIX}"; \
+  echo "DNS.20 = *.redis.cache.${PARENT}${SUFFIX}")
 
 openssl x509 -noout -text -in $PARENT.crt
 
