@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 
@@ -67,6 +68,11 @@ public interface IEndpointDefinition
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options);
 
     public Task GetResponseAsync(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        return Task.CompletedTask;
+    }
+    
+    public virtual Task HandleTcpConnection(Socket socket)
     {
         return Task.CompletedTask;
     }

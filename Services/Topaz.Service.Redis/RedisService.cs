@@ -1,5 +1,6 @@
 using Topaz.EventPipeline;
 using Topaz.Service.Redis.Endpoints;
+using Topaz.Service.Redis.Endpoints.DataPlane;
 using Topaz.Service.Redis.Endpoints.FirewallRules;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -29,6 +30,7 @@ public sealed class RedisService(Pipeline eventPipeline, ITopazLogger logger) : 
         new CreateOrUpdateFirewallRuleEndpoint(eventPipeline, logger),
         new GetFirewallRuleEndpoint(eventPipeline, logger),
         new DeleteFirewallRuleEndpoint(eventPipeline, logger),
-        new ListFirewallRulesEndpoint(eventPipeline, logger)
+        new ListFirewallRulesEndpoint(eventPipeline, logger),
+        new Resp2ProtocolListenerEndpoint()
     ];
 }

@@ -4,5 +4,6 @@ public enum Protocol
 {
     Http,
     Https,
-    Amqp
+    Amqp,
+    Tcp
 }

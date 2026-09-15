@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Security.Cryptography.X509Certificates;
@@ -63,6 +64,7 @@ public class Host
     private static readonly HttpClient Client = new();
 
     private static readonly List<Thread> Threads = [];
+    private static readonly List<TcpListener> Listeners = [];
 
     private readonly Pipeline _eventPipeline;
     private readonly Router _router;
@@ -190,9 +192,11 @@ public class Host
 
         var httpEndpoints = new List<IEndpointDefinition>();
         var amqpEndpoints = new List<IEndpointDefinition>();
+        var tcpEndpoints = new List<IEndpointDefinition>();
 
         ExtractEndpointsForProtocols(services, httpEndpoints, [Protocol.Http, Protocol.Https]);
         ExtractEndpointsForProtocols(services, amqpEndpoints, [Protocol.Amqp]);
+        ExtractEndpointsForProtocols(services, tcpEndpoints, [Protocol.Tcp]);
 
         httpEndpoints.Add(new GetHealthEndpoint());
 
@@ -219,6 +223,7 @@ public class Host
 
         await CreateWebserverForHttpEndpointsAsync([.. httpEndpoints], idFactory, cancellationToken);
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
+        CreateTcpListenersForTcpEndpoints([.. tcpEndpoints]);
 
         var backgroundServices = new ITopazBackgroundService[]
         {
@@ -280,6 +285,12 @@ public class Host
         
         // Cleanup
         Client.Dispose();
+        
+        foreach (var listener in Listeners)
+        {
+            listener.Stop();
+            _logger.LogDebug(nameof(Host), nameof(Bootstrap), $"TCP listener stopped: {listener.LocalEndpoint}");
+        }
     }
 
     private void Bootstrap()
@@ -380,6 +391,33 @@ public class Host
         }));
 
         Threads.Last().Start();
+    }
+    
+    private void CreateTcpListenersForTcpEndpoints(IEndpointDefinition[] endpoints)
+    {
+        foreach (var endpoint in endpoints)
+        {
+            _logger.LogDebug(nameof(Host), nameof(CreateTcpListenersForTcpEndpoints),
+                $"Processing endpoint [{endpoint.GetType().Name}]: {endpoint.PortsAndProtocol.Protocol}:{string.Join(", ", endpoint.PortsAndProtocol.Ports)} -> [{string.Join(" | ", endpoint.Endpoints)}]");
+
+            foreach (var port in endpoint.PortsAndProtocol.Ports)
+            {
+                var listenerAddress = IPAddress.Any;
+                var listener = new TcpListener(listenerAddress, port);
+                listener.Start();
+                
+                Task.Run(async () =>
+                {
+                    var socket = await listener.AcceptSocketAsync();
+                    await endpoint.HandleTcpConnection(socket);
+                });
+                
+                _logger.LogDebug(nameof(Host), nameof(CreateTcpListenersForTcpEndpoints), $"TCP listener started: {listenerAddress}:{port}");
+                Listeners.Add(listener);
+            }
+        }
+        
+        _logger.LogInformation(nameof(Host), nameof(CreateTcpListenersForTcpEndpoints), $"TCP listeners started.");
     }
 
     private void ExtractEndpointsForProtocols(IServiceDefinition[] services, List<IEndpointDefinition> httpEndpoints,
