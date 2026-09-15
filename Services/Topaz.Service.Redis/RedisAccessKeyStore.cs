@@ -5,9 +5,9 @@ namespace Topaz.Service.Redis;
 
 internal sealed class RedisAccessKeyStore : TopazApiModel
 {
-    public List<RedisAccessKey> Keys { get; set; } = [];
+    public List<RedisAccessKey> Keys { get; init; } = [];
 
-    public static RedisAccessKeyStore Generate(string storeName)
+    public static RedisAccessKeyStore Generate()
     {
         return new RedisAccessKeyStore
         {

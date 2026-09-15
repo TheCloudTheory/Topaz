@@ -94,7 +94,7 @@ internal sealed class RedisServiceControlPlane(
 
         provider.CreateOrUpdate(sub, rg, name, resource, createOperation: true);
         
-        var keyStore = RedisAccessKeyStore.Generate(name);
+        var keyStore = RedisAccessKeyStore.Generate();
         provider.CreateOrUpdateSubresource(sub, rg, AccessKeysId, name, AccessKeysSubresource, keyStore);
 
         return new ControlPlaneOperationResult<RedisResource>(OperationResult.Created, resource);
