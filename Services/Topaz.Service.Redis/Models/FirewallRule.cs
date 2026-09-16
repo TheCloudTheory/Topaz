@@ -12,7 +12,8 @@ internal sealed class FirewallRule : TopazApiModel, IValidatable
     public string? Name { get; init; }
     [UsedImplicitly] public string Type => "Microsoft.Cache/Redis/firewallRules";
 
-    private FirewallRuleProperties? Properties { get; init; }
+    // ReSharper disable once MemberCanBePrivate.Global
+    public FirewallRuleProperties? Properties { get; init; }
 
     [UsedImplicitly]
     internal class FirewallRuleProperties
