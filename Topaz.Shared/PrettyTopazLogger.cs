@@ -5,10 +5,20 @@ namespace Topaz.Shared;
 
 public sealed class PrettyTopazLogger : ITopazLogger
 {
-    private const string LogFilePath = "topaz.log";
+    private readonly string _logFilePath;
     private CorrelationIdFactory? _idFactory;
     private bool IsLoggingToFileEnabled { get; set; }
     public LogLevel LogLevel { get; private set; } = LogLevel.Information;
+
+    public PrettyTopazLogger()
+    {
+        _logFilePath = "topaz.log";
+    }
+
+    public PrettyTopazLogger(string fileSuffix)
+    {
+        _logFilePath = $"topaz-{fileSuffix}.log";
+    }
 
     public void LogInformation(string message)
     {
@@ -106,9 +116,9 @@ public sealed class PrettyTopazLogger : ITopazLogger
         _idFactory = idFactory;
     }
 
-    private static void RefreshLogFile()
+    private void RefreshLogFile()
     {
-        File.WriteAllText(LogFilePath, string.Empty);
+        File.WriteAllText(_logFilePath, string.Empty);
     }
 
     private void Log(string message, LogLevel logLevel, Guid correlationId, Exception? exception = null)
@@ -135,7 +145,7 @@ public sealed class PrettyTopazLogger : ITopazLogger
     {
         if (!IsLoggingToFileEnabled) return;
         
-        File.AppendAllText(LogFilePath, $"{log}{Environment.NewLine}");
+        File.AppendAllText(_logFilePath, $"{log}{Environment.NewLine}");
     }
 
     private void TryWriteToFile(Exception exception, string timestamp, LogLevel logLevel)

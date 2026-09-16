@@ -408,8 +408,18 @@ public class Host
                 
                 Task.Run(async () =>
                 {
-                    var socket = await listener.AcceptSocketAsync();
-                    await endpoint.HandleTcpConnection(socket);
+                    while (true)
+                    {
+                        try
+                        {
+                            var socket = await listener.AcceptSocketAsync();
+                            _ = endpoint.HandleTcpConnection(socket); // fire-and-forget per connection
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(nameof(Host), nameof(CreateTcpListenersForTcpEndpoints), $"Error occurred while accepting TCP connection on port {port}: {ex.Message}");
+                        }
+                    }
                 });
                 
                 _logger.LogDebug(nameof(Host), nameof(CreateTcpListenersForTcpEndpoints), $"TCP listener started: {listenerAddress}:{port}");

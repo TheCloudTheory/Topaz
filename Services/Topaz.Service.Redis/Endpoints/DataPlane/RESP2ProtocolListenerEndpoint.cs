@@ -20,14 +20,17 @@ internal sealed class Resp2ProtocolListenerEndpoint(Pipeline eventPipeline, ITop
     public async Task HandleTcpConnection(Socket socket)
     {
         var receiveBuffer = new byte[4096];
-        var noOfBytes = await socket.ReceiveAsync(receiveBuffer);
-        if (noOfBytes == 0)
+        while (socket.Connected)
         {
-            logger.LogDebug(nameof(Resp2ProtocolListenerEndpoint), nameof(HandleTcpConnection), "No data received.");
-            return;
-        }
+            var noOfBytes = await socket.ReceiveAsync(receiveBuffer);
+            if (noOfBytes == 0)
+            {
+                logger.LogDebug(nameof(Resp2ProtocolListenerEndpoint), nameof(HandleTcpConnection), "Connection closed by client.");
+                return;
+            }
 
-        var response = _handler.Handle(receiveBuffer, noOfBytes);
-        await socket.SendAsync(response);
+            var response = _handler.Handle(receiveBuffer, noOfBytes);
+            await socket.SendAsync(response);
+        }
     }
 }

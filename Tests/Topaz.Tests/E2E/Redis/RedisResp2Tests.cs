@@ -110,7 +110,7 @@ internal sealed class RedisResp2Tests
 
         public ILogger CreateLogger(string categoryName)
         {
-            var logger = new PrettyTopazLogger();
+            var logger = new PrettyTopazLogger("redis");
             logger.EnableLoggingToFile(true);
             
             return logger;
