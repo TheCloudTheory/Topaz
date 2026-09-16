@@ -103,7 +103,8 @@ internal sealed class ApplicationInsightsDataPlane(
                 component.Name,
                 (workspaceName, tableName) => provider.LoadTelemetry(
                     component.GetSubscription(), component.GetResourceGroup(), workspaceName, tableName),
-                ResolveWorkspaceName);
+                ResolveWorkspaceName,
+                (appReference, tableName) => LoadAppTelemetry(component, appReference, tableName));
 
             return new DataPlaneOperationResult<QueryResult>(OperationResult.Success, result);
         }
@@ -116,6 +117,32 @@ internal sealed class ApplicationInsightsDataPlane(
         }
     }
     
+    private IEnumerable<string> LoadAppTelemetry(
+        ApplicationInsightsComponentResource currentComponent, string appReference, string tableName)
+    {
+        // app() takes either a component name or its fully-qualified resource ID; the component may
+        // live in another resource group or subscription, so it is resolved before loading telemetry.
+        var appName = appReference.Split('/', StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+        if (string.IsNullOrWhiteSpace(appName))
+        {
+            return [];
+        }
+
+        var target = string.Equals(appName, currentComponent.Name, StringComparison.OrdinalIgnoreCase)
+            ? currentComponent
+            : ResolveComponentByName(appName);
+
+        return target == null
+            ? []
+            : provider.LoadTelemetry(target.GetSubscription(), target.GetResourceGroup(), target.Name, tableName);
+    }
+
+    private ApplicationInsightsComponentResource? ResolveComponentByName(string componentName)
+    {
+        var result = controlPlane.GetByName(componentName);
+        return result.Result == OperationResult.Success ? result.Resource : null;
+    }
+
     private string ResolveWorkspaceName(string workspaceRef)
     {
         return workspaceRef;
