@@ -96,9 +96,16 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleGetCommand(commandParameters);
             case "ECHO":
                 return HandleEchoCommand(commandParameters);
+            case "PING":
+                return HandlePingCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
+    }
+    
+    private byte[] HandlePingCommand(List<byte[]> parameters)
+    {
+        return parameters.Count > 0 ? parameters[0].AsBulkString() : "PONG".AsSimpleString();
     }
 
     private byte[] HandleEchoCommand(List<byte[]> parameters)
