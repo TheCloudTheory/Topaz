@@ -27,7 +27,11 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         ClientSetInfoKeyBulkString,
         ClientSetInfoValueBulkString,
         ClientSetInfoValueStart,
-        ClientIdStart
+        ClientIdStart,
+        ClientConfigStart,
+        ClientConfigBulkString,
+        ClientConfigGetStart,
+        ClientConfigGetBulkString
     }
 
     private static readonly IDictionary<char, TokenType> SpecialTokens = new Dictionary<char, TokenType>
@@ -74,7 +78,8 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
             if (SpecialTokens.TryGetValue(firstChar, out var tokenType) && currentToken != TokenType.AuthStart &&
                 currentToken != TokenType.HelloStart && currentToken != TokenType.ClientStart &&
                 currentToken != TokenType.ClientSetNameStart && currentToken != TokenType.ClientSetInfoStart &&
-                currentToken != TokenType.ClientSetInfoValueStart && currentToken != TokenType.ClientIdStart)
+                currentToken != TokenType.ClientSetInfoValueStart && currentToken != TokenType.ClientIdStart &&
+                currentToken != TokenType.ClientConfigStart && currentToken != TokenType.ClientConfigGetStart)
             {
                 currentToken = tokenType;
                 continue;
@@ -127,6 +132,18 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 // Just return a fake client ID
                 responses.Add("1".AsBulkString());
                 currentToken = TokenType.NoOp;
+                continue;
+            }
+            
+            if(currentToken == TokenType.ClientConfigStart)
+            {
+                currentToken = TokenType.ClientConfigBulkString;
+                continue;
+            }
+            
+            if(currentToken == TokenType.ClientConfigGetStart)
+            {
+                currentToken = TokenType.ClientConfigGetBulkString;
                 continue;
             }
 
@@ -209,6 +226,39 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 currentToken = TokenType.NoOp;
                 continue;
             }
+            
+            if(currentToken == TokenType.ClientConfigBulkString)
+            {
+                var configOp = line;
+                logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle), $"Received client config op: {configOp}");
+
+                if (configOp == "GET")
+                {
+                    currentToken = TokenType.ClientConfigGetStart;
+                    continue;
+                }
+                
+                continue;
+            }
+            
+            if(currentToken == TokenType.ClientConfigGetBulkString)
+            {
+                var configKey = line;
+                logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle), $"Received client config key: {configKey}");
+
+                switch (configKey)
+                {
+                    case "replica-read-only":
+                        responses.Add(new[] { "replica-read-only".AsBulkString(), "no".AsBulkString() }.AsRespArray());
+                        break;
+                    case "databases":
+                        responses.Add(new[] { "databases".AsBulkString(), "16".AsBulkString() }.AsRespArray());
+                        break;
+                }
+
+                currentToken = TokenType.NoOp;
+                continue;
+            }
 
             if (currentToken == TokenType.Array)
             {
@@ -234,6 +284,12 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 if (str == "CLIENT")
                 {
                     currentToken = TokenType.ClientStart;
+                    continue;
+                }
+                
+                if (str == "CONFIG")
+                {
+                    currentToken = TokenType.ClientConfigStart;
                 }
             }
         }
@@ -252,11 +308,16 @@ internal static class Resp2ProtocolHandlerExtensions
         return $"${str.Length}\r\n{str}\r\n";
     }
     
-    public static string AsRespMap(this string[] lines)
+    extension(string[] lines)
     {
-        var items = lines.Length;
-        var prefix = $"%{items}";
+        public string AsRespMap()
+        {
+            var items = lines.Length;
+            var prefix = $"%{items}";
         
-        return $"{prefix}\r\n{string.Join("", lines)}";
+            return $"{prefix}\r\n{string.Join("", lines)}";
+        }
+
+        public string AsRespArray() => $"*{lines.Length}\r\n{string.Join("", lines)}";
     }
 }
