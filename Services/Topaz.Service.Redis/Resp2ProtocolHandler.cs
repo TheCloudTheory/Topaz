@@ -8,96 +8,68 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 {
     public byte[] Handle(byte[] receiveBuffer, int noOfBytes)
     {
-        var newlineBytes = "\r\n"u8;
         var data = receiveBuffer.AsSpan(0, noOfBytes);
-        var segments = new List<byte[]>();
-        var start = 0;
-        
-        while (start <= data.Length)
-        {
-            var idx = data[start..].IndexOf(newlineBytes);
-            if (idx < 0)
-            {
-                if (start < data.Length)
-                {
-                    segments.Add([.. data[start..]]);
-                }
-                
-                break;
-            }
-
-            segments.Add([.. data.Slice(start, idx)]);
-            start += idx + newlineBytes.Length;
-        }
-        
         var responses = new List<byte[]>();
-        var noOfParameters = 0;
-        var isParsingCommand = false;
-        var currentParameterIndex = 0;
-        var currentCommandName = string.Empty;
-        var commandParameters = new List<byte[]>();
-        
-        // RESP2 sends the commands in the following format:
-        // *<number of elements in the array>
-        // $<string length>
-        // <value>
-        // This means that we can treat commands as arrays sent in sequence:
+        var pos = 0;
+
+        // RESP2 sends commands as arrays of bulk strings:
         // AUTH password -> *2\r\n$4\r\nAUTH\r\n$6\r\npassword\r\n
-        foreach (var segment in segments)
+        // Parsing must follow the declared lengths rather than scanning for
+        // the next CRLF, since a bulk string value can itself contain "\r\n"
+        // or start with '$'/'*'.
+        while (pos < data.Length)
         {
-            var line = Encoding.UTF8.GetString(segment);
-            logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle), $"Received line: {line}");
-            
-            var firstChar = line[0];
-            if (firstChar == '*' && !isParsingCommand)
-            {
-                isParsingCommand = true;
-                noOfParameters = int.Parse(line[1..]);
-                currentParameterIndex = 0;
-                continue;
-            }
+            var commandName = ParseNextCommand(data, ref pos, out var commandParameters);
+            if (commandName is null) break;
 
-            if (isParsingCommand)
-            {
-                if (currentParameterIndex == 0)
-                {
-                    if (firstChar == '$') continue;
-                    currentCommandName = line;
-                    currentParameterIndex++;
-
-                    if (currentParameterIndex == noOfParameters)
-                    {
-                        responses.Add(ParseCommand(currentCommandName, commandParameters));
-                        currentCommandName = "";
-                        commandParameters.Clear();
-                        currentParameterIndex = 0;
-                        isParsingCommand = false;
-                    }
-                    continue;
-                }
-
-                if (currentParameterIndex < noOfParameters)
-                {
-                    if (firstChar == '$') continue;
-                    commandParameters.Add(segment);
-                    currentParameterIndex++;
-
-                    if (currentParameterIndex == noOfParameters)
-                    {
-                        responses.Add(ParseCommand(currentCommandName, commandParameters));
-                        currentCommandName = "";
-                        commandParameters.Clear();
-                        currentParameterIndex = 0;
-                        isParsingCommand = false;
-                    }
-                }
-            }
+            responses.Add(ParseCommand(commandName, commandParameters));
         }
 
         var response = responses.SelectMany(r => r).ToArray();
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle), $"Sending response: {Encoding.UTF8.GetString(response)}");
         
         return response;
+    }
+
+    private static string? ParseNextCommand(ReadOnlySpan<byte> data, ref int pos, out List<byte[]> parameters)
+    {
+        var newlineBytes = "\r\n"u8;
+        parameters = [];
+
+        if (data[pos] != (byte)'*') return null;
+
+        var headerEnd = data[pos..].IndexOf(newlineBytes);
+        if (headerEnd < 0) return null;
+
+        var noOfParameters = int.Parse(Encoding.ASCII.GetString(data.Slice(pos + 1, headerEnd - 1)));
+        pos += headerEnd + newlineBytes.Length;
+
+        string? commandName = null;
+
+        for (var i = 0; i < noOfParameters; i++)
+        {
+            if (data[pos] != (byte)'$') return null;
+
+            var lengthEnd = data[pos..].IndexOf(newlineBytes);
+            if (lengthEnd < 0) return null;
+
+            var length = int.Parse(Encoding.ASCII.GetString(data.Slice(pos + 1, lengthEnd - 1)));
+            pos += lengthEnd + newlineBytes.Length;
+
+            var value = data.Slice(pos, length).ToArray();
+            pos += length + newlineBytes.Length;
+
+            if (i == 0)
+            {
+                commandName = Encoding.UTF8.GetString(value);
+            }
+            else
+            {
+                parameters.Add(value);
+            }
+        }
+
+        return commandName;
     }
 
     private byte[] ParseCommand(string commandName, List<byte[]> commandParameters)
@@ -330,7 +302,8 @@ internal static class Resp2ProtocolHandlerExtensions
     {
         public byte[] AsRespMap()
         {
-            var prefix = Encoding.ASCII.GetBytes($"%{elements.Length}\r\n");
+            // %N counts key-value pairs, not total elements.
+            var prefix = Encoding.ASCII.GetBytes($"%{elements.Length / 2}\r\n");
             return [.. prefix, .. elements.SelectMany(e => e)];
         }
 
