@@ -67,7 +67,7 @@ internal sealed class RedisResp2Tests
 
         var configurationOptions = new ConfigurationOptions
         {
-            EndPoints = { GlobalSettings.GetRedisEndpoint(cacheName, false) },
+            EndPoints = { GlobalSettings.GetRedisEndpointWithPort(cacheName, false) },
             Password = keys.Value.PrimaryKey,
             LoggerFactory = new RedisLoggerFactory()
         };

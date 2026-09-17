@@ -345,5 +345,6 @@ public static class GlobalSettings
     
     public const int RedisPort = 6379;
     public const int RedisSslPort = 6380;
-    public static string GetRedisEndpoint(string redisName, bool useSsl) => $"{redisName}.redis.cache.topaz.local.dev:{(useSsl ? RedisSslPort : RedisPort)}";
+    public static string GetRedisEndpoint(string redisName) => $"{redisName}.redis.cache.topaz.local.dev";
+    public static string GetRedisEndpointWithPort(string redisName, bool useSsl) => $"{redisName}.redis.cache.topaz.local.dev:{(useSsl ? RedisSslPort : RedisPort)}";
 }

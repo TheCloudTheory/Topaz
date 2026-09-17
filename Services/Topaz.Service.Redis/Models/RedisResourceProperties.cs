@@ -48,7 +48,7 @@ internal sealed class RedisResourceProperties
 
     internal void ConfigureHostname(string name)
     {
-        HostName = GlobalSettings.GetRedisEndpoint(name, EnableNonSslPort);
+        HostName = GlobalSettings.GetRedisEndpoint(name);
     }
 }
 
