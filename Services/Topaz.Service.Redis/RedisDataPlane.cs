@@ -56,7 +56,7 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
     {
         var keyStr = Encoding.UTF8.GetString(key);
         var valueStr = Encoding.UTF8.GetString(value);
-        logger.LogDebug(nameof(RedisDataPlane), nameof(Set), $"SET {keyStr} {valueStr} for Redis instance: {cache.Name}");
+        logger.LogDebug(nameof(RedisDataPlane), nameof(Append), $"APPEND {keyStr} {valueStr} for Redis instance: {cache.Name}");
         
         var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
         if (instance.Result != OperationResult.Success)
@@ -78,5 +78,28 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         File.WriteAllText(filePath, newValue);
 
         return new DataPlaneOperationResult<string>(OperationResult.Success, newValue);
+    }
+
+    public DataPlaneOperationResult<int> Delete(byte[] key, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(Append), $"DEL {keyStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<int>(instance.Result, 0, instance.Reason, instance.Code);
+        }
+        
+        var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var filePath = Path.Combine(mainPath, keyStr);
+        if (!File.Exists(filePath))
+        {
+            return new DataPlaneOperationResult<int>(OperationResult.Success, 0);
+        }
+        
+        File.Delete(filePath);
+        return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
+
     }
 }

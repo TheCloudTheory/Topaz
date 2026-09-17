@@ -184,14 +184,6 @@ TODO: Azure Redis Cache: RESP2 protocol listener
 -->
 
 <!--
-TODO: Azure Redis Cache: TLS listener
-  Optional TLS-wrapped RESP2 listener on port 6380 using the existing Topaz dev certificate;
-  enabled when enableNonSslPort is false on the cache resource.
-  milestone: v1.11
-  labels: enhancement, redis
--->
-
-<!--
 TODO: Azure Redis Cache: Connection string in GetConnectionStrings
   MCP and CLI GetConnectionStrings emit {host}:{port},password={key},ssl={true|false},abortConnect=False
   format compatible with StackExchange.Redis.ConfigurationOptions.Parse().

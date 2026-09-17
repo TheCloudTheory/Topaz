@@ -106,9 +106,23 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleSetCommand(commandParameters);
             case "APPEND":
                 return HandleAppendCommand(commandParameters);
+            case "DEL":
+                return HandleDeleteCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
+    }
+
+    private byte[] HandleDeleteCommand(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received DEL command.");
+        
+        var key = parameters[0];
+        var result = _dataPlane.Delete(key, _cache!);
+        
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource.ToString().AsInteger();
     }
 
     private byte[] HandleAppendCommand(List<byte[]> parameters)
@@ -117,8 +131,8 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
         var key = parameters[0];
         var value = parameters[1];
-
         var result = _dataPlane.Append(key, value, _cache!);
+        
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : result.Resource!.Length.ToString().AsInteger();
@@ -130,8 +144,8 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
         var key = parameters[0];
         var value = parameters[1];
-
         var result = _dataPlane.Set(key, value, _cache!);
+        
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : "OK".AsSimpleString();
