@@ -104,19 +104,37 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandlePingCommand(commandParameters);
             case "SET":
                 return HandleSetCommand(commandParameters);
+            case "APPEND":
+                return HandleAppendCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
     }
 
-    private byte[] HandleSetCommand(List<byte[]> parameters)
+    private byte[] HandleAppendCommand(List<byte[]> parameters)
     {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received APPEND command.");
+
         var key = parameters[0];
         var value = parameters[1];
 
+        var result = _dataPlane.Append(key, value, _cache!);
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource!.Length.ToString().AsInteger();
+    }
+
+    private byte[] HandleSetCommand(List<byte[]> parameters)
+    {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received SET command.");
-        _dataPlane.Set(key, value, _cache!);
-        return "OK".AsSimpleString();
+
+        var key = parameters[0];
+        var value = parameters[1];
+
+        var result = _dataPlane.Set(key, value, _cache!);
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : "OK".AsSimpleString();
     }
 
     private byte[] HandlePingCommand(List<byte[]> parameters)

@@ -101,6 +101,16 @@ internal sealed class RedisResp2Tests
         Assert.AreEqual("value", str);
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanSetAndAppend_AndThenGetStringValue()
+    {
+        await _db.StringSetAsync("key", "value");
+        await _db.StringAppendAsync("key", "_appended");
+        var str = await _db.StringGetAsync("key");
+        
+        Assert.AreEqual("value_appended", str);
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {

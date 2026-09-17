@@ -51,4 +51,32 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         var valueStr = File.ReadAllText(filePath);
         return new DataPlaneOperationResult<string>(OperationResult.Success, valueStr);
     }
+
+    public DataPlaneOperationResult<string> Append(byte[] key, byte[] value, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        var valueStr = Encoding.UTF8.GetString(value);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(Set), $"SET {keyStr} {valueStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<string>(instance.Result, instance.Reason, instance.Code);
+        }
+        
+        var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var filePath = Path.Combine(mainPath, keyStr);
+        
+        if(!File.Exists(filePath))
+        {
+            File.WriteAllText(filePath, valueStr);
+            return new DataPlaneOperationResult<string>(OperationResult.Success, valueStr);
+        }
+
+        var currentValue = File.ReadAllText(filePath);
+        var newValue = currentValue + valueStr;
+        File.WriteAllText(filePath, newValue);
+
+        return new DataPlaneOperationResult<string>(OperationResult.Success, newValue);
+    }
 }
