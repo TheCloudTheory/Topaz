@@ -108,9 +108,23 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleAppendCommand(commandParameters);
             case "DEL":
                 return HandleDeleteCommand(commandParameters);
+            case "EXISTS":
+                return HandleExistsCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
+    }
+
+    private byte[] HandleExistsCommand(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received EXISTS command.");
+        
+        var key = parameters[0];
+        var result = _dataPlane.Exists(key, _cache!);
+        
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource.ToString().AsInteger();
     }
 
     private byte[] HandleDeleteCommand(List<byte[]> parameters)

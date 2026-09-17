@@ -124,6 +124,19 @@ internal sealed class RedisResp2Tests
         Assert.AreEqual(str2, RedisValue.Null);
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanSetAndDelete_AndThenCheckIfExists()
+    {
+        await _db.StringSetAsync("key", "value");
+        var exists1 = _db.KeyExists("key");
+
+        await _db.StringDeleteAsync("key", ValueCondition.Always);
+        var exists2 = _db.KeyExists("key");
+        
+        Assert.AreEqual(exists1, true);
+        Assert.AreEqual(exists2, false);
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {

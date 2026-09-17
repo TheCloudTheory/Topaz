@@ -102,4 +102,24 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
 
     }
+
+    public DataPlaneOperationResult<int> Exists(byte[] key, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(Append), $"EXISTS {keyStr} for Redis instance: {cache.Name}");
+
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<int>(instance.Result, 0, instance.Reason, instance.Code);
+        }
+
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var filePath = Path.Combine(mainPath, keyStr);
+        
+        return !File.Exists(filePath)
+            ? new DataPlaneOperationResult<int>(OperationResult.Success, 0)
+            : new DataPlaneOperationResult<int>(OperationResult.Success, 1);
+    }
 }
