@@ -92,7 +92,7 @@ See the [roadmap](https://topaz.thecloudtheory.com/roadmap/) for what's coming n
 | Azure Application Insights | ✅ | ✅ | Preview |
 | Public IP Address | ✅ | — | Preview |
 | Private Endpoints | ✅ | — | Preview |
-| Azure Redis Cache | ✅ | — | Preview |
+| Azure Redis Cache | ✅ | ✅ | Preview |
 | Azure API Management | ✅ | ✅ | Preview |
 | Azure Event Grid | ✅ | ✅ | Preview |
 
