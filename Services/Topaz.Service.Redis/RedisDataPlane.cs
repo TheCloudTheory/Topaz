@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using Topaz.Service.Redis.Models;
 using Topaz.Service.Shared;
@@ -8,7 +9,9 @@ namespace Topaz.Service.Redis;
 internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITopazLogger logger)
 {
     public static RedisDataPlane New(RedisServiceControlPlane controlPlane, ITopazLogger logger) => new(controlPlane, logger);
+    
     private readonly RedisResourceProvider _provider = new(logger);
+    private readonly ConcurrentDictionary<string, CancellationTokenSource> _expirations = new();
 
     public DataPlaneOperationResult Set(byte[] key, byte[] value, RedisResource cache)
     {
@@ -121,5 +124,44 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         return !File.Exists(filePath)
             ? new DataPlaneOperationResult<int>(OperationResult.Success, 0)
             : new DataPlaneOperationResult<int>(OperationResult.Success, 1);
+    }
+
+    public DataPlaneOperationResult<int> Expire(byte[] key, byte[] expireTime, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        var expireTimeStr = Encoding.UTF8.GetString(expireTime);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(Append), $"EXPIRE {keyStr} {expireTimeStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<int>(instance.Result, 0, instance.Reason, instance.Code);
+        }
+        
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var filePath = Path.Combine(mainPath, keyStr);
+        
+        if(!File.Exists(filePath))
+        {
+            return new DataPlaneOperationResult<int>(OperationResult.Success, 0);
+        }
+        
+        var cts = new CancellationTokenSource();
+        _ = _expirations.AddOrUpdate(filePath, cts, (_, old) =>
+        {
+            old.Cancel();
+            old.Dispose();
+            return cts;
+        });
+
+        _ = Task.Delay(TimeSpan.FromSeconds(int.Parse(expireTimeStr)), cts.Token).ContinueWith(t =>
+        {
+            if (t.IsCanceled) return;
+            Delete(key, cache);
+            _expirations.TryRemove(filePath, out _);
+        }, TaskScheduler.Default);
+
+        return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
     }
 }

@@ -110,9 +110,24 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleDeleteCommand(commandParameters);
             case "EXISTS":
                 return HandleExistsCommand(commandParameters);
+            case "EXPIRE":
+                return HandleExpireCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
+    }
+
+    private byte[] HandleExpireCommand(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received EXPIRE command.");
+        
+        var key = parameters[0];
+        var expireTime = parameters[1];
+        var result = _dataPlane.Expire(key, expireTime, _cache!);
+        
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : "OK".AsSimpleString();
     }
 
     private byte[] HandleExistsCommand(List<byte[]> parameters)
