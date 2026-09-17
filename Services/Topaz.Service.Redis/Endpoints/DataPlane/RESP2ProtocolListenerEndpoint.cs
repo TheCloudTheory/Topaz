@@ -8,7 +8,6 @@ namespace Topaz.Service.Redis.Endpoints.DataPlane;
 
 internal sealed class Resp2ProtocolListenerEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly Resp2ProtocolHandler _handler = new(RedisServiceControlPlane.New(eventPipeline, logger), logger);
     public string[] Endpoints => ["/"];
     public string[] Permissions => [];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.RedisPort, GlobalSettings.RedisSslPort], Protocol.Tcp);
@@ -20,6 +19,8 @@ internal sealed class Resp2ProtocolListenerEndpoint(Pipeline eventPipeline, ITop
     public async Task HandleTcpConnection(Socket socket)
     {
         var receiveBuffer = new byte[4096];
+        var handler = new Resp2ProtocolHandler(RedisServiceControlPlane.New(eventPipeline, logger), logger);
+        
         while (socket.Connected)
         {
             var noOfBytes = await socket.ReceiveAsync(receiveBuffer);
@@ -29,7 +30,8 @@ internal sealed class Resp2ProtocolListenerEndpoint(Pipeline eventPipeline, ITop
                 return;
             }
 
-            var response = _handler.Handle(receiveBuffer, noOfBytes);
+            
+            var response = handler.Handle(receiveBuffer, noOfBytes);
             await socket.SendAsync(response);
         }
     }

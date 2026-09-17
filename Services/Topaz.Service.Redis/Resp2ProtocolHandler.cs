@@ -1,4 +1,5 @@
 using System.Text;
+using Topaz.Service.Redis.Models;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -6,6 +7,9 @@ namespace Topaz.Service.Redis;
 
 internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane, ITopazLogger logger)
 {
+    private readonly RedisDataPlane _dataPlane = RedisDataPlane.New(controlPlane, logger);
+    private RedisResource? _cache;
+
     public byte[] Handle(byte[] receiveBuffer, int noOfBytes)
     {
         var data = receiveBuffer.AsSpan(0, noOfBytes);
@@ -16,7 +20,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         // AUTH password -> *2\r\n$4\r\nAUTH\r\n$6\r\npassword\r\n
         // Parsing must follow the declared lengths rather than scanning for
         // the next CRLF, since a bulk string value can itself contain "\r\n"
-        // or start with '$'/'*'.
+        // or start with '$' / '*'.
         while (pos < data.Length)
         {
             var commandName = ParseNextCommand(data, ref pos, out var commandParameters);
@@ -98,11 +102,23 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleEchoCommand(commandParameters);
             case "PING":
                 return HandlePingCommand(commandParameters);
+            case "SET":
+                return HandleSetCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
     }
-    
+
+    private byte[] HandleSetCommand(List<byte[]> parameters)
+    {
+        var key = parameters[0];
+        var value = parameters[1];
+
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received SET command.");
+        _dataPlane.Set(key, value, _cache!);
+        return "OK".AsSimpleString();
+    }
+
     private byte[] HandlePingCommand(List<byte[]> parameters)
     {
         return parameters.Count > 0 ? parameters[0].AsBulkString() : "PONG".AsSimpleString();
@@ -115,7 +131,18 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleGetCommand(List<byte[]> parameters)
     {
-        return Resp2ProtocolHandlerExtensions.AsNilBulkString();
+        var key = parameters[0];
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received GET command.");
+        
+        var value = _dataPlane.Get(key, _cache!);
+        if(value.Result == OperationResult.NotFound)
+        {
+            return Resp2ProtocolHandlerExtensions.AsNilBulkString();
+        }
+
+        return value.Result != OperationResult.Success
+            ? $"ERR error '{value.Reason}' ({value.Code})".AsSimpleError()
+            : value.Resource!.AsBulkString();
     }
 
     private byte[] HandleClusterCommand(List<byte[]> parameters)
@@ -276,6 +303,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
             return "-ERR Authentication failed".AsBulkString();
         }
                 
+        _cache = cache.Resource!;
         return "OK".AsSimpleString();
     }
 }
