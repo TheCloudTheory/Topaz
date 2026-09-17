@@ -44,7 +44,7 @@ public class CreateRedisCacheToolTests
             "eastus",
             McpTestFixture.ObjectId);
 
-        Assert.That(result.HostName, Is.EqualTo(GlobalSettings.GetRedisEndpoint(CacheName, true)));
+        Assert.That(result.HostName, Is.EqualTo(GlobalSettings.GetRedisEndpoint(CacheName)));
     }
 
     [Test, Order(1)]
@@ -85,7 +85,7 @@ public class CreateRedisCacheToolTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.ConnectionString, Does.Contain(GlobalSettings.GetRedisEndpoint(CacheName, true)));
+            Assert.That(result.ConnectionString, Does.Contain(GlobalSettings.GetRedisEndpoint(CacheName)));
             Assert.That(result.ConnectionString, Does.Contain("password="));
             Assert.That(result.ConnectionString, Does.Contain("ssl=True"));
             Assert.That(result.ConnectionString, Does.Contain("abortConnect=False"));
