@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using Topaz.CLI;
 using Topaz.MCP.Tools;
+using Topaz.Shared;
 
 namespace Topaz.Tests.MCP;
 
@@ -43,7 +44,7 @@ public class CreateRedisCacheToolTests
             "eastus",
             McpTestFixture.ObjectId);
 
-        Assert.That(result.HostName, Is.EqualTo($"{CacheName}.redis.cache.topaz.local.dev"));
+        Assert.That(result.HostName, Is.EqualTo(GlobalSettings.GetRedisEndpoint(CacheName, true)));
     }
 
     [Test, Order(1)]
@@ -84,7 +85,7 @@ public class CreateRedisCacheToolTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.ConnectionString, Does.Contain($"{CacheName}.redis.cache.topaz.local.dev:6380"));
+            Assert.That(result.ConnectionString, Does.Contain(GlobalSettings.GetRedisEndpoint(CacheName, true)));
             Assert.That(result.ConnectionString, Does.Contain("password="));
             Assert.That(result.ConnectionString, Does.Contain("ssl=True"));
             Assert.That(result.ConnectionString, Does.Contain("abortConnect=False"));

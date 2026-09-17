@@ -18,7 +18,7 @@ internal sealed class RedisResourceProperties
     public int? ReplicasPerMaster { get; set; }
     public int? ReplicasPerPrimary { get; set; }
     public int? ShardCount { get; set; }
-    public string? StaticIP { get; set; }
+    public string? StaticIp { get; set; }
     public string? SubnetId { get; set; }
     public string? UpdateChannel { get; set; }
     public string? ZonalAllocationPolicy { get; set; }
@@ -38,7 +38,7 @@ internal sealed class RedisResourceProperties
         ReplicasPerMaster = request.ReplicasPerMaster ?? ReplicasPerMaster;
         ReplicasPerPrimary = request.ReplicasPerPrimary ?? ReplicasPerPrimary;
         ShardCount = request.ShardCount ?? ShardCount;
-        StaticIP = request.StaticIP ?? StaticIP;
+        StaticIp = request.StaticIp ?? StaticIp;
         SubnetId = request.SubnetId ?? SubnetId;
         UpdateChannel = request.UpdateChannel ?? UpdateChannel;
         ZonalAllocationPolicy = request.ZonalAllocationPolicy ?? ZonalAllocationPolicy;
@@ -48,7 +48,7 @@ internal sealed class RedisResourceProperties
 
     internal void ConfigureHostname(string name)
     {
-        HostName = GlobalSettings.GetRedisEndpoint(name);
+        HostName = GlobalSettings.GetRedisEndpoint(name, EnableNonSslPort);
     }
 }
 

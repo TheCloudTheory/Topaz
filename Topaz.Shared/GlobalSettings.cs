@@ -344,5 +344,6 @@ public static class GlobalSettings
     public static string GetEventGridEndpoint(string topicName, string subscriptionId) => $"https://{topicName}-{subscriptionId.Split('-')[0]}.{EventGridDnsSuffix}:{DefaultResourceManagerPort}/";
     
     public const int RedisPort = 6379;
-    public static string GetRedisEndpoint(string redisName) => $"{redisName}.redis.cache.topaz.local.dev:{RedisPort}";
+    public const int RedisSslPort = 6380;
+    public static string GetRedisEndpoint(string redisName, bool useSsl) => $"{redisName}.redis.cache.topaz.local.dev:{(useSsl ? RedisSslPort : RedisPort)}";
 }

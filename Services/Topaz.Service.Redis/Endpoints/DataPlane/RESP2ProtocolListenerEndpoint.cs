@@ -11,7 +11,7 @@ internal sealed class Resp2ProtocolListenerEndpoint(Pipeline eventPipeline, ITop
     private readonly Resp2ProtocolHandler _handler = new(RedisServiceControlPlane.New(eventPipeline, logger), logger);
     public string[] Endpoints => ["/"];
     public string[] Permissions => [];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.RedisPort], Protocol.Tcp);
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.RedisPort, GlobalSettings.RedisSslPort], Protocol.Tcp);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
