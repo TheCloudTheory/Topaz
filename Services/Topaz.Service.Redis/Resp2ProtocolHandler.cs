@@ -112,9 +112,23 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleExistsCommand(commandParameters);
             case "EXPIRE":
                 return HandleExpireCommand(commandParameters);
+            case "TTL":
+                return HandleTtlCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
+    }
+
+    private byte[] HandleTtlCommand(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received TTL command.");
+        
+        var key = parameters[0];
+        var result = _dataPlane.Ttl(key, _cache!);
+
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource.ToString().AsInteger();
     }
 
     private byte[] HandleExpireCommand(List<byte[]> parameters)

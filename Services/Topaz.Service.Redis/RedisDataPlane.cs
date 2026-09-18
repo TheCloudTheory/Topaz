@@ -20,7 +20,7 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
     /// Keys are added or updated when expiration is set, and removed when deletion or expiration
     /// operations reset the expiration state.
     /// </summary>
-    private readonly ConcurrentDictionary<string, CancellationTokenSource> _expirations = new();
+    private readonly ConcurrentDictionary<string, KeyExpirationEnvelope> _expirations = new();
 
     public DataPlaneOperationResult Set(byte[] key, byte[] value, RedisResource cache)
     {
@@ -40,9 +40,9 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         
         // SET command resets EXPIRE so if there's a key that is supposed to be expired,
         // we must remove it from the dictionary
-        if (_expirations.TryRemove(filePath, out var cts))
+        if (_expirations.TryRemove(filePath, out var envelope))
         {
-            cts.Cancel();
+            envelope.Cts.Cancel();
         }
         
         return new DataPlaneOperationResult(OperationResult.Success);
@@ -121,9 +121,9 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         
         // DELETE command resets EXPIRE, so if there's a key that is supposed to be expired,
         // we must remove it from the dictionary
-        if (_expirations.TryRemove(filePath, out var cts))
+        if (_expirations.TryRemove(filePath, out var envelope))
         {
-            cts.Cancel();
+            envelope.Cts.Cancel();
         }
         
         return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
@@ -171,15 +171,18 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
             return new DataPlaneOperationResult<int>(OperationResult.Success, 0);
         }
         
+        var timeToExpiry = TimeSpan.FromSeconds(int.Parse(expireTimeStr));
         var cts = new CancellationTokenSource();
-        _ = _expirations.AddOrUpdate(filePath, cts, (_, old) =>
+        
+        _ = _expirations.AddOrUpdate(filePath, new KeyExpirationEnvelope(cts, DateTimeOffset.Now), (_, old) =>
         {
-            old.Cancel();
-            old.Dispose();
-            return cts;
+            old.Cts.Cancel();
+            old.Cts.Dispose();
+            
+            return old;
         });
-
-        _ = Task.Delay(TimeSpan.FromSeconds(int.Parse(expireTimeStr)), cts.Token).ContinueWith(t =>
+        
+        _ = Task.Delay(timeToExpiry, cts.Token).ContinueWith(t =>
         {
             if (t.IsCanceled) return;
             Delete(key, cache);
@@ -188,4 +191,30 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
 
         return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
     }
+
+    public DataPlaneOperationResult<int> Ttl(byte[] key, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(Append), $"TTL {keyStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<int>(instance.Result, 0, instance.Reason, instance.Code);
+        }
+        
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var filePath = Path.Combine(mainPath, keyStr);
+
+        if (!File.Exists(filePath))
+        {
+            return new DataPlaneOperationResult<int>(OperationResult.Success, -2);
+        }
+        
+        var expiring = _expirations.TryGetValue(filePath, out var envelope);
+        return new DataPlaneOperationResult<int>(OperationResult.Success, expiring ? (int)envelope!.ExpirationSetDate.Subtract(DateTimeOffset.UtcNow).TotalSeconds : -1);
+    }
+
+    private record KeyExpirationEnvelope(CancellationTokenSource Cts, DateTimeOffset ExpirationSetDate);
 }

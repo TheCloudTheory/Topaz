@@ -164,6 +164,17 @@ internal sealed class RedisResp2Tests
         Assert.AreEqual(value, "value2");
     }
     
+    [Test]
+    public async Task RedisResp2Tests_WhenKeyHasExpiration_TtlReturnsValue()
+    {
+        await _db.StringSetAsync("key", "value");
+        _ = _db.KeyExpire("key", TimeSpan.FromMilliseconds(2000));
+        await Task.Delay(500);
+        var ttl = await _db.KeyTimeToLiveAsync("key");
+        
+        Assert.That(ttl, Is.LessThan(TimeSpan.FromMilliseconds(1500)));
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {
