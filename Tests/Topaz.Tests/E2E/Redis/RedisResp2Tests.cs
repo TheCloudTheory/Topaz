@@ -215,6 +215,15 @@ internal sealed class RedisResp2Tests
         Assert.That(result, Has.Length.EqualTo(3));
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanSetHash_AndThenGetStringValue()
+    {
+        await _db.HashSetAsync("key", "foo", "bar");
+        var str = await _db.HashGetAsync("key", "foo");
+        
+        Assert.AreEqual("bar", str);
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {

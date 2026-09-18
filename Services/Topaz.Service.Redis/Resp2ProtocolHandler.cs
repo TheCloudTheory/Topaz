@@ -116,14 +116,52 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleTtlCommand(commandParameters);
             case "KEYS":
                 return HandleKeysCommand(commandParameters);
+            case "HSET":
+                return HandleHSetCommand(commandParameters);
+            case "HGET":
+                return HandleHGetCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
     }
 
+    private byte[] HandleHGetCommand(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received HGET command.");
+        
+        var key = parameters[0];
+        var field = parameters[1];
+        
+        var result = _dataPlane.HGet(key, field, _cache!);
+        
+        if(result.Result == OperationResult.NotFound)
+        {
+            return Resp2ProtocolHandlerExtensions.AsNilBulkString();
+        }
+
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource!.AsBulkString();
+    }
+
+    private byte[] HandleHSetCommand(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received HSET command.");
+        
+        var key = parameters[0];
+        var field = parameters[1];
+        var value = parameters[2];
+
+        var result = _dataPlane.HSet(key, field, value, _cache!);
+
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource.ToString().AsInteger();
+    }
+
     private byte[] HandleKeysCommand(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received KEYS command.");
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleKeysCommand), $"Received KEYS command.");
         
         var pattern = parameters[0];
         var result = _dataPlane.Keys(pattern, _cache!);
@@ -135,7 +173,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleTtlCommand(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received TTL command.");
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleTtlCommand), $"Received TTL command.");
         
         var key = parameters[0];
         var result = _dataPlane.Ttl(key, _cache!);
@@ -147,7 +185,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleExpireCommand(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received EXPIRE command.");
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleExpireCommand), $"Received EXPIRE command.");
         
         var key = parameters[0];
         var expireTime = parameters[1];
@@ -160,7 +198,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleExistsCommand(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received EXISTS command.");
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleExistsCommand), $"Received EXISTS command.");
         
         var key = parameters[0];
         var result = _dataPlane.Exists(key, _cache!);
@@ -172,7 +210,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleDeleteCommand(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received DEL command.");
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleDeleteCommand), $"Received DEL command.");
         
         var key = parameters[0];
         var result = _dataPlane.Delete(key, _cache!);
@@ -184,7 +222,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleAppendCommand(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received APPEND command.");
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleAppendCommand), $"Received APPEND command.");
 
         var key = parameters[0];
         var value = parameters[1];
@@ -242,20 +280,20 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         switch(subcommand)
         {
             case "SLOTS":
-                return HandleClusterSlotsCommand(parameters);
+                return HandleClusterSlotsCommand();
             case "NODES":
-                return HandleClusterNodesCommand(parameters);
+                return HandleClusterNodesCommand();
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{subcommand}'".AsSimpleError();
         }
     }
 
-    private byte[] HandleClusterNodesCommand(List<byte[]> parameters)
+    private byte[] HandleClusterNodesCommand()
     {
         return "".AsBulkString();
     }
 
-    private byte[] HandleClusterSlotsCommand(List<byte[]> parameters)
+    private byte[] HandleClusterSlotsCommand()
     {
         return "".AsBulkString();
     }
@@ -284,13 +322,13 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         switch(subcommand)
         {
             case "MASTERS":
-                return HandleSentinelMastersCommand(parameters);
+                return HandleSentinelMastersCommand();
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{subcommand}'".AsSimpleError();
         }
     }
 
-    private byte[] HandleSentinelMastersCommand(List<byte[]> parameters)
+    private byte[] HandleSentinelMastersCommand()
     {
         return Array.Empty<byte[]>().AsRespArray();
     }
@@ -343,13 +381,13 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
             case "SETINFO":
                 return HandleClientSetInfoCommand(parameters);
             case "ID":
-                return HandleClientIdCommand(parameters);
+                return HandleClientIdCommand();
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{subcommand}'".AsSimpleError();
         }
     }
 
-    private byte[] HandleClientIdCommand(List<byte[]> parameters)
+    private byte[] HandleClientIdCommand()
     {
         return "1".AsInteger();
     }
