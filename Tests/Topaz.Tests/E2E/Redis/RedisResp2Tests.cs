@@ -149,6 +149,21 @@ internal sealed class RedisResp2Tests
         Assert.AreEqual(exists, false);
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanSetKeyAndSetExpire_AndIfUpdatedExpireIsCleared()
+    {
+        await _db.StringSetAsync("key", "value");
+        _ = _db.KeyExpire("key", TimeSpan.FromMilliseconds(1500));
+        await _db.StringSetAsync("key", "value2");
+        
+        await Task.Delay(1500);
+        var exists = _db.KeyExists("key");
+        var value = await _db.StringGetAsync("key");
+        
+        Assert.AreEqual(exists, true);
+        Assert.AreEqual(value, "value2");
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {

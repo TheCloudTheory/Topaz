@@ -11,6 +11,15 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
     public static RedisDataPlane New(RedisServiceControlPlane controlPlane, ITopazLogger logger) => new(controlPlane, logger);
     
     private readonly RedisResourceProvider _provider = new(logger);
+
+    /// <summary>
+    /// A concurrent dictionary that manages expiration state for keys in the Redis data plane.
+    /// This dictionary maps a key (as a string) to its associated <see cref="CancellationTokenSource"/>,
+    /// enabling the management of delayed tasks for key expiration.
+    /// 
+    /// Keys are added or updated when expiration is set, and removed when deletion or expiration
+    /// operations reset the expiration state.
+    /// </summary>
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _expirations = new();
 
     public DataPlaneOperationResult Set(byte[] key, byte[] value, RedisResource cache)
@@ -28,6 +37,13 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
         var filePath = Path.Combine(mainPath, keyStr);
         File.WriteAllText(filePath, valueStr);
+        
+        // SET command resets EXPIRE so if there's a key that is supposed to be expired,
+        // we must remove it from the dictionary
+        if (_expirations.TryRemove(filePath, out var cts))
+        {
+            cts.Cancel();
+        }
         
         return new DataPlaneOperationResult(OperationResult.Success);
     }
@@ -102,6 +118,14 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         }
         
         File.Delete(filePath);
+        
+        // DELETE command resets EXPIRE, so if there's a key that is supposed to be expired,
+        // we must remove it from the dictionary
+        if (_expirations.TryRemove(filePath, out var cts))
+        {
+            cts.Cancel();
+        }
+        
         return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
 
     }
