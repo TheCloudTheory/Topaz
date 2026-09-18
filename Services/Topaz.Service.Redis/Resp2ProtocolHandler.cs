@@ -124,9 +124,25 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleHmSetCommand(commandParameters);
             case "HGETALL":
                 return HandleHGetAllCommand(commandParameters);
+            case "HDEL":
+                return HandleHDelCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
+    }
+
+    private byte[] HandleHDelCommand(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received HGETALL command.");
+        
+        var key = parameters[0];
+        var hashField = parameters[1];
+        
+        var result = _dataPlane.HDel(key, hashField, _cache!);
+        
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource.ToString().AsInteger();
     }
 
     private byte[] HandleHGetAllCommand(List<byte[]> parameters)

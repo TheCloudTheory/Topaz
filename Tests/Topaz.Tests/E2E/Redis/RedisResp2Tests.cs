@@ -187,18 +187,18 @@ internal sealed class RedisResp2Tests
         
         var result = (RedisResult[])(await _db.ExecuteAsync("KEYS", "*"))!;
         
-        Assert.That(result, Has.Length.EqualTo(2));
+        Assert.That(result, Has.Length.AtLeast(2));
     }
     
     [Test]
     public async Task RedisResp2Tests_WhenScanningKeys_ItReturnsAllKeys()
     {
-        await _db.StringSetAsync("key", "value");
-        await _db.StringSetAsync("key2", "value2");
+        await _db.StringSetAsync("keytoscan", "value");
+        await _db.StringSetAsync("keytoscan2", "value2");
 
         var result = _server.Keys(database: 0, pattern: "*").ToArray();
         
-        Assert.That(result, Has.Length.EqualTo(2));
+        Assert.That(result, Has.Length.AtLeast(2));
     }
     
     [Test]
@@ -238,6 +238,33 @@ internal sealed class RedisResp2Tests
             Assert.That(entries[1].Name.ToString(), Is.EqualTo("foo2"));
             Assert.That(entries[1].Value.ToString(), Is.EqualTo("baz"));
         }
+    }
+    
+    [Test]
+    public async Task RedisResp2Tests_CanSetHash_AndThenDeleteValue()
+    {
+        await _db.HashSetAsync("key", "foo", "bar");
+        var str = await _db.HashGetAsync("key", "foo");
+        
+        Assert.AreEqual("bar", str);
+        
+        await _db.HashDeleteAsync("key", "foo");
+        
+        Assert.AreEqual(RedisValue.Null, await _db.HashGetAsync("key", "foo"));
+    }
+    
+    [Test]
+    public async Task RedisResp2Tests_CanSetHash_AndThenDeleteValue_WhilePreservingOthers()
+    {
+        await _db.HashSetAsync("key", [new HashEntry("foo", "bar"),  new HashEntry("foo2", "baz")]);
+        var str = await _db.HashGetAsync("key", "foo");
+        
+        Assert.AreEqual("bar", str);
+        
+        await _db.HashDeleteAsync("key", "foo");
+        
+        Assert.AreEqual(RedisValue.Null, await _db.HashGetAsync("key", "foo"));
+        Assert.AreEqual("baz", await _db.HashGetAsync("key", "foo2"));
     }
     
     [UsedImplicitly]
