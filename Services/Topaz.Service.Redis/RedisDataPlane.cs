@@ -251,9 +251,9 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         
         var mainPath =
             _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var filePath = Path.Combine(mainPath, keyStr);
+        var filePath = Path.Combine(mainPath, $"{keyStr}_{fieldStr}");
         
-        File.WriteAllText(filePath, $"{fieldStr}:{valueStr}");
+        File.WriteAllText(filePath, valueStr);
 
         return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
     }
@@ -263,7 +263,7 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         var keyStr = Encoding.UTF8.GetString(key);
         var fieldStr = Encoding.UTF8.GetString(field);
         
-        logger.LogDebug(nameof(RedisDataPlane), nameof(HSet), $"HGET {keyStr} {fieldStr} for Redis instance: {cache.Name}");
+        logger.LogDebug(nameof(RedisDataPlane), nameof(HGet), $"HGET {keyStr} {fieldStr} for Redis instance: {cache.Name}");
 
         var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
         if (instance.Result != OperationResult.Success)
@@ -273,14 +273,71 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         
         var mainPath =
             _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var filePath = Path.Combine(mainPath, keyStr);
+        var filePath = Path.Combine(mainPath, $"{keyStr}_{fieldStr}");
         if (!File.Exists(filePath))
         {
             return new DataPlaneOperationResult<string>(OperationResult.Success, null, "Key not found", "KeyNotFound");
         }
 
         var fileContent = File.ReadAllText(filePath);
-        var valueStr = fileContent.Split(':')[1];
-        return new DataPlaneOperationResult<string>(OperationResult.Success, valueStr);
+        return new DataPlaneOperationResult<string>(OperationResult.Success, fileContent);
+    }
+
+    public DataPlaneOperationResult<int> HmSet(byte[] key, List<KeyValuePair<byte[], byte[]>> pairs,
+        RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        
+        logger.LogDebug(nameof(RedisDataPlane), nameof(HmSet), $"HMSET {keyStr}, {pairs.Count} values for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<int>(instance.Result, 0, instance.Reason, instance.Code);
+        }
+        
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+
+        foreach (var pair in pairs)
+        {
+            var valueKeyStr = Encoding.UTF8.GetString(pair.Key);
+            var valueStr = Encoding.UTF8.GetString(pair.Value);
+            var filePath = Path.Combine(mainPath, $"{keyStr}_{valueKeyStr}");
+            
+            File.WriteAllText(filePath, valueStr);
+        }
+
+        return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
+    }
+
+    public DataPlaneOperationResult<string[]> HGetAll(byte[] key, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        
+        logger.LogDebug(nameof(RedisDataPlane), nameof(HGetAll), $"HGETALL {keyStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<string[]>(instance.Result, [], instance.Reason, instance.Code);
+        }
+        
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_*");
+        var result = new List<string>();
+
+        foreach (var file in files)
+        {
+            var fi = new FileInfo(file);
+            var pairKey = fi.Name.Split('_')[1];
+            var value = File.ReadAllText(file);
+            
+            result.Add(pairKey);
+            result.Add(value);
+        }
+        
+        return new DataPlaneOperationResult<string[]>(OperationResult.Success, [.. result]);
     }
 }

@@ -120,9 +120,51 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleHSetCommand(commandParameters);
             case "HGET":
                 return HandleHGetCommand(commandParameters);
+            case "HMSET":
+                return HandleHmSetCommand(commandParameters);
+            case "HGETALL":
+                return HandleHGetAllCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
+    }
+
+    private byte[] HandleHGetAllCommand(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received HGETALL command.");
+        
+        var key = parameters[0];
+        var result = _dataPlane.HGetAll(key, _cache!);
+        
+        if(result.Result == OperationResult.NotFound)
+        {
+            return Resp2ProtocolHandlerExtensions.AsNilBulkString();
+        }
+
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource!.Select(k => k.AsBulkString()).ToArray().AsRespArray();
+    }
+
+    private byte[] HandleHmSetCommand(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received HMSET command.");
+        
+        var key = parameters[0];
+        var pairs = new List<KeyValuePair<byte[], byte[]>>();
+
+        for (var i = 1; i < parameters.Count; i++)
+        {
+            var next =  parameters[i+1];
+            pairs.Add(new KeyValuePair<byte[], byte[]>(parameters[i], next));
+            i++;
+        }
+        
+        var result = _dataPlane.HmSet(key, pairs, _cache!);
+        
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : "OK".AsSimpleString();
     }
 
     private byte[] HandleHGetCommand(List<byte[]> parameters)

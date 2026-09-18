@@ -224,6 +224,22 @@ internal sealed class RedisResp2Tests
         Assert.AreEqual("bar", str);
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanSetHashWithMultiplePairs_AndThenGetAllValues()
+    {
+        await _db.HashSetAsync("key", [new HashEntry("foo", "bar"),  new HashEntry("foo2", "baz")]);
+        var entries = await _db.HashGetAllAsync("key");
+        
+        Assert.That(entries, Has.Length.EqualTo(2));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(entries[0].Name.ToString(), Is.EqualTo("foo"));
+            Assert.That(entries[0].Value.ToString(), Is.EqualTo("bar"));
+            Assert.That(entries[1].Name.ToString(), Is.EqualTo("foo2"));
+            Assert.That(entries[1].Value.ToString(), Is.EqualTo("baz"));
+        }
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {
