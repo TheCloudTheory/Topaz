@@ -69,11 +69,12 @@ internal sealed class RedisResp2Tests
         {
             EndPoints = { GlobalSettings.GetRedisEndpointWithPort(cacheName, false) },
             Password = keys.Value.PrimaryKey,
-            LoggerFactory = new RedisLoggerFactory()
+            LoggerFactory = new RedisLoggerFactory(),
+            AllowAdmin = true
         };
-        
+
         var muxer = await ConnectionMultiplexer.ConnectAsync(configurationOptions);
-        _db = muxer.GetDatabase();
+        _db = muxer.GetDatabase(0);
     }
 
     [OneTimeTearDown]
@@ -173,6 +174,17 @@ internal sealed class RedisResp2Tests
         var ttl = await _db.KeyTimeToLiveAsync("key");
         
         Assert.That(ttl, Is.LessThan(TimeSpan.FromMilliseconds(1500)));
+    }
+    
+    [Test]
+    public async Task RedisResp2Tests_WhenUsedKeys_ItReturnsAllKeys()
+    {
+        await _db.StringSetAsync("key", "value");
+        await _db.StringSetAsync("key2", "value2");
+        
+        var result = (RedisResult[])(await _db.ExecuteAsync("KEYS", "*"))!;
+        
+        Assert.That(result, Has.Length.EqualTo(2));
     }
     
     [UsedImplicitly]

@@ -217,4 +217,21 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
     }
 
     private record KeyExpirationEnvelope(CancellationTokenSource Cts, DateTimeOffset ExpirationSetDate);
+
+    public DataPlaneOperationResult<string[]> Keys(byte[] pattern, RedisResource cache)
+    {
+        var patternStr = Encoding.UTF8.GetString(pattern);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(Set), $"KEYS {patternStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<string[]>(instance.Result, null, instance.Reason, instance.Code);
+        }
+        
+        var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var allData = Directory.GetFiles(mainPath, patternStr);
+        
+        return new DataPlaneOperationResult<string[]>(OperationResult.Success, [.. allData.Select(File.ReadAllText)]);
+    }
 }

@@ -52,7 +52,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         }).ToArray();
 
         return new DataPlaneOperationResult<BlobEnumerationResult>(OperationResult.Success,
-            new BlobEnumerationResult(storageAccountName, entities), null, null);
+            new BlobEnumerationResult(storageAccountName, entities));
     }
 
     private static bool IsRagrsOrRagzrsAccount(string storageAccountName, string? sku)
@@ -129,7 +129,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             };
 
             File.WriteAllText(GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath), JsonSerializer.Serialize(metadata));
-            return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, metadata, null, null);
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, metadata);
         }
         else
         {
@@ -147,7 +147,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             File.WriteAllText(GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath), JsonSerializer.Serialize(metadata));
             File.WriteAllText(fullPath, rawContent);
 
-            return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, metadata, null, null);
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, metadata);
         }
     }
 
@@ -173,7 +173,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
         if (!File.Exists(propertiesPath))
-            return new DataPlaneOperationResult<BlobProperties>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.NotFound, null);
 
         var properties = JsonSerializer.Deserialize<BlobProperties>(File.ReadAllText(propertiesPath))!;
 
@@ -225,7 +225,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         File.WriteAllText(propertiesPath, JsonSerializer.Serialize(properties));
 
-        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, properties, null, null);
+        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, properties);
     }
 
     public DataPlaneOperationResult<BlobPageRangesResult> GetPageRanges(
@@ -248,7 +248,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
         if (!File.Exists(propertiesPath))
-            return new DataPlaneOperationResult<BlobPageRangesResult>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<BlobPageRangesResult>(OperationResult.NotFound, null);
         
         if(IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
         {
@@ -295,9 +295,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             {
                 BlobProperties = properties,
                 PageRanges = filteredRanges,
-            },
-            null,
-            null);
+            });
     }
 
     public DataPlaneOperationResult<byte[]> GetBlobBytes(SubscriptionIdentifier subscriptionIdentifier,
@@ -317,9 +315,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
         if (!IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
             return !File.Exists(fullPath)
-                ? new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null, null, null)
-                : new DataPlaneOperationResult<byte[]>(OperationResult.Success, File.ReadAllBytes(fullPath), null,
-                    null);
+                ? new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null)
+                : new DataPlaneOperationResult<byte[]>(OperationResult.Success, File.ReadAllBytes(fullPath));
 
         var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
         if (lastSyncTime.HasValue && lastSyncTime.Value < File.GetLastWriteTimeUtc(fullPath))
@@ -329,8 +326,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         }
 
         return !File.Exists(fullPath)
-            ? new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null, null, null)
-            : new DataPlaneOperationResult<byte[]>(OperationResult.Success, File.ReadAllBytes(fullPath), null, null);
+            ? new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null)
+            : new DataPlaneOperationResult<byte[]>(OperationResult.Success, File.ReadAllBytes(fullPath));
     }
 
     private static List<BlobPageRange> MergePageRange(IEnumerable<BlobPageRange> existingRanges, long startByte, long endByte)
@@ -422,7 +419,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         // Persist original block ID for GetBlockList (safeBlockId may differ due to +/→-/_ substitutions)
         File.WriteAllText(Path.Combine(stagingDir, safeBlockId + ".meta"), blockId);
 
-        return new DataPlaneOperationResult(OperationResult.Created, null, null);
+        return new DataPlaneOperationResult(OperationResult.Created);
     }
 
     public DataPlaneOperationResult<BlobProperties> PutBlockList(
@@ -504,7 +501,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         if (Directory.Exists(stagingDir))
             Directory.Delete(stagingDir, recursive: true);
 
-        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, metadata, null, null);
+        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, metadata);
     }
 
 
@@ -541,13 +538,13 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         if (!File.Exists(fullPath))
         {
             logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlobProperties), $"Blob `{blobPath}` not found");
-            return new DataPlaneOperationResult<BlobProperties>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.NotFound, null);
         }
 
         var content = File.ReadAllText(fullPath);
         var properties = JsonSerializer.Deserialize<BlobProperties>(content);
 
-        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Success, properties, null, null);
+        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Success, properties);
     }
 
     /// <summary>
@@ -652,7 +649,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         // For committed-only requests, the blob must already exist
         if (getCommitted && !getUncommitted && !blobExists)
-            return new DataPlaneOperationResult<BlockListData>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<BlockListData>(OperationResult.NotFound, null);
 
         // For uncommitted or all, determine staging dir existence for 404 check
         if (!blobExists && getUncommitted)
@@ -662,7 +659,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             var stagingDir = controlPlane.GetBlobBlocksStagingPath(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccountName, containerName, blobSubpathKey);
             if (!Directory.Exists(stagingDir))
-                return new DataPlaneOperationResult<BlockListData>(OperationResult.NotFound, null, null, null);
+                return new DataPlaneOperationResult<BlockListData>(OperationResult.NotFound, null);
         }
 
         List<BlockRecord> committed = [];
@@ -695,7 +692,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             }
         }
 
-        return new DataPlaneOperationResult<BlockListData>(OperationResult.Success, new BlockListData(committed, uncommitted), null, null);
+        return new DataPlaneOperationResult<BlockListData>(OperationResult.Success, new BlockListData(committed, uncommitted));
     }
 
     public DataPlaneOperationResult<string> GetBlob(SubscriptionIdentifier subscriptionIdentifier,
@@ -716,8 +713,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         if (!IsRagrsOrRagzrsAccount(originalStorageAccountName, accountOperation.Resource.Sku?.Name))
             return !File.Exists(fullPath)
-                ? new DataPlaneOperationResult<string>(OperationResult.NotFound, null, null, null)
-                : new DataPlaneOperationResult<string>(OperationResult.Success, File.ReadAllText(fullPath), null, null);
+                ? new DataPlaneOperationResult<string>(OperationResult.NotFound, null)
+                : new DataPlaneOperationResult<string>(OperationResult.Success, File.ReadAllText(fullPath));
 
         var lastSyncTime = accountOperation.Resource.Properties.LastGeoSyncTime;
         if (lastSyncTime.HasValue && lastSyncTime.Value < File.GetLastWriteTimeUtc(fullPath))
@@ -727,8 +724,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         }
 
         return !File.Exists(fullPath)
-            ? new DataPlaneOperationResult<string>(OperationResult.NotFound, null, null, null)
-            : new DataPlaneOperationResult<string>(OperationResult.Success, File.ReadAllText(fullPath), null, null);
+            ? new DataPlaneOperationResult<string>(OperationResult.NotFound, null)
+            : new DataPlaneOperationResult<string>(OperationResult.Success, File.ReadAllText(fullPath));
     }
 
     public DataPlaneOperationResult<CopyBlobData> CopyBlob(
@@ -742,7 +739,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var srcPropertiesPath = GetBlobPropertiesPath(srcSubscriptionId, srcResourceGroupId, srcAccountName, srcBlobPath);
 
         if (!File.Exists(srcContentPath))
-            return new DataPlaneOperationResult<CopyBlobData>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<CopyBlobData>(OperationResult.NotFound, null);
 
         var dstContentPath = GetBlobPath(dstSubscriptionId, dstResourceGroupId, dstAccountName, dstBlobPath);
         var dstDirectory = Path.GetDirectoryName(dstContentPath);
@@ -776,7 +773,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var dstPropertiesPath = GetBlobPropertiesPath(dstSubscriptionId, dstResourceGroupId, dstAccountName, dstBlobPath);
         File.WriteAllText(dstPropertiesPath, JsonSerializer.Serialize(dstProperties));
 
-        return new DataPlaneOperationResult<CopyBlobData>(OperationResult.Accepted, new CopyBlobData(dstProperties, copyId), null, null);
+        return new DataPlaneOperationResult<CopyBlobData>(OperationResult.Accepted, new CopyBlobData(dstProperties, copyId));
     }
     
     public DataPlaneOperationResult DeleteBlob(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName)
@@ -787,7 +784,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         if (!File.Exists(fullPath))
         {
-            return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
+            return new DataPlaneOperationResult(OperationResult.NotFound);
         }
 
         var containerName = GetContainerNameFromBlobPath(blobPath);
@@ -814,7 +811,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         if (File.Exists(metadataPath))
             File.Move(metadataPath, Path.Combine(deletedMetaDir, $"{Path.GetFileName(metadataPath)}__{safeTimestamp}"), overwrite: true);
         
-        return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
+        return new DataPlaneOperationResult(OperationResult.Deleted);
     }
 
     public DataPlaneOperationResult<Dictionary<string, string>> GetBlobMetadata(
@@ -845,12 +842,12 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         }
 
         if (!File.Exists(fullPath))
-            return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.NotFound, null);
 
         var metadataPath = GetBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
         if (!File.Exists(metadataPath))
-            return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.Success, new Dictionary<string, string>(), null, null);
+            return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.Success, new Dictionary<string, string>());
 
         var lines = File.ReadAllLines(metadataPath);
         var metadata = lines
@@ -859,7 +856,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
                 l => l[..l.IndexOf('=')],
                 l => l[(l.IndexOf('=') + 1)..]);
 
-        return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.Success, metadata, null, null);
+        return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.Success, metadata);
     }
     
     public DataPlaneOperationResult SetBlobMetadata(SubscriptionIdentifier subscriptionIdentifier,
@@ -873,7 +870,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         if (!File.Exists(fullPath))
         {
-            return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
+            return new DataPlaneOperationResult(OperationResult.NotFound);
         }
 
         var metadataHeaders = headers.Where(h => h.Key.StartsWith("x-ms-meta")).ToDictionary(h => h.Key, h => h.Value);
@@ -883,7 +880,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             GetBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath),
             metadata);
 
-        return new DataPlaneOperationResult(OperationResult.Updated, null, null);
+        return new DataPlaneOperationResult(OperationResult.Updated);
     }
 
     public DataPlaneOperationResult SetBlobMetadata(SubscriptionIdentifier subscriptionIdentifier,
@@ -897,7 +894,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         if (!File.Exists(fullPath))
         {
-            return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
+            return new DataPlaneOperationResult(OperationResult.NotFound);
         }
 
         var lines = metadata.Select(kvp => $"x-ms-meta-{kvp.Key}={kvp.Value}").ToArray();
@@ -906,7 +903,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             GetBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath),
             lines);
 
-        return new DataPlaneOperationResult(OperationResult.Updated, null, null);
+        return new DataPlaneOperationResult(OperationResult.Updated);
     }
 
     public DataPlaneOperationResult<BlobProperties> SetBlobProperties(
@@ -922,7 +919,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
         if (!File.Exists(propertiesPath))
-            return new DataPlaneOperationResult<BlobProperties>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.NotFound, null);
 
         var properties = JsonSerializer.Deserialize<BlobProperties>(File.ReadAllText(propertiesPath))!;
 
@@ -946,7 +943,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         File.WriteAllText(propertiesPath, JsonSerializer.Serialize(properties));
 
-        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Updated, properties, null, null);
+        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Updated, properties);
     }
 
     public DataPlaneOperationResult<BlobProperties> SetBlobProperties(
@@ -963,7 +960,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
         if (!File.Exists(propertiesPath))
-            return new DataPlaneOperationResult<BlobProperties>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.NotFound, null);
 
         var properties = JsonSerializer.Deserialize<BlobProperties>(File.ReadAllText(propertiesPath))!;
 
@@ -978,7 +975,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         File.WriteAllText(propertiesPath, JsonSerializer.Serialize(properties));
 
-        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Updated, properties, null, null);
+        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Updated, properties);
     }
 
     private string GetBlobMetadataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
@@ -1017,11 +1014,11 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             resourceGroupIdentifier, storageAccountName, containerName);
 
         if (!exists)
-            return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
+            return new DataPlaneOperationResult(OperationResult.NotFound);
 
         File.WriteAllText(metadataFilePath, JsonSerializer.Serialize(metadata));
 
-        return new DataPlaneOperationResult(OperationResult.Updated, null, null);
+        return new DataPlaneOperationResult(OperationResult.Updated);
     }
 
     public DataPlaneOperationResult<Dictionary<string, string>> GetContainerMetadata(
@@ -1037,15 +1034,15 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             resourceGroupIdentifier, storageAccountName, containerName);
 
         if (!exists)
-            return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.NotFound, null);
 
         if (!File.Exists(metadataFilePath))
-            return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.Success, new Dictionary<string, string>(), null, null);
+            return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.Success, new Dictionary<string, string>());
 
         var content = File.ReadAllText(metadataFilePath);
         var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(content) ?? new Dictionary<string, string>();
 
-        return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.Success, metadata, null, null);
+        return new DataPlaneOperationResult<Dictionary<string, string>>(OperationResult.Success, metadata);
     }
 
     public DataPlaneOperationResult<string> GetContainerAcl(
@@ -1061,13 +1058,13 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             resourceGroupIdentifier, storageAccountName, containerName);
 
         if (!exists)
-            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null);
 
         if (!File.Exists(aclFilePath))
-            return new DataPlaneOperationResult<string>(OperationResult.Success, "<?xml version=\"1.0\" encoding=\"utf-8\"?><SignedIdentifiers />", null, null);
+            return new DataPlaneOperationResult<string>(OperationResult.Success, "<?xml version=\"1.0\" encoding=\"utf-8\"?><SignedIdentifiers />");
 
         var xml = File.ReadAllText(aclFilePath);
-        return new DataPlaneOperationResult<string>(OperationResult.Success, xml, null, null);
+        return new DataPlaneOperationResult<string>(OperationResult.Success, xml);
     }
 
     public DataPlaneOperationResult SetContainerAcl(
@@ -1085,7 +1082,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             resourceGroupIdentifier, storageAccountName, containerName);
 
         if (!exists)
-            return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
+            return new DataPlaneOperationResult(OperationResult.NotFound);
 
         using var sr = new StreamReader(input);
         var body = sr.ReadToEnd();
@@ -1102,7 +1099,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         controlPlane.SetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, containerName, publicAccess);
 
-        return new DataPlaneOperationResult(OperationResult.Updated, null, null);
+        return new DataPlaneOperationResult(OperationResult.Updated);
     }
 
     public DataPlaneOperationResult<string?> GetContainerPublicAccess(
@@ -1118,12 +1115,12 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             resourceGroupIdentifier, storageAccountName, containerName);
 
         if (!exists)
-            return new DataPlaneOperationResult<string?>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<string?>(OperationResult.NotFound, null);
 
         var accessLevel = controlPlane.GetContainerPublicAccess(subscriptionIdentifier,
             resourceGroupIdentifier, storageAccountName, containerName);
 
-        return new DataPlaneOperationResult<string?>(OperationResult.Success, accessLevel, null, null);
+        return new DataPlaneOperationResult<string?>(OperationResult.Success, accessLevel);
     }
 
     public DataPlaneOperationResult SetContainerPublicAccess(
@@ -1140,12 +1137,12 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             resourceGroupIdentifier, storageAccountName, containerName);
 
         if (!exists)
-            return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
+            return new DataPlaneOperationResult(OperationResult.NotFound);
 
         controlPlane.SetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, containerName, accessLevel);
 
-        return new DataPlaneOperationResult(OperationResult.Updated, null, null);
+        return new DataPlaneOperationResult(OperationResult.Updated);
     }
 
     /// <summary>
@@ -1170,7 +1167,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             resourceGroupIdentifier, storageAccountName, containerName);
 
         if (!exists)
-            return new DataPlaneOperationResult<ContainerLease>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<ContainerLease>(OperationResult.NotFound, null);
 
         // Load or initialize the current lease
         ContainerLease lease;
@@ -1191,7 +1188,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             case "acquire":
             {
                 if (effectiveState == ContainerLeaseState.Leased)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null);
 
                 var newLeaseId = string.IsNullOrEmpty(proposedLeaseId) ? Guid.NewGuid().ToString() : proposedLeaseId;
                 lease.LeaseId = newLeaseId;
@@ -1200,57 +1197,57 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
                 lease.ExpiresAt = leaseDuration == -1 ? null : DateTimeOffset.UtcNow.AddSeconds(leaseDuration);
                 lease.BreakTime = null;
                 SaveLease(leaseFilePath, lease);
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Created, lease, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Created, lease);
             }
             case "renew":
             {
                 if (effectiveState != ContainerLeaseState.Leased)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null);
                 if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null);
 
                 lease.ExpiresAt = lease.Duration == -1 ? null : DateTimeOffset.UtcNow.AddSeconds(lease.Duration);
                 lease.State = ContainerLeaseState.Leased;
                 lease.BreakTime = null;
                 SaveLease(leaseFilePath, lease);
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease);
             }
             case "change":
             {
                 if (effectiveState != ContainerLeaseState.Leased)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null);
                 if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null);
                 if (string.IsNullOrEmpty(proposedLeaseId))
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null);
 
                 lease.LeaseId = proposedLeaseId;
                 SaveLease(leaseFilePath, lease);
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease);
             }
             case "release":
             {
                 if (effectiveState != ContainerLeaseState.Leased)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null);
                 if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null);
 
                 lease.State = ContainerLeaseState.Available;
                 lease.LeaseId = null;
                 lease.ExpiresAt = null;
                 lease.BreakTime = null;
                 SaveLease(leaseFilePath, lease);
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease);
             }
             case "break":
             {
                 if (effectiveState == ContainerLeaseState.Available || effectiveState == ContainerLeaseState.Broken)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null);
 
                 if (effectiveState == ContainerLeaseState.Breaking)
                 {
                     // Already breaking — just return remaining time
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Accepted, lease, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Accepted, lease);
                 }
 
                 // Determine how long until the lease breaks
@@ -1273,10 +1270,10 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
                 lease.State = ContainerLeaseState.Breaking;
                 lease.BreakTime = DateTimeOffset.UtcNow.AddSeconds(breakSeconds);
                 SaveLease(leaseFilePath, lease);
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Accepted, lease, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Accepted, lease);
             }
             default:
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null);
         }
     }
 
@@ -1300,7 +1297,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         var fullBlobPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
         if (!File.Exists(fullBlobPath))
-            return new DataPlaneOperationResult<ContainerLease>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<ContainerLease>(OperationResult.NotFound, null);
 
         var leaseFilePath = GetBlobLeaseFilePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
@@ -1322,7 +1319,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             case "acquire":
             {
                 if (effectiveState == ContainerLeaseState.Leased)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null);
 
                 var newLeaseId = string.IsNullOrEmpty(proposedLeaseId) ? Guid.NewGuid().ToString() : proposedLeaseId;
                 lease.LeaseId = newLeaseId;
@@ -1331,55 +1328,55 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
                 lease.ExpiresAt = leaseDuration == -1 ? null : DateTimeOffset.UtcNow.AddSeconds(leaseDuration);
                 lease.BreakTime = null;
                 SaveLease(leaseFilePath, lease);
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Created, lease, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Created, lease);
             }
             case "renew":
             {
                 if (effectiveState != ContainerLeaseState.Leased)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null);
                 if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null);
 
                 lease.ExpiresAt = lease.Duration == -1 ? null : DateTimeOffset.UtcNow.AddSeconds(lease.Duration);
                 lease.State = ContainerLeaseState.Leased;
                 lease.BreakTime = null;
                 SaveLease(leaseFilePath, lease);
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease);
             }
             case "change":
             {
                 if (effectiveState != ContainerLeaseState.Leased)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null);
                 if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null);
                 if (string.IsNullOrEmpty(proposedLeaseId))
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null);
 
                 lease.LeaseId = proposedLeaseId;
                 SaveLease(leaseFilePath, lease);
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease);
             }
             case "release":
             {
                 if (effectiveState != ContainerLeaseState.Leased)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null);
                 if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null);
 
                 lease.State = ContainerLeaseState.Available;
                 lease.LeaseId = null;
                 lease.ExpiresAt = null;
                 lease.BreakTime = null;
                 SaveLease(leaseFilePath, lease);
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease);
             }
             case "break":
             {
                 if (effectiveState == ContainerLeaseState.Available || effectiveState == ContainerLeaseState.Broken)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null);
 
                 if (effectiveState == ContainerLeaseState.Breaking)
-                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Accepted, lease, null, null);
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Accepted, lease);
 
                 int breakSeconds;
                 if (breakPeriod.HasValue)
@@ -1400,10 +1397,10 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
                 lease.State = ContainerLeaseState.Breaking;
                 lease.BreakTime = DateTimeOffset.UtcNow.AddSeconds(breakSeconds);
                 SaveLease(leaseFilePath, lease);
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Accepted, lease, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Accepted, lease);
             }
             default:
-                return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null, null, null);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null);
         }
     }
 
@@ -1443,7 +1440,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             : [];
 
         if (deletedContentFiles.Length == 0)
-            return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
+            return new DataPlaneOperationResult(OperationResult.NotFound);
 
         var mostRecentDeleted = deletedContentFiles[0];
         var suffix = Path.GetFileName(mostRecentDeleted)[(blobFileName.Length + 2)..];
@@ -1466,7 +1463,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         if (File.Exists(deletedMetadataPath))
             File.Move(deletedMetadataPath, originalMetadataPath, overwrite: true);
 
-        return new DataPlaneOperationResult(OperationResult.Success, null, null);
+        return new DataPlaneOperationResult(OperationResult.Success);
     }
 
         public DataPlaneOperationResult<string> SnapshotBlob(
@@ -1484,7 +1481,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
         if (!File.Exists(contentPath))
-            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, null, null);
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null);
 
         var leaseFilePath = GetBlobLeaseFilePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
         if (File.Exists(leaseFilePath))
@@ -1493,7 +1490,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             if (lease?.State is ContainerLeaseState.Leased or ContainerLeaseState.Breaking)
             {
                 if (!string.Equals(lease.LeaseId, leaseId, StringComparison.OrdinalIgnoreCase))
-                    return new DataPlaneOperationResult<string>(OperationResult.PreconditionFailed, null, null, null);
+                    return new DataPlaneOperationResult<string>(OperationResult.PreconditionFailed, null);
             }
         }
 
@@ -1533,7 +1530,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         File.WriteAllText(snapshotPropertiesPath, JsonSerializer.Serialize(properties, GlobalSettings.JsonOptions));
 
-        return new DataPlaneOperationResult<string>(OperationResult.Created, snapshotTimestamp, null, null);
+        return new DataPlaneOperationResult<string>(OperationResult.Created, snapshotTimestamp);
     }
 
     private static void SaveLease(string path, ContainerLease lease)

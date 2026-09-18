@@ -114,9 +114,23 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleExpireCommand(commandParameters);
             case "TTL":
                 return HandleTtlCommand(commandParameters);
+            case "KEYS":
+                return HandleKeysCommand(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
+    }
+
+    private byte[] HandleKeysCommand(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received KEYS command.");
+        
+        var pattern = parameters[0];
+        var result = _dataPlane.Keys(pattern, _cache!);
+
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource!.Select(k => k.AsBulkString()).ToArray().AsRespArray();
     }
 
     private byte[] HandleTtlCommand(List<byte[]> parameters)
