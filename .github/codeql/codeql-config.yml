@@ -1,0 +1,7 @@
+name: "Topaz CodeQL config"
+disable-default-queries: false
+queries:
+  - uses: security-extended
+query-filters:
+  - exclude:
+      id: cs/cleartext-storage-of-sensitive-information
