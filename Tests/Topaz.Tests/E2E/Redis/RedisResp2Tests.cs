@@ -22,6 +22,7 @@ internal sealed class RedisResp2Tests
     private const string ResourceGroupName = "rg-test-redis-data";
     
     private IDatabase _db;
+    private IServer _server;
 
     [OneTimeSetUp]
     public async Task OneTimeSetup()
@@ -74,6 +75,8 @@ internal sealed class RedisResp2Tests
         };
 
         var muxer = await ConnectionMultiplexer.ConnectAsync(configurationOptions);
+        
+        _server = muxer.GetServer(GlobalSettings.GetRedisEndpointWithPort(cacheName, false));
         _db = muxer.GetDatabase(0);
     }
 
@@ -185,6 +188,31 @@ internal sealed class RedisResp2Tests
         var result = (RedisResult[])(await _db.ExecuteAsync("KEYS", "*"))!;
         
         Assert.That(result, Has.Length.EqualTo(2));
+    }
+    
+    [Test]
+    public async Task RedisResp2Tests_WhenScanningKeys_ItReturnsAllKeys()
+    {
+        await _db.StringSetAsync("key", "value");
+        await _db.StringSetAsync("key2", "value2");
+
+        var result = _server.Keys(database: 0, pattern: "*").ToArray();
+        
+        Assert.That(result, Has.Length.EqualTo(2));
+    }
+    
+    [Test]
+    public async Task RedisResp2Tests_WhenScanningKeysWithSpecificGlob_ItReturnsSpecificKeysOnly()
+    {
+        await _db.StringSetAsync("key", "value");
+        await _db.StringSetAsync("key2", "value2");
+        await _db.StringSetAsync("some", "value3");
+        await _db.StringSetAsync("some2", "value3");
+        await _db.StringSetAsync("somekey", "value3");
+
+        var result = _server.Keys(database: 0, pattern: "some*").ToArray();
+        
+        Assert.That(result, Has.Length.EqualTo(3));
     }
     
     [UsedImplicitly]
