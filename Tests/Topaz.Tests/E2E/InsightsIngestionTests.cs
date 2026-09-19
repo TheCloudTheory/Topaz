@@ -222,6 +222,20 @@ public class InsightsIngestionTests
         return (component.Data.InstrumentationKey!, ingestionEndpoint);
     }
 
+    private async Task<(string ikey, string ingestionEndpoint)> CreateComponentAndGetKeys(string componentName)
+    {
+        await Program.RunAsync([
+            "insights", "component", "create", "--name", componentName, "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString(), "--location", "westeurope"
+        ]);
+
+        var armClient = CreateArmClient();
+        var rg = await GetResourceGroup(armClient);
+        var component = (await rg.GetApplicationInsightsComponents().GetAsync(componentName)).Value;
+        var ingestionEndpoint = TopazResourceHelpers.GetApplicationInsightsIngestionEndpoint(componentName);
+        return (component.Data.InstrumentationKey!, ingestionEndpoint);
+    }
+
     private async Task IngestRequestViaHttp(string ikey, string ingestionEndpoint, string requestName)
     {
         var payload =
@@ -704,5 +718,113 @@ public class InsightsIngestionTests
 
         Assert.ThrowsAsync<HttpRequestException>(async () => await RunQuery(ingestionEndpoint, ikey,
             "requests | where timestamp between (ago(1x) .. ago(0))"));
+    }
+
+    // ── app() tests ─────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task Query_AppFunctionByName_ReturnsRowsFromReferencedComponent()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string referencedComponent = "e2e-insights-app-name";
+        var (referencedKey, referencedEndpoint) = await CreateComponentAndGetKeys(referencedComponent);
+
+        await IngestRequestViaHttp(referencedKey, referencedEndpoint, "GET /api/app-by-name");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"app(\"{referencedComponent}\").requests | take 10");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(table.GetProperty("name").GetString(), Is.EqualTo("PrimaryResult"));
+            Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+        }
+    }
+
+    [Test]
+    public async Task Query_AppFunctionByName_DoesNotReturnRowsFromCurrentComponent()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string referencedComponent = "e2e-insights-app-scope";
+        var (referencedKey, referencedEndpoint) = await CreateComponentAndGetKeys(referencedComponent);
+
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/current-component-only");
+        await IngestRequestViaHttp(referencedKey, referencedEndpoint, "GET /api/referenced-component-only");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"app(\"{referencedComponent}\").requests | take 10");
+        var table = doc.RootElement.GetProperty("tables")[0];
+        var nameIdx = table.GetProperty("columns").EnumerateArray()
+            .Select((c, i) => (name: c.GetProperty("name").GetString()!, index: i))
+            .FirstOrDefault(c => c.name == "name").index;
+        var names = table.GetProperty("rows").EnumerateArray()
+            .Select(row => row[nameIdx].GetString())
+            .ToList();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(names, Does.Contain("GET /api/referenced-component-only"));
+            Assert.That(names, Does.Not.Contain("GET /api/current-component-only"));
+        }
+    }
+
+    [Test]
+    public async Task Query_AppFunctionByResourceId_ReturnsRowsFromReferencedComponent()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string referencedComponent = "e2e-insights-app-resource-id";
+        var (referencedKey, referencedEndpoint) = await CreateComponentAndGetKeys(referencedComponent);
+
+        await IngestRequestViaHttp(referencedKey, referencedEndpoint, "GET /api/app-by-resource-id");
+
+        var resourceId =
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Insights/components/{referencedComponent}";
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"app(\"{resourceId}\").requests | take 10");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
+    public async Task Query_AppFunctionWithUnknownComponent_ReturnsEmptyResult()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/app-unknown");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            "app(\"e2e-insights-app-missing\").requests | take 10");
+        var table = doc.RootElement.GetProperty("tables")[0];
+
+        Assert.That(table.GetProperty("rows").GetArrayLength(), Is.Zero);
+    }
+
+    [Test]
+    public async Task Query_UnionWithAppFunction_ReturnsRowsFromBothComponents()
+    {
+        var (ikey, ingestionEndpoint) = await GetComponentKeys();
+        const string referencedComponent = "e2e-insights-app-union";
+        var (referencedKey, referencedEndpoint) = await CreateComponentAndGetKeys(referencedComponent);
+
+        await IngestRequestViaHttp(ikey, ingestionEndpoint, "GET /api/union-current");
+        await IngestRequestViaHttp(referencedKey, referencedEndpoint, "GET /api/union-referenced");
+
+        using var doc = await RunQuery(ingestionEndpoint, ikey,
+            $"union requests, app(\"{referencedComponent}\").requests | take 100");
+        var table = doc.RootElement.GetProperty("tables")[0];
+        var nameIdx = table.GetProperty("columns").EnumerateArray()
+            .Select((c, i) => (name: c.GetProperty("name").GetString()!, index: i))
+            .FirstOrDefault(c => c.name == "name").index;
+        var names = table.GetProperty("rows").EnumerateArray()
+            .Select(row => row[nameIdx].GetString())
+            .ToList();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(names, Does.Contain("GET /api/union-current"));
+            Assert.That(names, Does.Contain("GET /api/union-referenced"));
+        }
     }
 }

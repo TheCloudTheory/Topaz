@@ -9,7 +9,7 @@ internal static partial class KqlQueryExecutor
     private static readonly HashSet<string> BuiltInEmptyTables =
         new(StringComparer.OrdinalIgnoreCase) { "AzureActivity", "AzureDiagnostics" };
     
-    public static QueryResult Execute(string queryText, string workspaceName, Func<string, string, IEnumerable<string>> tableLoader, Func<string, string> workspaceNameResolver)
+    public static QueryResult Execute(string queryText, string workspaceName, Func<string, string, IEnumerable<string>> tableLoader, Func<string, string> workspaceNameResolver, Func<string, string, IEnumerable<string>>? appTableLoader = null)
     {
         queryText = queryText.Trim();
         
@@ -29,6 +29,11 @@ internal static partial class KqlQueryExecutor
                 {
                     return LoadWorkspace(t, tableLoader, workspaceNameResolver);
                 }
+
+                if (t.StartsWith("app(", StringComparison.OrdinalIgnoreCase))
+                {
+                    return LoadApp(t, appTableLoader);
+                }
                 
                 return LoadTable(t, workspaceName, tableLoader);
             })];
@@ -36,6 +41,10 @@ internal static partial class KqlQueryExecutor
         else if(tableName.StartsWith("workspace(", StringComparison.OrdinalIgnoreCase))
         {
             rows = [.. LoadWorkspace(tableName, tableLoader, workspaceNameResolver)];
+        }
+        else if(tableName.StartsWith("app(", StringComparison.OrdinalIgnoreCase))
+        {
+            rows = [.. LoadApp(tableName, appTableLoader)];
         }
         else
         {
@@ -103,29 +112,30 @@ internal static partial class KqlQueryExecutor
         if (BuiltInEmptyTables.Contains(tableName))
             return [];
 
-        return
-        [
-            .. tableLoader(workspaceName, tableName)
-                .SelectMany(json =>
-                {
-                    try
-                    {
-                        var node = JsonNode.Parse(json);
-                        // Stored as JSON array (batch ingestion) or single object
-                        return node switch
-                        {
-                            JsonArray arr => arr.OfType<JsonObject>(),
-                            JsonObject obj => (IEnumerable<JsonObject>)[obj],
-                            _ => []
-                        };
-                    }
-                    catch (Exception)
-                    {
-                        return [];
-                    }
-                })
-        ];
+        return ParseRows(tableLoader(workspaceName, tableName));
     }
+
+    private static List<JsonObject> ParseRows(IEnumerable<string> payloads) =>
+    [
+        .. payloads.SelectMany(json =>
+        {
+            try
+            {
+                var node = JsonNode.Parse(json);
+                // Stored as JSON array (batch ingestion) or single object
+                return node switch
+                {
+                    JsonArray arr => arr.OfType<JsonObject>(),
+                    JsonObject obj => (IEnumerable<JsonObject>)[obj],
+                    _ => []
+                };
+            }
+            catch (Exception)
+            {
+                return [];
+            }
+        })
+    ];
     
     private static IEnumerable<JsonObject> LoadWorkspace(string workspaceReference,
         Func<string, string, IEnumerable<string>> tableLoader, Func<string, string> workspaceNameResolver)
@@ -139,6 +149,26 @@ internal static partial class KqlQueryExecutor
         var workspaceName = workspaceNameResolver(string.IsNullOrWhiteSpace(workspaceId) ? workspaceResourceId : workspaceId);
 
         return LoadTable(tableName, workspaceName, tableLoader);
+    }
+
+    private static IEnumerable<JsonObject> LoadApp(string appReference,
+        Func<string, string, IEnumerable<string>>? appTableLoader)
+    {
+        var appMatch = AppRegex().Match(appReference);
+        if (!appMatch.Success) return [];
+
+        // app() points at another Application Insights component, either by its name or by its
+        // fully-qualified resource ID. The component lives in its own resource group and
+        // subscription, so the reference is handed to the loader as-is for resolution there.
+        var appIdentifier = !string.IsNullOrWhiteSpace(appMatch.Groups["name"].Value)
+            ? appMatch.Groups["name"].Value
+            : appMatch.Groups["resourceId"].Value;
+
+        var tableSegments = appReference.Replace(appMatch.Captures[0].Value, string.Empty).Split('.');
+        if (tableSegments.Length < 2) return [];
+        var tableName = tableSegments[1];
+
+        return appTableLoader == null ? [] : ParseRows(appTableLoader(appIdentifier, tableName));
     }
 
     private static string CompileFunctions(string op)
