@@ -331,7 +331,8 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         foreach (var file in files)
         {
             var fi = new FileInfo(file);
-            var pairKey = fi.Name.Split('_')[1];
+            var segments = fi.Name.Split("_");
+            var pairKey = segments[^1];
             var value = File.ReadAllText(file);
             
             result.Add(pairKey);

@@ -227,8 +227,8 @@ internal sealed class RedisResp2Tests
     [Test]
     public async Task RedisResp2Tests_CanSetHashWithMultiplePairs_AndThenGetAllValues()
     {
-        await _db.HashSetAsync("key", [new HashEntry("foo", "bar"),  new HashEntry("foo2", "baz")]);
-        var entries = await _db.HashGetAllAsync("key");
+        await _db.HashSetAsync("key_all", [new HashEntry("foo", "bar"),  new HashEntry("foo2", "baz")]);
+        var entries = await _db.HashGetAllAsync("key_all");
         
         Assert.That(entries, Has.Length.EqualTo(2));
         using (Assert.EnterMultipleScope())
