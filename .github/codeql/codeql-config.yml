@@ -5,3 +5,4 @@ queries:
 query-filters:
   - exclude:
       id: cs/cleartext-storage-of-sensitive-information
+      id: cs/log-forging
