@@ -126,9 +126,46 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleHGetAllCommand(commandParameters);
             case "HDEL":
                 return HandleHDelCommand(commandParameters);
+            case "ARINSERT":
+                return HandleArrayInsert(commandParameters);
+            case "ARGET":
+                return HandleArrayGet(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
+    }
+
+    private byte[] HandleArrayGet(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received ARGET command.");
+        
+        var key = parameters[0];
+        var index = parameters[1];
+        
+        var result = _dataPlane.ArrayGet(key, index, _cache!);
+        
+        if(result.Result == OperationResult.NotFound)
+        {
+            return Resp2ProtocolHandlerExtensions.AsNilBulkString();
+        }
+        
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource!.AsBulkString();
+    }
+
+    private byte[] HandleArrayInsert(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received ARINSERT command.");
+        
+        var key = parameters[0];
+        var value = parameters[1];
+        
+        var result = _dataPlane.ArrayInsert(key, value, _cache!);
+        
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource.ToString().AsInteger();
     }
 
     private byte[] HandleHDelCommand(List<byte[]> parameters)
