@@ -30,8 +30,9 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         }
 
         var response = responses.SelectMany(r => r).ToArray();
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle), $"Sending response: {Encoding.UTF8.GetString(response)}");
-        
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle),
+            $"Sending response: {Encoding.UTF8.GetString(response)}");
+
         return response;
     }
 
@@ -80,79 +81,107 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(ParseCommand), $"Parsing command: {commandName}");
 
-        switch (commandName)
+        try
         {
-            case "AUTH":
-                return HandleAuthCommand(commandParameters);
-            case "HELLO":
-                return HandleHelloCommand(commandParameters);
-            case "CLIENT":
-                return HandleClientCommand(commandParameters);
-            case "CONFIG":
-                return HandleConfigCommand(commandParameters);
-            case "SENTINEL":
-                return HandleSentinelCommand(commandParameters);
-            case "INFO":
-                return HandleInfoCommand(commandParameters);
-            case "CLUSTER":
-                return HandleClusterCommand(commandParameters);
-            case "GET":
-                return HandleGetCommand(commandParameters);
-            case "ECHO":
-                return HandleEchoCommand(commandParameters);
-            case "PING":
-                return HandlePingCommand(commandParameters);
-            case "SET":
-                return HandleSetCommand(commandParameters);
-            case "APPEND":
-                return HandleAppendCommand(commandParameters);
-            case "DEL":
-                return HandleDeleteCommand(commandParameters);
-            case "EXISTS":
-                return HandleExistsCommand(commandParameters);
-            case "EXPIRE":
-                return HandleExpireCommand(commandParameters);
-            case "TTL":
-                return HandleTtlCommand(commandParameters);
-            case "KEYS":
-                return HandleKeysCommand(commandParameters);
-            case "HSET":
-                return HandleHSetCommand(commandParameters);
-            case "HGET":
-                return HandleHGetCommand(commandParameters);
-            case "HMSET":
-                return HandleHmSetCommand(commandParameters);
-            case "HGETALL":
-                return HandleHGetAllCommand(commandParameters);
-            case "HDEL":
-                return HandleHDelCommand(commandParameters);
-            case "ARINSERT":
-                return HandleArrayInsert(commandParameters);
-            case "ARGET":
-                return HandleArrayGet(commandParameters);
-            case "LPUSH":
-                return HandleLPush(commandParameters);
-            case "LINDEX":
-                return HandleLIndex(commandParameters);
-            default:
-                return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
+            switch (commandName)
+            {
+                case "AUTH":
+                    return HandleAuthCommand(commandParameters);
+                case "HELLO":
+                    return HandleHelloCommand(commandParameters);
+                case "CLIENT":
+                    return HandleClientCommand(commandParameters);
+                case "CONFIG":
+                    return HandleConfigCommand(commandParameters);
+                case "SENTINEL":
+                    return HandleSentinelCommand(commandParameters);
+                case "INFO":
+                    return HandleInfoCommand(commandParameters);
+                case "CLUSTER":
+                    return HandleClusterCommand(commandParameters);
+                case "GET":
+                    return HandleGetCommand(commandParameters);
+                case "ECHO":
+                    return HandleEchoCommand(commandParameters);
+                case "PING":
+                    return HandlePingCommand(commandParameters);
+                case "SET":
+                    return HandleSetCommand(commandParameters);
+                case "APPEND":
+                    return HandleAppendCommand(commandParameters);
+                case "DEL":
+                    return HandleDeleteCommand(commandParameters);
+                case "EXISTS":
+                    return HandleExistsCommand(commandParameters);
+                case "EXPIRE":
+                    return HandleExpireCommand(commandParameters);
+                case "TTL":
+                    return HandleTtlCommand(commandParameters);
+                case "KEYS":
+                    return HandleKeysCommand(commandParameters);
+                case "HSET":
+                    return HandleHSetCommand(commandParameters);
+                case "HGET":
+                    return HandleHGetCommand(commandParameters);
+                case "HMSET":
+                    return HandleHmSetCommand(commandParameters);
+                case "HGETALL":
+                    return HandleHGetAllCommand(commandParameters);
+                case "HDEL":
+                    return HandleHDelCommand(commandParameters);
+                case "ARINSERT":
+                    return HandleArrayInsert(commandParameters);
+                case "ARGET":
+                    return HandleArrayGet(commandParameters);
+                case "LPUSH":
+                    return HandleLPush(commandParameters);
+                case "LINDEX":
+                    return HandleLIndex(commandParameters);
+                case "LPOP":
+                    return HandleLPop(commandParameters);
+                default:
+                    return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
+            }
         }
+        catch (Exception ex)
+        {
+            logger.LogError(nameof(Resp2ProtocolHandler), nameof(ParseCommand), $"Error parsing command: {ex.Message} {ex.StackTrace}");
+            return $"ERR internal server error".AsSimpleError();
+        }
+    }
+
+    private byte[] HandleLPop(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPush), $"Received LPOP command.");
+
+        var key = parameters[0];
+
+        var result = _dataPlane.LPop(key, _cache!);
+
+        if (result.Result == OperationResult.NotFound)
+        {
+            return Resp2ProtocolHandlerExtensions.AsNilBulkString();
+        }
+
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource!.AsBulkString();
     }
 
     private byte[] HandleLIndex(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPush), $"Received LINDEX command.");
-        
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLIndex), $"Received LINDEX command.");
+
         var key = parameters[0];
         var index = parameters[1];
-        
+
         var result = _dataPlane.LIndex(key, index, _cache!);
-        
-        if(result.Result == OperationResult.NotFound)
+
+        if (result.Result == OperationResult.NotFound)
         {
             return Resp2ProtocolHandlerExtensions.AsNilBulkString();
         }
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : result.Resource!.AsBulkString();
@@ -161,12 +190,12 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleLPush(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPush), $"Received LPUSH command.");
-        
+
         var key = parameters[0];
         var value = parameters[1];
-        
+
         var result = _dataPlane.LPush(key, value, _cache!);
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : result.Resource.ToString().AsInteger();
@@ -175,17 +204,17 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleArrayGet(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received ARGET command.");
-        
+
         var key = parameters[0];
         var index = parameters[1];
-        
+
         var result = _dataPlane.ArrayGet(key, index, _cache!);
-        
-        if(result.Result == OperationResult.NotFound)
+
+        if (result.Result == OperationResult.NotFound)
         {
             return Resp2ProtocolHandlerExtensions.AsNilBulkString();
         }
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : result.Resource!.AsBulkString();
@@ -194,12 +223,12 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleArrayInsert(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received ARINSERT command.");
-        
+
         var key = parameters[0];
         var value = parameters[1];
-        
+
         var result = _dataPlane.ArrayInsert(key, value, _cache!);
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : result.Resource.ToString().AsInteger();
@@ -208,12 +237,12 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleHDelCommand(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received HGETALL command.");
-        
+
         var key = parameters[0];
         var hashField = parameters[1];
-        
+
         var result = _dataPlane.HDel(key, hashField, _cache!);
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : result.Resource.ToString().AsInteger();
@@ -222,11 +251,11 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleHGetAllCommand(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received HGETALL command.");
-        
+
         var key = parameters[0];
         var result = _dataPlane.HGetAll(key, _cache!);
-        
-        if(result.Result == OperationResult.NotFound)
+
+        if (result.Result == OperationResult.NotFound)
         {
             return Resp2ProtocolHandlerExtensions.AsNilBulkString();
         }
@@ -239,19 +268,19 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleHmSetCommand(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received HMSET command.");
-        
+
         var key = parameters[0];
         var pairs = new List<KeyValuePair<byte[], byte[]>>();
 
         for (var i = 1; i < parameters.Count; i++)
         {
-            var next =  parameters[i+1];
+            var next = parameters[i + 1];
             pairs.Add(new KeyValuePair<byte[], byte[]>(parameters[i], next));
             i++;
         }
-        
+
         var result = _dataPlane.HmSet(key, pairs, _cache!);
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : "OK".AsSimpleString();
@@ -260,13 +289,13 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleHGetCommand(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received HGET command.");
-        
+
         var key = parameters[0];
         var field = parameters[1];
-        
+
         var result = _dataPlane.HGet(key, field, _cache!);
-        
-        if(result.Result == OperationResult.NotFound)
+
+        if (result.Result == OperationResult.NotFound)
         {
             return Resp2ProtocolHandlerExtensions.AsNilBulkString();
         }
@@ -279,7 +308,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleHSetCommand(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received HSET command.");
-        
+
         var key = parameters[0];
         var field = parameters[1];
         var value = parameters[2];
@@ -294,7 +323,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleKeysCommand(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleKeysCommand), $"Received KEYS command.");
-        
+
         var pattern = parameters[0];
         var result = _dataPlane.Keys(pattern, _cache!);
 
@@ -306,7 +335,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleTtlCommand(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleTtlCommand), $"Received TTL command.");
-        
+
         var key = parameters[0];
         var result = _dataPlane.Ttl(key, _cache!);
 
@@ -318,11 +347,11 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleExpireCommand(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleExpireCommand), $"Received EXPIRE command.");
-        
+
         var key = parameters[0];
         var expireTime = parameters[1];
         var result = _dataPlane.Expire(key, expireTime, _cache!);
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : "OK".AsSimpleString();
@@ -331,10 +360,10 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleExistsCommand(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleExistsCommand), $"Received EXISTS command.");
-        
+
         var key = parameters[0];
         var result = _dataPlane.Exists(key, _cache!);
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : result.Resource.ToString().AsInteger();
@@ -343,10 +372,10 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     private byte[] HandleDeleteCommand(List<byte[]> parameters)
     {
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleDeleteCommand), $"Received DEL command.");
-        
+
         var key = parameters[0];
         var result = _dataPlane.Delete(key, _cache!);
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : result.Resource.ToString().AsInteger();
@@ -359,7 +388,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         var key = parameters[0];
         var value = parameters[1];
         var result = _dataPlane.Append(key, value, _cache!);
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : result.Resource!.Length.ToString().AsInteger();
@@ -372,7 +401,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         var key = parameters[0];
         var value = parameters[1];
         var result = _dataPlane.Set(key, value, _cache!);
-        
+
         return result.Result != OperationResult.Success
             ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
             : "OK".AsSimpleString();
@@ -392,9 +421,9 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
     {
         var key = parameters[0];
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSetCommand), $"Received GET command.");
-        
+
         var value = _dataPlane.Get(key, _cache!);
-        if(value.Result == OperationResult.NotFound)
+        if (value.Result == OperationResult.NotFound)
         {
             return Resp2ProtocolHandlerExtensions.AsNilBulkString();
         }
@@ -406,10 +435,11 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleClusterCommand(List<byte[]> parameters)
     {
-        var subcommand =  Encoding.UTF8.GetString(parameters[0]);
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSentinelCommand), $"Received sentinel subcommand: {subcommand}");
-        
-        switch(subcommand)
+        var subcommand = Encoding.UTF8.GetString(parameters[0]);
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSentinelCommand),
+            $"Received sentinel subcommand: {subcommand}");
+
+        switch (subcommand)
         {
             case "SLOTS":
                 return HandleClusterSlotsCommand();
@@ -448,10 +478,11 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleSentinelCommand(List<byte[]> parameters)
     {
-        var subcommand =  Encoding.UTF8.GetString(parameters[0]);
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSentinelCommand), $"Received sentinel subcommand: {subcommand}");
-        
-        switch(subcommand)
+        var subcommand = Encoding.UTF8.GetString(parameters[0]);
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleSentinelCommand),
+            $"Received sentinel subcommand: {subcommand}");
+
+        switch (subcommand)
         {
             case "MASTERS":
                 return HandleSentinelMastersCommand();
@@ -467,10 +498,11 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleConfigCommand(List<byte[]> parameters)
     {
-        var subcommand =  Encoding.UTF8.GetString(parameters[0]);
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleConfigCommand), $"Received config subcommand: {subcommand}");
-        
-        switch(subcommand)
+        var subcommand = Encoding.UTF8.GetString(parameters[0]);
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleConfigCommand),
+            $"Received config subcommand: {subcommand}");
+
+        switch (subcommand)
         {
             case "GET":
                 return HandleConfigGetCommand(parameters);
@@ -481,7 +513,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleConfigGetCommand(List<byte[]> parameters)
     {
-        var configKey =  Encoding.UTF8.GetString(parameters[1]);
+        var configKey = Encoding.UTF8.GetString(parameters[1]);
         logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(Handle), $"Received client config key: {configKey}");
 
         switch (configKey)
@@ -489,12 +521,12 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
             case "replica-read-only":
                 var replica = "replica-read-only".AsBulkString();
                 var replicaValue = "no".AsBulkString();
-                        
+
                 return new[] { replica, replicaValue }.AsRespArray();
             case "databases":
                 var databases = "databases".AsBulkString();
                 var databasesValue = "16".AsBulkString();
-                        
+
                 return new[] { databases, databasesValue }.AsRespArray();
             default:
                 return Array.Empty<byte[]>().AsRespArray();
@@ -503,10 +535,11 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleClientCommand(List<byte[]> parameters)
     {
-        var subcommand =  Encoding.UTF8.GetString(parameters[0]);
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleClientCommand), $"Received client subcommand: {subcommand}");
-        
-        switch(subcommand)
+        var subcommand = Encoding.UTF8.GetString(parameters[0]);
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleClientCommand),
+            $"Received client subcommand: {subcommand}");
+
+        switch (subcommand)
         {
             case "SETNAME":
                 return HandleClientSetNameCommand(parameters);
@@ -526,29 +559,32 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleClientSetInfoCommand(List<byte[]> parameters)
     {
-        var value =  Encoding.UTF8.GetString(parameters[1]);
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleClientSetInfoCommand), $"Received client info key: {value}");
-                
+        var value = Encoding.UTF8.GetString(parameters[1]);
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleClientSetInfoCommand),
+            $"Received client info key: {value}");
+
         return "OK".AsSimpleString();
     }
 
     private byte[] HandleClientSetNameCommand(List<byte[]> parameters)
     {
-        var value =  Encoding.UTF8.GetString(parameters[1]);
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleClientSetNameCommand), $"Received client info key: {value}");
-                
+        var value = Encoding.UTF8.GetString(parameters[1]);
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleClientSetNameCommand),
+            $"Received client info key: {value}");
+
         return "OK".AsSimpleString();
     }
 
     private byte[] HandleHelloCommand(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHelloCommand), $"Received protocol version: {Encoding.UTF8.GetString(parameters[0])}");
-                
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHelloCommand),
+            $"Received protocol version: {Encoding.UTF8.GetString(parameters[0])}");
+
         var server = "server".AsBulkString();
         var topaz = "topaz".AsBulkString();
         var version = "version".AsBulkString();
         var versionValue = "1.0".AsBulkString();
-                
+
         return new[] { server, topaz, version, versionValue }.AsRespMap();
     }
 
@@ -558,10 +594,11 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         var cache = controlPlane.GetByKey(key);
         if (cache.Result != OperationResult.Success)
         {
-            logger.LogError(nameof(Resp2ProtocolHandler), nameof(HandleAuthCommand), $"Failed to authenticate with key: {key}");
+            logger.LogError(nameof(Resp2ProtocolHandler), nameof(HandleAuthCommand),
+                $"Failed to authenticate with key: {key}");
             return "-ERR Authentication failed".AsBulkString();
         }
-                
+
         _cache = cache.Resource!;
         return "OK".AsSimpleString();
     }
@@ -581,17 +618,17 @@ internal static class Resp2ProtocolHandlerExtensions
 
         return [.. prefix, .. bytes, .. suffix];
     }
-    
+
     public static byte[] AsSimpleError(this string str) =>
         Encoding.ASCII.GetBytes($"-{str}\r\n");
-    
+
     public static byte[] AsSimpleString(this string str) =>
         Encoding.ASCII.GetBytes($"+{str}\r\n");
-    
+
     public static byte[] AsNilBulkString() => [.. "$-1\r\n"u8];
-    
+
     public static byte[] AsInteger(this string str) => Encoding.ASCII.GetBytes($":{str}\r\n");
-    
+
     extension(byte[][] elements)
     {
         public byte[] AsRespMap()

@@ -459,4 +459,55 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
             ? new DataPlaneOperationResult<string>(OperationResult.NotFound, null)
             : new DataPlaneOperationResult<string>(OperationResult.Success, File.ReadAllText(filePath));
     }
+
+    public DataPlaneOperationResult<string> LPop(byte[] key, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(LPop),
+            $"LPOP {keyStr} for Redis instance: {cache.Name}");
+
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<string>(instance.Result, null, instance.Reason, instance.Code);
+        }
+
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        if (files.Length == 0)
+        {
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null);
+        }
+        
+        var first = File.ReadAllText(files[0]);
+        
+        // Reorganize all the existing elements
+        File.Delete(files[0]);
+
+        if (files.Length <= 1)
+        {
+            return new DataPlaneOperationResult<string>(OperationResult.Success, first);
+        }
+        
+        for (var i = 1; i < files.Length; i++)
+        {
+            var destination = Path.Combine(mainPath, $"{keyStr}_b[{i+1}]");
+            
+            File.WriteAllText(destination, null);
+            File.Replace(files[i], destination, null);
+        }
+        
+        var newFiles = Directory.EnumerateFiles(mainPath, $"{keyStr}_b[*").ToArray();
+        
+        for (var i = 0; i < newFiles.Length; i++)
+        {
+            var destination = Path.Combine(mainPath, $"{keyStr}_[{i+1}]");
+            
+            File.WriteAllText(destination, null);
+            File.Replace(newFiles[i], destination, null);
+        }
+
+        return new DataPlaneOperationResult<string>(OperationResult.Success, first);
+    }
 }
