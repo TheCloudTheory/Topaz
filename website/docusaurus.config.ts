@@ -60,6 +60,43 @@ const config: Config = {
       attributes: {},
       innerHTML: `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`,
     },
+    {
+      tagName: 'script',
+      attributes: {
+        type: 'application/ld+json',
+      },
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'SoftwareApplication',
+            name: 'Topaz',
+            applicationCategory: 'DeveloperApplication',
+            operatingSystem: 'macOS, Linux, Windows',
+            description: 'Local Azure environment emulator for developers and cloud engineers. Runs Azure Storage, Key Vault, Service Bus, Event Hub, Container Registry, RBAC, and more locally with ARM, Bicep, and Terraform support.',
+            url: 'https://topaz.thecloudtheory.com',
+            image: 'https://topaz.thecloudtheory.com/img/topaz-logo.png',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
+            },
+            author: {
+              '@type': 'Organization',
+              name: 'TheCloudTheory',
+              url: 'https://thecloudtheory.com',
+            },
+          },
+          {
+            '@type': 'Organization',
+            name: 'TheCloudTheory',
+            url: 'https://thecloudtheory.com',
+            logo: 'https://thecloudtheory.com/static/tct.svg',
+            sameAs: ['https://github.com/TheCloudTheory'],
+          },
+        ],
+      }),
+    },
   ],
 
   presets: [
