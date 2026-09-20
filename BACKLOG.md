@@ -630,13 +630,6 @@ TODO: Application Insights: mv-expand support
   labels: enhancement, kql, application-insights
 -->
 
-<!--
-TODO: Application Insights: app() support
-  Add support for `app()` function. So it's possible to perform cross-workspace queries. Reference the existing implementation of `workspace()` function.
-  milestone: v1.16
-  labels: enhancement, kql, application-insights, good first issue
--->
-
 ### Azure Resource Manager – Subscription and tenant limits
 
 <!--

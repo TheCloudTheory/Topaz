@@ -221,6 +221,33 @@ internal sealed class ApplicationInsightsServiceControlPlane(
         return new ControlPlaneOperationResult<ApplicationInsightsComponentResource[]>(OperationResult.Success, resources, null, null);
     }
 
+    public ControlPlaneOperationResult<ApplicationInsightsComponentResource?> GetByName(string name)
+    {
+        var subscriptions = subscriptionControlPlane.List();
+        if (subscriptions.Result != OperationResult.Success || subscriptions.Resource == null ||
+            subscriptions.Resource.Length == 0)
+        {
+            return new ControlPlaneOperationResult<ApplicationInsightsComponentResource?>(OperationResult.Failed, null,
+                "No subscriptions found", "NoSubscriptionsFound");
+        }
+
+        foreach (var subscription in subscriptions.Resource)
+        {
+            var components = ListBySubscription(SubscriptionIdentifier.From(subscription.SubscriptionId));
+            if (components.Result != OperationResult.Success || components.Resource == null) continue;
+
+            var match = components.Resource.FirstOrDefault(c =>
+                string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (match == null) continue;
+
+            return new ControlPlaneOperationResult<ApplicationInsightsComponentResource?>(OperationResult.Success,
+                match, null, null);
+        }
+
+        return new ControlPlaneOperationResult<ApplicationInsightsComponentResource?>(OperationResult.NotFound, null,
+            string.Format(NotFoundMessage, name), NotFoundCode);
+    }
+
     public ControlPlaneOperationResult<ApplicationInsightsComponentResource?> GetByInstrumentationKey(
         string instrumentationKey)
     {

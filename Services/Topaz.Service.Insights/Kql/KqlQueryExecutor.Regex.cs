@@ -67,4 +67,7 @@ internal static partial class KqlQueryExecutor
     
     [GeneratedRegex(@"^workspace\(\s*""(?<guid>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})""\s*\)|workspace\(\s*""(?<resourceId>/subscriptions/[0-9a-fA-F-]+/resourcegroups/[^/]+/providers/Microsoft\.OperationalInsights/workspaces/[^""]+)""\s*\)", RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex WorkspaceRegex();
+
+    [GeneratedRegex(@"^app\(\s*""(?<name>[^""/]+)""\s*\)|app\(\s*""(?<resourceId>/subscriptions/[0-9a-fA-F-]+/resourcegroups/[^/]+/providers/Microsoft\.Insights/components/[^""]+)""\s*\)", RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex AppRegex();
 }
