@@ -130,9 +130,46 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                 return HandleArrayInsert(commandParameters);
             case "ARGET":
                 return HandleArrayGet(commandParameters);
+            case "LPUSH":
+                return HandleLPush(commandParameters);
+            case "LINDEX":
+                return HandleLIndex(commandParameters);
             default:
                 return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
         }
+    }
+
+    private byte[] HandleLIndex(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPush), $"Received LINDEX command.");
+        
+        var key = parameters[0];
+        var index = parameters[1];
+        
+        var result = _dataPlane.LIndex(key, index, _cache!);
+        
+        if(result.Result == OperationResult.NotFound)
+        {
+            return Resp2ProtocolHandlerExtensions.AsNilBulkString();
+        }
+        
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource!.AsBulkString();
+    }
+
+    private byte[] HandleLPush(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPush), $"Received LPUSH command.");
+        
+        var key = parameters[0];
+        var value = parameters[1];
+        
+        var result = _dataPlane.LPush(key, value, _cache!);
+        
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource.ToString().AsInteger();
     }
 
     private byte[] HandleArrayGet(List<byte[]> parameters)

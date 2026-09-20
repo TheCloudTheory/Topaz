@@ -412,4 +412,51 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
             ? new DataPlaneOperationResult<string>(OperationResult.NotFound, null)
             : new DataPlaneOperationResult<string>(OperationResult.Success, File.ReadAllText(filePath));
     }
+
+    public DataPlaneOperationResult<int> LPush(byte[] key, byte[] value, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        var valueStr = Encoding.UTF8.GetString(value);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(LPush), $"LPUSH {keyStr} {valueStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<int>(instance.Result, 0, instance.Reason, instance.Code);
+        }
+        
+        var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var array = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        if (array.Length == 0)
+        {
+            File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_[1]"), valueStr);
+            return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
+        }
+        
+        var newIndex = array.Length+1;
+        File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_[{newIndex}]"), valueStr);
+        return new DataPlaneOperationResult<int>(OperationResult.Success, newIndex);
+    }
+
+    public DataPlaneOperationResult<string> LIndex(byte[] key, byte[] index, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        var indexStr = Encoding.UTF8.GetString(index);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(LIndex),
+            $"LINDEX {keyStr} {indexStr} for Redis instance: {cache.Name}");
+
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<string>(instance.Result, null, instance.Reason, instance.Code);
+        }
+
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var filePath = Path.Combine(mainPath, $"{keyStr}_[{indexStr}]");
+
+        return !File.Exists(filePath)
+            ? new DataPlaneOperationResult<string>(OperationResult.NotFound, null)
+            : new DataPlaneOperationResult<string>(OperationResult.Success, File.ReadAllText(filePath));
+    }
 }

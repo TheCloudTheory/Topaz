@@ -285,6 +285,24 @@ internal sealed class RedisResp2Tests
         Assert.AreEqual(value2, "value2");
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanPushList_ThenRetrieveIt()
+    {
+        var index = await _db.ListLeftPushAsync("akey", "value1");
+        
+        Assert.AreEqual(index, 1);
+        
+        index = await _db.ListLeftPushAsync("akey", "value2");
+        
+        Assert.AreEqual(index, 2);
+
+        var value1 = await _db.ListGetByIndexAsync("akey", 1);
+        var value2 = await _db.ListGetByIndexAsync("akey", 2);
+        
+        Assert.AreEqual(value1, "value1");
+        Assert.AreEqual(value2, "value2");
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {
