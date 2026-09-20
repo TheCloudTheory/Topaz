@@ -163,7 +163,7 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/topaz-logo.png',
+    image: 'img/topaz-logo-v4.svg',
     metadata: [
       { name: 'keywords', content: 'azure emulator, local azure development, azure storage emulator, key vault emulator, service bus emulator, event hub emulator, azurite alternative, arm template testing, local cloud development' },
       { name: 'og:type', content: 'website' },
@@ -175,7 +175,7 @@ const config: Config = {
       title: '',
       logo: {
         alt: 'Topaz - Azure emulator',
-        src: 'img/topaz-logo.png',
+        src: 'img/topaz-logo-no-text-v4.svg',
       },
       items: [
         { to: '/features', label: 'Features', position: 'left' },

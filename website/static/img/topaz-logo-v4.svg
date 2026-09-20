@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="440" viewBox="0 0 360 440">
+  <defs>
+    <linearGradient id="facet-a" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A9CBFB"/>
+      <stop offset="100%" stop-color="#4E7FE0"/>
+    </linearGradient>
+    <linearGradient id="facet-b" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2E58C4"/>
+      <stop offset="100%" stop-color="#122A6E"/>
+    </linearGradient>
+    <linearGradient id="facet-c" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6E9BEA"/>
+      <stop offset="100%" stop-color="#2A50B8"/>
+    </linearGradient>
+    <linearGradient id="facet-d" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1A3585"/>
+      <stop offset="100%" stop-color="#3C6BD1"/>
+    </linearGradient>
+    <linearGradient id="facet-e" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#CFE1FC"/>
+      <stop offset="100%" stop-color="#89AFEE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- irregular faceted crystal, outermost to innermost -->
+  <g stroke="#0F2560" stroke-width="1.4" stroke-linejoin="round">
+    <path d="M172 18 L262 56 L306 100 L300 176 L308 238 L232 296 L172 310 L96 288 L48 224 L54 142 L48 88 L104 40 Z" fill="url(#facet-b)"/>
+    <path d="M172 18 L262 56 L232 132 L166 108 L104 40 Z" fill="url(#facet-a)"/>
+    <path d="M300 176 L306 100 L232 132 L246 210 Z" fill="url(#facet-c)"/>
+    <path d="M96 288 L48 224 L54 142 L166 108 L232 132 L246 210 L232 296 Z" fill="url(#facet-d)"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="180" y="400" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace" font-weight="400" font-size="72" letter-spacing="1" fill="#101828">Topaz</text>
+</svg>

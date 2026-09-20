@@ -69,7 +69,7 @@ function HomepageHeader() {
     <header className={styles.heroBanner}>
       <div className="container">
         <div className={styles.heroLogoWrapper}>
-          <img src="/img/topaz-logo.png" alt="Topaz logo" className={styles.heroLogoImage} />
+          <img src="/img/topaz-logo-no-text-v4.svg" alt="Topaz logo" className={styles.heroLogoImage} />
         </div>
         <Heading as="h1" className={styles.heroTitle}>
           {siteConfig.title}
