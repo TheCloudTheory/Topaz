@@ -126,7 +126,7 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/topaz-logo.png',
     metadata: [
       { name: 'keywords', content: 'azure emulator, local azure development, azure storage emulator, key vault emulator, service bus emulator, event hub emulator, azurite alternative, arm template testing, local cloud development' },
       { name: 'og:type', content: 'website' },
