@@ -370,8 +370,11 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
         for (var i = 1; i < parameters.Count; i++)
         {
-            var next = parameters[i + 1];
+            var next = parameters[i+1];
             pairs.Add(new KeyValuePair<byte[], byte[]>(parameters[i], next));
+            
+            // Skip next value as it's already fetched
+            i++;
         }
 
         var result = _dataPlane.HmSet(key, pairs, _cache!);
