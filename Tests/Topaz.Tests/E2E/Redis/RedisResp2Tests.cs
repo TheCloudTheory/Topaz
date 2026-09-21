@@ -370,6 +370,24 @@ internal sealed class RedisResp2Tests
         Assert.AreEqual(value, "value3");
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanPushList_ThenFetchByRange()
+    {
+        await _db.ListRightPushAsync("rpopkey", "value1");
+        await _db.ListRightPushAsync("rpopkey", "value2");
+        await _db.ListRightPushAsync("rpopkey", "value3");
+        
+        var value = await _db.ListRangeAsync("rpopkey", 0, 0);
+        
+        Assert.AreEqual(value[0], "value1");
+        
+        value = await _db.ListRangeAsync("rpopkey", -3, 2);
+        
+        Assert.AreEqual(value[0], "value1");
+        Assert.AreEqual(value[1], "value2");
+        Assert.AreEqual(value[2], "value3");
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {

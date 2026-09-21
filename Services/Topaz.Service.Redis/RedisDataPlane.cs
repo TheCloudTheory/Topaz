@@ -595,4 +595,54 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
 
         return new DataPlaneOperationResult<string>(OperationResult.Success, content);
     }
+
+    public DataPlaneOperationResult<string[]> LRange(byte[] key, byte[] start, byte[] stop, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        var startStr = Encoding.UTF8.GetString(start);
+        var stopStr = Encoding.UTF8.GetString(stop);
+        
+        logger.LogDebug(nameof(RedisDataPlane), nameof(LPop),
+            $"LRANGE {keyStr} {startStr} {stopStr} for Redis instance: {cache.Name}");
+
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<string[]>(instance.Result, null, instance.Reason, instance.Code);
+        }
+        
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+
+        if (files.Length == 0)
+        {
+            return new DataPlaneOperationResult<string[]>(OperationResult.NotFound, null);
+        }
+
+
+        var startIndex = int.Parse(startStr);
+        var stopIndex = int.Parse(stopStr);
+        
+        if (startIndex < 0)
+        {
+            startIndex = files.Length + startIndex;
+        }
+
+        if (startIndex > files.Length + 1)
+        {
+            return new DataPlaneOperationResult<string[]>(OperationResult.Success, []);
+        }
+
+        if (stopIndex > files.Length + 1)
+        {
+            stopIndex = files.Length + 1;
+        }
+
+        // Array range has exclusive upper bound so we need to adjust it
+        stopIndex++;
+        
+        var subarray = files[startIndex..stopIndex];
+        return new DataPlaneOperationResult<string[]>(OperationResult.Success, [.. subarray.Select(File.ReadAllText)]);
+    }
 }
