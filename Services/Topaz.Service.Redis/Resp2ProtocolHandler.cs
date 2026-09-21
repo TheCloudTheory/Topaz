@@ -139,6 +139,8 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                     return HandleLIndex(commandParameters);
                 case "LPOP":
                     return HandleLPop(commandParameters);
+                case "RPUSH":
+                    return HandleRPush(commandParameters);
                 default:
                     return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
             }
@@ -148,6 +150,20 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
             logger.LogError(nameof(Resp2ProtocolHandler), nameof(ParseCommand), $"Error parsing command: {ex.Message} {ex.StackTrace}");
             return $"ERR internal server error".AsSimpleError();
         }
+    }
+
+    private byte[] HandleRPush(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPush), $"Received RPUSH command.");
+
+        var key = parameters[0];
+        var value = parameters[1];
+
+        var result = _dataPlane.RPush(key, value, _cache!);
+
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource.ToString().AsInteger();
     }
 
     private byte[] HandleLPop(List<byte[]> parameters)

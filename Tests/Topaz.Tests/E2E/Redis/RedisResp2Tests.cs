@@ -300,8 +300,8 @@ internal sealed class RedisResp2Tests
         var value1 = await _db.ListGetByIndexAsync("lkey", 1);
         var value2 = await _db.ListGetByIndexAsync("lkey", 2);
         
-        Assert.AreEqual(value1, "value1");
-        Assert.AreEqual(value2, "value2");
+        Assert.AreEqual(value1, "value2");
+        Assert.AreEqual(value2, "value1");
     }
     
     [Test]
@@ -314,6 +314,48 @@ internal sealed class RedisResp2Tests
         var value = await _db.ListLeftPopAsync("popkey");
         
         Assert.AreEqual(value, "value1");
+    }
+    
+    [Test]
+    public async Task RedisResp2Tests_CanRPushList_ThenRetrieveIt()
+    {
+        var length = await _db.ListRightPushAsync("rkey", "value1");
+        
+        Assert.AreEqual(length, 1);
+        
+        length = await _db.ListRightPushAsync("rkey", "value2");
+        
+        Assert.AreEqual(length, 2);
+
+        var value1 = await _db.ListGetByIndexAsync("rkey", 1);
+        var value2 = await _db.ListGetByIndexAsync("rkey", 2);
+        
+        Assert.AreEqual(value1, "value1");
+        Assert.AreEqual(value2, "value2");
+    }
+    
+    [Test]
+    public async Task RedisResp2Tests_CanLPushAndRPushList_ThenRetrieveIt()
+    {
+        var length = await _db.ListRightPushAsync("rlkey", "value1");
+        
+        Assert.AreEqual(length, 1);
+        
+        length = await _db.ListLeftPushAsync("rlkey", "value2");
+        
+        Assert.AreEqual(length, 2);
+        
+        length = await _db.ListRightPushAsync("rlkey", "value3");
+        
+        Assert.AreEqual(length, 3);
+
+        var value1 = await _db.ListGetByIndexAsync("rlkey", 1);
+        var value2 = await _db.ListGetByIndexAsync("rlkey", 2);
+        var value3 = await _db.ListGetByIndexAsync("rlkey", 3);
+        
+        Assert.AreEqual(value1, "value2");
+        Assert.AreEqual(value2, "value1");
+        Assert.AreEqual(value3, "value3");
     }
     
     [UsedImplicitly]

@@ -426,16 +426,42 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         }
         
         var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var array = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
-        if (array.Length == 0)
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        if (files.Length == 0)
         {
             File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_[1]"), valueStr);
             return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
         }
         
-        var newIndex = array.Length+1;
-        File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_[{newIndex}]"), valueStr);
-        return new DataPlaneOperationResult<int>(OperationResult.Success, newIndex);
+        // LPUSH pushes a new element at the beginning
+        if (files.Length == 1)
+        {
+            var destination = Path.Combine(mainPath, $"{keyStr}_b[2]");
+            
+            File.WriteAllText(destination, null);
+            File.Replace(files[0], destination, null);
+        }
+        
+        for (var i = 1; i < files.Length; i++)
+        {
+            var destination = Path.Combine(mainPath, $"{keyStr}_b[{i+1}]");
+            
+            File.WriteAllText(destination, null);
+            File.Replace(files[i], destination, null);
+        }
+        
+        File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_b[1]"), valueStr);
+        var newFiles = Directory.EnumerateFiles(mainPath, $"{keyStr}_b[*").ToArray();
+        
+        for (var i = 0; i < newFiles.Length; i++)
+        {
+            var destination = Path.Combine(mainPath, $"{keyStr}_[{i+1}]");
+            
+            File.WriteAllText(destination, null);
+            File.Replace(newFiles[i], destination, null);
+        }
+        
+        return new DataPlaneOperationResult<int>(OperationResult.Success, files.Length+1);
     }
 
     public DataPlaneOperationResult<string> LIndex(byte[] key, byte[] index, RedisResource cache)
@@ -509,5 +535,29 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         }
 
         return new DataPlaneOperationResult<string>(OperationResult.Success, first);
+    }
+
+    public DataPlaneOperationResult<int> RPush(byte[] key, byte[] value, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        var valueStr = Encoding.UTF8.GetString(value);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(LPush), $"RPUSH {keyStr} {valueStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<int>(instance.Result, 0, instance.Reason, instance.Code);
+        }
+        
+        var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        if (files.Length == 0)
+        {
+            File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_[1]"), valueStr);
+            return new DataPlaneOperationResult<int>(OperationResult.Success, 1);
+        }
+        
+        File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_[{files.Length+1}]"), valueStr);
+        return new DataPlaneOperationResult<int>(OperationResult.Success, files.Length+1);
     }
 }
