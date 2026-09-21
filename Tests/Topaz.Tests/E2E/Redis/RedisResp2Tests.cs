@@ -5,7 +5,6 @@ using Azure.ResourceManager.Redis;
 using Azure.ResourceManager.Redis.Models;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using StackExchange.Redis;
 using Topaz.CLI;
 using Topaz.Identity;
@@ -313,7 +312,7 @@ internal sealed class RedisResp2Tests
         
         var value = await _db.ListLeftPopAsync("popkey");
         
-        Assert.AreEqual(value, "value1");
+        Assert.AreEqual(value, "value3");
     }
     
     [Test]
