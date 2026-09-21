@@ -157,6 +157,8 @@ jobs:
             - 'Services/Topaz.Service.LogAnalytics/**'
           redis:
             - 'Services/Topaz.Service.Redis/**'
+          apimanagement:
+            - 'Services/Topaz.Service.ApiManagement/**'
     - name: Build test filter
       id: test_filter
       shell: bash
@@ -251,6 +253,7 @@ jobs:
         [[ "${{ steps.changes.outputs.insights }}"         == "true" ]] && PARTS+=("FullyQualifiedName~Insights")
         [[ "${{ steps.changes.outputs.loganalytics }}"     == "true" ]] && PARTS+=("FullyQualifiedName~LogAnalytics")
         [[ "${{ steps.changes.outputs.redis }}"            == "true" ]] && PARTS+=("FullyQualifiedName~Redis")
+        [[ "${{ steps.changes.outputs.apimanagement }}"    == "true" ]] && PARTS+=("FullyQualifiedName~ApiManagement")
 
         if [[ ${#PARTS[@]} -eq 0 ]]; then
           # Untracked code path changed (e.g. Topaz.CLI): run all tests as safety fallback
@@ -274,7 +277,7 @@ jobs:
         [[ "${{ steps.changes.outputs.loadbalancer }}"     == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.LoadBalancer")
         [[ "${{ steps.changes.outputs.insights }}"          == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.ApplicationInsights")
         [[ "${{ steps.changes.outputs.loganalytics }}"      == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.LogAnalytics")
-
+        [[ "${{ steps.changes.outputs.apimanagement }}"      == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.ApiManagement")
         if [[ "${{ steps.changes.outputs.azurepowershell }}" == "true" ]]; then
           # PS test files themselves changed: run all PS tests
           echo "ps_skip=false" >> "$GITHUB_OUTPUT"
@@ -295,6 +298,7 @@ jobs:
         [[ "${{ steps.changes.outputs.keyvault }}"        == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.KeyVault")
         [[ "${{ steps.changes.outputs.acr }}"             == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ContainerRegistry")
         [[ "${{ steps.changes.outputs.storage }}"         == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.Storage")
+        [[ "${{ steps.changes.outputs.apimanagement }}"   == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ApiManagement")
         [[ "${{ steps.changes.outputs.servicebus }}"      == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ServiceBus")
         [[ "${{ steps.changes.outputs.authorization }}"   == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.Authorization")
         [[ "${{ steps.changes.outputs.entra }}"           == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.Entra")
@@ -342,6 +346,7 @@ jobs:
         [[ "${{ steps.changes.outputs.virtualnetwork }}"  == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_VirtualNetwork")
         [[ "${{ steps.changes.outputs.virtualmachine }}"  == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_VirtualMachine")
         [[ "${{ steps.changes.outputs.managementgroup }}" == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_ManagementGroup")
+        [[ "${{ steps.changes.outputs.apimanagement }}"   == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_ApiManagement")
 
         if [[ "${{ steps.changes.outputs.python }}" == "true" ]]; then
           # Python test files or SDK changed: run all Python tests
