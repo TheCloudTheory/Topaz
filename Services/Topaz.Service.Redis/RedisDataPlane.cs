@@ -645,4 +645,99 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         var subarray = files[startIndex..stopIndex];
         return new DataPlaneOperationResult<string[]>(OperationResult.Success, [.. subarray.Select(File.ReadAllText)]);
     }
+
+    public DataPlaneOperationResult<int> SAdd(byte[] key, List<byte[]> values, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        
+        logger.LogDebug(nameof(RedisDataPlane), nameof(HmSet), $"SADD {keyStr}, {values.Count} values for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<int>(instance.Result, 0, instance.Reason, instance.Code);
+        }
+        
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_s[*").ToArray();
+
+        if (files.Length == 0)
+        {
+            for (var i = 0; i < values.Count; i++)
+            {
+                File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_s[{i}]"), Encoding.UTF8.GetString(values[i]), Encoding.UTF8);
+            }
+            
+            return new DataPlaneOperationResult<int>(OperationResult.Success, values.Count);
+        }
+
+        var y = 0;
+        var newElements = 0;
+        var existingSet = files.Select(File.ReadAllText).ToArray();
+        for (var i = files.Length; i < files.Length + values.Count; i++)
+        {
+            var value = Encoding.UTF8.GetString(values[y]);
+            if (existingSet.Contains(value))
+            {
+                y++;
+                continue;
+            }
+            
+            File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_s[{i}]"), value, Encoding.UTF8);
+            y++;
+            newElements++;
+        }
+
+        return new DataPlaneOperationResult<int>(OperationResult.Success, newElements);
+    }
+
+    public DataPlaneOperationResult<string> SPop(byte[] key, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        
+        logger.LogDebug(nameof(RedisDataPlane), nameof(HmSet), $"SPOP {keyStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<string>(instance.Result, null, instance.Reason, instance.Code);
+        }
+        
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_s[*").ToArray();
+
+        if (files.Length == 0)
+        {
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null);
+        }
+
+        var random = new Random().Next(0, files.Length - 1);
+        var toReturn = File.ReadAllText(files[random]);
+        
+        File.Delete(files[random]);
+        
+        // Reorganize set
+        var existingSet = Directory.EnumerateFiles(mainPath, $"{keyStr}_s[*").ToArray();
+        for (var i = 0; i < existingSet.Length; i++)
+        {
+            var destination = Path.Combine(mainPath, $"{keyStr}_bs[{i}]");
+            
+            File.WriteAllText(destination, null);
+            File.Replace(existingSet[i], destination, null);
+        }
+        
+        var newFiles = Directory.EnumerateFiles(mainPath, $"{keyStr}_bs[*").ToArray();
+        
+        for (var i = 0; i < newFiles.Length; i++)
+        {
+            var destination = Path.Combine(mainPath, $"{keyStr}_s[{i}]");
+            
+            File.WriteAllText(destination, null);
+            File.Replace(newFiles[i], destination, null);
+        }
+        
+        return new DataPlaneOperationResult<string>(OperationResult.Success, toReturn);
+    }
 }

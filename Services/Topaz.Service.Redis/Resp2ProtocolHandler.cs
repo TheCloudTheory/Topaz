@@ -145,6 +145,10 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                     return HandleRPop(commandParameters);
                 case "LRANGE":
                     return HandleLRange(commandParameters);
+                case "SADD":
+                    return HandleSAdd(commandParameters);
+                case "SPOP":
+                    return HandleSPop(commandParameters);
                 default:
                     return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
             }
@@ -156,9 +160,46 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         }
     }
 
+    private byte[] HandleSPop(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleRPop), $"Received SPOP command.");
+
+        var key = parameters[0];
+        var result = _dataPlane.SPop(key, _cache!);
+
+        if (result.Result == OperationResult.NotFound)
+        {
+            return Resp2ProtocolHandlerExtensions.AsNilBulkString();
+        }
+
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource!.AsBulkString();
+    }
+
+    private byte[] HandleSAdd(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleHSetCommand), $"Received SADD command.");
+
+        var key = parameters[0];
+        var pairs = new List<byte[]>();
+
+        for (var i = 1; i < parameters.Count; i++)
+        {
+            var next = parameters[i];
+            pairs.Add(next);
+        }
+
+        var result = _dataPlane.SAdd(key, pairs, _cache!);
+
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource.ToString().AsInteger();
+    }
+
     private byte[] HandleLRange(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPush), $"Received RPOP command.");
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLRange), $"Received RPOP command.");
 
         var key = parameters[0];
         var start = parameters[1];
@@ -177,7 +218,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleRPop(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPush), $"Received RPOP command.");
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleRPop), $"Received RPOP command.");
 
         var key = parameters[0];
         var result = _dataPlane.RPop(key, _cache!);
@@ -194,7 +235,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleRPush(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPush), $"Received RPUSH command.");
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleRPush), $"Received RPUSH command.");
 
         var key = parameters[0];
         var value = parameters[1];
@@ -208,7 +249,7 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
 
     private byte[] HandleLPop(List<byte[]> parameters)
     {
-        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPush), $"Received LPOP command.");
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleLPop), $"Received LPOP command.");
 
         var key = parameters[0];
         var result = _dataPlane.LPop(key, _cache!);
@@ -331,7 +372,6 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
         {
             var next = parameters[i + 1];
             pairs.Add(new KeyValuePair<byte[], byte[]>(parameters[i], next));
-            i++;
         }
 
         var result = _dataPlane.HmSet(key, pairs, _cache!);
