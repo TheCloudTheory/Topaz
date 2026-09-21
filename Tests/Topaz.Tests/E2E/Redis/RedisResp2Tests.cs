@@ -5,6 +5,7 @@ using Azure.ResourceManager.Redis;
 using Azure.ResourceManager.Redis.Models;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using StackExchange.Redis;
 using Topaz.CLI;
 using Topaz.Identity;
@@ -233,10 +234,10 @@ internal sealed class RedisResp2Tests
         Assert.That(entries, Has.Length.EqualTo(2));
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(entries[0].Name.ToString(), Is.EqualTo("foo"));
-            Assert.That(entries[0].Value.ToString(), Is.EqualTo("bar"));
-            Assert.That(entries[1].Name.ToString(), Is.EqualTo("foo2"));
-            Assert.That(entries[1].Value.ToString(), Is.EqualTo("baz"));
+            Assert.That(entries.FirstOrDefault(e => e.Name == "foo").Name.ToString(), Is.EqualTo("foo"));
+            Assert.That(entries.FirstOrDefault(e => e.Name == "foo").Value.ToString(), Is.EqualTo("bar"));
+            Assert.That(entries.FirstOrDefault(e => e.Name == "foo2").Name.ToString(), Is.EqualTo("foo2"));
+            Assert.That(entries.FirstOrDefault(e => e.Name == "foo2").Value.ToString(), Is.EqualTo("baz"));
         }
     }
     
@@ -288,16 +289,16 @@ internal sealed class RedisResp2Tests
     [Test]
     public async Task RedisResp2Tests_CanPushList_ThenRetrieveIt()
     {
-        var index = await _db.ListLeftPushAsync("akey", "value1");
+        var index = await _db.ListLeftPushAsync("lkey", "value1");
         
         Assert.AreEqual(index, 1);
         
-        index = await _db.ListLeftPushAsync("akey", "value2");
+        index = await _db.ListLeftPushAsync("lkey", "value2");
         
         Assert.AreEqual(index, 2);
 
-        var value1 = await _db.ListGetByIndexAsync("akey", 1);
-        var value2 = await _db.ListGetByIndexAsync("akey", 2);
+        var value1 = await _db.ListGetByIndexAsync("lkey", 1);
+        var value2 = await _db.ListGetByIndexAsync("lkey", 2);
         
         Assert.AreEqual(value1, "value1");
         Assert.AreEqual(value2, "value2");
