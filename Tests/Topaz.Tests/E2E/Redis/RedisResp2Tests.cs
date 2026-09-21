@@ -358,6 +358,18 @@ internal sealed class RedisResp2Tests
         Assert.AreEqual(value3, "value3");
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanRPushList_ThenDeleteIt()
+    {
+        await _db.ListRightPushAsync("rpopkey", "value1");
+        await _db.ListRightPushAsync("rpopkey", "value2");
+        await _db.ListRightPushAsync("rpopkey", "value3");
+        
+        var value = await _db.ListRightPopAsync("rpopkey");
+        
+        Assert.AreEqual(value, "value3");
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {

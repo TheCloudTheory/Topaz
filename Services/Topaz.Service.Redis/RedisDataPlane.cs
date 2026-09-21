@@ -560,4 +560,39 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_[{files.Length+1}]"), valueStr);
         return new DataPlaneOperationResult<int>(OperationResult.Success, files.Length+1);
     }
+
+    public DataPlaneOperationResult<string> RPop(byte[] key, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        logger.LogDebug(nameof(RedisDataPlane), nameof(LPop),
+            $"RPOP {keyStr} for Redis instance: {cache.Name}");
+
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<string>(instance.Result, null, instance.Reason, instance.Code);
+        }
+
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        if (files.Length == 0)
+        {
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null);
+        }
+
+        string? content;
+        if (files.Length == 1)
+        {
+            content = File.ReadAllText(files[0]);
+            File.Delete(files[0]);
+            return new DataPlaneOperationResult<string>(OperationResult.Success, content);
+        }
+
+        var last = files[^1];
+        content = File.ReadAllText(last);
+        File.Delete(last);
+
+        return new DataPlaneOperationResult<string>(OperationResult.Success, content);
+    }
 }
