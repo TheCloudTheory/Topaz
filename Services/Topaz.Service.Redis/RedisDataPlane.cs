@@ -326,7 +326,7 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         var mainPath =
             _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
         var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_*")
-            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .OrderBy(p => Path.GetFileNameWithoutExtension(p).Split("_")[1])
             .ToArray();
         var result = new List<string>();
 
