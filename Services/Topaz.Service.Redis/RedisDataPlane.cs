@@ -325,7 +325,9 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         
         var mainPath =
             _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_*");
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
         var result = new List<string>();
 
         foreach (var file in files)
@@ -379,7 +381,9 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         }
         
         var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var array = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        var array = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
         if (array.Length == 0)
         {
             File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_[0]"), valueStr);
@@ -426,7 +430,10 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         }
         
         var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
+        
         if (files.Length == 0)
         {
             File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_[1]"), valueStr);
@@ -451,7 +458,9 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         }
         
         File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_b[1]"), valueStr);
-        var newFiles = Directory.EnumerateFiles(mainPath, $"{keyStr}_b[*").ToArray();
+        var newFiles = Directory.EnumerateFiles(mainPath, $"{keyStr}_b[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
         
         for (var i = 0; i < newFiles.Length; i++)
         {
@@ -500,7 +509,10 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
 
         var mainPath =
             _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
+        
         if (files.Length == 0)
         {
             return new DataPlaneOperationResult<string>(OperationResult.NotFound, null);
@@ -550,7 +562,10 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         }
         
         var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
+        
         if (files.Length == 0)
         {
             File.WriteAllText(Path.Combine(mainPath, $"{keyStr}_[1]"), valueStr);
@@ -575,7 +590,10 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
 
         var mainPath =
             _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
+        
         if (files.Length == 0)
         {
             return new DataPlaneOperationResult<string>(OperationResult.NotFound, null);
@@ -613,7 +631,9 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         
         var mainPath =
             _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*").ToArray();
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
 
         if (files.Length == 0)
         {
@@ -660,7 +680,9 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         
         var mainPath =
             _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
-        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_s[*").ToArray();
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_s[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
 
         if (files.Length == 0)
         {
@@ -719,7 +741,10 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         File.Delete(files[random]);
         
         // Reorganize set
-        var existingSet = Directory.EnumerateFiles(mainPath, $"{keyStr}_s[*").ToArray();
+        var existingSet = Directory.EnumerateFiles(mainPath, $"{keyStr}_s[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
+        
         for (var i = 0; i < existingSet.Length; i++)
         {
             var destination = Path.Combine(mainPath, $"{keyStr}_bs[{i}]");
