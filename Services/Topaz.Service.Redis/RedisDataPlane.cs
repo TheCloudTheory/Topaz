@@ -765,4 +765,26 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         
         return new DataPlaneOperationResult<string>(OperationResult.Success, toReturn);
     }
+
+    public DataPlaneOperationResult<string[]> SMembers(byte[] key, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        
+        logger.LogDebug(nameof(RedisDataPlane), nameof(SMembers), $"SMEMBERS {keyStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<string[]>(instance.Result, [], instance.Reason, instance.Code);
+        }
+        
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_s[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
+        var result = files.Select(File.ReadAllText).ToList();
+
+        return new DataPlaneOperationResult<string[]>(OperationResult.Success, [.. result]);
+    }
 }

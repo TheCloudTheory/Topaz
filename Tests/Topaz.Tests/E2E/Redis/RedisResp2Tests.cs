@@ -405,6 +405,22 @@ internal sealed class RedisResp2Tests
         }
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanAddSetMembers_ThenGetThem()
+    {
+        var elementsCount = await _db.SetAddAsync("set1all", [new RedisValue("value1"), new RedisValue("value2")]);
+        
+        Assert.AreEqual(elementsCount, 2);
+
+        var elements = await _db.SetMembersAsync("set1all");
+        
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(elements.Any(e => e == "value1"), Is.True);
+            Assert.That(elements.Any(e => e == "value2"), Is.True);
+        }
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {
