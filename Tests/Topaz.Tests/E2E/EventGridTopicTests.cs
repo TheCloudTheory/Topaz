@@ -359,8 +359,8 @@ public class EventGridTopicTests
         {
             Assert.That(receivedEvents[0].GetProperty("eventType").GetString(), Is.EqualTo("Microsoft.EventGrid.SubscriptionValidationEvent"));
             Assert.That(receivedEvents[1].GetProperty("eventType").GetString(), Is.EqualTo("Microsoft.EventGrid.SubscriptionValidationEvent"));
-            Assert.That(receivedEvents[3].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType"));
-            Assert.That(receivedEvents[2].GetProperty("type").GetString(), Is.EqualTo("Example.EventType.CE"));
+            Assert.That(receivedEvents[2].GetProperty("eventType").GetString(), Is.EqualTo("Example.EventType"));
+            Assert.That(receivedEvents[3].GetProperty("type").GetString(), Is.EqualTo("Example.EventType.CE"));
         }
     }
     
