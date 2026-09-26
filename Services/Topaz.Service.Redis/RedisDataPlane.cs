@@ -792,7 +792,7 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
     {
         var keyStr = Encoding.UTF8.GetString(key);
         
-        logger.LogDebug(nameof(RedisDataPlane), nameof(HmSet), $"SREM {keyStr} {members.Count} for Redis instance: {cache.Name}");
+        logger.LogDebug(nameof(RedisDataPlane), nameof(SRem), $"SREM {keyStr} {members.Count} for Redis instance: {cache.Name}");
         
         var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
         if (instance.Result != OperationResult.Success)
@@ -849,7 +849,7 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
     {
         var keyStr = Encoding.UTF8.GetString(key);
         
-        logger.LogDebug(nameof(RedisDataPlane), nameof(SMembers), $"INCR {keyStr} for Redis instance: {cache.Name}");
+        logger.LogDebug(nameof(RedisDataPlane), nameof(Incr), $"INCR {keyStr} for Redis instance: {cache.Name}");
         
         var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
         if (instance.Result != OperationResult.Success)
@@ -874,6 +874,39 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         }
 
         existingInt++;
+        Set(key, Encoding.UTF8.GetBytes(existingInt.ToString()), cache);
+        return new DataPlaneOperationResult<int>(OperationResult.Success, existingInt);
+    }
+
+    public DataPlaneOperationResult<int> Decr(byte[] key, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        
+        logger.LogDebug(nameof(RedisDataPlane), nameof(Decr), $"DECR {keyStr} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<int>(instance.Result, 0, instance.Reason, instance.Code);
+        }
+        
+        var mainPath = _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var filePath = Path.Combine(mainPath, keyStr);
+        
+        if(!File.Exists(filePath))
+        {
+            Set(key, [.. "-1"u8], cache);
+            return new DataPlaneOperationResult<int>(OperationResult.Success, -1);
+        }
+        
+        var existingValue = File.ReadAllText(filePath);
+        
+        if(!int.TryParse(existingValue, out var existingInt))
+        {
+            return new DataPlaneOperationResult<int>(OperationResult.Failed, 0, "Invalid value", "Invalid value");
+        }
+
+        existingInt--;
         Set(key, Encoding.UTF8.GetBytes(existingInt.ToString()), cache);
         return new DataPlaneOperationResult<int>(OperationResult.Success, existingInt);
     }

@@ -447,6 +447,15 @@ internal sealed class RedisResp2Tests
         Assert.That(result, Is.EqualTo(11));
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanDecrValue()
+    {
+        _ = await _db.StringSetAsync("setdecr", "10");
+        var result = await _db.StringDecrementAsync("setdecr");
+
+        Assert.That(result, Is.EqualTo(9));
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {
