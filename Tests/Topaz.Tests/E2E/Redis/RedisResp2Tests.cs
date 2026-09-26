@@ -424,12 +424,12 @@ internal sealed class RedisResp2Tests
     [Test]
     public async Task RedisResp2Tests_CanAddSetMembers_ThenRemoveOneOfThem()
     {
-        var elementsCount = await _db.SetAddAsync("set1all", [new RedisValue("value1"), new RedisValue("value2")]);
+        var elementsCount = await _db.SetAddAsync("set1allone", [new RedisValue("value1"), new RedisValue("value2")]);
         
         Assert.AreEqual(elementsCount, 2);
 
-        var noOfRemovedElements = await _db.SetRemoveAsync("set1all", [new RedisValue("value1")]);
-        var noOfRemovedElementsNotExisting = await _db.SetRemoveAsync("set1all", [new RedisValue("value3")]);
+        var noOfRemovedElements = await _db.SetRemoveAsync("set1allone", [new RedisValue("value1")]);
+        var noOfRemovedElementsNotExisting = await _db.SetRemoveAsync("set1allone", [new RedisValue("value3")]);
         
         using (Assert.EnterMultipleScope())
         {
