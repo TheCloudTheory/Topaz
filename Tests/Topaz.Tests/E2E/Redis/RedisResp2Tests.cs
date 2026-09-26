@@ -438,6 +438,15 @@ internal sealed class RedisResp2Tests
         }
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanIncrValue()
+    {
+        _ = await _db.StringSetAsync("setincr", "10");
+        var result = await _db.StringIncrementAsync("setincr");
+
+        Assert.That(result, Is.EqualTo(11));
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {
