@@ -151,6 +151,8 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                     return HandleSPop(commandParameters);
                 case "SMEMBERS":
                     return HandleSMembers(commandParameters);
+                case "SREM":
+                    return HandleSRem(commandParameters);
                 default:
                     return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
             }
@@ -160,6 +162,31 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
             logger.LogError(nameof(Resp2ProtocolHandler), nameof(ParseCommand), $"Error parsing command: {ex.Message} {ex.StackTrace}");
             return $"ERR internal server error".AsSimpleError();
         }
+    }
+
+    private byte[] HandleSRem(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleRPop), $"Received SREM command.");
+
+        var key = parameters[0];
+        var pairs = new List<byte[]>();
+
+        for (var i = 1; i < parameters.Count; i++)
+        {
+            var next = parameters[i];
+            pairs.Add(next);
+        }
+        
+        var result = _dataPlane.SRem(key, pairs, _cache!);
+
+        if (result.Result == OperationResult.NotFound)
+        {
+            return Resp2ProtocolHandlerExtensions.AsNilBulkString();
+        }
+
+        return result.Result != OperationResult.Success
+            ? $"ERR error '{result.Reason}' ({result.Code})".AsSimpleError()
+            : result.Resource.ToString().AsInteger();
     }
 
     private byte[] HandleSMembers(List<byte[]> parameters)

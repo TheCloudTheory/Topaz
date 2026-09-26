@@ -787,4 +787,61 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
 
         return new DataPlaneOperationResult<string[]>(OperationResult.Success, [.. result]);
     }
+
+    public DataPlaneOperationResult<int> SRem(byte[] key, List<byte[]> members, RedisResource cache)
+    {
+        var keyStr = Encoding.UTF8.GetString(key);
+        
+        logger.LogDebug(nameof(RedisDataPlane), nameof(HmSet), $"SREM {keyStr} {members.Count} for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult<int>(instance.Result, 0, instance.Reason, instance.Code);
+        }
+        
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var files = Directory.EnumerateFiles(mainPath, $"{keyStr}_s[*").ToArray();
+
+        if (files.Length == 0)
+        {
+            return new DataPlaneOperationResult<int>(OperationResult.NotFound, 0);
+        }
+
+        var filesRemoved = 0;
+        foreach (var file in members
+                     .Select(member =>
+                         files.FirstOrDefault(f => File.ReadAllText(f) == Encoding.UTF8.GetString(member)))
+                     .OfType<string>())
+        {
+            File.Delete(file);
+            filesRemoved++;
+        }
+
+        // Reorganize set
+        var existingSet = Directory.EnumerateFiles(mainPath, $"{keyStr}_s[*")
+            .OrderBy(p => int.Parse(Path.GetFileNameWithoutExtension(p).Split('[', ']')[1]))
+            .ToArray();
+        
+        for (var i = 0; i < existingSet.Length; i++)
+        {
+            var destination = Path.Combine(mainPath, $"{keyStr}_bs[{i}]");
+            
+            File.WriteAllText(destination, null);
+            File.Replace(existingSet[i], destination, null);
+        }
+        
+        var newFiles = Directory.EnumerateFiles(mainPath, $"{keyStr}_bs[*").ToArray();
+        
+        for (var i = 0; i < newFiles.Length; i++)
+        {
+            var destination = Path.Combine(mainPath, $"{keyStr}_s[{i}]");
+            
+            File.WriteAllText(destination, null);
+            File.Replace(newFiles[i], destination, null);
+        }
+        
+        return new DataPlaneOperationResult<int>(OperationResult.Success, filesRemoved);
+    }
 }
