@@ -1,0 +1,145 @@
+@page {
+  size: 6in 8in;
+  margin: 0.68in 0.7in 0.78in;
+
+  @bottom-center {
+    content: counter(page);
+    color: #657084;
+    font-size: 9pt;
+  }
+}
+
+@page:first {
+  size: 6in 8in;
+  margin: 0;
+}
+
+.cover {
+  break-after: page;
+  width: 6in;
+  height: 8in;
+  margin: 0;
+  padding: 0;
+}
+
+.cover figure,
+.cover p {
+  margin: 0;
+}
+
+.cover-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+html {
+  color: #202938;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.55;
+}
+
+body {
+  margin: 0;
+  text-align: justify;
+}
+
+#title-block-header {
+  display: none;
+}
+
+.cover {
+  break-after: page;
+  height: 8in;
+  width: 6in;
+}
+
+.cover img {
+  display: block;
+  height: 8in;
+  width: 6in;
+}
+
+h1,
+h2,
+h3 {
+  color: #142d5e;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  line-height: 1.2;
+  break-after: avoid;
+}
+
+h1 {
+  break-before: page;
+  font-size: 25pt;
+  margin: 0 0 0.35in;
+}
+
+h2 {
+  font-size: 16pt;
+  margin: 0.34in 0 0.12in;
+}
+
+h3 {
+  font-size: 12pt;
+  margin: 0.24in 0 0.08in;
+}
+
+p,
+ul,
+ol,
+table,
+pre {
+  orphans: 3;
+  widows: 3;
+}
+
+ul,
+ol {
+  padding-left: 1.2em;
+}
+
+li {
+  margin: 0.08in 0;
+}
+
+table {
+  border-collapse: collapse;
+  font-size: 9pt;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid #d8dee8;
+  padding: 0.08in;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #eef3fa;
+  color: #142d5e;
+}
+
+pre {
+  background: #f2f5f8;
+  border-left: 3px solid #1b63eb;
+  font-size: 8.5pt;
+  overflow-wrap: anywhere;
+  padding: 0.12in;
+  white-space: pre-wrap;
+}
+
+code {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.9em;
+}
+
+a {
+  color: #174ea6;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}

@@ -29,3 +29,5 @@ sdk/python/topaz_sdk.egg-info/**
 .debugging/findings.md
 CLAUDE.md
 topaz.log
+website/book/book.html
+website/book/book.pdf
