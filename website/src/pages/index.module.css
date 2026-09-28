@@ -222,6 +222,72 @@
   margin-top: 0.4rem;
 }
 
+/* ── Book announcement ───────────────────────────────────────── */
+.bookSection {
+  padding: 4.5rem 0;
+  background: color-mix(in srgb, var(--ifm-color-primary) 6%, var(--ifm-background-color));
+}
+
+.bookLayout {
+  display: grid;
+  grid-template-columns: minmax(150px, 240px) minmax(0, 1fr);
+  align-items: center;
+  gap: 3rem;
+  max-width: 900px;
+}
+
+.bookCover {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  box-shadow: 0 16px 40px rgba(13, 27, 62, 0.3);
+}
+
+.bookCopy {
+  max-width: 560px;
+}
+
+.bookEyebrow {
+  margin-bottom: 0.75rem;
+  color: var(--ifm-color-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.bookTitle {
+  margin-bottom: 0.75rem !important;
+}
+
+.bookSubtitle {
+  margin-bottom: 1rem;
+  color: var(--ifm-heading-color);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.bookDescription {
+  margin-bottom: 0;
+  color: var(--ifm-font-color-base);
+  line-height: 1.7;
+}
+
+@media screen and (max-width: 600px) {
+  .bookLayout {
+    grid-template-columns: minmax(0, 170px) minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  .bookTitle {
+    font-size: 1.4rem !important;
+  }
+
+  .bookSubtitle {
+    font-size: 1rem;
+  }
+}
+
 /* ── Services section ─────────────────────────────────────────── */
 .servicesSection {
   padding: 4.5rem 0;

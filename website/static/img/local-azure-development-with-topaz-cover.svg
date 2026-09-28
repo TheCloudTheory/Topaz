@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800" role="img" aria-labelledby="title description">
+  <title id="title">Local Azure Development with Topaz</title>
+  <desc id="description">Book cover with the Topaz crystal logo and the subtitle, A practical guide to building and testing Azure applications locally.</desc>
+  <defs>
+    <linearGradient id="cover" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1b3e"/>
+      <stop offset="1" stop-color="#102463"/>
+    </linearGradient>
+    <linearGradient id="facet-a" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A9CBFB"/>
+      <stop offset="100%" stop-color="#4E7FE0"/>
+    </linearGradient>
+    <linearGradient id="facet-b" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2E58C4"/>
+      <stop offset="100%" stop-color="#122A6E"/>
+    </linearGradient>
+    <linearGradient id="facet-c" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6E9BEA"/>
+      <stop offset="100%" stop-color="#2A50B8"/>
+    </linearGradient>
+    <linearGradient id="facet-d" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1A3585"/>
+      <stop offset="100%" stop-color="#3C6BD1"/>
+    </linearGradient>
+    <linearGradient id="facet-e" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#CFE1FC"/>
+      <stop offset="100%" stop-color="#89AFEE"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#6699F3" stroke-opacity=".09" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="800" fill="url(#cover)"/>
+  <rect width="600" height="800" fill="url(#grid)"/>
+  <path d="M0 0H600V12H0Z" fill="#1B63EB"/>
+  <path d="M0 350L600 220V800H0Z" fill="#1B63EB" opacity=".08"/>
+  <text x="54" y="62" fill="#80AAF5" font-family="Avenir Next, Trebuchet MS, sans-serif" font-size="15" font-weight="700" letter-spacing="2.2">THE TOPAZ FIELD GUIDE</text>
+  <g transform="translate(155 82) scale(.82)" stroke="#0F2560" stroke-width="1.4" stroke-linejoin="round">
+    <path d="M172 18 L262 56 L306 100 L300 176 L308 238 L232 296 L172 310 L96 288 L48 224 L54 142 L48 88 L104 40 Z" fill="url(#facet-b)"/>
+    <path d="M172 18 L262 56 L232 132 L166 108 L104 40 Z" fill="url(#facet-a)"/>
+    <path d="M300 176 L306 100 L232 132 L246 210 Z" fill="url(#facet-c)"/>
+    <path d="M96 288 L48 224 L54 142 L166 108 L232 132 L246 210 L232 296 Z" fill="url(#facet-d)"/>
+  </g>
+  <path d="M54 355H546" stroke="#4D85F0" stroke-width="2"/>
+  <text x="54" y="421" fill="#FFFFFF" font-family="Avenir Next, Trebuchet MS, sans-serif" font-size="47" font-weight="700">Local Azure</text>
+  <text x="54" y="480" fill="#FFFFFF" font-family="Avenir Next, Trebuchet MS, sans-serif" font-size="47" font-weight="700">Development</text>
+  <text x="54" y="539" fill="#FFFFFF" font-family="Avenir Next, Trebuchet MS, sans-serif" font-size="47" font-weight="700">with <tspan fill="#80AAF5">Topaz</tspan></text>
+  <text x="54" y="598" fill="#DCE8FF" font-family="Avenir Next, Trebuchet MS, sans-serif" font-size="19">A practical guide to building and testing</text>
+  <text x="54" y="627" fill="#DCE8FF" font-family="Avenir Next, Trebuchet MS, sans-serif" font-size="19">Azure applications locally</text>
+  <path d="M54 708H546" stroke="#FFFFFF" stroke-opacity=".18"/>
+  <text x="54" y="747" fill="#80AAF5" font-family="Avenir Next, Trebuchet MS, sans-serif" font-size="14" font-weight="700" letter-spacing="1.4">.NET  ·  PYTHON  ·  JAVASCRIPT  ·  MORE</text>
+</svg>

@@ -112,6 +112,36 @@ function HomepageHeader() {
   );
 }
 
+function HomepageBookAnnouncement() {
+  return (
+    <section className={styles.bookSection}>
+      <div className={clsx('container', styles.bookLayout)}>
+        <img
+          className={styles.bookCover}
+          src="/img/local-azure-development-with-topaz-cover.svg"
+          alt="Cover of Local Azure Development with Topaz"
+          width="300"
+          height="400"
+        />
+        <div className={styles.bookCopy}>
+          <p className={styles.bookEyebrow}>Coming soon</p>
+          <Heading as="h2" className={styles.bookTitle}>Local Azure Development with Topaz</Heading>
+          <p className={styles.bookSubtitle}>
+            A practical guide to building and testing Azure applications locally.
+          </p>
+          <p className={styles.bookDescription}>
+            Each edition will show how to install, configure, and use Topaz with your technology stack,
+            starting with .NET, Python and JavaScript.
+          </p>
+          <p className={styles.bookDescription}>
+            <br />Have a question or suggestion about the book? <Link to="/contact/">Get in touch</Link>.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function HomepageInstall() {
   const [activeTab, setActiveTab] = useState(0);
   return (
@@ -227,6 +257,7 @@ export default function Home(): ReactNode {
       <main>
         <HomepageInstall />
         <HomepageFeatures />
+        <HomepageBookAnnouncement />
         <HomepageServices />
         <HomepageIntegrations />
         <section className={styles.communitySection}>
