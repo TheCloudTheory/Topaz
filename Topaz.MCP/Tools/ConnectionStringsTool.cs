@@ -12,6 +12,7 @@ using JetBrains.Annotations;
 using ModelContextProtocol.Server;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Shared;
 
 namespace Topaz.MCP.Tools;
 
@@ -155,7 +156,7 @@ public sealed class ConnectionStringsTool
             {
                 var keys = await cache.GetKeysAsync().ConfigureAwait(false);
                 var primaryKey = keys.Value.PrimaryKey ?? string.Empty;
-                var sslPort = cache.Data.SslPort ?? 6380;
+                var sslPort = cache.Data.SslPort ?? GlobalSettings.RedisSslPort;
                 redisCacheEntries.Add(new RedisCacheEntry
                 {
                     ResourceGroup = resourceGroup.Data.Name,

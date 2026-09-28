@@ -169,20 +169,6 @@ TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
 
 ---
 
-## v1.11
-
-### Azure Redis Cache — data plane
-
-<!--
-TODO: Azure Redis Cache: Connection string in GetConnectionStrings
-  MCP and CLI GetConnectionStrings emit {host}:{port},password={key},ssl={true|false},abortConnect=False
-  format compatible with StackExchange.Redis.ConfigurationOptions.Parse().
-  milestone: v1.11
-  labels: enhancement, redis, mcp
--->
-
----
-
 ## v1.12
 
 ### API Management — policy execution subset
