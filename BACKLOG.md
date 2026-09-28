@@ -174,16 +174,6 @@ TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
 ### Azure Redis Cache — data plane
 
 <!--
-TODO: Azure Redis Cache: RESP2 protocol listener
-  In-process TCP listener on port 6379 (configurable) implementing the RESP2 wire protocol;
-  backed by a ConcurrentDictionary per-cache instance; supports SET, GET, DEL, EXISTS, EXPIRE,
-  TTL, KEYS, HSET, HGET, HGETALL, HDEL, LPUSH, RPUSH, LPOP, RPOP, LRANGE, SADD, SMEMBERS,
-  SREM, INCR, DECR, PING, SELECT, FLUSHDB.
-  milestone: v1.11
-  labels: enhancement, redis
--->
-
-<!--
 TODO: Azure Redis Cache: Connection string in GetConnectionStrings
   MCP and CLI GetConnectionStrings emit {host}:{port},password={key},ssl={true|false},abortConnect=False
   format compatible with StackExchange.Redis.ConfigurationOptions.Parse().
