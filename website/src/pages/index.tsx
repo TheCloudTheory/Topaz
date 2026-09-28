@@ -46,7 +46,7 @@ const SERVICES = [
   {name: 'Azure Log Analytics', sub: 'Workspaces · Data Collection'},
   {name: 'Azure Application Insights', sub: 'Workspaces · Data Collection · Query'},
   {name: 'Private Endpoints', sub: 'Control Plane'},
-  {name: 'Redis Cache', sub: 'Control Plane'},
+  {name: 'Redis Cache', sub: 'Control Plane · RESP2 Support'},
   {name: 'API Management', sub: 'Control Plane'},
   {name: 'Event Grid', sub: 'Topics · Subscriptions · Event Publishing'}
 ];
