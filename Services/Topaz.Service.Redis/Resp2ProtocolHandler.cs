@@ -157,6 +157,8 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
                     return HandleIncr(commandParameters);
                 case "DECR":
                     return HandleDecr(commandParameters);
+                case "FLUSHDB":
+                    return HandleFlushDb(commandParameters);
                 default:
                     return $"ERR unknown subcommand or wrong number of arguments for '{commandName}'".AsSimpleError();
             }
@@ -166,6 +168,15 @@ internal sealed class Resp2ProtocolHandler(RedisServiceControlPlane controlPlane
             logger.LogError(nameof(Resp2ProtocolHandler), nameof(ParseCommand), $"Error parsing command: {ex.Message} {ex.StackTrace}");
             return $"ERR internal server error".AsSimpleError();
         }
+    }
+
+    private byte[] HandleFlushDb(List<byte[]> parameters)
+    {
+        logger.LogDebug(nameof(Resp2ProtocolHandler), nameof(HandleRPop), $"Received DECR command.");
+
+        _ = _dataPlane.Flush(_cache!);
+        
+        return "OK".AsSimpleString();
     }
 
     private byte[] HandleDecr(List<byte[]> parameters)

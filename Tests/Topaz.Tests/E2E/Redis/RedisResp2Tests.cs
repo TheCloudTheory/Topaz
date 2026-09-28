@@ -456,6 +456,20 @@ internal sealed class RedisResp2Tests
         Assert.That(result, Is.EqualTo(9));
     }
     
+    [Test]
+    public async Task RedisResp2Tests_CanFlushDb()
+    {
+        _ = await _db.StringSetAsync("flush1", "10");
+        _ = await _db.StringSetAsync("flush2", "20");
+        _ = await _db.StringSetAsync("flush3", "30");
+        
+        await _server.FlushDatabaseAsync(database: 0);
+        
+        var result = _server.Keys(database: 0, pattern: "*").ToArray();
+
+        Assert.That(result, Is.Empty);
+    }
+    
     [UsedImplicitly]
     public class RedisLoggerFactory : ILoggerFactory
     {

@@ -910,4 +910,26 @@ internal sealed class RedisDataPlane(RedisServiceControlPlane controlPlane, ITop
         Set(key, Encoding.UTF8.GetBytes(existingInt.ToString()), cache);
         return new DataPlaneOperationResult<int>(OperationResult.Success, existingInt);
     }
+
+    public DataPlaneOperationResult Flush(RedisResource cache)
+    {
+        logger.LogDebug(nameof(RedisDataPlane), nameof(Decr), $"FLUSHDB for Redis instance: {cache.Name}");
+        
+        var instance = controlPlane.Get(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        if (instance.Result != OperationResult.Success)
+        {
+            return new DataPlaneOperationResult(instance.Result, instance.Reason, instance.Code);
+        }
+        
+        var mainPath =
+            _provider.GetServiceInstanceDataPath(cache.GetSubscription(), cache.GetResourceGroup(), cache.Name);
+        var files = Directory.EnumerateFiles(mainPath, "*");
+        
+        foreach (var file in files)
+        {
+            File.Delete(file);
+        }
+        
+        return new DataPlaneOperationResult(OperationResult.Success);
+    }
 }
