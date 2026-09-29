@@ -13,7 +13,7 @@ internal sealed class UpdateAcrRunEndpoint(Pipeline eventPipeline, ITopazLogger 
 {
     private readonly ContainerRegistryControlPlane _controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+    public string ProviderNamespace => "Microsoft.ContainerRegistry";
 
     public string[] Endpoints =>
     [

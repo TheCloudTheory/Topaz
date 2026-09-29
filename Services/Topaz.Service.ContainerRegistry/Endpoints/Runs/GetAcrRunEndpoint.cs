@@ -11,7 +11,7 @@ internal sealed class GetAcrRunEndpoint(Pipeline eventPipeline, ITopazLogger log
 {
     private readonly ContainerRegistryControlPlane _controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+    public string ProviderNamespace => "Microsoft.ContainerRegistry";
 
     public string[] Endpoints =>
     [

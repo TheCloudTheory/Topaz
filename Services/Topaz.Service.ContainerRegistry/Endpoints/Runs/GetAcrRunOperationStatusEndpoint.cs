@@ -22,7 +22,7 @@ internal sealed class GetAcrRunOperationStatusEndpoint(Pipeline eventPipeline, I
     private readonly ContainerRegistryControlPlane _controlPlane =
         ContainerRegistryControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+    public string ProviderNamespace => "Microsoft.ContainerRegistry";
 
     public string[] Endpoints =>
     [

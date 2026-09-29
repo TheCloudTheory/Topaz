@@ -14,7 +14,7 @@ internal sealed class GetAcrRunLogSasUrlEndpoint(Pipeline eventPipeline, ITopazL
 {
     private readonly ContainerRegistryControlPlane _controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+    public string ProviderNamespace => "Microsoft.ContainerRegistry";
 
     public string[] Endpoints =>
     [
