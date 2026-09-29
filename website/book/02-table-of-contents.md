@@ -1,0 +1,26 @@
+# Contents
+
+::: {.table-of-contents}
+- [Introduction](#introduction)
+	- [What emulation means](#what-emulation-means)
+	- [What emulation does not guarantee](#what-emulation-does-not-guarantee)
+	- [How Topaz fits into a workflow](#how-topaz-fits-into-a-workflow)
+		- [Scenario 1: Run application integration tests](#scenario-1-run-application-integration-tests)
+		- [Scenario 2: Develop and debug Azure SDK applications](#scenario-2-develop-and-debug-azure-sdk-applications)
+		- [Scenario 3: Validate infrastructure definitions](#scenario-3-validate-infrastructure-definitions)
+		- [Scenario 4: Prototype workflows across services](#scenario-4-prototype-workflows-across-services)
+		- [Scenario 5: Develop AI agents that use Azure services](#scenario-5-develop-ai-agents-that-use-azure-services)
+		- [Scenario 6: Test authorization and failure handling](#scenario-6-test-authorization-and-failure-handling)
+		- [Scenario 7: Train and onboard developers](#scenario-7-train-and-onboard-developers)
+	- [How to use this book](#how-to-use-this-book)
+- [Prerequisites](#prerequisites)
+	- [Operating system and runtime](#operating-system-and-runtime)
+	- [Choose an installation method](#choose-an-installation-method)
+		- [macOS with Homebrew](#macos-with-homebrew)
+		- [Linux or WSL 2](#linux-or-wsl-2)
+		- [Docker](#docker)
+	- [Configure DNS](#configure-dns)
+	- [Trust the HTTPS certificate](#trust-the-https-certificate)
+	- [Install tools for your examples](#install-tools-for-your-examples)
+	- [Verify the setup](#verify-the-setup)
+:::

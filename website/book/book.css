@@ -124,6 +124,31 @@ h3 {
   flex: 0 0 auto;
 }
 
+.table-of-contents {
+  font-size: 8.5pt;
+  line-height: 1.2;
+}
+
+.table-of-contents ul {
+  margin: 0;
+  padding-left: 1.25em;
+}
+
+.table-of-contents li {
+  margin: 0.025in 0;
+}
+
+.table-of-contents a {
+  display: flex;
+  gap: 0.08in;
+}
+
+.table-of-contents a::after {
+  content: target-counter(attr(href), page);
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
 p,
 ul,
 ol,

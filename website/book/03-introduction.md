@@ -6,6 +6,18 @@ Topaz provides a local environment for developing and testing applications that 
 
 This book explains how to use Topaz as part of a local development workflow. It begins with the concepts and setup requirements, then moves toward creating resources, connecting application code, and testing behavior.
 
+## Working with Azure without emulation
+
+Working directly with Azure often means using real Azure accounts and resources during development and testing. This lets developers exercise services in the cloud, but it also requires access to the right tenant and care when selecting the resources that tools will change. A typical workflow may require developers to:
+
+- authenticate with an account in the appropriate Microsoft Entra ID tenant
+- receive the required permissions through role-based access control (RBAC), assigned at the appropriate scope
+- select the intended subscription and configure tools to target the correct resources
+
+These requirements can involve coordination before development or testing can begin. For example, a developer may need an account in the right tenant and permission grants from an administrator. When several subscriptions are available, selecting the wrong one can direct commands or application requests to unintended resources. Larger organizations may also require access and change controls, particularly for shared or production environments. Those safeguards remain important outside local development; non-production systems can also contain sensitive data or affect other users.
+
+For short-lived development and test work, creating or maintaining a dedicated Azure environment may be more setup than the task requires. A local emulator offers another option: it lets developers exercise supported Azure APIs without provisioning real Azure resources for every iteration. Emulation does not remove all setup or replace validation against Azure; it provides a local environment for the operations it supports.
+
 ## What emulation means
 
 An emulator implements an API or system locally so that software can interact with it without using the remote service. In this context, Topaz accepts requests intended for selected Azure APIs and handles them on the local machine. The application can create resources and use service endpoints without requiring those operations to reach an Azure subscription.

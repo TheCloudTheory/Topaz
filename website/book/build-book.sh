@@ -5,8 +5,9 @@ cd "$(dirname "$0")"
 
 pandoc \
   01-front-matter.md \
-  02-introduction.md \
-  03-prerequisites.md \
+  02-table-of-contents.md \
+  03-introduction.md \
+  04-prerequisites.md \
   --standalone \
   --syntax-highlighting=none \
   --css=book.css \
