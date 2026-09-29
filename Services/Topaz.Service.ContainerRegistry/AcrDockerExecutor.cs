@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry;
 
@@ -26,11 +25,11 @@ public static class AcrDockerExecutor
         string logPath,
         CancellationToken cancellationToken)
     {
-        string buildContext;
         string? tempDir = null;
 
         try
         {
+            string buildContext;
             if (contextPath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                 contextPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
@@ -88,7 +87,9 @@ public static class AcrDockerExecutor
             CreateNoWindow = true,
         };
 
-        using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        using var process = new Process();
+        process.StartInfo = psi;
+        process.EnableRaisingEvents = true;
         process.OutputDataReceived += (_, e) =>
         {
             if (e.Data != null) File.AppendAllText(logPath, e.Data + Environment.NewLine);
@@ -123,6 +124,7 @@ public static class AcrDockerExecutor
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
+            
             using var process = Process.Start(psi);
             process?.WaitForExit(5_000);
             return process?.ExitCode == 0;
