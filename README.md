@@ -131,7 +131,7 @@ Topaz supports local Terraform workflows with both the AzureRM and AzAPI provide
 
 ## Licensing
 
-Topaz is open-source. A commercial license with enterprise support is planned for teams that need SLAs, priority fixes, or long-term stability guarantees. Existing users will receive advance notice well before any licensing changes take effect.
+Starting with Topaz 1.11, Topaz will be available under dual licensing, including a commercial license for teams that need SLAs, priority fixes, or long-term stability guarantees. See the [pricing page](https://topaz.thecloudtheory.com/pricing/).
 
 ## Community
 
