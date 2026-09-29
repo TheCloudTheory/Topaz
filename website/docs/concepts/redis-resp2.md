@@ -8,6 +8,17 @@ keywords: [topaz redis, RESP2, redis protocol, redis emulator, redis commands]
 
 Topaz accepts Redis commands over TCP using the Redis Serialization Protocol (RESP). Its Redis data-plane listener passes received bytes to a RESP2 handler, which parses commands, invokes the Redis data plane, and writes the encoded response to the socket.
 
+## Ports and instance routing
+
+Topaz listens for Redis connections on the standard Redis ports:
+
+| Port | Connection |
+|---|---|
+| `6379` | TCP without TLS |
+| `6380` | TCP with TLS |
+
+These ports are shared by all emulated Redis instances; Topaz does not allocate a separate listener port for each instance. After connecting, authenticate with the primary or secondary access key for the intended instance. Topaz resolves that key to its Redis resource and routes commands on that connection to the selected instance.
+
 ## Request format
 
 Commands are sent as RESP arrays of bulk strings. The first bulk string is the command name; the remaining bulk strings are its arguments. For example, `AUTH cache-key` is encoded as:
