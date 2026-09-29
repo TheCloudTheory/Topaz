@@ -104,6 +104,10 @@ public class Host
         Console.WriteLine();
         Console.WriteLine($"  Azure emulator  •  v{ThisAssembly.AssemblyInformationalVersion}");
         Console.WriteLine();
+        
+        Console.WriteLine("==============================================================================");
+        Console.WriteLine("STARTING FROM 1.11 VERSION, TOPAZ WILL REQUIRE LICENSE IF RUNNING COMMERCIALLY");
+        Console.WriteLine("==============================================================================");
 
         Bootstrap();
 
