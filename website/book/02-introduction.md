@@ -38,16 +38,65 @@ Normally, you run the host in the background and use an Azure SDK or tool, such 
 
 These examples depend on the services and operations supported by the Topaz version you use. Check the current [supported services and API coverage](https://topaz.thecloudtheory.com/docs/supported-services/) before designing a workflow around a specific operation.
 
-Topaz routes Azure service hostnames to the local machine using a one-time DNS configuration. HTTPS clients also need to trust the certificate used by Topaz. After setup, tools configured for Topaz send their requests to local endpoints rather than to Azure. This arrangement can make development and automated tests less dependent on a deployed Azure environment. It also provides a place to create disposable local resources and exercise application code against service APIs. Here are some ways you could use Topaz in your work:
+Topaz routes Azure service hostnames to the local machine using a one-time DNS configuration. HTTPS clients also need to trust the certificate used by Topaz. After setup, tools configured for Topaz send their requests to local endpoints rather than to Azure. This provides a place to develop and test application workflows without directing those service requests to live Azure resources.
 
-- Run application integration tests against local Azure-compatible services, including in a continuous integration pipeline.
-- Develop and debug applications that use Azure SDKs without sending those service requests to a live Azure resource.
-- Deploy infrastructure definitions with ARM, Bicep, or Terraform, then test the resulting resources and permissions locally.
-- Prototype a feature or test a microservices workflow that depends on several emulated Azure services.
-- Develop AI agents that call Azure services, or test tools that create and inspect resources in Topaz.
-- Test authorization behavior, error handling, and retry policies against the features supported by Topaz.
-- Help developers learn Azure SDK and resource-management workflows in a local environment.
+Here are some ways you could use Topaz in your work.
 
+### Scenario 1: Run application integration tests
+
+Run application tests against local instances of the Azure services they depend on. The same workflow can run in continuous integration, where each test run can use its own Topaz instance and resource state. This helps test interactions between application code and supported service APIs without creating those test resources in Azure.
+
+::: {.scenario-diagram role="img" aria-label="Test runner sends application tests to the Topaz host, which handles them with emulated services."}
+[Test runner: application tests]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Topaz host]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Emulated services]{.scenario-node}
+:::
+
+### Scenario 2: Develop and debug Azure SDK applications
+
+Configure Azure SDK clients to send requests to Topaz while developing an application. This lets you exercise supported API calls and inspect application behavior against local resources. Keep the local endpoint and credential configuration separate from production settings.
+
+::: {.scenario-diagram role="img" aria-label="An application uses an Azure SDK to call a Topaz endpoint and access local resources."}
+[Application]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Azure SDK: Topaz endpoint]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Local resources]{.scenario-node}
+:::
+
+### Scenario 3: Validate infrastructure definitions
+
+Deploy ARM templates, Bicep templates, or Terraform configurations to Topaz. Inspect the resources and permissions created by the deployment before using the same definitions against Azure. The checks you can perform depend on the resource types and operations supported by your Topaz version.
+
+::: {.scenario-diagram role="img" aria-label="Infrastructure definitions are deployed through the Topaz ARM endpoint to create resources and permissions for verification."}
+[ARM, Bicep, or Terraform]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Topaz ARM endpoint]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Resources and permissions]{.scenario-node}
+:::
+
+### Scenario 4: Prototype workflows across services
+
+Build a feature that uses several Azure services, such as storage, a secrets store, and messaging. Topaz provides one local environment in which to exercise the supported parts of that workflow without first provisioning each dependency in Azure.
+
+::: {.scenario-diagram role="img" aria-label="A feature or group of microservices connects to Topaz and uses local storage, secrets, and messaging services."}
+[Feature or microservices]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Topaz]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Storage, secrets, and messaging]{.scenario-node}
+:::
+
+### Scenario 5: Develop AI agents that use Azure services
+
+Test an agent's calls to Azure-backed tools against local resources. For example, an agent can read a blob, retrieve a secret, or send a message through an emulated service. Use test data and verify that each required operation is supported.
+
+::: {.scenario-diagram role="img" aria-label="An AI agent makes tool calls to Azure services running in Topaz."}
+[AI agent]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Tool calls]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Topaz services]{.scenario-node}
+:::
+
+### Scenario 6: Test authorization and failure handling
+
+Exercise supported authorization behavior and check how an application handles errors and retries. Where available, Topaz's fault-injection features can help test responses such as throttling, service unavailability, or timeouts without inducing those failures in a live Azure resource.
+
+::: {.scenario-diagram role="img" aria-label="A test client exercises authorization and injected failures in Topaz, then verifies the application's response."}
+[Test client]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Topaz authorization and fault injection]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Verify application response]{.scenario-node}
+:::
+
+### Scenario 7: Train and onboard developers
+
+Give developers a local environment for exploring Azure SDK calls, resource creation, and application workflows. They can repeat exercises without sharing a development subscription or affecting shared Azure resources.
+
+::: {.scenario-diagram role="img" aria-label="Developers use a local Topaz environment to practice SDK and resource-management workflows."}
+[Developer]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Local Topaz environment]{.scenario-node} [&rarr;]{.scenario-arrow aria-hidden="true"} [Practice SDK and resource workflows]{.scenario-node}
+:::
 
 ## How to use this book
 

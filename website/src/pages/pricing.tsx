@@ -16,39 +16,55 @@ interface Tier {
   highlighted?: boolean;
 }
 
-const FUTURE_TIERS: Tier[] = [
+const LICENSE_TIERS: Tier[] = [
   {
     name: 'Community',
     priceLabel: 'Free',
-    priceSub: 'forever',
+    priceSub: 'for non-commercial projects',
     features: [
-      { text: 'Core Azure service emulation' },
-      { text: 'Single-developer use' },
-      { text: 'Community support' },
-      { text: 'Public releases only' },
+      { text: 'All Topaz features' },
+      { text: 'Control planes and data planes' },
+      { text: 'Chaos Mode and background services' },
+      { text: 'Non-commercial use only' },
     ],
   },
   {
-    name: 'Pro',
-    priceLabel: 'TBD',
-    priceSub: 'per seat / month',
+    name: 'Free',
+    priceLabel: '$0',
+    priceSub: 'for companies at or below $1M consolidated revenue',
+    features: [
+      { text: 'All Topaz features' },
+      { text: 'Control planes and data planes' },
+      { text: 'Chaos Mode and background services' },
+      { text: 'No SLA; support through GitHub issues' },
+      { text: 'Quotas: 1 Azure subscription, 10 resource groups' },
+    ],
+  },
+  {
+    name: 'Commercial',
+    priceLabel: '$49',
+    priceSub: 'per seat / year',
     highlighted: true,
     features: [
-      { text: 'Everything in Community' },
-      { text: 'Advanced service coverage' },
-      { text: 'Priority bug fixes' },
-      { text: 'Priority support' },
+      { text: 'Required above $1M consolidated revenue' },
+      { text: 'All Topaz features' },
+      { text: 'Control planes and data planes' },
+      { text: 'Chaos Mode and background services' },
+      { text: 'Shared mode requires a dedicated license' },
+      { text: 'Dedicated support' },
+      { text: 'No quotas' }
     ],
   },
   {
     name: 'Enterprise',
-    priceLabel: 'Contact us',
-    priceSub: 'custom pricing',
+    priceLabel: 'Custom',
+    priceSub: 'annual agreement',
     features: [
-      { text: 'Everything in Pro' },
-      { text: 'Custom SLA & support' },
+      { text: 'Everything in Commercial' },
+      { text: 'Feature requests and roadmap influence' },
+      { text: 'Dedicated support and SLA' },
       { text: 'Private builds' },
-      { text: 'On-premises deployment' },
+      { text: 'Includes a dedicated license for shared mode' },
     ],
   },
 ];
@@ -57,80 +73,28 @@ function Hero() {
   return (
     <section className={styles.hero}>
       <div className="container">
-        <h1 className={styles.heroTitle}>Simple, honest pricing</h1>
+        <h1 className={styles.heroTitle}>Topaz for every team.</h1>
         <p className={styles.heroSubtitle}>
-          Topaz is completely free today — for every project, every team, every
-          scale. No credit card. No registration. No surprises.
+          Every feature is free for non-commercial projects and companies with
+          up to $1 million in consolidated annual revenue. Larger companies need
+          a commercial license.
         </p>
       </div>
     </section>
   );
 }
 
-function CurrentPlan() {
-  return (
-    <section className={styles.section}>
-      <div className="container">
-        <h2 className={styles.sectionTitle}>What you get today</h2>
-        <p className={styles.sectionSubtitle}>
-          Full access to everything Topaz offers, at zero cost.
-        </p>
-        <div className={styles.currentPlanWrapper}>
-          <div className={styles.currentPlanCard}>
-            <span className={styles.currentBadge}>Current plan</span>
-            <h3 className={styles.currentPlanName}>Topaz Free</h3>
-            <div className={styles.currentPlanPrice}>
-              $0<span> / forever</span>
-            </div>
-            <p className={styles.currentPlanDesc}>
-              Available to anyone — individuals, startups, and enterprises
-              alike. No registration required, no usage limits, no hidden fees.
-            </p>
-            <ul className={styles.featureList}>
-              <li>Azure Resource Manager emulation</li>
-              <li>Key Vault, Service Bus &amp; Event Hubs</li>
-              <li>Blob, Table &amp; Queue Storage</li>
-              <li>Container Registry, Virtual Networks &amp; more</li>
-              <li>Topaz Portal management UI</li>
-              <li>ARM template &amp; Bicep deployment</li>
-              <li>Works with Azure CLI, Azure SDKs &amp; Terraform</li>
-              <li>Docker &amp; Kubernetes friendly</li>
-              <li>Commercial use permitted</li>
-              <li>No registration or account required</li>
-            </ul>
-            <div className={styles.noticeBanner}>
-              <span>ℹ️</span>
-              <span>
-                <strong>Heads up for the future:</strong> Pricing will evolve
-                as Topaz grows. You will be notified of any changes{' '}
-                <em>several releases in advance</em> — never retroactively and
-                never without warning.
-              </span>
-            </div>
-            <div className={styles.currentPlanCta}>
-              <Link className="button button--primary button--lg" to="/docs/intro/">
-                Get started free →
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FutureTiers() {
+function LicenseTiers() {
   return (
     <section className={clsx(styles.section, styles.sectionAlt)}>
       <div className="container">
-        <h2 className={styles.sectionTitle}>What&apos;s coming</h2>
+        <h2 className={styles.sectionTitle}>Choose your license</h2>
         <p className={styles.sectionSubtitle}>
-          Future pricing tiers are being designed. Specifics are subject to
-          change — exact prices and features will be finalised and communicated
-          well ahead of any launch.
+          Community and Free include every feature. The right tier depends on
+          whether your use is commercial and your company&apos;s consolidated revenue.
         </p>
         <div className={styles.tiersGrid}>
-          {FUTURE_TIERS.map((tier) => (
+          {LICENSE_TIERS.map((tier) => (
             <div
               key={tier.name}
               className={clsx(
@@ -138,7 +102,6 @@ function FutureTiers() {
                 tier.highlighted && styles.tierCardHighlighted,
               )}
             >
-              <span className={styles.comingSoonPill}>Coming soon</span>
               <h3 className={styles.tierName}>{tier.name}</h3>
               <div className={styles.tierPrice}>{tier.priceLabel}</div>
               <div className={styles.tierPriceSub}>{tier.priceSub}</div>
@@ -151,6 +114,12 @@ function FutureTiers() {
             </div>
           ))}
         </div>
+        <p className={styles.billingNote}>
+          <strong>Billing:</strong> Commercial licenses cost $49 per seat per
+          year, with no usage-based fees. Shared-mode deployments require a
+          separate dedicated license. Enterprise licenses are custom-priced
+          annually and include dedicated support, a private build, and an SLA.
+        </p>
       </div>
     </section>
   );
@@ -163,8 +132,12 @@ interface FaqItem {
 
 const FAQ_ITEMS: FaqItem[] = [
   {
-    q: 'Is Topaz really free — are there any hidden limits?',
-    a: 'Yes, completely free. There are no usage caps, no request limits, no time-limited trials, and no feature gates today. Everything Topaz currently offers is available to everyone at no cost.',
+    q: 'Who can use the Community tier?',
+    a: 'Community is free for non-commercial projects and includes every Topaz feature, including Chaos Mode and background services.',
+  },
+  {
+    q: 'Who qualifies for the Free tier?',
+    a: 'The Free tier includes every Topaz feature for commercial use by companies with consolidated annual revenue of $1 million or less. Companies above that threshold need a Commercial license.',
   },
   {
     q: 'Can I self-host Topaz on my own infrastructure?',
@@ -181,12 +154,16 @@ const FAQ_ITEMS: FaqItem[] = [
     ),
   },
   {
-    q: 'Will Topaz stay free when paid tiers launch?',
-    a: 'The Community (free) tier will remain available — it is not a trial. Any pricing changes will be communicated several releases in advance, never retroactively.',
+    q: 'What support comes with the free tier?',
+    a: 'Community and Free have no SLA. Support is limited to GitHub issues.',
   },
   {
-    q: 'Can I use Topaz in a commercial project or at my company?',
-    a: 'Yes. Commercial use is explicitly permitted under the current licence. No enterprise agreement or special approval is needed to start using Topaz in a professional context.',
+    q: 'How is a commercial license billed?',
+    a: 'Commercial licenses cost $49 per named seat per year, without usage-based fees.',
+  },
+  {
+    q: 'What license does shared mode need?',
+    a: 'Shared-mode deployments require a separate dedicated license. Enterprise agreements are custom-priced and include dedicated support, a private build, and an SLA.',
   },
 ];
 
@@ -227,11 +204,10 @@ function EnterpriseContact() {
     <section className={styles.section}>
       <div className="container">
         <div className={styles.enterpriseCard}>
-          <h2 className={styles.enterpriseTitle}>Evaluating Topaz for your team?</h2>
+          <h2 className={styles.enterpriseTitle}>Need shared mode or Enterprise terms?</h2>
           <p className={styles.enterpriseText}>
-            Pro and Enterprise tiers are in design. If you're considering Topaz
-            for team or company-wide use, reach out early — your workflow and
-            requirements will help shape what gets built.
+            Contact us to discuss a dedicated shared-mode license, private
+            builds, dedicated support, and SLA requirements.
           </p>
           <div className={styles.enterpriseActions}>
             <Link
@@ -257,13 +233,10 @@ function Cta() {
   return (
     <section className={styles.ctaSection}>
       <div className="container">
-        <h2 className={styles.ctaTitle}>Start using Topaz today — free</h2>
+        <h2 className={styles.ctaTitle}>Start using Topaz today</h2>
         <p className={styles.ctaSubtitle}>
-          Download, run, and integrate in minutes. No sign-up required.
-        </p>
-        <p className={styles.ctaSubtitle}>
-          Topaz runs fully locally with no Azure subscription, everything available today is free,
-          and future paid tiers are planned for advanced support and enterprise needs.
+          Every feature is free for non-commercial projects and qualifying
+          companies. Commercial seats start at $49 per year.
         </p>
         <div className={styles.ctaButtons}>
           <Link
@@ -288,12 +261,11 @@ export default function PricingPage(): JSX.Element {
   return (
     <Layout
       title="Pricing"
-      description="Topaz is free for everyone today — commercial and non-commercial alike. Learn about current and future pricing."
+      description="All Topaz features are free for non-commercial projects and companies with up to $1 million in consolidated annual revenue. Commercial licenses start at $49 per seat per year."
     >
       <Hero />
-      <CurrentPlan />
+      <LicenseTiers />
       <Faq />
-      <FutureTiers />
       <EnterpriseContact />
       <Cta />
     </Layout>

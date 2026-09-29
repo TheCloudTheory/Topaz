@@ -87,6 +87,43 @@ h3 {
   margin: 0.24in 0 0.08in;
 }
 
+.scenario-diagram {
+  break-inside: avoid;
+  display: block;
+  margin: 0.16in 0 0.22in;
+  text-align: center;
+}
+
+.scenario-diagram p {
+  align-items: stretch;
+  display: flex;
+  gap: 0.08in;
+  margin: 0;
+  width: 100%;
+}
+
+.scenario-node {
+  align-items: center;
+  background: #f2f5f8;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  color: #142d5e;
+  display: flex;
+  flex: 1 1 0;
+  font-size: 8.5pt;
+  justify-content: center;
+  min-height: 0.42in;
+  overflow-wrap: anywhere;
+  padding: 0.06in;
+}
+
+.scenario-arrow {
+  align-self: center;
+  color: #1b63eb;
+  font-size: 14pt;
+  flex: 0 0 auto;
+}
+
 p,
 ul,
 ol,

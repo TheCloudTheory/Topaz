@@ -38,6 +38,7 @@ public sealed class ChaosProvider(ITopazLogger logger)
         }
         
         logger.LogDebug(nameof(ChaosProvider), nameof(GetChaosResponse), "No chaos rule triggered.");
+        
         // No rule triggered, return false
         return (false, null);
     }
