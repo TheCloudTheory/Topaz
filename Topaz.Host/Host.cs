@@ -47,6 +47,7 @@ using Topaz.ForwardProxy;
 using Topaz.Importer;
 using Topaz.Service.ApiManagement;
 using Topaz.Service.ContainerInstances;
+using Topaz.Service.ContainerRegistry.Executors;
 using Topaz.Service.EventGrid;
 using Topaz.Service.Redis;
 using Topaz.Shared;

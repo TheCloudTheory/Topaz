@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Topaz.Service.ContainerRegistry;
+using Topaz.Service.ContainerRegistry.Executors;
 
 namespace Topaz.Host;
 

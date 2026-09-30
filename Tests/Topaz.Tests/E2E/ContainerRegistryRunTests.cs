@@ -7,6 +7,7 @@ using Azure.ResourceManager.ContainerRegistry.Models;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Service.ContainerRegistry;
+using Topaz.Service.ContainerRegistry.Executors;
 
 namespace Topaz.Tests.E2E;
 

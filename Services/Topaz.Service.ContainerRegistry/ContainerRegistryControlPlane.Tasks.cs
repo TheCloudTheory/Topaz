@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Topaz.Service.ContainerRegistry.Executors;
 using Topaz.Service.ContainerRegistry.Models;
 using Topaz.Service.ContainerRegistry.Models.Requests;
 using Topaz.Service.Shared;
@@ -405,7 +406,62 @@ internal sealed partial class ContainerRegistryControlPlane
         provider.CreateOrUpdateSubresource(
             subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
         
+        _ = ExecuteRunAsync(subscriptionIdentifier, resourceGroupIdentifier, registryName, runId, request);
+        
         return resource;
+    }
+
+    private async Task ExecuteRunAsync(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string registryName, string runId, ScheduleTaskRunRequest fileTaskStep)
+    {
+        var logPath = provider.GetRunLogPath(runId);
+        
+        try
+        {
+            // Transition to Running
+            var resource = provider.GetSubresourceAs<AcrRunResource>(
+                subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource);
+            if (resource != null)
+            {
+                resource.Properties.Status = "Running";
+                resource.Properties.ProvisioningState = "Running";
+                resource.Properties.StartTime = DateTimeOffset.UtcNow;
+                provider.CreateOrUpdateSubresource(
+                    subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
+            }
+
+            var success = await FileTaskRunExecutor.ExecuteAsync(fileTaskStep, logPath, CancellationToken.None);
+
+            // Transition to Succeeded or Failed
+            resource = provider.GetSubresourceAs<AcrRunResource>(
+                subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource);
+            if (resource != null)
+            {
+                resource.Properties.Status = success ? "Succeeded" : "Failed";
+                resource.Properties.ProvisioningState = success ? "Succeeded" : "Failed";
+                resource.Properties.FinishTime = DateTimeOffset.UtcNow;
+                provider.CreateOrUpdateSubresource(
+                    subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            try
+            {
+                await File.AppendAllTextAsync(logPath, $"Fatal error: {ex.Message}{Environment.NewLine}");
+                var resource = provider.GetSubresourceAs<AcrRunResource>(
+                    subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource);
+                if (resource != null)
+                {
+                    resource.Properties.Status = "Failed";
+                    resource.Properties.ProvisioningState = "Failed";
+                    resource.Properties.FinishTime = DateTimeOffset.UtcNow;
+                    provider.CreateOrUpdateSubresource(
+                        subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
+                }
+            }
+            catch { /* best effort */ }
+        }
     }
 
     private AcrRunResource ExecuteScheduledDockerRun(SubscriptionIdentifier subscriptionIdentifier,
@@ -442,6 +498,7 @@ internal sealed partial class ContainerRegistryControlPlane
         bool isPushEnabled)
     {
         var logPath = provider.GetRunLogPath(runId);
+        
         try
         {
             // Transition to Running

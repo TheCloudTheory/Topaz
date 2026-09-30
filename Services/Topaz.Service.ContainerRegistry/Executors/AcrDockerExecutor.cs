@@ -1,12 +1,14 @@
 using System.Diagnostics;
+using JetBrains.Annotations;
 
-namespace Topaz.Service.ContainerRegistry;
+namespace Topaz.Service.ContainerRegistry.Executors;
 
 /// <summary>
 /// Shells out to the host Docker daemon to execute a DockerBuildRequest ACR run.
 /// All other step types are handled by the existing immediate-Succeeded path.
 /// </summary>
-public static class AcrDockerExecutor
+[UsedImplicitly]
+internal class AcrDockerExecutor : ExecutorBase
 {
     private static readonly Lazy<bool> Available = new(CheckAvailability);
 
@@ -33,7 +35,7 @@ public static class AcrDockerExecutor
             if (contextPath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                 contextPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
-                tempDir = Path.Combine(Path.GetTempPath(), "topaz-acr-" + Guid.NewGuid().ToString("N")[..8]);
+                tempDir = GenerateTempDir();
                 await AppendLogAsync(logPath, $"Cloning context from {contextPath}...");
                 var cloneOk = await RunProcessAsync("git", $"clone {contextPath} \"{tempDir}\"", logPath, cancellationToken);
                 if (!cloneOk) return false;
@@ -71,46 +73,6 @@ public static class AcrDockerExecutor
                 try { Directory.Delete(tempDir, true); } catch { /* best-effort cleanup */ }
             }
         }
-    }
-
-    private static async Task<bool> RunProcessAsync(
-        string fileName,
-        string arguments,
-        string logPath,
-        CancellationToken cancellationToken)
-    {
-        var psi = new ProcessStartInfo(fileName, arguments)
-        {
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true,
-        };
-
-        using var process = new Process();
-        process.StartInfo = psi;
-        process.EnableRaisingEvents = true;
-        process.OutputDataReceived += (_, e) =>
-        {
-            if (e.Data != null) File.AppendAllText(logPath, e.Data + Environment.NewLine);
-        };
-        process.ErrorDataReceived += (_, e) =>
-        {
-            if (e.Data != null) File.AppendAllText(logPath, e.Data + Environment.NewLine);
-        };
-
-        process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-
-        await process.WaitForExitAsync(cancellationToken);
-        return process.ExitCode == 0;
-    }
-
-    private static Task AppendLogAsync(string logPath, string line)
-    {
-        File.AppendAllText(logPath, line + Environment.NewLine);
-        return Task.CompletedTask;
     }
 
     private static bool CheckAvailability()
