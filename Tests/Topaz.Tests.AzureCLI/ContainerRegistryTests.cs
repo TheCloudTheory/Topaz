@@ -681,4 +681,49 @@ public class ContainerRegistryTests : TopazFixture
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
 
+    [Test]
+    public async Task AcrTaskRun_FileTaskRunRequest_MultiStepTaskFile_ShouldReturnQuickRun()
+    {
+        const string registryName = "topazacrfiletask01";
+        const string resourceGroup = "test-acr-filetask-rg";
+        const string contextPath = "/tmp/acr-multi-step-task";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+
+        await RunAzureCliCommand(
+            $"mkdir -p {contextPath} && cd {contextPath} && " +
+            "printf '%s\\n' 'version: v1.1.0' 'steps:' " +
+            "'  - cmd: mcr.microsoft.com/azure-cli:2.88.0 echo first-step' " +
+            "'  - cmd: mcr.microsoft.com/azure-cli:2.88.0 echo second-step' > task.yaml");
+
+        string? runId = null;
+        await RunAzureCliCommand(
+            $"cd {contextPath} && az acr run --registry {registryName} --resource-group {resourceGroup} " +
+            "--file task.yaml . --no-logs",
+            resp =>
+            {
+                runId = resp["runId"]?.GetValue<string>();
+                Assert.That(runId, Is.Not.Null.And.Not.Empty);
+                Assert.That(resp["status"]?.GetValue<string>(), Is.EqualTo("Succeeded"));
+            });
+
+        await RunAzureCliCommand(
+            $"az rest --method get " +
+            $"--url \"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/subscriptions/$(az account show --query id -o tsv)/resourceGroups/{resourceGroup}/providers/Microsoft.ContainerRegistry/registries/{registryName}/runs/{runId}?api-version=2019-04-01\"",
+            resp =>
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(resp["properties"]?["runType"]?.GetValue<string>(), Is.EqualTo("QuickRun"));
+                    Assert.That(resp["properties"]?["status"]?.GetValue<string>(), Is.EqualTo("Succeeded"));
+                    Assert.That(resp["properties"]?["platform"]?["os"]?.GetValue<string>(), Is.EqualTo("Linux"));
+                });
+            });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
 }

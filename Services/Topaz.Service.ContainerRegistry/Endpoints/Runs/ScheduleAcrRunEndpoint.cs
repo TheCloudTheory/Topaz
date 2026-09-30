@@ -39,9 +39,15 @@ internal sealed class ScheduleAcrRunEndpoint(Pipeline eventPipeline, ITopazLogge
                       ?? new ScheduleAcrRunRequest();
 
         var operation = _controlPlane.ScheduleRun(
-            subscriptionIdentifier, resourceGroupIdentifier, registryName, request);
+            subscriptionIdentifier, resourceGroupIdentifier, registryName, content);
 
         if (operation.Result == OperationResult.NotFound)
+        {
+            response.CreateErrorResponse(operation.Code!, operation.Reason!);
+            return;
+        }
+
+        if (operation.Result == OperationResult.BadRequest)
         {
             response.CreateErrorResponse(operation.Code!, operation.Reason!);
             return;

@@ -1,6 +1,7 @@
-using System.Text.Json;
+using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using Topaz.Service.ContainerRegistry.Models.Requests;
+using Topaz.Service.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Models;
 
@@ -8,20 +9,22 @@ namespace Topaz.Service.ContainerRegistry.Models;
 internal sealed class AcrTaskResourceProperties
 {
     public string? Status { get; set; }
-    public string ProvisioningState { get; set; } = "Succeeded";
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public ProvisioningState ProvisioningState { get; set; } = ProvisioningState.Succeeded;
     public DateTimeOffset CreationDate { get; set; }
     public int Timeout { get; set; } = 3600;
-    public JsonElement? Platform { get; set; }
-    public JsonElement? AgentConfiguration { get; set; }
-    public JsonElement? Step { get; set; }
-    public JsonElement? Trigger { get; set; }
-    public JsonElement? Credentials { get; set; }
+    public AcrTaskPlatformProperties? Platform { get; set; }
+    public AcrTaskAgentProperties? AgentConfiguration { get; set; }
+    public AcrTaskStepProperties? Step { get; set; }
+    public AcrTaskTriggerProperties? Trigger { get; set; }
+    public AcrTaskCredentials? Credentials { get; set; }
 
     public static AcrTaskResourceProperties FromRequest(CreateOrUpdateAcrTaskRequest request) =>
         new()
         {
             Status = request.Properties?.Status ?? "Enabled",
-            ProvisioningState = "Succeeded",
+            ProvisioningState = ProvisioningState.Succeeded,
             CreationDate = DateTimeOffset.UtcNow,
             Timeout = request.Properties?.Timeout ?? 3600,
             Platform = request.Properties?.Platform,
@@ -43,19 +46,19 @@ internal sealed class AcrTaskResourceProperties
         if (request.Properties.Timeout.HasValue)
             resource.Properties.Timeout = request.Properties.Timeout.Value;
 
-        if (request.Properties.Platform.HasValue)
+        if (request.Properties.Platform != null)
             resource.Properties.Platform = request.Properties.Platform;
 
-        if (request.Properties.AgentConfiguration.HasValue)
+        if (request.Properties.AgentConfiguration != null)
             resource.Properties.AgentConfiguration = request.Properties.AgentConfiguration;
 
-        if (request.Properties.Step.HasValue)
+        if (request.Properties.Step != null)
             resource.Properties.Step = request.Properties.Step;
 
-        if (request.Properties.Trigger.HasValue)
+        if (request.Properties.Trigger != null)
             resource.Properties.Trigger = request.Properties.Trigger;
 
-        if (request.Properties.Credentials.HasValue)
+        if (request.Properties.Credentials != null)
             resource.Properties.Credentials = request.Properties.Credentials;
 
         if (request.Tags != null)

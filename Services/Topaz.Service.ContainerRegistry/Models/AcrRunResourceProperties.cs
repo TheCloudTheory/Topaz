@@ -1,6 +1,7 @@
 using System.Text.Json;
 using JetBrains.Annotations;
 using Topaz.Service.ContainerRegistry.Models.Requests;
+using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Models;
 
@@ -78,6 +79,28 @@ internal sealed class AcrRunResourceProperties
             FinishTime = now,
             RunType = runType,
             IsArchiveEnabled = false
+        };
+    }
+
+    public static AcrRunResourceProperties FromScheduleTaskRun(
+        string runId,
+        ScheduleTaskRunRequest request)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return new AcrRunResourceProperties
+        {
+            RunId = runId,
+            Status = "Succeeded",
+            ProvisioningState = "Succeeded",
+            CreateTime = now,
+            StartTime = now,
+            FinishTime = now,
+            RunType = "QuickRun",
+            IsArchiveEnabled = request.IsArchiveEnabled ?? false,
+            Platform = JsonSerializer.SerializeToElement(request.Platform, GlobalSettings.JsonOptions),
+            AgentConfiguration = request.AgentConfiguration is null
+                ? null
+                : JsonSerializer.SerializeToElement(request.AgentConfiguration, GlobalSettings.JsonOptions)
         };
     }
 

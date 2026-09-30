@@ -1,9 +1,10 @@
 using JetBrains.Annotations;
+using Topaz.Service.Shared.Models;
 
 namespace Topaz.Service.ContainerRegistry.Models.Requests;
 
 [UsedImplicitly]
-internal sealed class ScheduleAcrRunRequest
+internal sealed class ScheduleAcrRunRequest : TopazApiRequest
 {
     public string Type { get; init; } = string.Empty;
 

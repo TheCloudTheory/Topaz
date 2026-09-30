@@ -1,5 +1,6 @@
 using System.Text.Json;
 using JetBrains.Annotations;
+using Topaz.Service.ContainerRegistry.Models;
 
 namespace Topaz.Service.ContainerRegistry.Models.Requests;
 
@@ -16,10 +17,10 @@ internal sealed class CreateOrUpdateAcrTaskRequest
     {
         public string? Status { get; init; }
         public int? Timeout { get; init; }
-        public JsonElement? Platform { get; init; }
-        public JsonElement? AgentConfiguration { get; init; }
-        public JsonElement? Step { get; init; }
-        public JsonElement? Trigger { get; init; }
-        public JsonElement? Credentials { get; init; }
+        public AcrTaskPlatformProperties? Platform { get; init; }
+        public AcrTaskAgentProperties? AgentConfiguration { get; init; }
+        public AcrTaskStepProperties? Step { get; init; }
+        public AcrTaskTriggerProperties? Trigger { get; init; }
+        public AcrTaskCredentials? Credentials { get; init; }
     }
 }

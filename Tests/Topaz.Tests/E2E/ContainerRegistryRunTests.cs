@@ -61,7 +61,7 @@ public class ContainerRegistryRunTests
     [Test]
     public async Task ContainerRegistryRun_TriggerTask_ShouldReturnSucceededRun()
     {
-        var registry = await CreateRegistryWithTaskAsync();
+        _ = await CreateRegistryWithTaskAsync();
 
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
@@ -85,7 +85,7 @@ public class ContainerRegistryRunTests
     [Test]
     public async Task ContainerRegistryRun_GetRun_ShouldReturnDetails()
     {
-        var registry = await CreateRegistryWithTaskAsync();
+        _ = await CreateRegistryWithTaskAsync();
 
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
@@ -110,7 +110,7 @@ public class ContainerRegistryRunTests
     [Test]
     public async Task ContainerRegistryRun_ListRuns_ShouldIncludeTriggered()
     {
-        var registry = await CreateRegistryWithTaskAsync();
+        _ = await CreateRegistryWithTaskAsync();
 
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
@@ -133,7 +133,7 @@ public class ContainerRegistryRunTests
     [Test]
     public async Task ContainerRegistryRun_UpdateRun_ShouldModifyIsArchiveEnabled()
     {
-        var registry = await CreateRegistryWithTaskAsync();
+        _ = await CreateRegistryWithTaskAsync();
 
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
@@ -188,7 +188,7 @@ public class ContainerRegistryRunTests
     [Test]
     public async Task ContainerRegistryRun_GetLogSasUrl_ShouldReturnLogLink()
     {
-        var registry = await CreateRegistryWithTaskAsync();
+        _ = await CreateRegistryWithTaskAsync();
 
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
@@ -271,7 +271,7 @@ public class ContainerRegistryRunTests
             runId = runLro.Value.Data.RunId;
             Assert.That(runLro.Value.Data.Status?.ToString(), Is.EqualTo("Succeeded"));
         }
-        catch (Azure.RequestFailedException ex) when (ex.Status == 200 || ex.ErrorCode == null)
+        catch (RequestFailedException ex) when (ex.Status == 200 || ex.ErrorCode == null)
         {
             // 200 + null ErrorCode means the LRO terminal status was "Failed" — expected when
             // Docker can't find a Dockerfile. Verify the run exists and is in a terminal state.
@@ -280,5 +280,35 @@ public class ContainerRegistryRunTests
 
         if (runId != null)
             Assert.That(runId, Is.Not.Null.And.Not.Empty);
+    }
+    
+    [Test]
+    public async Task ContainerRegistry_FileTaskRun_MultiStepYaml_ShouldReturnQuickRun()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Standard));
+        var registryLro = await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var runContent = new ContainerRegistryFileTaskRunContent(
+            "build-push-hello-world-multi.yaml",
+            new ContainerRegistryPlatformProperties(ContainerRegistryOS.Linux))
+        {
+            SourceLocation = "https://github.com/Azure-Samples/acr-tasks.git"
+        };
+        var runLro = await registryLro.Value.ScheduleRunAsync(WaitUntil.Completed, runContent);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(runLro.Value.Data.RunId, Is.Not.Null.And.Not.Empty);
+            Assert.That(runLro.Value.Data.Status.ToString(), Is.EqualTo("Succeeded"));
+            Assert.That(runLro.Value.Data.RunType.ToString(), Is.EqualTo("QuickRun"));
+        });
     }
 }
