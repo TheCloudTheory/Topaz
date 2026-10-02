@@ -396,6 +396,8 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     public void CreateOrUpdateSubresource<TModel>(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string id, string parentId, string subresource, TModel model)
     {
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(CreateOrUpdateSubresource), $"Creating / updating subresource '{subresource}' for parent '{parentId}' with Id '{id}'");
+        
         if (TService.Subresources == null)
         {
             throw new InvalidOperationException(
@@ -482,22 +484,29 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     public T? GetSubresourceAs<T>(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string id, string parentId, string subresource)
     {
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(GetSubresourceAs), $"Loading subresource {id} in {parentId}/{subresource}");
+        
         var raw = GetSubresource(subscriptionIdentifier, resourceGroupIdentifier, id, parentId, subresource);
-        if (string.IsNullOrEmpty(raw)) return default;
+        if (string.IsNullOrEmpty(raw))
+        {
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(GetSubresourceAs), $"Didn't find subresource {id} in {parentId}/{subresource}");
+            return default;
+        }
+        
         var json = JsonSerializer.Deserialize<T>(raw, GlobalSettings.JsonOptions);
-
         return json;
     }
 
     private string GetSubresourcePath(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string parentId, string subresourceId, string subresource)
     {
-        if (parentId.Contains("..") || parentId.Contains('\\'))
+        if (parentId.Contains("..") || parentId.Contains('\\') || subresourceId.Contains("..") ||
+            subresourceId.Contains('/') || subresourceId.Contains('\\') || subresource.Contains("..") ||
+            subresource.Contains('/') || subresource.Contains('\\'))
+        {
             throw new InvalidOperationException("Identifier contains forbidden characters.");
-        if (subresourceId.Contains("..") || subresourceId.Contains('/') || subresourceId.Contains('\\'))
-            throw new InvalidOperationException("Identifier contains forbidden characters.");
-        if (subresource.Contains("..") || subresource.Contains('/') || subresource.Contains('\\'))
-            throw new InvalidOperationException("Identifier contains forbidden characters.");
+        }
+
         return Path.Combine(BaseEmulatorPath,
             GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), parentId,
             subresource, subresourceId);
@@ -506,6 +515,8 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     public void DeleteSubresource(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string id, string parentId, string subresource)
     {
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(DeleteSubresource), $"Deleting subresource {id} in {parentId}/{subresource}");
+        
         var subresourcePath =
             GetSubresourcePath(subscriptionIdentifier, resourceGroupIdentifier, parentId, id, subresource);
         if (!Directory.Exists(subresourcePath))
@@ -602,7 +613,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         }
 
         // Read only the immediate subdirectory metadata files to avoid picking up
-        // nested sub-resource files (e.g. rules stored under each subscription folder).
+        // nested sub-resource files (e.g., rules stored under each subscription folder).
         var metadataFiles = Directory.GetDirectories(subresourcePath)
             .Select(d => Path.Combine(d, "metadata.json"))
             .Where(File.Exists)

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Topaz.ResourceManager;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ContainerRegistry.Models;
@@ -29,4 +30,23 @@ internal sealed class AcrRunResource : ArmSubresource<AcrRunResourceProperties>
     public override string Name { get; init; }
     public override string Type { get; init; } = "Microsoft.ContainerRegistry/registries/runs";
     public override AcrRunResourceProperties Properties { get; init; }
+
+    public void TransitionToRunning()
+    {
+        Properties.Status = "Running";
+        Properties.ProvisioningState = ProvisioningState.Succeeded;
+        Properties.StartTime = DateTimeOffset.UtcNow;
+    }
+
+    public void TransitionToSucceeded()
+    {
+        Properties.Status = "Succeeded";
+        Properties.FinishTime = DateTimeOffset.UtcNow;
+    }
+
+    public void TransitionToFailed()
+    {
+        Properties.Status = "Failed";
+        Properties.FinishTime = DateTimeOffset.UtcNow;
+    }
 }

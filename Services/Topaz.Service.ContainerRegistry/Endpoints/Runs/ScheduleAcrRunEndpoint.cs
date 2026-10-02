@@ -39,7 +39,7 @@ internal sealed class ScheduleAcrRunEndpoint(Pipeline eventPipeline, ITopazLogge
                       ?? new ScheduleAcrRunRequest();
 
         var operation = _controlPlane.ScheduleRun(
-            subscriptionIdentifier, resourceGroupIdentifier, registryName, content);
+            subscriptionIdentifier, resourceGroupIdentifier, registryName, content, CancellationToken.None);
 
         if (operation.Result == OperationResult.NotFound)
         {
@@ -59,7 +59,7 @@ internal sealed class ScheduleAcrRunEndpoint(Pipeline eventPipeline, ITopazLogge
         // Azure-AsyncOperation points to the dedicated status endpoint so the .NET SDK LRO
         // machinery receives {"status":"InProgress"/"Succeeded"/"Failed"} which it understands.
         // Location points to the run GET endpoint so the SDK retrieves the final resource once done.
-        if (run.Properties.Status == "Queued" || run.Properties.Status == "Running")
+        if (run.Properties.Status is "Queued" or "Running")
         {
             var scheme = context.Request.Scheme;
             var host = context.Request.Host.Value;

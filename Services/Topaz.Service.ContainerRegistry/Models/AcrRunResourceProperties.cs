@@ -1,6 +1,8 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using Topaz.Service.ContainerRegistry.Models.Requests;
+using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Models;
@@ -10,7 +12,9 @@ internal sealed class AcrRunResourceProperties
 {
     public string RunId { get; set; } = string.Empty;
     public string Status { get; set; } = "Succeeded";
-    public string ProvisioningState { get; set; } = "Succeeded";
+    
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public ProvisioningState ProvisioningState { get; set; } = ProvisioningState.Succeeded;
     public DateTimeOffset CreateTime { get; set; }
     public DateTimeOffset StartTime { get; set; }
     public DateTimeOffset FinishTime { get; set; }
@@ -27,7 +31,7 @@ internal sealed class AcrRunResourceProperties
         {
             RunId = runId,
             Status = "Queued",
-            ProvisioningState = "Creating",
+            ProvisioningState = ProvisioningState.Creating,
             CreateTime = now,
             StartTime = now,
             RunType = runType,
@@ -46,7 +50,7 @@ internal sealed class AcrRunResourceProperties
         {
             RunId = runId,
             Status = "Succeeded",
-            ProvisioningState = "Succeeded",
+            ProvisioningState = ProvisioningState.Succeeded,
             CreateTime = now,
             StartTime = now,
             FinishTime = now,
@@ -73,7 +77,7 @@ internal sealed class AcrRunResourceProperties
         {
             RunId = runId,
             Status = "Succeeded",
-            ProvisioningState = "Succeeded",
+            ProvisioningState = ProvisioningState.Succeeded,
             CreateTime = now,
             StartTime = now,
             FinishTime = now,
@@ -91,7 +95,7 @@ internal sealed class AcrRunResourceProperties
         {
             RunId = runId,
             Status = "Succeeded",
-            ProvisioningState = "Succeeded",
+            ProvisioningState = ProvisioningState.Succeeded,
             CreateTime = now,
             StartTime = now,
             FinishTime = now,
