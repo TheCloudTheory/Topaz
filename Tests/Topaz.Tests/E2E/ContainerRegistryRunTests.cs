@@ -305,11 +305,11 @@ public class ContainerRegistryRunTests
         };
         var runLro = await registryLro.Value.ScheduleRunAsync(WaitUntil.Completed, runContent);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(runLro.Value.Data.RunId, Is.Not.Null.And.Not.Empty);
             Assert.That(runLro.Value.Data.Status.ToString(), Is.EqualTo("Succeeded"));
             Assert.That(runLro.Value.Data.RunType.ToString(), Is.EqualTo("QuickRun"));
-        });
+        }
     }
 }
