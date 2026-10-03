@@ -35,8 +35,6 @@ internal sealed class ScheduleAcrRunEndpoint(Pipeline eventPipeline, ITopazLogge
 
         using var reader = new StreamReader(context.Request.Body);
         var content = reader.ReadToEnd();
-        var request = JsonSerializer.Deserialize<ScheduleAcrRunRequest>(content, GlobalSettings.JsonOptions)
-                      ?? new ScheduleAcrRunRequest();
 
         var operation = _controlPlane.ScheduleRun(
             subscriptionIdentifier, resourceGroupIdentifier, registryName, content, CancellationToken.None);

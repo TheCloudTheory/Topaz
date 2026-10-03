@@ -27,7 +27,7 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
                 await AppendLogAsync(logPath, $"Cloning context from {fileTaskStep.SourceLocation}...");
              
                 tempDir = GenerateTempDir();
-                var cloneOk = await RunProcessAsync("git", $"clone {fileTaskStep.SourceLocation} \"{tempDir}\"", logPath, cancellationToken);
+                var cloneOk = await RunProcessAsync("git", $"clone {fileTaskStep.SourceLocation} \"{tempDir}\"", logPath, tempDir, cancellationToken);
                 if (!cloneOk)
                 {
                     await AppendLogAsync(logPath, $"Error cloning context from {fileTaskStep.SourceLocation}");
@@ -42,7 +42,7 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
                 }
                 
                 var content = await File.ReadAllTextAsync(taskFilePath, cancellationToken);
-                var result = await ParseAndRunFileTask(content, logPath, registryName, runId, cancellationToken);
+                var result = await ParseAndRunFileTask(content, logPath, registryName, runId, tempDir, cancellationToken);
                 if (!result)
                 {
                     await AppendLogAsync(logPath, $"Error parsing and running file task.");
@@ -63,6 +63,7 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
 
     private static async Task<bool> ParseAndRunFileTask(string content, string logPath, string registryName,
         string runId,
+        string workingDirectory,
         CancellationToken cancellationToken)
     {
         var task = YamlSerializerFacade.Deserialize<ContainerRegistryTaskFile>(content);
@@ -80,7 +81,7 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
                 return false;
             }
 
-            var result = await ParseAndExecuteStep(step, logPath, registryName, runId, cancellationToken);
+            var result = await ParseAndExecuteStep(step, logPath, registryName, runId, workingDirectory, cancellationToken);
             if (!result)
             {
                 return false;
@@ -93,12 +94,13 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
     private static async Task<bool> ParseAndExecuteStep(ContainerRegistryTaskStep step, string logPath,
         string registryName,
         string runId,
+        string workingDirectory,
         CancellationToken cancellationToken)
     {
         if (!string.IsNullOrWhiteSpace(step.Build))
         {
             await AppendLogAsync(logPath, $"Building image: {step.Build}");
-            return await BuildImage(step.Build, registryName, logPath, runId, cancellationToken);
+            return await BuildImage(step.Build, registryName, logPath, runId, workingDirectory, cancellationToken);
         }
         
         return false;
@@ -106,6 +108,7 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
 
     private static async Task<bool> BuildImage(string stepBuild, string registryName, string logPath,
         string runId,
+        string workingDirectory,
         CancellationToken cancellationToken)
     {
         // The build step definition may contain "$Registry" placeholder which
@@ -115,7 +118,7 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
         // We also need to replace "$RunId" placeholder with the actual run id.
         compiledBuild = compiledBuild.Replace("$ID", runId);
 
-        var result = await RunProcessAsync("docker", compiledBuild, logPath, cancellationToken);
+        var result = await RunProcessAsync("docker", "build " + compiledBuild, logPath, workingDirectory, cancellationToken);
         return result;
     }
 }

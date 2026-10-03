@@ -8,7 +8,8 @@ internal abstract class ExecutorBase
         string fileName,
         string arguments,
         string logPath,
-        CancellationToken cancellationToken)
+        string? workingDirectory = null,
+        CancellationToken cancellationToken = default)
     {
         var psi = new ProcessStartInfo(fileName, arguments)
         {
@@ -16,6 +17,7 @@ internal abstract class ExecutorBase
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             CreateNoWindow = true,
+            WorkingDirectory = workingDirectory
         };
 
         using var process = new Process();
@@ -46,6 +48,12 @@ internal abstract class ExecutorBase
 
     protected static string GenerateTempDir()
     {
-        return Path.Combine(Path.GetTempPath(), "topaz-acr-" + Guid.NewGuid().ToString("N")[..8]);
+        var tempPath = Path.Combine(Path.GetTempPath(), "topaz-acr-" + Guid.NewGuid().ToString("N")[..8]);
+        if(!Directory.Exists(tempPath))
+        {
+            Directory.CreateDirectory(tempPath);
+        }
+        
+        return tempPath;
     }
 }

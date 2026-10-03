@@ -385,6 +385,12 @@ internal sealed partial class ContainerRegistryControlPlane
             var result = ExecuteScheduledTaskRun(subscriptionIdentifier, resourceGroupIdentifier,
                 registryName, taskRunRequest, runId, cancellationToken);
 
+            if (result == null)
+            {
+                return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Failed, null,
+                    "Failed to execute scheduled task run");
+            }
+
             logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ScheduleRun),
                 "Executing {0}: Docker run '{1}' queued.", nameof(ScheduleRun), runId);
 
@@ -402,7 +408,7 @@ internal sealed partial class ContainerRegistryControlPlane
         return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource);
     }
 
-    private AcrRunResource ExecuteScheduledTaskRun(SubscriptionIdentifier subscriptionIdentifier,
+    private AcrRunResource? ExecuteScheduledTaskRun(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string registryName,
         ScheduleTaskRunRequest request, string runId, CancellationToken cancellationToken)
     {
@@ -414,6 +420,10 @@ internal sealed partial class ContainerRegistryControlPlane
 
         _ = ExecuteRunAsync(subscriptionIdentifier, resourceGroupIdentifier, registryName, runId, request,
             cancellationToken);
+        
+        // Executing a run may affect the run status, so we need to refresh the resource to get the latest status.
+        resource = provider.GetSubresourceAs<AcrRunResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource);
 
         return resource;
     }
@@ -522,8 +532,7 @@ internal sealed partial class ContainerRegistryControlPlane
             resource.TransitionToRunning();
             provider.CreateOrUpdateSubresource(
                 subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
-
-
+            
             var success = await AcrDockerExecutor.ExecuteAsync(
                 contextPath, dockerFilePath, imageName, isPushEnabled, logPath, CancellationToken.None);
 

@@ -37,7 +37,7 @@ internal class AcrDockerExecutor : ExecutorBase
             {
                 tempDir = GenerateTempDir();
                 await AppendLogAsync(logPath, $"Cloning context from {contextPath}...");
-                var cloneOk = await RunProcessAsync("git", $"clone {contextPath} \"{tempDir}\"", logPath, cancellationToken);
+                var cloneOk = await RunProcessAsync("git", $"clone {contextPath} \"{tempDir}\"", logPath, null, cancellationToken);
                 if (!cloneOk) return false;
                 buildContext = tempDir;
             }
@@ -48,13 +48,13 @@ internal class AcrDockerExecutor : ExecutorBase
 
             var buildArgs = $"build -f \"{dockerFilePath}\" -t \"{imageName}\" \"{buildContext}\"";
             await AppendLogAsync(logPath, $"Running: docker {buildArgs}");
-            var buildOk = await RunProcessAsync("docker", buildArgs, logPath, cancellationToken);
+            var buildOk = await RunProcessAsync("docker", buildArgs, logPath, null, cancellationToken);
             if (!buildOk) return false;
 
             if (isPushEnabled)
             {
                 await AppendLogAsync(logPath, $"Running: docker push \"{imageName}\"");
-                var pushOk = await RunProcessAsync("docker", $"push \"{imageName}\"", logPath, cancellationToken);
+                var pushOk = await RunProcessAsync("docker", $"push \"{imageName}\"", logPath, null, cancellationToken);
                 if (!pushOk) return false;
             }
 
