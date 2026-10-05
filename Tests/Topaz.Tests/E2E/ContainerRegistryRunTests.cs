@@ -231,11 +231,11 @@ public class ContainerRegistryRunTests
         };
         var runLro = await registryLro.Value.ScheduleRunAsync(WaitUntil.Completed, buildContent);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(runLro.Value.Data.RunId, Is.Not.Null.And.Not.Empty);
             Assert.That(runLro.Value.Data.Status.ToString(), Is.EqualTo("Succeeded"));
-        });
+        }
     }
 
     [Test]
@@ -303,8 +303,12 @@ public class ContainerRegistryRunTests
         {
             SourceLocation = "https://github.com/Azure-Samples/acr-tasks.git"
         };
+        
         var runLro = await registryLro.Value.ScheduleRunAsync(WaitUntil.Completed, runContent);
-
+        var logResult = await runLro.Value.GetLogSasUrlAsync();
+        
+        await TestContext.Progress.WriteLineAsync(logResult.Value.LogLink);
+        
         using (Assert.EnterMultipleScope())
         {
             Assert.That(runLro.Value.Data.RunId, Is.Not.Null.And.Not.Empty);

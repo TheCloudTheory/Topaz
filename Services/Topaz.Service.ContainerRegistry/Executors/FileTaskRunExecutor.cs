@@ -103,7 +103,27 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
             return await BuildImage(step.Build, registryName, logPath, runId, workingDirectory, cancellationToken);
         }
         
+        if(step.Push != null && step.Push.All(p => !string.IsNullOrWhiteSpace(p)))
+        {
+            await AppendLogAsync(logPath, $"Pushing image: {string.Join(", ", step.Push)}");
+            return await PushImage(step.Push, registryName, logPath, runId, workingDirectory, cancellationToken);
+        }
+        
         return false;
+    }
+
+    private static async Task<bool> PushImage(List<string> stepPush, string registryName, string logPath, string runId, string workingDirectory, CancellationToken cancellationToken)
+    {
+        foreach (var compiledStep in stepPush.Select(step => CompileCommonPlaceholders(step, registryName, runId)))
+        {
+            var result = await RunProcessAsync("docker", "push " + compiledStep, logPath, workingDirectory, cancellationToken);
+            if (!result)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static async Task<bool> BuildImage(string stepBuild, string registryName, string logPath,
@@ -111,14 +131,20 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
         string workingDirectory,
         CancellationToken cancellationToken)
     {
-        // The build step definition may contain "$Registry" placeholder which
-        // needs to be replaced with the actual registry name.
-        var compiledBuild = stepBuild.Replace("$Registry", registryName);
+        var compiledStep = CompileCommonPlaceholders(stepBuild, registryName, runId);
+        var result = await RunProcessAsync("docker", "build " + compiledStep, logPath, workingDirectory, cancellationToken);
         
-        // We also need to replace "$RunId" placeholder with the actual run id.
-        compiledBuild = compiledBuild.Replace("$ID", runId);
-
-        var result = await RunProcessAsync("docker", "build " + compiledBuild, logPath, workingDirectory, cancellationToken);
         return result;
+    }
+
+    private static string CompileCommonPlaceholders(string stepBuild, string registryName, string runId)
+    {
+        // The step definition may contain "$Registry" placeholder which
+        // needs to be replaced with the actual registry name.
+        var compiledStep = stepBuild.Replace("$Registry", registryName);
+
+        // We also need to replace "$RunId" placeholder with the actual run id.
+        compiledStep = compiledStep.Replace("$ID", runId);
+        return compiledStep;
     }
 }
