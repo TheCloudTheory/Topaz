@@ -4,7 +4,8 @@ using System.Text.Json.Serialization;
 
 namespace Topaz.Shared;
 
-public static class GlobalSettings
+public static class 
+    GlobalSettings
 {
     /// <summary>
     /// A global configuration for JSON serialization and deserialization in the application.
@@ -187,6 +188,8 @@ public static class GlobalSettings
     /// infrastructure setup for the Container Registry.
     /// </remarks>
     public const ushort ContainerRegistryPort = 8892;
+
+    public static string GetContainerRegistryEndpoint(string registryName) => $"{registryName}.cr.{TopazHostname}:{ContainerRegistryPort}";
 
     /// <summary>
     /// Represents the default port number used for establishing AMQP 1.0 connections over TLS (Transport Layer Security).

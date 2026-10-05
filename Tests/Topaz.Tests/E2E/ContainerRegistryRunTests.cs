@@ -283,6 +283,16 @@ public class ContainerRegistryRunTests
             Assert.That(runId, Is.Not.Null.And.Not.Empty);
     }
     
+    /// <summary>
+    /// For this test to pass, the Container Registry must be accessible from the emulator. This works fine when the emulator is running on the same machine as the Docker Engine.
+    /// However, if the emulator runs on a non-Linux machine, Docker will most likely run inside a VM. This requires a couple of pre-requisites:
+    /// - bind Topaz to all host interfaces for the test run (0.0.0.0)
+    /// - add a host mapping inside Colima for this test’s registry name. Lima’s default network exposes the Mac to the VM as host.lima.internal (usually 192.168.5.2)
+    /// - echo '(returned-IP) topazacrrun01.cr.topaz.local.dev' | sudo tee -a /etc/hosts
+    /// - ensure that the certificate is copied to the VM
+    /// - colima ssh -- sudo mkdir -p \ '/etc/docker/certs.d/topazacrrun01.cr.topaz.local.dev:8892'
+    /// - cat (local Topaz path)/certificate/topaz.crt | colima ssh -- sudo tee \ '/etc/docker/certs.d/topazacrrun01.cr.topaz.local.dev:8892/ca.crt' >/dev/null
+    /// </summary>
     [Test]
     public async Task ContainerRegistry_FileTaskRun_MultiStepYaml_ShouldReturnQuickRun()
     {

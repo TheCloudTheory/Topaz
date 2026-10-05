@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Topaz.Service.ContainerRegistry.Models;
 using Topaz.Service.ContainerRegistry.Models.Requests;
 using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Executors;
 
@@ -141,7 +142,7 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
     {
         // The step definition may contain "$Registry" placeholder which
         // needs to be replaced with the actual registry name.
-        var compiledStep = stepBuild.Replace("$Registry", registryName);
+        var compiledStep = stepBuild.Replace("$Registry", GlobalSettings.GetContainerRegistryEndpoint(registryName));
 
         // We also need to replace "$RunId" placeholder with the actual run id.
         compiledStep = compiledStep.Replace("$ID", runId);
