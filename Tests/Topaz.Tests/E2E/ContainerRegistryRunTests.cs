@@ -294,7 +294,26 @@ public class ContainerRegistryRunTests
     /// - cat (local Topaz path)/certificate/topaz.crt | colima ssh -- sudo tee \ '/etc/docker/certs.d/topazacrrun01.cr.topaz.local.dev:8892/ca.crt' >/dev/null
     /// </summary>
     [Test]
-    public async Task ContainerRegistry_FileTaskRun_MultiStepYaml_ShouldReturnQuickRun()
+    [TestCase("bash-echo-3.yaml")]
+    [TestCase("bash-echo.yaml")]
+    [TestCase("build-hello-world.yaml")]
+    [TestCase("build-push-hello-world-multi.yaml")]
+    [TestCase("build-push-hello-world.yaml")]
+    [TestCase("build-run-hello-world.yaml")]
+    [TestCase("build-test-hello-world.yaml")]
+    [TestCase("files-working-directory.yaml")]
+    [TestCase("hello-world.yaml")]
+    [TestCase("managed-identities.yaml")]
+    [TestCase("mounts-multistep.yaml")]
+    [TestCase("mounts-secrets.yaml")]
+    [TestCase("multipleRegistries/testtask.yaml")]
+    [TestCase("network-curl.yaml")]
+    [TestCase("simpletask.yaml")]
+    [TestCase("when-parallel-dependent.yaml")]
+    [TestCase("when-parallel.yaml")]
+    [TestCase("when-sequential-default.yaml")]
+    [TestCase("when-sequential-id.yaml")]
+    public async Task ContainerRegistry_FileTaskRun_MultiStepYaml_ShouldReturnQuickRun(string yamlFile)
     {
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
@@ -308,7 +327,7 @@ public class ContainerRegistryRunTests
         var registryLro = await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
 
         var runContent = new ContainerRegistryFileTaskRunContent(
-            "build-push-hello-world-multi.yaml",
+            yamlFile,
             new ContainerRegistryPlatformProperties(ContainerRegistryOS.Linux))
         {
             SourceLocation = "https://github.com/Azure-Samples/acr-tasks.git"

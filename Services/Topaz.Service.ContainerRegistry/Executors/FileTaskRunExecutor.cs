@@ -109,8 +109,29 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
             await AppendLogAsync(logPath, $"Pushing image: {string.Join(", ", step.Push)}");
             return await PushImage(step.Push, registryName, logPath, runId, workingDirectory, cancellationToken);
         }
+
+        if (!string.IsNullOrEmpty(step.Cmd))
+        {
+            await AppendLogAsync(logPath, $"Running command: {step.Cmd}");
+            return await RunCommand(step.Cmd, registryName, logPath, runId, workingDirectory, cancellationToken);
+        }
         
         return false;
+    }
+
+    private static async Task<bool> RunCommand(string stepCmd, string registryName, string logPath, string runId, string workingDirectory, CancellationToken cancellationToken)
+    {
+        var compiledStep = CompileCommonPlaceholders(stepCmd, registryName, runId);
+        var commandSegments = compiledStep.Split(' ');
+        var image = commandSegments[0];
+
+        // If CMD is `docker`, assume it's a Docker command and run it directly
+        if (image == "docker")
+        {
+            return await RunProcessAsync("docker", string.Join(" ", commandSegments.Skip(1)), logPath, workingDirectory, cancellationToken);
+        }
+        
+        return await RunProcessAsync("docker", $"run --rm {image} {string.Join(" ", commandSegments.Skip(1))}", logPath, workingDirectory, cancellationToken);
     }
 
     private static async Task<bool> PushImage(List<string> stepPush, string registryName, string logPath, string runId, string workingDirectory, CancellationToken cancellationToken)
@@ -146,6 +167,8 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
 
         // We also need to replace "$RunId" placeholder with the actual run id.
         compiledStep = compiledStep.Replace("$ID", runId);
+        
+        compiledStep = compiledStep.Replace("$Date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"));
         return compiledStep;
     }
 }
