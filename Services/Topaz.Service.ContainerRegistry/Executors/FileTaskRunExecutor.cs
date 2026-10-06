@@ -28,7 +28,7 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
                 await AppendLogAsync(logPath, $"Cloning context from {fileTaskStep.SourceLocation}...");
              
                 tempDir = GenerateTempDir();
-                var cloneOk = await RunProcessAsync("git", $"clone {fileTaskStep.SourceLocation} \"{tempDir}\"", logPath, tempDir, cancellationToken);
+                var cloneOk = await RunProcessAsync("git", $"clone {fileTaskStep.SourceLocation} {tempDir}", logPath, tempDir, cancellationToken);
                 if (!cloneOk)
                 {
                     await AppendLogAsync(logPath, $"Error cloning context from {fileTaskStep.SourceLocation}");

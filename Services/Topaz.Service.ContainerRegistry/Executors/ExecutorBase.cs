@@ -11,7 +11,18 @@ internal abstract class ExecutorBase
         string? workingDirectory = null,
         CancellationToken cancellationToken = default)
     {
-        var psi = new ProcessStartInfo(fileName, arguments)
+        var argumentsCollection = arguments.Split(' ');
+        var quotedArguments = arguments.Split('\'');
+
+        if (quotedArguments.Length > 1)
+        {
+            // If there are any quoted arguments, the split above will give us an array
+            // of two elements. We need to keep the first half as a collection and
+            // append the rest as a single string.
+            argumentsCollection = [.. quotedArguments[0].Split(' '), string.Join(" ", quotedArguments[1..])];
+        }
+        
+        var psi = new ProcessStartInfo(fileName, argumentsCollection)
         {
             UseShellExecute = false,
             RedirectStandardOutput = true,
