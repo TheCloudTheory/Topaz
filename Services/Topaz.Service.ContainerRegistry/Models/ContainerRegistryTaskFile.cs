@@ -43,10 +43,14 @@ internal sealed class ContainerRegistryTaskStep
 	public string? WorkingDirectory { get; init; }
 }
 
+internal class CustomAlias
+{
+}
+
 internal sealed class ContainerRegistryTaskSecret
 {
 	public string? Id { get; init; }
-	public string? KeyVault { get; init; }
+	public string? Keyvault { get; init; }
 	public string? ClientID { get; init; }
 }
 

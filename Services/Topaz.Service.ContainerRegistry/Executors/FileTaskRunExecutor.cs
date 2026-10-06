@@ -73,6 +73,13 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
             return false;
         }
 
+        var aliases = new Dictionary<string, string>();
+        if (task.Alias != null)
+        {
+            await AppendLogAsync(logPath, $"Resolving aliases.");
+            aliases = ResolveAliases(task.Alias);
+        }
+
         foreach (var step in task.Steps)
         {
             if(cancellationToken.IsCancellationRequested)
@@ -81,7 +88,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
                 return false;
             }
 
-            var result = await ParseAndExecuteStep(step, logPath, registryName, runId, workingDirectory, cancellationToken);
+            var result = await ParseAndExecuteStep(step, logPath, registryName, runId, workingDirectory, aliases, cancellationToken);
             if (!result)
             {
                 return false;
@@ -91,36 +98,52 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
         return true;
     }
 
+    private static Dictionary<string, string> ResolveAliases(ContainerRegistryTaskAliases aliases)
+    {
+        var aliasesResolved = new Dictionary<string, string>();
+        if (aliases.Values != null)
+        {
+            foreach (var value in aliases.Values)
+            {
+                aliasesResolved.Add(value.Key, value.Value);
+            }
+        }
+        
+        return aliasesResolved;
+    }
+
     private static async Task<bool> ParseAndExecuteStep(ContainerRegistryTaskStep step, string logPath,
         string registryName,
         string runId,
         string workingDirectory,
+        Dictionary<string, string> aliases,
         CancellationToken cancellationToken)
     {
         if (!string.IsNullOrWhiteSpace(step.Build))
         {
             await AppendLogAsync(logPath, $"Building image: {step.Build}");
-            return await BuildImage(step.Build, registryName, logPath, runId, workingDirectory, cancellationToken);
+            return await BuildImage(step.Build, registryName, logPath, runId, workingDirectory, aliases, cancellationToken);
         }
         
         if(step.Push != null && step.Push.All(p => !string.IsNullOrWhiteSpace(p)))
         {
             await AppendLogAsync(logPath, $"Pushing image: {string.Join(", ", step.Push)}");
-            return await PushImage(step.Push, registryName, logPath, runId, workingDirectory, cancellationToken);
+            return await PushImage(step.Push, registryName, logPath, runId, workingDirectory, aliases, cancellationToken);
         }
 
         if (!string.IsNullOrEmpty(step.Cmd))
         {
             await AppendLogAsync(logPath, $"Running command: {step.Cmd}");
-            return await RunCommand(step.Cmd, registryName, logPath, runId, workingDirectory, cancellationToken);
+            return await RunCommand(step.Cmd, registryName, logPath, runId, workingDirectory, aliases, cancellationToken);
         }
         
         return false;
     }
 
-    private static async Task<bool> RunCommand(string stepCmd, string registryName, string logPath, string runId, string workingDirectory, CancellationToken cancellationToken)
+    private static async Task<bool> RunCommand(string stepCmd, string registryName, string logPath, string runId,
+        string workingDirectory, Dictionary<string, string> aliases, CancellationToken cancellationToken)
     {
-        var compiledStep = CompileCommonPlaceholders(stepCmd, registryName, runId);
+        var compiledStep = CompileCommonPlaceholders(stepCmd, registryName, runId, aliases);
         var commandSegments = compiledStep.Split(' ');
         var image = commandSegments[0];
 
@@ -129,13 +152,20 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
         {
             return await RunProcessAsync("docker", string.Join(" ", commandSegments.Skip(1)), logPath, workingDirectory, cancellationToken);
         }
+
+        // It's possible that the command is `az`, assume it's an Azure CLI command and run it directly
+        if (image == "az")
+        {
+            return await RunProcessAsync("az", string.Join(" ", commandSegments.Skip(1)), logPath, workingDirectory, cancellationToken);
+        }
         
         return await RunProcessAsync("docker", $"run --rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}", logPath, workingDirectory, cancellationToken);
     }
 
-    private static async Task<bool> PushImage(List<string> stepPush, string registryName, string logPath, string runId, string workingDirectory, CancellationToken cancellationToken)
+    private static async Task<bool> PushImage(List<string> stepPush, string registryName, string logPath, string runId,
+        string workingDirectory, Dictionary<string, string> aliases, CancellationToken cancellationToken)
     {
-        foreach (var compiledStep in stepPush.Select(step => CompileCommonPlaceholders(step, registryName, runId)))
+        foreach (var compiledStep in stepPush.Select(step => CompileCommonPlaceholders(step, registryName, runId, aliases)))
         {
             var result = await RunProcessAsync("docker", "push " + compiledStep, logPath, workingDirectory, cancellationToken);
             if (!result)
@@ -150,15 +180,17 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
     private static async Task<bool> BuildImage(string stepBuild, string registryName, string logPath,
         string runId,
         string workingDirectory,
+        Dictionary<string, string> aliases,
         CancellationToken cancellationToken)
     {
-        var compiledStep = CompileCommonPlaceholders(stepBuild, registryName, runId);
+        var compiledStep = CompileCommonPlaceholders(stepBuild, registryName, runId, aliases);
         var result = await RunProcessAsync("docker", "build " + compiledStep, logPath, workingDirectory, cancellationToken);
         
         return result;
     }
 
-    private static string CompileCommonPlaceholders(string stepBuild, string registryName, string runId)
+    private static string CompileCommonPlaceholders(string stepBuild, string registryName, string runId,
+        Dictionary<string, string> aliases)
     {
         // The step definition may contain "$Registry" placeholder which
         // needs to be replaced with the actual registry name.
@@ -168,6 +200,8 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
         compiledStep = compiledStep.Replace("$ID", runId);
         
         compiledStep = compiledStep.Replace("$Date", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"));
-        return compiledStep;
+
+        // Also replace aliases if any is provided
+        return aliases.Aggregate(compiledStep, (current, alias) => current.Replace("$" + alias.Key, alias.Value));
     }
 }
