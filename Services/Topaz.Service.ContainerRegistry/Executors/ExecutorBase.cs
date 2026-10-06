@@ -11,6 +11,10 @@ internal abstract class ExecutorBase
         string? workingDirectory = null,
         CancellationToken cancellationToken = default)
     {
+        // We need to transform the arguments into a collection of strings that can be passed to ProcessStartInfo.
+        // The reason for this is that some arguments may contain quoted strings. Those are treated as
+        // separate arguments, e.g., bash -c 'echo $(date) >> hello.txt' would be handled as bash, -c, 'echo, $(date),
+        // etc. eventually breaking the whole command.
         var argumentsCollection = arguments.Split(' ');
         var quotedArguments = arguments.Split('\'');
 
@@ -19,7 +23,7 @@ internal abstract class ExecutorBase
             // If there are any quoted arguments, the split above will give us an array
             // of two elements. We need to keep the first half as a collection and
             // append the rest as a single string.
-            argumentsCollection = [.. quotedArguments[0].Split(' '), string.Join(" ", quotedArguments[1..])];
+            argumentsCollection = [.. quotedArguments[0].Split(' ', StringSplitOptions.RemoveEmptyEntries), string.Join(" ", quotedArguments[1..])];
         }
         
         var psi = new ProcessStartInfo(fileName, argumentsCollection)
@@ -57,9 +61,11 @@ internal abstract class ExecutorBase
         return Task.CompletedTask;
     }
 
-    protected static string GenerateTempDir()
+    protected static string GenerateTempDir(string? runId = null)
     {
-        var tempPath = Path.Combine(Path.GetTempPath(), "topaz-acr-" + Guid.NewGuid().ToString("N")[..8]);
+        var uuid = string.IsNullOrWhiteSpace(runId) ? Guid.NewGuid().ToString("N")[..8] : runId;
+        var tempPath = Path.Combine(Path.GetTempPath(), "topaz-acr-" + uuid);
+        
         if(!Directory.Exists(tempPath))
         {
             Directory.CreateDirectory(tempPath);

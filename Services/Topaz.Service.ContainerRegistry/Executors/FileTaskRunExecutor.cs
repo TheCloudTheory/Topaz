@@ -19,15 +19,13 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
             return false;
         }
 
-        string? tempDir = null;
-        
         try
         {
             if (!string.IsNullOrWhiteSpace(fileTaskStep.SourceLocation) && fileTaskStep.SourceLocation.EndsWith(".git") && !string.IsNullOrWhiteSpace(fileTaskStep.TaskFilePath))
             {
                 await AppendLogAsync(logPath, $"Cloning context from {fileTaskStep.SourceLocation}...");
              
-                tempDir = GenerateTempDir();
+                var tempDir = GenerateTempDir(runId);
                 var cloneOk = await RunProcessAsync("git", $"clone {fileTaskStep.SourceLocation} {tempDir}", logPath, tempDir, cancellationToken);
                 if (!cloneOk)
                 {
@@ -132,7 +130,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
             return await RunProcessAsync("docker", string.Join(" ", commandSegments.Skip(1)), logPath, workingDirectory, cancellationToken);
         }
         
-        return await RunProcessAsync("docker", $"run --rm {image} {string.Join(" ", commandSegments.Skip(1))}", logPath, workingDirectory, cancellationToken);
+        return await RunProcessAsync("docker", $"run --rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}", logPath, workingDirectory, cancellationToken);
     }
 
     private static async Task<bool> PushImage(List<string> stepPush, string registryName, string logPath, string runId, string workingDirectory, CancellationToken cancellationToken)
