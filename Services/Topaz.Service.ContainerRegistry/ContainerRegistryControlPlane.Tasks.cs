@@ -4,6 +4,7 @@ using Topaz.Service.ContainerRegistry.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Shared.Models;
+using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry;
 
@@ -17,6 +18,8 @@ internal sealed partial class ContainerRegistryControlPlane
 
     private const string RunNotFoundCode = "RunNotFound";
     private const string RunNotFoundMessageTemplate = "ACR run '{0}' could not be found in registry '{1}'";
+    
+    private readonly FileTaskRunExecutor fileTaskRunExecutor = new(logger);
 
     public ControlPlaneOperationResult<AcrTaskResource> CreateOrUpdateTask(
         SubscriptionIdentifier subscriptionIdentifier,
@@ -446,7 +449,7 @@ internal sealed partial class ContainerRegistryControlPlane
                 subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
 
             var success =
-                await FileTaskRunExecutor.ExecuteAsync(fileTaskStep, logPath, registryName, runId,
+                await fileTaskRunExecutor.ExecuteAsync(fileTaskStep, logPath, registryName, runId,
                     cancellationToken);
 
             // Transition to Succeeded or Failed

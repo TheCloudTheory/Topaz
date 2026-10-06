@@ -7,9 +7,9 @@ using Topaz.Shared;
 namespace Topaz.Service.ContainerRegistry.Executors;
 
 [UsedImplicitly]
-internal sealed class FileTaskRunExecutor : ExecutorBase
+internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
 {
-    public static async Task<bool> ExecuteAsync(ScheduleTaskRunRequest fileTaskStep, string logPath,
+    public async Task<bool> ExecuteAsync(ScheduleTaskRunRequest fileTaskStep, string logPath,
         string registryName,
         string runId,
         CancellationToken cancellationToken)
@@ -58,6 +58,7 @@ internal sealed class FileTaskRunExecutor : ExecutorBase
         catch (Exception ex)
         {
             await AppendLogAsync(logPath, $"Error: {ex.Message}");
+            logger.LogError(nameof(FileTaskRunExecutor), nameof(ExecuteAsync), $"Error parsing and running file task: {ex.Message}");
             return false;
         }
     }
