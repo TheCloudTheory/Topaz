@@ -7,8 +7,10 @@ using Topaz.Shared;
 namespace Topaz.Service.ContainerRegistry.Executors;
 
 [UsedImplicitly]
-internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
+internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(logger)
 {
+    private readonly ITopazLogger _logger = logger;
+
     public async Task<bool> ExecuteAsync(ScheduleTaskRunRequest fileTaskStep, string logPath,
         string registryName,
         string runId,
@@ -56,12 +58,12 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
         catch (Exception ex)
         {
             await AppendLogAsync(logPath, $"Error: {ex.Message}");
-            logger.LogError(nameof(FileTaskRunExecutor), nameof(ExecuteAsync), $"Error parsing and running file task: {ex.Message}");
+            _logger.LogError(nameof(FileTaskRunExecutor), nameof(ExecuteAsync), $"Error parsing and running file task: {ex.Message}");
             return false;
         }
     }
 
-    private static async Task<bool> ParseAndRunFileTask(string content, string logPath, string registryName,
+    private async Task<bool> ParseAndRunFileTask(string content, string logPath, string registryName,
         string runId,
         string workingDirectory,
         CancellationToken cancellationToken)
@@ -112,7 +114,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
         return aliasesResolved;
     }
 
-    private static async Task<bool> ParseAndExecuteStep(ContainerRegistryTaskStep step, string logPath,
+    private async Task<bool> ParseAndExecuteStep(ContainerRegistryTaskStep step, string logPath,
         string registryName,
         string runId,
         string workingDirectory,

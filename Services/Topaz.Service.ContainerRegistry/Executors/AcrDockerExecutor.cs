@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using JetBrains.Annotations;
+using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Executors;
 
@@ -8,7 +9,7 @@ namespace Topaz.Service.ContainerRegistry.Executors;
 /// All other step types are handled by the existing immediate-Succeeded path.
 /// </summary>
 [UsedImplicitly]
-internal class AcrDockerExecutor : ExecutorBase
+internal class AcrDockerExecutor(ITopazLogger logger) : ExecutorBase(logger)
 {
     private static readonly Lazy<bool> Available = new(CheckAvailability);
 
@@ -19,7 +20,7 @@ internal class AcrDockerExecutor : ExecutorBase
     /// Appends stdout/stderr to <paramref name="logPath"/> line-by-line.
     /// Returns <c>true</c> on success, <c>false</c> on non-zero exit or exception.
     /// </summary>
-    public static async Task<bool> ExecuteAsync(
+    public async Task<bool> ExecuteAsync(
         string contextPath,
         string dockerFilePath,
         string imageName,

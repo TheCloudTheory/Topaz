@@ -1,8 +1,9 @@
 using System.Diagnostics;
+using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Executors;
 
-internal abstract class ExecutorBase
+internal abstract class ExecutorBase(ITopazLogger logger)
 {
     protected static async Task<bool> RunProcessAsync(
         string fileName,
@@ -54,9 +55,11 @@ internal abstract class ExecutorBase
         await process.WaitForExitAsync(cancellationToken);
         return process.ExitCode == 0;
     }
-
-    protected static Task AppendLogAsync(string logPath, string line)
+    
+    protected Task AppendLogAsync(string logPath, string line)
     {
+        logger.LogDebug(nameof(ExecutorBase), nameof(AppendLogAsync), line);
+        
         File.AppendAllText(logPath, line + Environment.NewLine);
         return Task.CompletedTask;
     }
