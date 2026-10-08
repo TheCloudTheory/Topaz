@@ -144,7 +144,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
         string workingDirectory, Dictionary<string, string> aliases, CancellationToken cancellationToken)
     {
         var compiledStep = CompileCommonPlaceholders(stepCmd, registryName, runId, aliases);
-        var commandSegments = compiledStep.Split(' ');
+        var commandSegments = compiledStep.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var image = commandSegments[0];
 
         // If CMD is `docker`, assume it's a Docker command and run it directly
@@ -157,6 +157,12 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase
         if (image == "az")
         {
             return await RunProcessAsync("az", string.Join(" ", commandSegments.Skip(1)), logPath, workingDirectory, cancellationToken);
+        }
+        
+        // If no additional arguments of a command are provided, do not attempt to pass them
+        if (commandSegments.Length <= 1)
+        {
+            return await RunProcessAsync("docker", $"run --rm --volume {workingDirectory}:/workspace --workdir /workspace {image}", logPath, workingDirectory, cancellationToken);
         }
         
         return await RunProcessAsync("docker", $"run --rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}", logPath, workingDirectory, cancellationToken);
