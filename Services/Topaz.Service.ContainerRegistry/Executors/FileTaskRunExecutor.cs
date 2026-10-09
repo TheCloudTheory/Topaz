@@ -25,20 +25,20 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         {
             if (!string.IsNullOrWhiteSpace(fileTaskStep.SourceLocation) && fileTaskStep.SourceLocation.EndsWith(".git") && !string.IsNullOrWhiteSpace(fileTaskStep.TaskFilePath))
             {
-                await AppendLogAsync(logPath, $"Cloning context from {fileTaskStep.SourceLocation}...");
+                AppendLogAsync(logPath, $"Cloning context from {fileTaskStep.SourceLocation}...");
              
                 var tempDir = GenerateTempDir(runId);
                 var cloneOk = await RunProcessAsync("git", $"clone {fileTaskStep.SourceLocation} {tempDir}", logPath, tempDir, cancellationToken);
                 if (!cloneOk)
                 {
-                    await AppendLogAsync(logPath, $"Error cloning context from {fileTaskStep.SourceLocation}");
+                    AppendLogAsync(logPath, $"Error cloning context from {fileTaskStep.SourceLocation}");
                     return false;
                 }
                 
                 var taskFilePath = Path.Combine(tempDir, fileTaskStep.TaskFilePath);
                 if (!File.Exists(taskFilePath))
                 {
-                    await AppendLogAsync(logPath, $"Task file {taskFilePath} does not exist");
+                    AppendLogAsync(logPath, $"Task file {taskFilePath} does not exist");
                     return false;
                 }
                 
@@ -46,18 +46,18 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
                 var result = await ParseAndRunFileTask(content, logPath, registryName, runId, tempDir, cancellationToken);
                 if (!result)
                 {
-                    await AppendLogAsync(logPath, $"Error parsing and running file task.");
+                    AppendLogAsync(logPath, $"Error parsing and running file task.");
                     return false;
                 }
                 
-                await AppendLogAsync(logPath, "Run completed successfully.");
+                AppendLogAsync(logPath, "Run completed successfully.");
             }
 
             return true;
         }
         catch (Exception ex)
         {
-            await AppendLogAsync(logPath, $"Error: {ex.Message}");
+            AppendLogAsync(logPath, $"Error: {ex.Message}");
             _logger.LogError(nameof(FileTaskRunExecutor), nameof(ExecuteAsync), $"Error parsing and running file task: {ex.Message}");
             return false;
         }
@@ -71,14 +71,14 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         var task = YamlSerializerFacade.Deserialize<ContainerRegistryTaskFile>(content);
         if (task.Steps == null)
         {
-            await AppendLogAsync(logPath, "No steps defined.");
+            AppendLogAsync(logPath, "No steps defined.");
             return false;
         }
 
         var aliases = new Dictionary<string, string>();
         if (task.Alias != null)
         {
-            await AppendLogAsync(logPath, $"Resolving aliases.");
+            AppendLogAsync(logPath, $"Resolving aliases.");
             aliases = ResolveAliases(task.Alias);
         }
 
@@ -86,7 +86,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         {
             if(cancellationToken.IsCancellationRequested)
             {
-                await AppendLogAsync(logPath, "Run cancelled.");
+                AppendLogAsync(logPath, "Run cancelled.");
                 return false;
             }
 
@@ -123,26 +123,26 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
     {
         if (!string.IsNullOrWhiteSpace(step.Build))
         {
-            await AppendLogAsync(logPath, $"Building image: {step.Build}");
+            AppendLogAsync(logPath, $"Building image: {step.Build}");
             return await BuildImage(step.Build, registryName, logPath, runId, workingDirectory, aliases, cancellationToken);
         }
         
         if(step.Push != null && step.Push.All(p => !string.IsNullOrWhiteSpace(p)))
         {
-            await AppendLogAsync(logPath, $"Pushing image: {string.Join(", ", step.Push)}");
+            AppendLogAsync(logPath, $"Pushing image: {string.Join(", ", step.Push)}");
             return await PushImage(step.Push, registryName, logPath, runId, workingDirectory, aliases, cancellationToken);
         }
 
         if (!string.IsNullOrEmpty(step.Cmd))
         {
-            await AppendLogAsync(logPath, $"Running command: {step.Cmd}");
+            AppendLogAsync(logPath, $"Running command: {step.Cmd}");
             return await RunCommand(step.Cmd, registryName, logPath, runId, workingDirectory, aliases, cancellationToken);
         }
         
         return false;
     }
 
-    private static async Task<bool> RunCommand(string stepCmd, string registryName, string logPath, string runId,
+    private async Task<bool> RunCommand(string stepCmd, string registryName, string logPath, string runId,
         string workingDirectory, Dictionary<string, string> aliases, CancellationToken cancellationToken)
     {
         var compiledStep = CompileCommonPlaceholders(stepCmd, registryName, runId, aliases);
@@ -170,7 +170,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         return await RunProcessAsync("docker", $"run --rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}", logPath, workingDirectory, cancellationToken);
     }
 
-    private static async Task<bool> PushImage(List<string> stepPush, string registryName, string logPath, string runId,
+    private async Task<bool> PushImage(List<string> stepPush, string registryName, string logPath, string runId,
         string workingDirectory, Dictionary<string, string> aliases, CancellationToken cancellationToken)
     {
         foreach (var compiledStep in stepPush.Select(step => CompileCommonPlaceholders(step, registryName, runId, aliases)))
@@ -185,7 +185,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         return true;
     }
 
-    private static async Task<bool> BuildImage(string stepBuild, string registryName, string logPath,
+    private async Task<bool> BuildImage(string stepBuild, string registryName, string logPath,
         string runId,
         string workingDirectory,
         Dictionary<string, string> aliases,

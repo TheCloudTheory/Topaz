@@ -5,7 +5,7 @@ namespace Topaz.Service.ContainerRegistry.Executors;
 
 internal abstract class ExecutorBase(ITopazLogger logger)
 {
-    protected static async Task<bool> RunProcessAsync(
+    protected async Task<bool> RunProcessAsync(
         string fileName,
         string arguments,
         string logPath,
@@ -41,11 +41,17 @@ internal abstract class ExecutorBase(ITopazLogger logger)
         process.EnableRaisingEvents = true;
         process.OutputDataReceived += (_, e) =>
         {
-            if (e.Data != null) File.AppendAllText(logPath, e.Data + Environment.NewLine);
+            if (e.Data != null)
+            {
+                AppendLogAsync(logPath, e.Data);
+            }
         };
         process.ErrorDataReceived += (_, e) =>
         {
-            if (e.Data != null) File.AppendAllText(logPath, e.Data + Environment.NewLine);
+            if (e.Data != null)
+            {
+                AppendLogAsync(logPath, e.Data);
+            }
         };
 
         process.Start();
@@ -56,12 +62,11 @@ internal abstract class ExecutorBase(ITopazLogger logger)
         return process.ExitCode == 0;
     }
     
-    protected Task AppendLogAsync(string logPath, string line)
+    protected void AppendLogAsync(string logPath, string line)
     {
         logger.LogDebug(nameof(ExecutorBase), nameof(AppendLogAsync), line);
         
         File.AppendAllText(logPath, line + Environment.NewLine);
-        return Task.CompletedTask;
     }
 
     protected static string GenerateTempDir(string? runId = null)
