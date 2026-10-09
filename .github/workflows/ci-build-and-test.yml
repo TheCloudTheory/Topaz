@@ -389,6 +389,7 @@ jobs:
           echo "nodejs_filter=$NODEJS_JOINED" >> "$GITHUB_OUTPUT"
         fi
     - name: Test
+      id: test
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true'
       run: |
         FILTER="${{ steps.test_filter.outputs.filter }}"
@@ -409,6 +410,13 @@ jobs:
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
+    - name: Publish Topaz test log
+      if: failure() && steps.test.outcome == 'failure'
+      uses: actions/upload-artifact@v4
+      with:
+        name: topaz-test-log
+        path: Topaz.Tests/bin/Debug/topaz.log
+        if-no-files-found: ignore
     - name: Publish Topaz container logs
       if: always()
       uses: actions/upload-artifact@v4
