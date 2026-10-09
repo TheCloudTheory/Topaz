@@ -50,7 +50,7 @@ internal sealed class ListNetworkInterfacesByResourceGroupEndpoint(Pipeline even
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListNetworkInterfacesByResourceGroupEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

@@ -104,7 +104,7 @@ internal sealed class AppServicePlanControlPlane(
         var plan = resource.As<AppServicePlanResource, AppServicePlanResourceProperties>();
         if (plan == null)
         {
-            logger.LogError($"Could not parse generic resource '{resource.Id}' as an App Service Plan.");
+            logger.LogError(nameof(AppServicePlanControlPlane), nameof(Deploy), "{0}", $"Could not parse generic resource '{resource.Id}' as an App Service Plan.");
             return OperationResult.Failed;
         }
 
@@ -143,7 +143,7 @@ internal sealed class AppServicePlanControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(AppServicePlanControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

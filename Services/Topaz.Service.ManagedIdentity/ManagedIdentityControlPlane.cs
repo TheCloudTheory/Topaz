@@ -93,7 +93,7 @@ internal sealed class ManagedIdentityControlPlane(
         var identity = resource.As<ManagedIdentityResource, ManagedIdentityResourceProperties>();
         if (identity == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Managed Identity instance.");
+            logger.LogError(nameof(ManagedIdentityControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Managed Identity instance.");
             return OperationResult.Failed;
         }
 

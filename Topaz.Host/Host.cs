@@ -390,7 +390,7 @@ public class Host
             }
             catch (Exception ex)
             {
-                _logger.LogError(
+                _logger.LogError(nameof(Host), nameof(CreateAmqpListener),
                     $"Failed to open Topaz host listener for AMQP ({listenerAddress}). Error: {ex.Message}.");
             }
         }));
@@ -599,7 +599,7 @@ public class Host
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-                        _logger.LogError(ex);
+                        _logger.LogError(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),ex.Message);
 
                         await context.Response.WriteAsync(ex.Message, cancellationToken: cancellationToken);
                     }

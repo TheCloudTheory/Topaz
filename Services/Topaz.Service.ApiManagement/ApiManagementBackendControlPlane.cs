@@ -27,7 +27,7 @@ internal sealed class ApiManagementBackendControlPlane(
         var backend = resource.AsSubresource<BackendContractResource, BackendContractResourceProperties>();
         if (backend == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a ApiManagement backend instance.");
+            logger.LogError(nameof(ApiManagementBackendControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a ApiManagement backend instance.");
             return OperationResult.Failed;
         }
 
@@ -45,7 +45,7 @@ internal sealed class ApiManagementBackendControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ApiManagementBackendControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

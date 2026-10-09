@@ -56,7 +56,7 @@ internal sealed class DeleteKeyEndpoint(Pipeline eventPipeline, ITopazLogger log
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(DeleteKeyEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

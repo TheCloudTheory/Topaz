@@ -63,7 +63,7 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
 
         if (!headers.TryGetValue("Host", out var host))
         {
-            Logger.LogError("`Host` header not found - it's required for storage account creation.");
+            Logger.LogError(nameof(TableDataPlaneEndpointBase), nameof(TryGetStorageAccount), "{0}", "`Host` header not found - it's required for storage account creation.");
 
             storageAccount = null;
             originalStorageAccountName = null;

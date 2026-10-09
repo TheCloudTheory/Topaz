@@ -49,7 +49,7 @@ internal sealed class GetCertificateOperationEndpoint(Pipeline eventPipeline, IT
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(GetCertificateOperationEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

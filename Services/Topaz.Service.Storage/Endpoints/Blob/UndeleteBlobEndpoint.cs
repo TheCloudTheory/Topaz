@@ -58,7 +58,7 @@ internal sealed class UndeleteBlobEndpoint(Pipeline eventPipeline, ITopazLogger 
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(UndeleteBlobEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

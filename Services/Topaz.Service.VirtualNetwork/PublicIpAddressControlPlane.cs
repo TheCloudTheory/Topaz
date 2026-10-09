@@ -32,7 +32,7 @@ internal sealed class PublicIpAddressControlPlane(
         var pip = resource.As<PublicIpAddressResource, PublicIpAddressResourceProperties>();
         if (pip == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Public IP Address instance.");
+            logger.LogError(nameof(PublicIpAddressControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Public IP Address instance.");
             return OperationResult.Failed;
         }
 
@@ -55,7 +55,7 @@ internal sealed class PublicIpAddressControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(PublicIpAddressControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

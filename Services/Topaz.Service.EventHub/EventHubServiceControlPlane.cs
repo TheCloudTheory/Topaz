@@ -255,7 +255,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         var hub = resource.AsSubresource<EventHubResource, EventHubResourceProperties>();
         if (hub == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Event Hub instance.");
+            logger.LogError(nameof(EventHubServiceControlPlane), nameof(DeployEventHub), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Event Hub instance.");
             return OperationResult.Failed;
         }
 
@@ -272,7 +272,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         var @namespace = resource.As<EventHubNamespaceResource, EventHubNamespaceResourceProperties>();
         if (@namespace == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Event Hub namespace instance.");
+            logger.LogError(nameof(EventHubServiceControlPlane), nameof(DeployEventHubNamespace), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Event Hub namespace instance.");
             return OperationResult.Failed;
         }
 
@@ -305,7 +305,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             resource.AsSubresource<EventHubNetworkRuleSetSubresource, EventHubNetworkRuleSetSubresourceProperties>();
         if (networkRuleSet == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as an Event Hub network ruleset.");
+            logger.LogError(nameof(EventHubServiceControlPlane), nameof(DeployEventHubNetworkRuleSet), "{0}", $"Couldn't parse generic resource `{resource.Id}` as an Event Hub network ruleset.");
             return OperationResult.Failed;
         }
 

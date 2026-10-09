@@ -82,7 +82,7 @@ internal sealed class EncryptKeyEndpoint(Pipeline eventPipeline, ITopazLogger lo
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(EncryptKeyEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

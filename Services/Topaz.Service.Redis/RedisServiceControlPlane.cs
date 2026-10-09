@@ -36,13 +36,13 @@ internal sealed class RedisServiceControlPlane(
         var store = resource.As<RedisResource, RedisResourceProperties>();
         if (store == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Redis instance.");
+            logger.LogError(nameof(RedisServiceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Redis instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(store.Location))
         {
-            logger.LogError($"Redis resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(RedisServiceControlPlane), nameof(Deploy), "{0}", $"Redis resource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -55,7 +55,7 @@ internal sealed class RedisServiceControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(RedisServiceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

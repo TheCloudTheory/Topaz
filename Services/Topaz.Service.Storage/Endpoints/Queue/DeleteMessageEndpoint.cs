@@ -111,7 +111,7 @@ internal sealed class DeleteMessageEndpoint(Pipeline eventPipeline, ITopazLogger
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(DeleteMessageEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new ByteArrayContent([]);
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");

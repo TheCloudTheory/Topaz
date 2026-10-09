@@ -120,7 +120,7 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(KeyVaultCertificatesDataPlane), nameof(ImportCertificate), "{0}", ex);
             return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Failed, null, "Failed to parse certificate.", "BadParameter");
         }
 
@@ -459,7 +459,7 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(KeyVaultCertificatesDataPlane), nameof(MergeCertificate), "{0}", ex);
             return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Failed, null,
                 "Failed to parse certificate from x5c[0].", "BadParameter");
         }

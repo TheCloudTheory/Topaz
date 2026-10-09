@@ -37,7 +37,7 @@ internal sealed class GetDeploymentsEndpoint(ITopazLogger logger)
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex);
+            _logger.LogError(nameof(GetDeploymentsEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

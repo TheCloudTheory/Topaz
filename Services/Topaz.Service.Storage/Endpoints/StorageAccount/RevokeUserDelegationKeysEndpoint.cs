@@ -50,7 +50,7 @@ internal sealed class RevokeUserDelegationKeysEndpoint(ITopazLogger logger) : IE
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(RevokeUserDelegationKeysEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

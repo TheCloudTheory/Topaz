@@ -56,7 +56,7 @@ internal sealed class PurgeDeletedKeyEndpoint(Pipeline eventPipeline, ITopazLogg
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(PurgeDeletedKeyEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

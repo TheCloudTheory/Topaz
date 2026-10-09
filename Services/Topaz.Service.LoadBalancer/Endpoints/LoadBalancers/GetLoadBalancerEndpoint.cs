@@ -48,7 +48,7 @@ internal sealed class GetLoadBalancerEndpoint(Pipeline eventPipeline, ITopazLogg
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(GetLoadBalancerEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

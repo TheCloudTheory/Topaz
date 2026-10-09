@@ -50,7 +50,7 @@ internal sealed class RecoverDeletedVaultEndpoint(Pipeline eventPipeline, ITopaz
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(RecoverDeletedVaultEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

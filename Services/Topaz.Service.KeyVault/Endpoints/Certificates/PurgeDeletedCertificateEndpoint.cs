@@ -48,7 +48,7 @@ internal sealed class PurgeDeletedCertificateEndpoint(Pipeline eventPipeline, IT
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(PurgeDeletedCertificateEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

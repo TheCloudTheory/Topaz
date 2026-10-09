@@ -47,12 +47,12 @@ internal sealed class CheckStorageAccountNameAvailabilityEndpoint(ITopazLogger l
         }
         catch (JsonException ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(CheckStorageAccountNameAvailabilityEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.BadRequest;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(CheckStorageAccountNameAvailabilityEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

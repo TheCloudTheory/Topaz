@@ -28,7 +28,7 @@ internal sealed class ApiManagementApiControlPlane(
         var api = resource.AsSubresource<ApiContractResource, ApiContractResourceProperties>();
         if (api == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a ApiManagement API instance.");
+            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a ApiManagement API instance.");
             return OperationResult.Failed;
         }
 
@@ -46,7 +46,7 @@ internal sealed class ApiManagementApiControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ApiManagementApiControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

@@ -27,7 +27,7 @@ internal sealed class ApiManagementPolicyControlPlane(
         var policy = resource.AsSubresource<PolicyContractResource, PolicyContractResourceProperties>();
         if (policy == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a ApiManagement policy instance.");
+            logger.LogError(nameof(ApiManagementPolicyControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a ApiManagement policy instance.");
             return OperationResult.Failed;
         }
 
@@ -45,7 +45,7 @@ internal sealed class ApiManagementPolicyControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ApiManagementPolicyControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

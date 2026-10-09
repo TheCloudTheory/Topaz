@@ -242,7 +242,7 @@ internal sealed partial class ServiceBusServiceControlPlane(
         var segments = NameSegments(resource);
         if (segments.Length != 2)
         {
-            logger.LogError($"Couldn't parse `{resource.Name}` as a Service Bus topic name.");
+            logger.LogError(nameof(ServiceBusServiceControlPlane), nameof(DeployServiceBusTopic), "{0}", $"Couldn't parse `{resource.Name}` as a Service Bus topic name.");
             return OperationResult.Failed;
         }
 
@@ -261,7 +261,7 @@ internal sealed partial class ServiceBusServiceControlPlane(
         var segments = NameSegments(resource);
         if (segments.Length != 3)
         {
-            logger.LogError($"Couldn't parse `{resource.Name}` as a Service Bus subscription name.");
+            logger.LogError(nameof(ServiceBusServiceControlPlane), nameof(DeployServiceBusSubscription), "{0}", $"Couldn't parse `{resource.Name}` as a Service Bus subscription name.");
             return OperationResult.Failed;
         }
 
@@ -281,14 +281,14 @@ internal sealed partial class ServiceBusServiceControlPlane(
         var segments = NameSegments(resource);
         if (segments.Length != 4)
         {
-            logger.LogError($"Couldn't parse `{resource.Name}` as a Service Bus rule name.");
+            logger.LogError(nameof(ServiceBusServiceControlPlane), nameof(DeployServiceBusRule), "{0}", $"Couldn't parse `{resource.Name}` as a Service Bus rule name.");
             return OperationResult.Failed;
         }
 
         var properties = PropertiesAs<ServiceBusRuleResourceProperties>(resource);
         if (properties == null)
         {
-            logger.LogError($"Rule `{resource.Name}` carries no filter properties.");
+            logger.LogError(nameof(ServiceBusServiceControlPlane), nameof(DeployServiceBusRule), "{0}", $"Rule `{resource.Name}` carries no filter properties.");
             return OperationResult.Failed;
         }
 
@@ -320,7 +320,7 @@ internal sealed partial class ServiceBusServiceControlPlane(
         var queue = resource.AsSubresource<ServiceBusQueueResource, ServiceBusQueueResourceProperties>();
         if (queue == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Service Bus namespace.");
+            logger.LogError(nameof(ServiceBusServiceControlPlane), nameof(DeployServiceBusQueue), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Service Bus namespace.");
             return OperationResult.Failed;
         }
 
@@ -337,7 +337,7 @@ internal sealed partial class ServiceBusServiceControlPlane(
         var @namespace = resource.As<ServiceBusNamespaceResource, ServiceBusNamespaceResourceProperties>();
         if (@namespace == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Service Bus namespace.");
+            logger.LogError(nameof(ServiceBusServiceControlPlane), nameof(DeployServiceBusNamespace), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Service Bus namespace.");
             return OperationResult.Failed;
         }
 

@@ -21,7 +21,7 @@ public abstract class DataPlaneAuthorizationChecker(Pipeline eventPipeline, ITop
         var token = JwtHelper.ValidateJwt(authHeader);
         if (token == null)
         {
-            logger.LogError("Authentication failure for Storage Bearer scheme. JWT validation failed.");
+            logger.LogError(nameof(DataPlaneAuthorizationChecker), nameof(IsAuthorizedForBearer), "{0}", "Authentication failure for Storage Bearer scheme. JWT validation failed.");
             return false;
         }
 
@@ -45,7 +45,7 @@ public abstract class DataPlaneAuthorizationChecker(Pipeline eventPipeline, ITop
         var validated = JwtHelper.ValidateJwt(token);
         if (validated == null)
         {
-            logger.LogError("Authentication failure for Bearer scheme. JWT validation failed.");
+            logger.LogError(nameof(DataPlaneAuthorizationChecker), nameof(IsAuthorizedForBearerWithScope), "{0}", "Authentication failure for Bearer scheme. JWT validation failed.");
             return false;
         }
 

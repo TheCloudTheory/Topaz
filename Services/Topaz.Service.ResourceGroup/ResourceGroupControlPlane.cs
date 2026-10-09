@@ -118,13 +118,15 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
         var resourceGroup = resource.As<ResourceGroupResource, ResourceGroupProperties>();
         if (resourceGroup == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Resource Group instance.");
+            logger.LogError(nameof(ResourceGroupControlPlane), nameof(Deploy),
+                "Couldn't parse generic resource `{0}` as a Resource Group instance.", resource.Id);
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(resourceGroup.Location))
         {
-            logger.LogError($"Resource group resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(ResourceGroupControlPlane), nameof(Deploy),
+                "Resource group resource `{0}` is missing required location.", resource.Id);
             return OperationResult.Failed;
         }
 
@@ -143,7 +145,8 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ResourceGroupControlPlane), nameof(Deploy),
+                "Failed to deploy resource group `{0}`: {1}", resource.Id, ex.ToString());
             return OperationResult.Failed;
         }
     }

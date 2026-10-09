@@ -48,7 +48,7 @@ internal sealed class ListComputeResourceSkusEndpoint(ITopazLogger logger) : IEn
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListComputeResourceSkusEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

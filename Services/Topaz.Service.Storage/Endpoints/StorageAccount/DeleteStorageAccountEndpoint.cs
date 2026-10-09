@@ -50,7 +50,7 @@ internal sealed class DeleteStorageAccountEndpoint(ITopazLogger logger) : IEndpo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(DeleteStorageAccountEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

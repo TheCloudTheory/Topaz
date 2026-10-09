@@ -45,13 +45,13 @@ internal sealed class RestoreKeyEndpoint(Pipeline eventPipeline, ITopazLogger lo
         }
         catch (InvalidOperationException ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(RestoreKeyEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.BadRequest;
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(RestoreKeyEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

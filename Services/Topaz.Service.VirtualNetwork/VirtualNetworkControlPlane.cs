@@ -36,7 +36,7 @@ internal sealed class VirtualNetworkControlPlane(
         var vnet = resource.As<VirtualNetworkResource, VirtualNetworkResourceProperties>();
         if (vnet == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Virtual Network instance.");
+            logger.LogError(nameof(VirtualNetworkControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Virtual Network instance.");
             return OperationResult.Failed;
         }
 

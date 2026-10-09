@@ -53,7 +53,7 @@ internal sealed class GetNetworkSecurityGroupEndpoint(Pipeline eventPipeline, IT
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(GetNetworkSecurityGroupEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

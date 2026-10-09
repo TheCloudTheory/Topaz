@@ -50,7 +50,7 @@ internal sealed class ListVirtualNetworksByResourceGroupEndpoint(Pipeline eventP
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListVirtualNetworksByResourceGroupEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

@@ -32,13 +32,13 @@ internal sealed class SqlServiceControlPlane(
         var server = resource.As<SqlServerResource, SqlServerResourceProperties>();
         if (server == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a SQL Server instance.");
+            logger.LogError(nameof(SqlServiceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a SQL Server instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(server.Location))
         {
-            logger.LogError($"SQL server resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(SqlServiceControlPlane), nameof(Deploy), "{0}", $"SQL server resource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -65,7 +65,7 @@ internal sealed class SqlServiceControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(SqlServiceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

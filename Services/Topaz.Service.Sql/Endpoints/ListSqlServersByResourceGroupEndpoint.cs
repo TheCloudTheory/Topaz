@@ -51,7 +51,7 @@ internal sealed class ListSqlServersByResourceGroupEndpoint(Pipeline eventPipeli
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListSqlServersByResourceGroupEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

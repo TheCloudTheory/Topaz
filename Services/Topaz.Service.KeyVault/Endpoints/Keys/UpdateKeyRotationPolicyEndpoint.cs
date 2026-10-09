@@ -63,7 +63,7 @@ internal sealed class UpdateKeyRotationPolicyEndpoint(Pipeline eventPipeline, IT
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(UpdateKeyRotationPolicyEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

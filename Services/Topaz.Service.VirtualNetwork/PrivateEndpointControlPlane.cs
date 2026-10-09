@@ -32,7 +32,7 @@ internal sealed class PrivateEndpointControlPlane(
         var pe = resource.As<PrivateEndpointResource, PrivateEndpointResourceProperties>();
         if (pe == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Private Endpoint instance.");
+            logger.LogError(nameof(PrivateEndpointControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Private Endpoint instance.");
             return OperationResult.Failed;
         }
 
@@ -55,7 +55,7 @@ internal sealed class PrivateEndpointControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(PrivateEndpointControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

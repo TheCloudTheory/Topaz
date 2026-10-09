@@ -43,7 +43,7 @@ internal sealed class ListDatabaseAccountsBySubscriptionEndpoint(Pipeline eventP
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListDatabaseAccountsBySubscriptionEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

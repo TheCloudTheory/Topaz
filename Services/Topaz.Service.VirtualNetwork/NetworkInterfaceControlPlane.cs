@@ -35,7 +35,7 @@ internal sealed class NetworkInterfaceControlPlane(
         var nic = resource.As<NetworkInterfaceResource, NetworkInterfaceResourceProperties>();
         if (nic == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Network Interface instance.");
+            logger.LogError(nameof(NetworkInterfaceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Network Interface instance.");
             return OperationResult.Failed;
         }
 
@@ -59,7 +59,7 @@ internal sealed class NetworkInterfaceControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(NetworkInterfaceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

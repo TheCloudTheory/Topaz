@@ -49,7 +49,7 @@ internal sealed class ListPublicIpAddressesBySubscriptionEndpoint(Pipeline event
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListPublicIpAddressesBySubscriptionEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

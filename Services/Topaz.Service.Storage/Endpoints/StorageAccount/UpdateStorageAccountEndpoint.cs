@@ -45,7 +45,7 @@ internal sealed class UpdateStorageAccountEndpoint(ITopazLogger logger) : IEndpo
 
             if (request == null)
             {
-                logger.LogError($"Could not deserialize the request content of {content}.");
+                logger.LogError(nameof(UpdateStorageAccountEndpoint), nameof(GetResponse), "{0}", $"Could not deserialize the request content of {content}.");
                 response.StatusCode = HttpStatusCode.InternalServerError;
                 return;
             }
@@ -62,7 +62,7 @@ internal sealed class UpdateStorageAccountEndpoint(ITopazLogger logger) : IEndpo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(UpdateStorageAccountEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

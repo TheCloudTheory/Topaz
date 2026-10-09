@@ -40,7 +40,7 @@ internal sealed partial class ContainerRegistryControlPlane(
         var registry = resource.As<ContainerRegistryResource, ContainerRegistryResourceProperties>();
         if (registry == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Container Registry instance.");
+            logger.LogError(nameof(ContainerRegistryControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Container Registry instance.");
             return OperationResult.Failed;
         }
 
@@ -53,7 +53,7 @@ internal sealed partial class ContainerRegistryControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ContainerRegistryControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

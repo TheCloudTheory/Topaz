@@ -33,7 +33,7 @@ internal sealed class DeleteCertificateContactsEndpoint(Pipeline eventPipeline, 
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(DeleteCertificateContactsEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

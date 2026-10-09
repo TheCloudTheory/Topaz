@@ -45,7 +45,7 @@ internal sealed class ListAccountSasEndpoint(ITopazLogger logger) : IEndpointDef
 
             if (request == null)
             {
-                logger.LogError($"Could not deserialize the ListAccountSas request content: {content}.");
+                logger.LogError(nameof(ListAccountSasEndpoint), nameof(GetResponse), "{0}", $"Could not deserialize the ListAccountSas request content: {content}.");
                 response.StatusCode = HttpStatusCode.BadRequest;
                 return;
             }
@@ -55,7 +55,7 @@ internal sealed class ListAccountSasEndpoint(ITopazLogger logger) : IEndpointDef
                 string.IsNullOrWhiteSpace(request.SignedPermission) ||
                 string.IsNullOrWhiteSpace(request.SignedExpiry))
             {
-                logger.LogError("ListAccountSas request is missing required fields (signedServices, signedResourceTypes, signedPermission, signedExpiry).");
+                logger.LogError(nameof(ListAccountSasEndpoint), nameof(GetResponse), "{0}", "ListAccountSas request is missing required fields (signedServices, signedResourceTypes, signedPermission, signedExpiry).");
                 response.StatusCode = HttpStatusCode.BadRequest;
                 return;
             }
@@ -79,7 +79,7 @@ internal sealed class ListAccountSasEndpoint(ITopazLogger logger) : IEndpointDef
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListAccountSasEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

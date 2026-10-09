@@ -76,7 +76,7 @@ internal sealed class CreateOrUpdateSqlServerEndpoint(Pipeline eventPipeline, IT
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(CreateOrUpdateSqlServerEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

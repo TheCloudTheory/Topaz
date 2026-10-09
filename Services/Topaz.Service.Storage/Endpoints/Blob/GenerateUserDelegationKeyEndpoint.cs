@@ -104,7 +104,7 @@ internal sealed class GenerateUserDelegationKeyEndpoint(Pipeline eventPipeline, 
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(GenerateUserDelegationKeyEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }
     }

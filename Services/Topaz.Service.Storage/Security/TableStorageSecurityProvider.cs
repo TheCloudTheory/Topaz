@@ -43,7 +43,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
                     subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method, remoteIpAddress);
             }
 
-            logger.LogError($"Authentication failure for SharedKeyLite scheme. Authorization header is missing.");
+            logger.LogError(nameof(TableStorageSecurityProvider), nameof(RequestIsAuthorized), "{0}", $"Authentication failure for SharedKeyLite scheme. Authorization header is missing.");
             return StorageAuthorizationResult.AuthenticationFailed();
         }
 
@@ -71,7 +71,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
                     ? StorageAuthorizationResult.Authorized()
                     : StorageAuthorizationResult.AuthenticationFailed();
             default:
-                logger.LogError($"Authentication failure for {scheme}. Scheme is not supported.");
+                logger.LogError(nameof(TableStorageSecurityProvider), nameof(RequestIsAuthorized), "{0}", $"Authentication failure for {scheme}. Scheme is not supported.");
                 return StorageAuthorizationResult.AuthenticationFailed();
         }
     }
@@ -105,7 +105,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
         var valueParts = headerValue.Split(':');
         if (valueParts.Length != 2)
         {
-            logger.LogError($"Authentication failure for SharedKey scheme. Header value isn't correct.");
+            logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme), "{0}", $"Authentication failure for SharedKey scheme. Header value isn't correct.");
             return false;
         }
 
@@ -114,7 +114,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
 
         if (accountName != storageAccountName)
         {
-            logger.LogError($"Authentication failure for SharedKey scheme. Storage account name isn't correct.");
+            logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme), "{0}", $"Authentication failure for SharedKey scheme. Storage account name isn't correct.");
             return false;
         }
 
@@ -224,7 +224,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
         var token = JwtHelper.ValidateJwt(authHeader);
         if (token == null)
         {
-            logger.LogError("Authentication failure for Bearer scheme. JWT validation failed.");
+            logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForBearerScheme), "{0}", "Authentication failure for Bearer scheme. JWT validation failed.");
             return false;
         }
 
@@ -262,7 +262,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
         var valueParts = headerValue.Split(':');
         if (valueParts.Length != 2)
         {
-            logger.LogError($"Authentication failure for SharedKeyLite scheme. Header value isn't correct.");
+            logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme), "{0}", $"Authentication failure for SharedKeyLite scheme. Header value isn't correct.");
             logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme), "Header value: {0}", headerValue);
             
             return false;    
@@ -275,7 +275,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
         // the request must be considered as unauthorized
         if (accountName != storageAccountName)
         {
-            logger.LogError($"Authentication failure for SharedKeyLite scheme. Storage account name isn't correct.");
+            logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme), "{0}", $"Authentication failure for SharedKeyLite scheme. Storage account name isn't correct.");
             logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme), "Storage account name: {0} but the value sent with the Authorization header is {1}.", storageAccountName, accountName);
             
             return false;   

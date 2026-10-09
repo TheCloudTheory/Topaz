@@ -46,7 +46,7 @@ internal sealed class RegenerateStorageAccountKeyEndpoint(ITopazLogger logger) :
 
             if (request == null || string.IsNullOrWhiteSpace(request.KeyName))
             {
-                logger.LogError("RegenerateKey request is missing or has no keyName.");
+                logger.LogError(nameof(RegenerateStorageAccountKeyEndpoint), nameof(GetResponse), "{0}", "RegenerateKey request is missing or has no keyName.");
                 response.StatusCode = HttpStatusCode.BadRequest;
                 return;
             }
@@ -71,7 +71,7 @@ internal sealed class RegenerateStorageAccountKeyEndpoint(ITopazLogger logger) :
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(RegenerateStorageAccountKeyEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

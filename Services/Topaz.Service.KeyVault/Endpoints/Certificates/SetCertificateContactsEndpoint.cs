@@ -34,7 +34,7 @@ internal sealed class SetCertificateContactsEndpoint(Pipeline eventPipeline, ITo
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(SetCertificateContactsEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

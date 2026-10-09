@@ -48,7 +48,7 @@ internal sealed class BackupCertificateEndpoint(Pipeline eventPipeline, ITopazLo
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(BackupCertificateEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

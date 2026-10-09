@@ -84,7 +84,7 @@ internal sealed class ListResourceGroupResourcesEndpoint(Pipeline eventPipeline,
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListResourceGroupResourcesEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

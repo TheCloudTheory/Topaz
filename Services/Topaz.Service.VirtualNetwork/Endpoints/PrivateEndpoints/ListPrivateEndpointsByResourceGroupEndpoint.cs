@@ -50,7 +50,7 @@ internal sealed class ListPrivateEndpointsByResourceGroupEndpoint(Pipeline event
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListPrivateEndpointsByResourceGroupEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

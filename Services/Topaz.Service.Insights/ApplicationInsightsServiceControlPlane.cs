@@ -32,13 +32,13 @@ internal sealed class ApplicationInsightsServiceControlPlane(
         var component = resource.As<ApplicationInsightsComponentResource, ApplicationInsightsComponentResourceProperties>();
         if (component == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as an ApplicationInsightsComponentResource instance.");
+            logger.LogError(nameof(ApplicationInsightsServiceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as an ApplicationInsightsComponentResource instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(component.Location))
         {
-            logger.LogError($"ApplicationInsightsComponentResource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(ApplicationInsightsServiceControlPlane), nameof(Deploy), "{0}", $"ApplicationInsightsComponentResource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -51,7 +51,7 @@ internal sealed class ApplicationInsightsServiceControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ApplicationInsightsServiceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

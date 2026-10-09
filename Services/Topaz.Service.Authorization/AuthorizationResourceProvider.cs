@@ -32,7 +32,7 @@ internal sealed class RoleDefinitionResourceProvider(ITopazLogger logger)
 
             if (fileModel == null)
             {
-                _logger.LogError($"Could not deserialize `{file}` file as `{nameof(RoleDefinition)}`.");
+                _logger.LogError(nameof(RoleDefinitionResourceProvider), nameof(ListBuiltInRoles), "{0}", $"Could not deserialize `{file}` file as `{nameof(RoleDefinition)}`.");
                 continue;
             }
 
@@ -43,7 +43,7 @@ internal sealed class RoleDefinitionResourceProvider(ITopazLogger logger)
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Could not convert `{file}` to `{nameof(RoleDefinitionResource)}`: {ex.Message}");
+                _logger.LogError(nameof(RoleDefinitionResourceProvider), nameof(ListBuiltInRoles), "{0}", $"Could not convert `{file}` to `{nameof(RoleDefinitionResource)}`: {ex.Message}");
             }
         }
 

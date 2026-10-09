@@ -38,7 +38,7 @@ internal sealed class PostZipDeployEndpoint(ITopazLogger logger)
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex);
+            _logger.LogError(nameof(PostZipDeployEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

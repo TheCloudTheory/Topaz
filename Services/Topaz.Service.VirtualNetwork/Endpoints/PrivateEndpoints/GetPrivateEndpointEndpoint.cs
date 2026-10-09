@@ -52,7 +52,7 @@ internal sealed class GetPrivateEndpointEndpoint(Pipeline eventPipeline, ITopazL
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(GetPrivateEndpointEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

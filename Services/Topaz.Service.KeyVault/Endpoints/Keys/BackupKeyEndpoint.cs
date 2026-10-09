@@ -54,7 +54,7 @@ internal sealed class BackupKeyEndpoint(Pipeline eventPipeline, ITopazLogger log
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(BackupKeyEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

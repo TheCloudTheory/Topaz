@@ -70,8 +70,8 @@ internal sealed class ListQueuesEndpoint(Pipeline eventPipeline, ITopazLogger lo
         }
         catch (Exception ex)
         {
-            Logger.LogError($"{ex.GetType().Name}: {ex.Message}. InnerException: {ex.InnerException?.Message}");
-            Logger.LogError(ex);
+            Logger.LogError(nameof(ListQueuesEndpoint), nameof(GetResponse), "{0}", $"{ex.GetType().Name}: {ex.Message}. InnerException: {ex.InnerException?.Message}");
+            Logger.LogError(nameof(ListQueuesEndpoint), nameof(GetResponse), "{0}", ex);
 
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;

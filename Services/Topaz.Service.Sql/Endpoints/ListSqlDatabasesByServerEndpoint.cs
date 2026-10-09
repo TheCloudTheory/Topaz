@@ -48,7 +48,7 @@ internal sealed class ListSqlDatabasesByServerEndpoint(Pipeline eventPipeline, I
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListSqlDatabasesByServerEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

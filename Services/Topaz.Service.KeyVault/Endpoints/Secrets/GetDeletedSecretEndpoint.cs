@@ -56,7 +56,7 @@ internal sealed class GetDeletedSecretEndpoint(Pipeline eventPipeline, ITopazLog
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(GetDeletedSecretEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

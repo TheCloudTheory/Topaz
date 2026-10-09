@@ -29,13 +29,13 @@ internal sealed class ContainerInstancesServiceControlPlane(
         var aci = resource.As<ContainerInstancesServiceResource, ContainerInstancesServiceResourceProperties>();
         if (aci == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Azure Container Instances instance.");
+            logger.LogError(nameof(ContainerInstancesServiceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Azure Container Instances instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(aci.Location))
         {
-            logger.LogError($"Azure Container Instances resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(ContainerInstancesServiceControlPlane), nameof(Deploy), "{0}", $"Azure Container Instances resource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -48,7 +48,7 @@ internal sealed class ContainerInstancesServiceControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ContainerInstancesServiceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

@@ -94,7 +94,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
 
     private StorageAuthorizationResult LogAndDeny(string scheme)
     {
-        logger.LogError($"Authentication failure for Blob Storage. Unsupported scheme: {scheme}.");
+        logger.LogError(nameof(BlobStorageSecurityProvider), nameof(LogAndDeny), "{0}", $"Authentication failure for Blob Storage. Unsupported scheme: {scheme}.");
         return StorageAuthorizationResult.AuthenticationFailed();
     }
 
@@ -131,7 +131,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
         var valueParts = headerValue.Split(':', 2);
         if (valueParts.Length != 2)
         {
-            logger.LogError("Authentication failure for Blob SharedKey scheme. Header value format is incorrect.");
+            logger.LogError(nameof(BlobStorageSecurityProvider), nameof(IsAuthorizedForSharedKey), "{0}", "Authentication failure for Blob SharedKey scheme. Header value format is incorrect.");
             return false;
         }
 
@@ -140,7 +140,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
 
         if (accountName != storageAccountName)
         {
-            logger.LogError("Authentication failure for Blob SharedKey. Account name mismatch.");
+            logger.LogError(nameof(BlobStorageSecurityProvider), nameof(IsAuthorizedForSharedKey), "{0}", "Authentication failure for Blob SharedKey. Account name mismatch.");
             return false;
         }
 
@@ -176,7 +176,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
         var valueParts = headerValue.Split(':', 2);
         if (valueParts.Length != 2)
         {
-            logger.LogError("Authentication failure for Blob SharedKeyLite scheme. Header value format is incorrect.");
+            logger.LogError(nameof(BlobStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLite), "{0}", "Authentication failure for Blob SharedKeyLite scheme. Header value format is incorrect.");
             return false;
         }
 
@@ -185,7 +185,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
 
         if (accountName != storageAccountName)
         {
-            logger.LogError("Authentication failure for Blob SharedKeyLite. Account name mismatch.");
+            logger.LogError(nameof(BlobStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLite), "{0}", "Authentication failure for Blob SharedKeyLite. Account name mismatch.");
             return false;
         }
 
@@ -290,7 +290,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
     {
         if (!method.Equals("GET", StringComparison.OrdinalIgnoreCase))
         {
-            logger.LogError($"Anonymous access denied: method '{method}' is not permitted without credentials.");
+            logger.LogError(nameof(BlobStorageSecurityProvider), nameof(IsAnonymousAccessAllowed), "{0}", $"Anonymous access denied: method '{method}' is not permitted without credentials.");
             return false;
         }
 
@@ -302,7 +302,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
                 .Select(p => p.Split('=', 2)[0]);
             if (queryPairs.Any(k => k.Equals("sig", StringComparison.OrdinalIgnoreCase)))
             {
-                logger.LogError("Authentication failure for Blob Storage: SAS signature present but no Authorization header.");
+                logger.LogError(nameof(BlobStorageSecurityProvider), nameof(IsAnonymousAccessAllowed), "{0}", "Authentication failure for Blob Storage: SAS signature present but no Authorization header.");
                 return false;
             }
         }
@@ -316,7 +316,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
 
         if (string.IsNullOrEmpty(accessLevel))
         {
-            logger.LogError($"Anonymous access denied: container '{containerName}' has no public access configured.");
+            logger.LogError(nameof(BlobStorageSecurityProvider), nameof(IsAnonymousAccessAllowed), "{0}", $"Anonymous access denied: container '{containerName}' has no public access configured.");
             return false;
         }
 
@@ -337,18 +337,18 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
                     comp.Equals("list", StringComparison.OrdinalIgnoreCase))
                     return true;
             }
-            logger.LogError($"Anonymous access denied: container-level access does not permit this operation on '{absolutePath}'.");
+            logger.LogError(nameof(BlobStorageSecurityProvider), nameof(IsAnonymousAccessAllowed), "{0}", $"Anonymous access denied: container-level access does not permit this operation on '{absolutePath}'.");
             return false;
         }
 
         if (accessLevel.Equals("blob", StringComparison.OrdinalIgnoreCase))
         {
             if (isBlobOperation) return true;
-            logger.LogError($"Anonymous access denied: blob-level access does not permit container operations on '{absolutePath}'.");
+            logger.LogError(nameof(BlobStorageSecurityProvider), nameof(IsAnonymousAccessAllowed), "{0}", $"Anonymous access denied: blob-level access does not permit container operations on '{absolutePath}'.");
             return false;
         }
 
-        logger.LogError($"Anonymous access denied: unrecognised access level '{accessLevel}' on container '{containerName}'.");
+        logger.LogError(nameof(BlobStorageSecurityProvider), nameof(IsAnonymousAccessAllowed), "{0}", $"Anonymous access denied: unrecognised access level '{accessLevel}' on container '{containerName}'.");
         return false;
     }
 }

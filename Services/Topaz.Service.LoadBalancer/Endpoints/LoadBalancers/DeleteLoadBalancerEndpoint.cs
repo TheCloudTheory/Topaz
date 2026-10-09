@@ -47,7 +47,7 @@ internal sealed class DeleteLoadBalancerEndpoint(Pipeline eventPipeline, ITopazL
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(DeleteLoadBalancerEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

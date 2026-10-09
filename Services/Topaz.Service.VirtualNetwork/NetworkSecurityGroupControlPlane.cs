@@ -32,7 +32,7 @@ internal sealed class NetworkSecurityGroupControlPlane(
         var nsg = resource.As<NetworkSecurityGroupResource, NetworkSecurityGroupResourceProperties>();
         if (nsg == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Network Security Group instance.");
+            logger.LogError(nameof(NetworkSecurityGroupControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Network Security Group instance.");
             return OperationResult.Failed;
         }
 
@@ -53,7 +53,7 @@ internal sealed class NetworkSecurityGroupControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(NetworkSecurityGroupControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

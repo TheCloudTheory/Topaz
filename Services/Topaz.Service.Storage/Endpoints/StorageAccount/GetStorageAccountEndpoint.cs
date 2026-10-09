@@ -49,7 +49,7 @@ internal sealed class GetStorageAccountEndpoint(ITopazLogger logger) : IEndpoint
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(GetStorageAccountEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

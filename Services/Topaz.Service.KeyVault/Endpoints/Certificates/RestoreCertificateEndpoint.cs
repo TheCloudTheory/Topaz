@@ -40,13 +40,13 @@ internal sealed class RestoreCertificateEndpoint(Pipeline eventPipeline, ITopazL
         }
         catch (InvalidOperationException ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(RestoreCertificateEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.BadRequest;
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(RestoreCertificateEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

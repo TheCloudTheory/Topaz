@@ -54,7 +54,7 @@ internal sealed class GetKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(GetKeyEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

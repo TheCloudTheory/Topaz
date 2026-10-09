@@ -55,7 +55,7 @@ internal sealed class DeletePublicIpAddressEndpoint(Pipeline eventPipeline, ITop
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(DeletePublicIpAddressEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

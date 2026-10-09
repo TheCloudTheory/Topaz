@@ -84,7 +84,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         if (string.IsNullOrWhiteSpace(blobDirectory))
         {
-            logger.LogError("Couldn't determine the blob directory.");
+            logger.LogError(nameof(BlobServiceDataPlane), nameof(PutBlob), "{0}", "Couldn't determine the blob directory.");
             return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "Couldn't determine the blob directory.", "InvalidBlobPath");
         }
 
@@ -101,7 +101,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         {
             if (pageBlobSize == null || pageBlobSize <= 0)
             {
-                logger.LogError("PageBlob requires a positive x-ms-blob-content-length.");
+                logger.LogError(nameof(BlobServiceDataPlane), nameof(PutBlob), "{0}", "PageBlob requires a positive x-ms-blob-content-length.");
                 return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "PageBlob requires x-ms-blob-content-length.", "InvalidBlobType");
             }
 
@@ -441,7 +441,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var blockIds = request?.AllBlockIds.ToList();
         if (blockIds == null)
         {
-            logger.LogError("PutBlockList: could not parse BlockList XML.");
+            logger.LogError(nameof(BlobServiceDataPlane), nameof(PutBlockList), "{0}", "PutBlockList: could not parse BlockList XML.");
             return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "Could not parse BlockList XML.", "InvalidXml");
         }
 
@@ -470,7 +470,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         if (string.IsNullOrWhiteSpace(blobDirectory))
         {
-            logger.LogError("PutBlockList: couldn't determine the blob directory.");
+            logger.LogError(nameof(BlobServiceDataPlane), nameof(PutBlockList), "{0}", "PutBlockList: couldn't determine the blob directory.");
             return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "Couldn't determine the blob directory.", "InvalidBlobPath");
         }
 
@@ -746,7 +746,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         if (string.IsNullOrWhiteSpace(dstDirectory))
         {
-            logger.LogError("Couldn't determine the destination blob directory.");
+            logger.LogError(nameof(BlobServiceDataPlane), nameof(CopyBlob), "{0}", "Couldn't determine the destination blob directory.");
             return new DataPlaneOperationResult<CopyBlobData>(OperationResult.BadRequest, null, "Couldn't determine the destination blob directory.", "InvalidBlobPath");
         }
 

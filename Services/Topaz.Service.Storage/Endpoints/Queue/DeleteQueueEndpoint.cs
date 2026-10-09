@@ -68,7 +68,7 @@ internal sealed class DeleteQueueEndpoint(Pipeline eventPipeline, ITopazLogger l
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(DeleteQueueEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new ByteArrayContent([]);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

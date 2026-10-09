@@ -57,7 +57,7 @@ internal sealed class ListDisksByResourceGroupEndpoint(Pipeline eventPipeline, I
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListDisksByResourceGroupEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

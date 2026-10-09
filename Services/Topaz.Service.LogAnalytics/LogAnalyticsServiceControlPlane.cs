@@ -31,13 +31,13 @@ internal sealed class LogAnalyticsServiceControlPlane(
         var workspace = resource.As<WorkspaceResource, WorkspaceResourceProperties>();
         if (workspace == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a WorkspaceResource instance.");
+            logger.LogError(nameof(LogAnalyticsServiceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a WorkspaceResource instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(workspace.Location))
         {
-            logger.LogError($"WorkspaceResource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(LogAnalyticsServiceControlPlane), nameof(Deploy), "{0}", $"WorkspaceResource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -50,7 +50,7 @@ internal sealed class LogAnalyticsServiceControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(LogAnalyticsServiceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

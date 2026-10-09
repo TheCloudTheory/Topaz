@@ -29,7 +29,7 @@ internal sealed class ApiManagementProductControlPlane(Pipeline eventPipeline, A
         var product = resource.AsSubresource<ProductContractResource, ProductContractResourceProperties>();
         if (product == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a ApiManagement product instance.");
+            logger.LogError(nameof(ApiManagementProductControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a ApiManagement product instance.");
             return OperationResult.Failed;
         }
 
@@ -47,7 +47,7 @@ internal sealed class ApiManagementProductControlPlane(Pipeline eventPipeline, A
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ApiManagementProductControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

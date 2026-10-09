@@ -193,7 +193,7 @@ internal sealed class KeyVaultControlPlane(
         var keyVault = resource.As<KeyVaultResource, KeyVaultResourceProperties>();
         if (keyVault == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Key Vault instance.");
+            logger.LogError(nameof(KeyVaultControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Key Vault instance.");
             return OperationResult.Failed;
         }
 
@@ -231,7 +231,7 @@ internal sealed class KeyVaultControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(KeyVaultControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

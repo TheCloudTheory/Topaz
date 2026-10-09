@@ -32,7 +32,7 @@ internal sealed class LoadBalancerControlPlane(
         var lb = resource.As<LoadBalancerResource, LoadBalancerResourceProperties>();
         if (lb == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Load Balancer instance.");
+            logger.LogError(nameof(LoadBalancerControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Load Balancer instance.");
             return OperationResult.Failed;
         }
 

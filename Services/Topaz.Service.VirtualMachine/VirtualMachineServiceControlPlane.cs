@@ -33,13 +33,13 @@ internal sealed class VirtualMachineServiceControlPlane(
         var vm = resource.As<VirtualMachineResource, VirtualMachineResourceProperties>();
         if (vm == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Virtual Machine instance.");
+            logger.LogError(nameof(VirtualMachineServiceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Virtual Machine instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(vm.Location))
         {
-            logger.LogError($"Virtual machine resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(VirtualMachineServiceControlPlane), nameof(Deploy), "{0}", $"Virtual machine resource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -60,7 +60,7 @@ internal sealed class VirtualMachineServiceControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(VirtualMachineServiceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

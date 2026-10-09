@@ -44,7 +44,7 @@ internal sealed class GetSlotConfigNamesEndpoint(ITopazLogger logger) : IEndpoin
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(GetSlotConfigNamesEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

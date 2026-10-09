@@ -30,13 +30,13 @@ internal sealed class DiskServiceControlPlane(
         var disk = resource.As<DiskResource, DiskResourceProperties>();
         if (disk == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Disk instance.");
+            logger.LogError(nameof(DiskServiceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Disk instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(disk.Location))
         {
-            logger.LogError($"Disk resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(DiskServiceControlPlane), nameof(Deploy), "{0}", $"Disk resource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -52,7 +52,7 @@ internal sealed class DiskServiceControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(DiskServiceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

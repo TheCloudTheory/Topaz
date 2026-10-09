@@ -122,7 +122,7 @@ internal sealed class GetBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(GetBlobEndpoint), nameof(GetResponse), "{0}", ex);
 
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;

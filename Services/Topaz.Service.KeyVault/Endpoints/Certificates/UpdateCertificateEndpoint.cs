@@ -50,7 +50,7 @@ internal sealed class UpdateCertificateEndpoint(Pipeline eventPipeline, ITopazLo
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(UpdateCertificateEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

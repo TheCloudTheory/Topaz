@@ -48,7 +48,7 @@ internal sealed class RecoverDeletedCertificateEndpoint(Pipeline eventPipeline, 
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(RecoverDeletedCertificateEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

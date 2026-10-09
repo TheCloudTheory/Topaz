@@ -522,7 +522,7 @@ internal sealed class AzureStorageControlPlane(
         var storageAccount = resource.As<StorageAccountResource, StorageAccountResourceProperties>();
         if (storageAccount == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Managed Identity instance.");
+            logger.LogError(nameof(AzureStorageControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Managed Identity instance.");
             return OperationResult.Failed;
         }
 

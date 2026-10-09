@@ -25,13 +25,13 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
         var availabilitySet = resource.As<AvailabilitySetResource, AvailabilitySetResourceProperties>();
         if (availabilitySet == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Virtual Machine instance.");
+            logger.LogError(nameof(AvailabilitySetControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Virtual Machine instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(availabilitySet.Location))
         {
-            logger.LogError($"Virtual machine resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(AvailabilitySetControlPlane), nameof(Deploy), "{0}", $"Virtual machine resource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -59,7 +59,7 @@ internal sealed class AvailabilitySetControlPlane(Pipeline eventPipeline, Availa
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(AvailabilitySetControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

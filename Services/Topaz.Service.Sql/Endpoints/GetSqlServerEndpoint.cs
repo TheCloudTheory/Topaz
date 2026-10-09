@@ -50,7 +50,7 @@ internal sealed class GetSqlServerEndpoint(Pipeline eventPipeline, ITopazLogger 
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(GetSqlServerEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

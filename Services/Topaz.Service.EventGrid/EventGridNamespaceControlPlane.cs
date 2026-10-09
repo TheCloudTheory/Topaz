@@ -29,13 +29,13 @@ internal sealed class EventGridNamespaceControlPlane(Pipeline eventPipeline, ITo
         var @namespace = resource.As<EventGridNamespaceResource, EventGridNamespaceResourceProperties>();
         if (@namespace == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Event Grid instance.");
+            logger.LogError(nameof(EventGridNamespaceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Event Grid instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(@namespace.Location))
         {
-            logger.LogError($"Event Grid resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(EventGridNamespaceControlPlane), nameof(Deploy), "{0}", $"Event Grid resource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -49,7 +49,7 @@ internal sealed class EventGridNamespaceControlPlane(Pipeline eventPipeline, ITo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(EventGridNamespaceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

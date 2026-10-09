@@ -139,7 +139,7 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
 
         if (!headers.TryGetValue("Host", out var host))
         {
-            Logger.LogError("`Host` header not found - it's required for storage account creation.");
+            Logger.LogError(nameof(BlobDataPlaneEndpointBase), nameof(TryGetStorageAccount), "{0}", "`Host` header not found - it's required for storage account creation.");
 
             storageAccount = null;
             accountName = null;

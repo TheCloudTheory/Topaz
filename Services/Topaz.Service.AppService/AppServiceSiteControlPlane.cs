@@ -177,7 +177,7 @@ internal sealed class AppServiceSiteControlPlane(
         var site = resource.As<AppServiceSiteResource, AppServiceSiteResourceProperties>();
         if (site == null)
         {
-            logger.LogError($"Could not parse generic resource '{resource.Id}' as an App Service Site.");
+            logger.LogError(nameof(AppServiceSiteControlPlane), nameof(Deploy), "{0}", $"Could not parse generic resource '{resource.Id}' as an App Service Site.");
             return OperationResult.Failed;
         }
 
@@ -216,7 +216,7 @@ internal sealed class AppServiceSiteControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(AppServiceSiteControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

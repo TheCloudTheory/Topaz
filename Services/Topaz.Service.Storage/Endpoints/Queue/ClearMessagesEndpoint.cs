@@ -74,7 +74,7 @@ internal sealed class ClearMessagesEndpoint(Pipeline eventPipeline, ITopazLogger
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(ClearMessagesEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new ByteArrayContent([]);
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");

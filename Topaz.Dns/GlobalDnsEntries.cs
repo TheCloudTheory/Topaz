@@ -189,14 +189,14 @@ public record GlobalDnsEntries
 
     public static bool IsSoftDeleted(string serviceName, string instanceName)
     {
-        _logger?.LogDebug(nameof(IsSoftDeleted), $"Checking if {instanceName} is soft deleted...");
+        _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(IsSoftDeleted), $"Checking if {instanceName} is soft deleted...");
 
         var entries = GetDnsEntriesFromFile();
 
         if (entries == null) throw new InvalidOperationException();
         if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries)) return false;
 
-        _logger?.LogDebug(nameof(IsSoftDeleted),
+        _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(IsSoftDeleted),
             $"Loading entries: {JsonSerializer.Serialize(globalServiceEntries, GlobalSettings.JsonOptionsCli)}");
 
         var matchingGroup = globalServiceEntries

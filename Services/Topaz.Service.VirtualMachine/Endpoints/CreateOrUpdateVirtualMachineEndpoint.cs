@@ -77,7 +77,7 @@ internal sealed class CreateOrUpdateVirtualMachineEndpoint(Pipeline eventPipelin
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(CreateOrUpdateVirtualMachineEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

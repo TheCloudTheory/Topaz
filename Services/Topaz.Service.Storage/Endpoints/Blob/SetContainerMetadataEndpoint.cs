@@ -57,7 +57,7 @@ internal sealed class SetContainerMetadataEndpoint(Pipeline eventPipeline, ITopa
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(SetContainerMetadataEndpoint), nameof(GetResponse), "{0}", ex);
 
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;

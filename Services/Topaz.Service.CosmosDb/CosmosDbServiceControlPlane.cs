@@ -32,13 +32,13 @@ internal sealed class CosmosDbServiceControlPlane(
         var account = resource.As<DatabaseAccountResource, DatabaseAccountResourceProperties>();
         if (account == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Cosmos DB database account.");
+            logger.LogError(nameof(CosmosDbServiceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Cosmos DB database account.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(account.Location))
         {
-            logger.LogError($"Cosmos DB database account resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(CosmosDbServiceControlPlane), nameof(Deploy), "{0}", $"Cosmos DB database account resource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -54,7 +54,7 @@ internal sealed class CosmosDbServiceControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(CosmosDbServiceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

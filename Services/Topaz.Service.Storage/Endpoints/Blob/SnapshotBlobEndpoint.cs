@@ -74,7 +74,7 @@ internal sealed class SnapshotBlobEndpoint(Pipeline eventPipeline, ITopazLogger 
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(SnapshotBlobEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

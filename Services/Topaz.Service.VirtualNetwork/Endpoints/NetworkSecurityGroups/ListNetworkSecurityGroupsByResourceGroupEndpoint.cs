@@ -50,7 +50,7 @@ internal sealed class ListNetworkSecurityGroupsByResourceGroupEndpoint(Pipeline 
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ListNetworkSecurityGroupsByResourceGroupEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

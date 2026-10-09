@@ -44,7 +44,7 @@ internal sealed class GetAppServicePlanEndpoint(ITopazLogger logger) : IEndpoint
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(GetAppServicePlanEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

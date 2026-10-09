@@ -149,7 +149,7 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
                         }
                         catch
                         {
-                            logger.LogError("Failed to evaluate expression: " + s + "");
+                            logger.LogError(nameof(ArmTemplateEngineFacade), nameof(EvaluateJTokenExpressions), "{0}", "Failed to evaluate expression: " + s + "");
                         }
                     }
                     else
@@ -176,7 +176,7 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
                         }
                         catch
                         {
-                            logger.LogError("Failed to evaluate expression: " + s + "");
+                            logger.LogError(nameof(ArmTemplateEngineFacade), nameof(EvaluateJTokenExpressions), "{0}", "Failed to evaluate expression: " + s + "");
                         }
                     }
                     else

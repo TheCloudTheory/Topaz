@@ -295,7 +295,7 @@ internal sealed partial class ContainerRegistryControlPlane
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ContainerRegistryControlPlane), nameof(ExecuteRunAsync), "{0}", ex);
             try
             {
                 await File.AppendAllTextAsync(logPath, $"Fatal error: {ex.Message}{Environment.NewLine}");
@@ -470,7 +470,7 @@ internal sealed partial class ContainerRegistryControlPlane
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ContainerRegistryControlPlane), nameof(ExecuteRunAsync), "{0}", ex);
 
             try
             {
@@ -486,7 +486,7 @@ internal sealed partial class ContainerRegistryControlPlane
             }
             catch (Exception ex2)
             {
-                logger.LogError(ex2);
+                logger.LogError(nameof(ContainerRegistryControlPlane), nameof(ExecuteRunAsync), "{0}", ex2);
             }
         }
     }
@@ -557,7 +557,7 @@ internal sealed partial class ContainerRegistryControlPlane
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(ContainerRegistryControlPlane), nameof(ExecuteRunAsync), "{0}", ex);
             try
             {
                 await File.AppendAllTextAsync(logPath, $"Fatal error: {ex.Message}{Environment.NewLine}");

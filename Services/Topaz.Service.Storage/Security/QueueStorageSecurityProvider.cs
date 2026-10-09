@@ -52,7 +52,7 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
                     subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method, remoteIpAddress);
             }
 
-            logger.LogError("Authentication failure for Queue Storage. Authorization header is missing.");
+            logger.LogError(nameof(QueueStorageSecurityProvider), nameof(RequestIsAuthorized), "{0}", "Authentication failure for Queue Storage. Authorization header is missing.");
             return StorageAuthorizationResult.AuthenticationFailed();
         }
 
@@ -83,7 +83,7 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
 
     private StorageAuthorizationResult LogAndDeny(string scheme)
     {
-        logger.LogError($"Authentication failure for Queue Storage. Unsupported scheme: {scheme}.");
+        logger.LogError(nameof(QueueStorageSecurityProvider), nameof(LogAndDeny), "{0}", $"Authentication failure for Queue Storage. Unsupported scheme: {scheme}.");
         return StorageAuthorizationResult.AuthenticationFailed();
     }
 
@@ -120,7 +120,7 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
         var valueParts = headerValue.Split(':', 2);
         if (valueParts.Length != 2)
         {
-            logger.LogError("Authentication failure for Queue SharedKey scheme. Header value format is incorrect.");
+            logger.LogError(nameof(QueueStorageSecurityProvider), nameof(IsAuthorizedForSharedKey), "{0}", "Authentication failure for Queue SharedKey scheme. Header value format is incorrect.");
             return false;
         }
 
@@ -129,7 +129,7 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
 
         if (accountName != storageAccountName)
         {
-            logger.LogError("Authentication failure for Queue SharedKey. Account name mismatch.");
+            logger.LogError(nameof(QueueStorageSecurityProvider), nameof(IsAuthorizedForSharedKey), "{0}", "Authentication failure for Queue SharedKey. Account name mismatch.");
             return false;
         }
 
@@ -165,7 +165,7 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
         var valueParts = headerValue.Split(':', 2);
         if (valueParts.Length != 2)
         {
-            logger.LogError("Authentication failure for Queue SharedKeyLite scheme. Header value format is incorrect.");
+            logger.LogError(nameof(QueueStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLite), "{0}", "Authentication failure for Queue SharedKeyLite scheme. Header value format is incorrect.");
             return false;
         }
 
@@ -174,7 +174,7 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
 
         if (accountName != storageAccountName)
         {
-            logger.LogError("Authentication failure for Queue SharedKeyLite. Account name mismatch.");
+            logger.LogError(nameof(QueueStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLite), "{0}", "Authentication failure for Queue SharedKeyLite. Account name mismatch.");
             return false;
         }
 

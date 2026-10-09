@@ -30,13 +30,13 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
         var topic = resource.As<EventGridTopicResource, EventGridTopicResourceProperties>();
         if (topic == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Event Grid topic instance.");
+            logger.LogError(nameof(EventGridTopicControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a Event Grid topic instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(topic.Location))
         {
-            logger.LogError($"Event Grid resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(EventGridTopicControlPlane), nameof(Deploy), "{0}", $"Event Grid resource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -50,7 +50,7 @@ internal sealed class EventGridTopicControlPlane(Pipeline eventPipeline, ITopazL
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(EventGridTopicControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

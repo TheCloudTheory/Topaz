@@ -56,7 +56,7 @@ internal sealed class DeleteAppServicePlanEndpoint(ITopazLogger logger) : IEndpo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(DeleteAppServicePlanEndpoint), nameof(GetResponse), "{0}", ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }

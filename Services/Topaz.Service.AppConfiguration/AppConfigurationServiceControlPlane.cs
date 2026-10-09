@@ -40,13 +40,13 @@ internal sealed class AppConfigurationServiceControlPlane(
         var store = resource.As<ConfigurationStoreFullResource, ConfigurationStoreResourceProperties>();
         if (store == null)
         {
-            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a ConfigurationStore instance.");
+            logger.LogError(nameof(AppConfigurationServiceControlPlane), nameof(Deploy), "{0}", $"Couldn't parse generic resource `{resource.Id}` as a ConfigurationStore instance.");
             return OperationResult.Failed;
         }
 
         if (string.IsNullOrWhiteSpace(store.Location))
         {
-            logger.LogError($"ConfigurationStore resource `{resource.Id}` is missing required location.");
+            logger.LogError(nameof(AppConfigurationServiceControlPlane), nameof(Deploy), "{0}", $"ConfigurationStore resource `{resource.Id}` is missing required location.");
             return OperationResult.Failed;
         }
 
@@ -59,7 +59,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(AppConfigurationServiceControlPlane), nameof(Deploy), "{0}", ex);
             return OperationResult.Failed;
         }
     }

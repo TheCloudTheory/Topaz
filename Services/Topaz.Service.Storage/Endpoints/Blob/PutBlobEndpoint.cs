@@ -72,7 +72,7 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(PutBlobEndpoint), nameof(GetResponse), "{0}", ex);
 
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
@@ -161,7 +161,7 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
 
         if (!Uri.TryCreate(copySourceUrl, UriKind.Absolute, out var sourceUri))
         {
-            Logger.LogError($"Invalid x-ms-copy-source URL: {copySourceUrl}");
+            Logger.LogError(nameof(PutBlobEndpoint), nameof(HandleCopyBlobRequest), "{0}", $"Invalid x-ms-copy-source URL: {copySourceUrl}");
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }

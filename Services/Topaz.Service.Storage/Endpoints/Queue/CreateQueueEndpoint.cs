@@ -77,7 +77,7 @@ internal sealed class CreateQueueEndpoint(Pipeline eventPipeline, ITopazLogger l
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(CreateQueueEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new ByteArrayContent([]);
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");

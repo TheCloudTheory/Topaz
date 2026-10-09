@@ -169,7 +169,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 }
                 return;
             case HttpStatusCode.InternalServerError:
-                logger.LogError(textResponse);
+                logger.LogError(nameof(Router), nameof(MatchAndExecuteEndpoint), textResponse);
                 break;
         }
 
@@ -264,7 +264,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         }
         catch(Exception ex)
         {
-            logger.LogError(ex);
+            logger.LogError(nameof(Router), nameof(CallEndpoint), ex.Message);
             
             response!.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
@@ -301,7 +301,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
     {
         var host = context.Request.Headers.TryGetValue("Host", out var hostValue) ? hostValue.ToString() : "(unknown)";
         var query = context.Request.QueryString.HasValue ? context.Request.QueryString.Value : string.Empty;
-        logger.LogError($"Request {method} {host}{path}{query} has no corresponding endpoint assigned.");
+        logger.LogError(nameof(Router), nameof(CreateNotFoundResponse), $"Request {method} {host}{path}{query} has no corresponding endpoint assigned.");
 
         var failedResponse = new HttpResponseMessage();
         failedResponse.CreateErrorResponse(

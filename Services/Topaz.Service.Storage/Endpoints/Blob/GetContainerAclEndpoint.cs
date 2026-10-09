@@ -62,7 +62,7 @@ internal sealed class GetContainerAclEndpoint(Pipeline eventPipeline, ITopazLogg
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(GetContainerAclEndpoint), nameof(GetResponse), "{0}", ex);
 
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;

@@ -40,7 +40,7 @@ internal sealed class GetDeletedKeysEndpoint(Pipeline eventPipeline, ITopazLogge
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            Logger.LogError(nameof(GetDeletedKeysEndpoint), nameof(GetResponse), "{0}", ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }
