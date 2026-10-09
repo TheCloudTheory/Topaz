@@ -415,7 +415,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: topaz-test-log
-        path: Topaz.Tests/bin/Debug/topaz.log
+        path: Tests/Topaz.Tests/bin/Debug/net10.0/topaz.log
         if-no-files-found: ignore
     - name: Publish Topaz container logs
       if: always()
