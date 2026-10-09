@@ -416,6 +416,7 @@ jobs:
       with:
         name: topaz-test-log
         path: Tests/Topaz.Tests/bin/Debug/net10.0/.topaz/.acr-run-logs/
+        include-hidden-files: true
         if-no-files-found: ignore
     - name: Publish Topaz container logs
       if: always()
