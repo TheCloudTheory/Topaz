@@ -74,10 +74,6 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
         new DeleteRepositoryEndpoint(AcrDataPlane(), logger),
     ];
 
-    public void Bootstrap()
-    {
-    }
-
     private AcrDataPlane AcrDataPlane() =>
         new(new ContainerRegistryResourceProvider(logger), logger);
 }

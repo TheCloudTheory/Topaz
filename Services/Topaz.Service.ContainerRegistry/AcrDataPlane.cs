@@ -186,30 +186,6 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
     }
 
     /// <summary>
-    /// Returns the byte length of an existing blob, or <c>null</c> when not found.
-    /// Corresponds to <c>HEAD /v2/{name}/blobs/{digest}</c>.
-    /// </summary>
-    public long? GetBlobLength(
-        SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
-        string registryName, string digest)
-    {
-        logger.LogDebug(nameof(AcrDataPlane), nameof(GetBlobLength),
-            "Executing {0}: registry={1} digest={2}", nameof(GetBlobLength), registryName, digest);
-
-        PathGuard.ValidateName(registryName);
-
-        var digestHex = SanitizeDigestHex(digest);
-        if (digestHex == null) return null;
-
-        var blobsDir = BlobsPath(sub, rg, registryName);
-        var blobPath = Path.Combine(blobsDir, digestHex);
-        PathGuard.EnsureWithinDirectory(blobPath, blobsDir);
-
-        if (!File.Exists(blobPath)) return null;
-        return new FileInfo(blobPath).Length;
-    }
-
-    /// <summary>
     /// Deletes a blob identified by <paramref name="digest"/>.
     /// Corresponds to <c>DELETE /v2/{name}/blobs/{digest}</c>.
     /// Returns <c>true</c> when the blob existed and was deleted; <c>false</c> when not found.
@@ -234,29 +210,6 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
 
         File.Delete(blobPath);
         return true;
-    }
-
-    /// <summary>
-    /// Returns true when a blob with the given <paramref name="digest"/> exists.
-    /// Corresponds to <c>HEAD /v2/{name}/blobs/{digest}</c>.
-    /// </summary>
-    public bool BlobExists(
-        SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
-        string registryName, string digest)
-    {
-        logger.LogDebug(nameof(AcrDataPlane), nameof(BlobExists),
-            "Executing {0}: registry={1} digest={2}", nameof(BlobExists), registryName, digest);
-
-        PathGuard.ValidateName(registryName);
-
-        var digestHex = SanitizeDigestHex(digest);
-        if (digestHex == null) return false;
-
-        var blobsDir = BlobsPath(sub, rg, registryName);
-        var blobPath = Path.Combine(blobsDir, digestHex);
-        PathGuard.EnsureWithinDirectory(blobPath, blobsDir);
-
-        return File.Exists(blobPath);
     }
 
     // ── Manifests ─────────────────────────────────────────────────────────────
