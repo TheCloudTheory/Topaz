@@ -57,7 +57,9 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         }
         catch (Exception ex)
         {
-            AppendLogAsync(logPath, $"Error: {ex.Message}");
+            AppendLogAsync(logPath,
+                _logger.LogLevel == LogLevel.Debug ? $"Error: {ex.Message} {ex.StackTrace}" : $"Error: {ex.Message}");
+
             _logger.LogError(nameof(FileTaskRunExecutor), nameof(ExecuteAsync), $"Error parsing and running file task: {ex.Message}");
             return false;
         }
