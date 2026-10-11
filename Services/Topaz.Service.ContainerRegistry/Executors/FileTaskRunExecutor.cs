@@ -15,6 +15,8 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
     public async Task<bool> ExecuteAsync(ScheduleTaskRunRequest fileTaskStep, string logPath,
         string registryName,
         string runId,
+        string username,
+        string password,
         CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
@@ -44,7 +46,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
                 }
                 
                 var content = await File.ReadAllTextAsync(taskFilePath, cancellationToken);
-                var result = await ParseAndRunFileTask(content, logPath, registryName, runId, tempDir, cancellationToken);
+                var result = await ParseAndRunFileTask(content, logPath, registryName, runId, tempDir, username, password, cancellationToken);
                 if (!result)
                 {
                     AppendLogAsync(logPath, $"Error parsing and running file task.");
@@ -69,6 +71,8 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
     private async Task<bool> ParseAndRunFileTask(string content, string logPath, string registryName,
         string runId,
         string workingDirectory,
+        string username,
+        string password,
         CancellationToken cancellationToken)
     {
         var task = YamlSerializerFacade.Deserialize<ContainerRegistryTaskFile>(content);
@@ -83,6 +87,19 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         {
             AppendLogAsync(logPath, $"Resolving aliases.");
             aliases = ResolveAliases(task.Alias);
+        }
+        
+        // The initial validation passed. Before we start executing anything 
+        // against the Docker Engine, we need to authorize the operations
+        // using `docker login`
+        var loginSuccessful = await RunProcessAsync("docker",
+            $"login -u {username} -p {password}",
+            logPath, workingDirectory, cancellationToken);
+        
+        if (!loginSuccessful)
+        {
+            AppendLogAsync(logPath, $"Login failed.");
+            return false;
         }
 
         foreach (var step in task.Steps)

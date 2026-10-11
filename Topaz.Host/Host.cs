@@ -203,7 +203,7 @@ public class Host
         ExtractEndpointsForProtocols(services, amqpEndpoints, [Protocol.Amqp]);
         ExtractEndpointsForProtocols(services, tcpEndpoints, [Protocol.Tcp]);
 
-        httpEndpoints.Add(new GetHealthEndpoint());
+        httpEndpoints.Add(new GetHealthEndpoint(_logger));
 
         // Start the built-in HTTP CONNECT proxy. This remaps port-443 CONNECT tunnels
         // targeting Topaz hostnames to the resource-manager port so that MSAL's user-realm
@@ -265,7 +265,7 @@ public class Host
 
         new BackgroundServiceOrchestrator(backgroundServices, _logger).StartAll(cancellationToken);
 
-        if (!AcrDockerExecutor.IsAvailable())
+        if (!new AcrDockerExecutor(_logger).IsAvailable())
         {
             _logger.LogDebug(nameof(Host), nameof(StartAsync),
                 "Docker is not available — ACR DockerBuildRequest runs will use immediate-Succeeded emulation.");

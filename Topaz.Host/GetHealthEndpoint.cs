@@ -6,7 +6,7 @@ using Topaz.Shared;
 
 namespace Topaz.Host;
 
-internal sealed class GetHealthEndpoint : IEndpointDefinition
+internal sealed class GetHealthEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     public string[] Endpoints => ["GET /health"];
     public string[] Permissions => [];
@@ -17,7 +17,7 @@ internal sealed class GetHealthEndpoint : IEndpointDefinition
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var healthResponse = new HealthResponse(Environment.CurrentDirectory, ThisAssembly.AssemblyInformationalVersion, ChaosStateProvider.IsEnabled);
+        var healthResponse = new HealthResponse(new HostState(logger), Environment.CurrentDirectory, ThisAssembly.AssemblyInformationalVersion, ChaosStateProvider.IsEnabled);
         response.CreateJsonContentResponse(healthResponse);
     }
 }

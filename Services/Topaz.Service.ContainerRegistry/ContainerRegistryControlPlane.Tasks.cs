@@ -448,8 +448,12 @@ internal sealed partial class ContainerRegistryControlPlane
             provider.CreateOrUpdateSubresource(
                 subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
 
+            // Get credentials for the run
+            var registry = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+            
             var success =
-                await _fileTaskRunExecutor.ExecuteAsync(fileTaskStep, logPath, registryName, runId,
+                await _fileTaskRunExecutor.ExecuteAsync(fileTaskStep, logPath, registryName, runId, registry.Resource!.Properties.AdminUsername!, 
+                    registry.Resource!.Properties.AdminPassword!,
                     cancellationToken);
 
             // Transition to Succeeded or Failed
