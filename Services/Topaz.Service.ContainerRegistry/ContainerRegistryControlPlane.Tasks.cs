@@ -213,7 +213,7 @@ internal sealed partial class ContainerRegistryControlPlane
         switch (taskResource.Properties.Step)
         {
             case AcrTaskDockerBuildStep dockerStep when
-                AcrDockerExecutor.IsAvailable():
+                _acrDockerExecutor.IsAvailable():
             {
                 var buildResult = RunDockerBuildRequest(subscriptionIdentifier, resourceGroupIdentifier,
                     registryName, taskName, dockerStep, runId);
@@ -364,7 +364,7 @@ internal sealed partial class ContainerRegistryControlPlane
         }
 
         if (string.Equals(type, "DockerBuildRequest", StringComparison.OrdinalIgnoreCase) &&
-            AcrDockerExecutor.IsAvailable())
+            _acrDockerExecutor.IsAvailable())
         {
             var result = ExecuteScheduledDockerRun(subscriptionIdentifier, resourceGroupIdentifier, registryName,
                 rawRequest, runId);
@@ -375,7 +375,7 @@ internal sealed partial class ContainerRegistryControlPlane
             return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, result);
         }
 
-        if (string.Equals(type, "FileTaskRunRequest"))
+        if (string.Equals(type, "FileTaskRunRequest") && _fileTaskRunExecutor.IsAvailable())
         {
             var taskRunRequest = TopazApiRequest.Deserialize<ScheduleTaskRunRequest>(rawRequest)!;
             var validation = taskRunRequest.Validate<ScheduleTaskRunRequest>();

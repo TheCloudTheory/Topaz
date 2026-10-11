@@ -6,14 +6,12 @@ namespace Topaz.Service.ContainerRegistry.Executors;
 
 /// <summary>
 /// Shells out to the host Docker daemon to execute a DockerBuildRequest ACR run.
-/// All other step types are handled by the existing immediate-Succeeded path.
 /// </summary>
 [UsedImplicitly]
 internal class AcrDockerExecutor(ITopazLogger logger) : ExecutorBase(logger)
 {
-    private static readonly Lazy<bool> Available = new(CheckAvailability);
-
-    public static bool IsAvailable() => Available.Value;
+    private readonly ITopazLogger _logger = logger;
+    public bool IsAvailable() => CheckAvailability();
 
     /// <summary>
     /// Runs <c>docker build</c> (and optionally <c>docker push</c>) for a DockerBuildRequest run.
@@ -64,6 +62,7 @@ internal class AcrDockerExecutor(ITopazLogger logger) : ExecutorBase(logger)
         }
         catch (Exception ex)
         {
+            _logger.LogError(nameof(AcrDockerExecutor), nameof(ExecuteAsync), "Error running docker build");
             AppendLogAsync(logPath, $"Error: {ex.Message}");
             return false;
         }
@@ -73,28 +72,6 @@ internal class AcrDockerExecutor(ITopazLogger logger) : ExecutorBase(logger)
             {
                 try { Directory.Delete(tempDir, true); } catch { /* best-effort cleanup */ }
             }
-        }
-    }
-
-    private static bool CheckAvailability()
-    {
-        try
-        {
-            var psi = new ProcessStartInfo("docker", "info")
-            {
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-            };
-            
-            using var process = Process.Start(psi);
-            process?.WaitForExit(5_000);
-            return process?.ExitCode == 0;
-        }
-        catch
-        {
-            return false;
         }
     }
 }

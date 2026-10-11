@@ -81,4 +81,27 @@ internal abstract class ExecutorBase(ITopazLogger logger)
         
         return tempPath;
     }
+    
+    protected bool CheckAvailability()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo("docker", "info")
+            {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            
+            using var process = Process.Start(psi);
+            process?.WaitForExit(5_000);
+            return process?.ExitCode == 0;
+        }
+        catch(Exception ex)
+        {
+            logger.LogError(nameof(AcrDockerExecutor), nameof(CheckAvailability), "Error checking docker availability: {O}", ex.Message);
+            return false;
+        }
+    }
 }

@@ -156,11 +156,6 @@ public class ContainerRegistryRunTests
     [Test]
     public async Task ContainerRegistryRun_ScheduleRun_ShouldSucceed()
     {
-        // When Docker is available the run goes async (Queued→Succeeded/Failed);
-        // immediate-Succeeded path is covered by DockerUnavailable test.
-        Assume.That(!AcrDockerExecutor.IsAvailable(),
-            "Skipping: Docker is available — immediate-Succeeded fallback does not apply here.");
-
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
@@ -210,11 +205,6 @@ public class ContainerRegistryRunTests
     [Test]
     public async Task ContainerRegistryRun_DockerBuildRequest_WhenDockerUnavailable_ImmediateSucceeded()
     {
-        // If Docker is available, the run will go async (Queued/Running/Succeeded/Failed).
-        // This test covers the fallback path: when Docker is unavailable the run is immediate Succeeded.
-        Assume.That(!AcrDockerExecutor.IsAvailable(),
-            "Skipping: Docker is available — immediate-Succeeded fallback does not apply.");
-
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
@@ -241,9 +231,6 @@ public class ContainerRegistryRunTests
     [Test]
     public async Task ContainerRegistryRun_DockerBuildRequest_WhenDockerAvailable_ReachesTerminalState()
     {
-        Assume.That(AcrDockerExecutor.IsAvailable(),
-            "Skipping: Docker is not available on this machine.");
-
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();

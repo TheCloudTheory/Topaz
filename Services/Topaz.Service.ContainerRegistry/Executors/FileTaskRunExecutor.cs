@@ -10,6 +10,7 @@ namespace Topaz.Service.ContainerRegistry.Executors;
 internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(logger)
 {
     private readonly ITopazLogger _logger = logger;
+    public bool IsAvailable() => CheckAvailability();
 
     public async Task<bool> ExecuteAsync(ScheduleTaskRunRequest fileTaskStep, string logPath,
         string registryName,
