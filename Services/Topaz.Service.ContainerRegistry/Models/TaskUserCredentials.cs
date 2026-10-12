@@ -4,8 +4,8 @@ namespace Topaz.Service.ContainerRegistry.Models;
 
 internal sealed class TaskUserCredentials : TopazApiModel
 {
-    public string? Username { get; private set; }
-    public string? Password { get; private init; }
+    public string? Username { get; init; }
+    public string? Password { get; init; }
     
     public static TaskUserCredentials Create(string registryName)
     {

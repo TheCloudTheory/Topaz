@@ -13,6 +13,7 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Auth;
 /// <summary>
 /// Implements the Docker Registry V2 ping endpoint.
 /// - No Authorization header → 401 with Bearer challenge (directs client to /oauth2/token).
+/// - Basic Authorization (Task user) → validated before admin user.
 /// - Basic Authorization → only accepted when admin user is enabled; validates against stored admin credentials.
 /// - Bearer Authorization → validate JWT; return 200 on success.
 /// </summary>
@@ -55,10 +56,28 @@ internal sealed class AcrV2ChallengeEndpoint(ContainerRegistryControlPlane contr
             }
 
             var registry = ResolveRegistry(context);
-            if (registry == null || !registry.Properties.AdminUserEnabled)
+            if (registry == null)
             {
                 logger.LogDebug(nameof(AcrV2ChallengeEndpoint), nameof(GetResponse),
-                    "Basic auth — registry not found or admin user disabled for '{0}'.", username);
+                    "Basic auth — registry not found for '{0}'.", username);
+                ReturnChallenge(response, host);
+                return;
+            }
+            
+            var taskUserCredentials = controlPlane.GetInternalTaskUserCredentials(registry.GetSubscription(), registry.GetResourceGroup(), registry.Name);
+            if(taskUserCredentials.Resource != null && string.Equals(taskUserCredentials.Resource.Username, username, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(taskUserCredentials.Resource.Password, password, StringComparison.Ordinal))
+            {
+                logger.LogDebug(nameof(AcrV2ChallengeEndpoint), nameof(GetResponse),
+                    "Basic auth — task user '{0}' found for registry '{1}'.", username, registry.Name);
+                ReturnOk(response);
+                return;
+            }
+            
+            if (!registry.Properties.AdminUserEnabled)
+            {
+                logger.LogDebug(nameof(AcrV2ChallengeEndpoint), nameof(GetResponse),
+                    "Basic auth — admin user disabled for '{0}'.", username);
                 ReturnChallenge(response, host);
                 return;
             }

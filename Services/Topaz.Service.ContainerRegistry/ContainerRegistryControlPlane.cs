@@ -146,6 +146,18 @@ internal sealed partial class ContainerRegistryControlPlane(
         }
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource, isCreate);
+        
+        // Also create task user credentials
+        var existingCredentials = GetInternalTaskUserCredentials(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (existingCredentials.Result != OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ContainerRegistryResource>(
+                isCreate ? OperationResult.Created : OperationResult.Updated,
+                resource);
+        }
+        
+        var taskUserCredentials = TaskUserCredentials.Create(registryName);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, "task-user-credentials", registryName, TaskUserCredentialsSubresource, taskUserCredentials);
 
         if (!string.Equals(request.Identity?.Type, "SystemAssigned", StringComparison.OrdinalIgnoreCase))
             return new ControlPlaneOperationResult<ContainerRegistryResource>(
@@ -166,18 +178,6 @@ internal sealed partial class ContainerRegistryControlPlane(
         };
         
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource);
-        
-        // Also create task user credentials
-        var existingCredentials = GetInternalTaskUserCredentials(subscriptionIdentifier, resourceGroupIdentifier, registryName);
-        if (existingCredentials.Result != OperationResult.NotFound)
-        {
-            return new ControlPlaneOperationResult<ContainerRegistryResource>(
-                isCreate ? OperationResult.Created : OperationResult.Updated,
-                resource);
-        }
-        
-        var taskUserCredentials = TaskUserCredentials.Create(registryName);
-        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, "task-user-credentials", registryName, TaskUserCredentialsSubresource, taskUserCredentials);
 
         return new ControlPlaneOperationResult<ContainerRegistryResource>(
             isCreate ? OperationResult.Created : OperationResult.Updated,
@@ -390,7 +390,7 @@ internal sealed partial class ContainerRegistryControlPlane(
         return new ControlPlaneOperationResult<RegistryUsage[]>(OperationResult.Success, usages);
     }
 
-    private ControlPlaneOperationResult<TaskUserCredentials> GetInternalTaskUserCredentials(
+    internal ControlPlaneOperationResult<TaskUserCredentials> GetInternalTaskUserCredentials(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string registryName)
