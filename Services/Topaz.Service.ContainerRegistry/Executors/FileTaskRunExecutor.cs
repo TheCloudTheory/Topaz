@@ -93,7 +93,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         // against the Docker Engine, we need to authorize the operations
         // using `docker login`
         var loginSuccessful = await RunProcessAsync("docker",
-            $"login -u {username} -p {password}",
+            $"login {GlobalSettings.GetContainerRegistryEndpoint(registryName)} -u {username} -p {password}",
             logPath, workingDirectory, cancellationToken);
         
         if (!loginSuccessful)
