@@ -28,6 +28,9 @@ internal sealed partial class ContainerRegistryControlPlane(
     private const string MissingLocationCode = "LocationRequired";
     private const string MissingLocationMessage = "The 'location' property is required when creating a container registry.";
 
+    private static readonly string TaskUserCredentialsSubresource =
+        nameof(Subresources.TaskUserCredentials).ToLowerInvariant();
+
     public static ContainerRegistryControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
         new ContainerRegistryResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
@@ -161,7 +164,20 @@ internal sealed partial class ContainerRegistryControlPlane(
             PrincipalId = identityOperation.Resource.Properties.PrincipalId,
             TenantId = identityOperation.Resource.Properties.TenantId
         };
+        
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource);
+        
+        // Also create task user credentials
+        var existingCredentials = GetInternalTaskUserCredentials(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (existingCredentials.Result != OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ContainerRegistryResource>(
+                isCreate ? OperationResult.Created : OperationResult.Updated,
+                resource);
+        }
+        
+        var taskUserCredentials = TaskUserCredentials.Create(registryName);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, "task-user-credentials", registryName, TaskUserCredentialsSubresource, taskUserCredentials);
 
         return new ControlPlaneOperationResult<ContainerRegistryResource>(
             isCreate ? OperationResult.Created : OperationResult.Updated,
@@ -365,9 +381,38 @@ internal sealed partial class ContainerRegistryControlPlane(
 
         var result = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
         if (result.Result == OperationResult.NotFound)
-            return new ControlPlaneOperationResult<RegistryUsage[]>(OperationResult.NotFound, null, result.Reason, result.Code);
+        {
+            return new ControlPlaneOperationResult<RegistryUsage[]>(OperationResult.NotFound, null, result.Reason,
+                result.Code);
+        }
 
         var usages = ContainerRegistryResourceProperties.GetUsagesForSku(result.Resource!.Sku?.Name);
         return new ControlPlaneOperationResult<RegistryUsage[]>(OperationResult.Success, usages);
+    }
+
+    private ControlPlaneOperationResult<TaskUserCredentials> GetInternalTaskUserCredentials(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(GetInternalTaskUserCredentials),
+            "Executing {0}: registry={1}, resourceGroup={2}, subscription={3}",
+            nameof(GetInternalTaskUserCredentials), registryName, resourceGroupIdentifier.Value,
+            subscriptionIdentifier.Value);
+
+        var result = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (result.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<TaskUserCredentials>(OperationResult.NotFound, null, result.Reason,
+                result.Code);
+        }
+
+        var credentials = provider.GetSubresourceAs<TaskUserCredentials>(subscriptionIdentifier,
+            resourceGroupIdentifier, "task-user-credentials", registryName, TaskUserCredentialsSubresource);
+        
+        return credentials == null
+            ? new ControlPlaneOperationResult<TaskUserCredentials>(OperationResult.NotFound, null,
+                "Task user credentials not found", "NotFound")
+            : new ControlPlaneOperationResult<TaskUserCredentials>(OperationResult.Success, credentials);
     }
 }

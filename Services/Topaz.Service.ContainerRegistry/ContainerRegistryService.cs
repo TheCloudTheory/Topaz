@@ -18,7 +18,7 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".container-registry");
-    public static IReadOnlyCollection<string>? Subresources => ["tasks", "runs"];
+    public static IReadOnlyCollection<string>? Subresources => ["tasks", "runs", "taskusercredentials"];
     public static string UniqueName => "container-registry";
 
     public string Name => "Azure Container Registry";

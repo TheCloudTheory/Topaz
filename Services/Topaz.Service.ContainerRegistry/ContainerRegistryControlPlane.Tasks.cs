@@ -449,11 +449,11 @@ internal sealed partial class ContainerRegistryControlPlane
                 subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
 
             // Get credentials for the run
-            var registry = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+            var credentials = GetInternalTaskUserCredentials(subscriptionIdentifier, resourceGroupIdentifier, registryName);
             
             var success =
-                await _fileTaskRunExecutor.ExecuteAsync(fileTaskStep, logPath, registryName, runId, registry.Resource!.Properties.AdminUsername!, 
-                    registry.Resource!.Properties.AdminPassword!,
+                await _fileTaskRunExecutor.ExecuteAsync(fileTaskStep, logPath, registryName, runId, credentials.Resource!.Username!, 
+                    credentials.Resource!.Password!,
                     cancellationToken);
 
             // Transition to Succeeded or Failed
