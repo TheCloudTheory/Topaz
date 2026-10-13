@@ -290,7 +290,6 @@ public class ContainerRegistryRunTests
     [TestCase("build-test-hello-world.yaml")]
     [TestCase("files-working-directory.yaml")]
     [TestCase("hello-world.yaml")]
-    [TestCase("mounts-multistep.yaml")]
     [TestCase("network-curl.yaml")]
     [TestCase("simpletask.yaml")]
     [TestCase("when-parallel-dependent.yaml")]

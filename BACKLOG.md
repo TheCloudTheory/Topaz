@@ -137,26 +137,6 @@ TODO: Azure Cosmos DB: VectorDistance query support (vector search stub)
 ### ACR Tasks — multi-step task files
 
 <!--
-TODO: ACR Tasks: Multi-step task file execution (FileTaskRunRequest)
-  Parse the task YAML provided via FileTaskRunRequest (taskFilePath points to a YAML file
-  in the cloned context) and execute each step sequentially:
-  - build steps: docker build with the specified dockerfile, context, and build-args
-  - cmd steps: docker run with the specified image and command
-  - push steps: docker push to the local OCI registry
-  - when dependencies: topological ordering — a step only starts once all steps listed in
-    its `when` array have completed successfully
-  Transition the run through Queued → Running → Succeeded / Failed using the same async LRO
-  pattern already implemented for DockerBuildRequest (202 Accepted + Azure-AsyncOperation header).
-  Stream combined per-step output (prefixed with the step id) to the log content endpoint
-  (GET /v2/runs/{runId}/log).
-  If any step fails and `continueOnError` is false (the default), mark remaining steps as
-  skipped and transition the run to Failed.
-  Prerequisite: Docker must be available on the host (falls back to immediate-Succeeded when absent).
-  milestone: v1.11
-  labels: enhancement, container-registry
--->
-
-<!--
 TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
   Extend multi-step execution to the EncodedTaskRunRequest path: base64-decode
   `encodedTaskContent` to recover the YAML, then apply the same step execution logic as
@@ -170,6 +150,29 @@ TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
 ---
 
 ## v1.12
+
+### ACR Enhancements
+
+<!--
+TODO: ACR Tasks: Pass dynamic values
+  Support passing dynamic values to ACR tasks at runtime.
+  milestone: v1.12
+  labels: enhancement, container-registry
+-->
+
+<!--
+TODO: ACR Tasks: Volumes
+  Support volumes in ACR tasks.
+  milestone: v1.12
+  labels: enhancement, container-registry
+-->
+
+<!--
+TODO: ACR Tasks: Mount secrets
+  Support mounting secrets in ACR tasks.
+  milestone: v1.12
+  labels: enhancement, container-registry
+-->
 
 ### API Management — policy execution subset
 
