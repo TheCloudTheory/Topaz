@@ -1,8 +1,11 @@
+using JetBrains.Annotations;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace Topaz.Service.Shared;
 
+[UsedImplicitly]
 public sealed class YamlSerializerFacade
 {
     static YamlSerializerFacade()
@@ -16,6 +19,21 @@ public sealed class YamlSerializerFacade
     
     public static T Deserialize<T>(string yaml)
     {
-        return Deserializer.Deserialize<T>(yaml);
+        try
+        {
+            return Deserializer.Deserialize<T>(yaml);
+        }
+        catch (YamlException ex)
+        {
+            throw new WrappedYamlException(ex);
+        }
+    }
+}
+
+public class WrappedYamlException : Exception
+{
+    internal WrappedYamlException(YamlException exception)
+        : base(exception.Message, exception)
+    {
     }
 }

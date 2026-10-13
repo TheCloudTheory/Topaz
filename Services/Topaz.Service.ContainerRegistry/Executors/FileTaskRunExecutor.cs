@@ -26,37 +26,47 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
 
         try
         {
-            if (!string.IsNullOrWhiteSpace(fileTaskStep.SourceLocation) && fileTaskStep.SourceLocation.EndsWith(".git") && !string.IsNullOrWhiteSpace(fileTaskStep.TaskFilePath))
+            if (!string.IsNullOrWhiteSpace(fileTaskStep.SourceLocation) &&
+                fileTaskStep.SourceLocation.EndsWith(".git") && !string.IsNullOrWhiteSpace(fileTaskStep.TaskFilePath))
             {
                 AppendLogAsync(logPath, $"Cloning context from {fileTaskStep.SourceLocation}...");
-             
+
                 var tempDir = GenerateTempDir(runId);
-                var cloneOk = await RunProcessAsync("git", $"clone {fileTaskStep.SourceLocation} {tempDir}", logPath, tempDir, cancellationToken);
+                var cloneOk = await RunProcessAsync("git", $"clone {fileTaskStep.SourceLocation} {tempDir}", logPath,
+                    tempDir, cancellationToken);
                 if (!cloneOk)
                 {
                     AppendLogAsync(logPath, $"Error cloning context from {fileTaskStep.SourceLocation}");
                     return false;
                 }
-                
+
                 var taskFilePath = Path.Combine(tempDir, fileTaskStep.TaskFilePath);
                 if (!File.Exists(taskFilePath))
                 {
                     AppendLogAsync(logPath, $"Task file {taskFilePath} does not exist");
                     return false;
                 }
-                
+
                 var content = await File.ReadAllTextAsync(taskFilePath, cancellationToken);
-                var result = await ParseAndRunFileTask(content, logPath, registryName, runId, tempDir, username, password, cancellationToken);
+                var result = await ParseAndRunFileTask(content, logPath, registryName, runId, tempDir, username,
+                    password, cancellationToken);
                 if (!result)
                 {
                     AppendLogAsync(logPath, $"Error parsing and running file task.");
                     return false;
                 }
-                
+
                 AppendLogAsync(logPath, "Run completed successfully.");
             }
 
             return true;
+        }
+        catch (WrappedYamlException ex)
+        {
+            AppendLogAsync(logPath, ex.ToString());
+
+            _logger.LogError(nameof(FileTaskRunExecutor), nameof(ExecuteAsync), $"Error parsing and running file task: {ex.Message}");
+            return false;
         }
         catch (Exception ex)
         {
