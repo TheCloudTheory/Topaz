@@ -4,7 +4,6 @@ using System.Net.Http.Headers;
 using Topaz.Dns;
 using Topaz.Identity;
 using Topaz.Service.ContainerRegistry.Models;
-using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -37,22 +36,22 @@ internal static class AcrTokenHelper
         ContainerRegistryControlPlane controlPlane,
         ITopazLogger logger)
     {
-        if (!string.IsNullOrWhiteSpace(refreshToken))
+        if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            try
-            {
-                var validated = JwtHelper.ValidateJwt(refreshToken);
-                return validated?.Subject ?? Globals.GlobalAdminId;
-            }
-            catch
-            {
-                logger.LogDebug(nameof(AcrTokenHelper), nameof(ResolveObjectId),
-                    "refresh_token validation failed — issuing 401.");
-                return null;
-            }
+            return ResolveObjectIdFromAuthorization(context, controlPlane, logger);
         }
-
-        return ResolveObjectIdFromAuthorization(context, controlPlane, logger);
+        
+        try
+        {
+            var validated = JwtHelper.ValidateJwt(refreshToken);
+            return validated?.Subject ?? Globals.GlobalAdminId;
+        }
+        catch
+        {
+            logger.LogDebug(nameof(AcrTokenHelper), nameof(ResolveObjectId),
+                "refresh_token validation failed — issuing 401.");
+            return null;
+        }
     }
 
     private static string? ResolveObjectIdFromAuthorization(
@@ -68,16 +67,17 @@ internal static class AcrTokenHelper
             return null;
         }
 
-        if (!AuthenticationHeaderValue.TryParse(authorization, out var parsedAuthorization) ||
-            !string.Equals(parsedAuthorization.Scheme, "Basic", StringComparison.OrdinalIgnoreCase) ||
-            string.IsNullOrWhiteSpace(parsedAuthorization.Parameter))
+        if (AuthenticationHeaderValue.TryParse(authorization, out var parsedAuthorization) &&
+            string.Equals(parsedAuthorization.Scheme, "Basic", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(parsedAuthorization.Parameter))
         {
-            logger.LogDebug(nameof(AcrTokenHelper), nameof(ResolveObjectId),
-                "Unsupported or malformed Authorization header — issuing 401.");
-            return null;
+            return ValidateBasicAuth(parsedAuthorization.Parameter, context, controlPlane, logger);
         }
+            
+        logger.LogDebug(nameof(AcrTokenHelper), nameof(ResolveObjectId),
+            "Unsupported or malformed Authorization header — issuing 401.");
+        return null;
 
-        return ValidateBasicAuth(parsedAuthorization.Parameter, context, controlPlane, logger);
     }
 
     private static string? ValidateBasicAuth(
@@ -121,7 +121,23 @@ internal static class AcrTokenHelper
         }
 
         var registry = ResolveRegistry(context, controlPlane);
-        if (registry == null || !registry.Properties.AdminUserEnabled)
+        if (registry == null)
+        {
+            logger.LogDebug(nameof(AcrTokenHelper), nameof(ValidateBasicAuth),
+                "Basic auth — registry not found.");
+            return null;
+        }
+        
+        var taskUserCredentials = controlPlane.GetInternalTaskUserCredentials(registry.GetSubscription(), registry.GetResourceGroup(), registry.Name);
+        if(taskUserCredentials.Resource != null && string.Equals(taskUserCredentials.Resource.Username, username, StringComparison.OrdinalIgnoreCase) &&
+           string.Equals(taskUserCredentials.Resource.Password, password, StringComparison.Ordinal))
+        {
+            logger.LogDebug(nameof(AcrTokenHelper), nameof(ValidateBasicAuth),
+                "Basic auth — task user '{0}' found for registry '{1}'.", username, registry.Name);
+            return Globals.GlobalAdminId;
+        }
+        
+        if (!registry.Properties.AdminUserEnabled)
         {
             logger.LogDebug(nameof(AcrTokenHelper), nameof(ValidateBasicAuth),
                 "Basic auth — registry not found or admin user disabled.");
