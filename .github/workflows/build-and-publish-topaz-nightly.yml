@@ -41,6 +41,14 @@ jobs:
         mv ./publish/Topaz.Host ./publish/topaz-host-linux-x64
     - name: Test (E2E + CLI only)
       run: dotnet test Tests/Topaz.Tests/Topaz.Tests.csproj -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
+    - name: Publish Topaz test log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: topaz-test-log
+        path: Tests/Topaz.Tests/bin/Debug/net10.0/.topaz/.acr-run-logs/
+        include-hidden-files: true
+        if-no-files-found: ignore
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
