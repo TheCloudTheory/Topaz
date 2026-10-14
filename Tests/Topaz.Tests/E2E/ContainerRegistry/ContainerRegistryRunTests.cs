@@ -1,15 +1,13 @@
-using Topaz.CLI;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ContainerRegistry;
 using Azure.ResourceManager.ContainerRegistry.Models;
+using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
-using Topaz.Service.ContainerRegistry;
-using Topaz.Service.ContainerRegistry.Executors;
 
-namespace Topaz.Tests.E2E;
+namespace Topaz.Tests.E2E.ContainerRegistry;
 
 public class ContainerRegistryRunTests
 {

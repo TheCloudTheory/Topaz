@@ -1,4 +1,6 @@
-using Topaz.CLI;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Azure;
 using Azure.Containers.ContainerRegistry;
 using Azure.Core;
@@ -8,13 +10,11 @@ using Azure.ResourceManager.ContainerRegistry.Models;
 using Azure.ResourceManager.ManagedServiceIdentities;
 using Azure.ResourceManager.Models;
 using Microsoft.Graph;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
+using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
-namespace Topaz.Tests.E2E;
+namespace Topaz.Tests.E2E.ContainerRegistry;
 
 public class ContainerRegistryTests
 {
