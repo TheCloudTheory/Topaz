@@ -1,3 +1,4 @@
+using System.Text;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
@@ -319,6 +320,44 @@ public class ContainerRegistryRunTests
         
         await TestContext.Progress.WriteLineAsync(logResult.Value.LogLink);
         
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(runLro.Value.Data.RunId, Is.Not.Null.And.Not.Empty);
+            Assert.That(runLro.Value.Data.Status.ToString(), Is.EqualTo("Succeeded"));
+            Assert.That(runLro.Value.Data.RunType.ToString(), Is.EqualTo("QuickRun"));
+        }
+    }
+
+    [Test]
+    public async Task ContainerRegistry_EncodedFileTaskRun_MultiStepYaml_ShouldReturnQuickRun()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Standard));
+        var registryLro = await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var taskContent = """
+                          version: v1.1.0
+                          steps:
+                            - cmd: echo "hello from step 1"
+                            - cmd: echo "hello from step 2"
+                          """;
+        var encodedTaskContent = Convert.ToBase64String(Encoding.UTF8.GetBytes(taskContent));
+        var runContent = new ContainerRegistryEncodedTaskRunContent(
+            encodedTaskContent,
+            new ContainerRegistryPlatformProperties(ContainerRegistryOS.Linux));
+
+        var runLro = await registryLro.Value.ScheduleRunAsync(WaitUntil.Completed, runContent);
+        var logResult = await runLro.Value.GetLogSasUrlAsync();
+
+        await TestContext.Progress.WriteLineAsync(logResult.Value.LogLink);
+
         using (Assert.EnterMultipleScope())
         {
             Assert.That(runLro.Value.Data.RunId, Is.Not.Null.And.Not.Empty);
