@@ -165,7 +165,7 @@ public class ContainerRegistryRunTests
         var registryLro = await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
 
         var buildContent = new ContainerRegistryDockerBuildContent(
-            "Dockerfile",
+            "docker/Dockerfile",
             new ContainerRegistryPlatformProperties(ContainerRegistryOS.Linux))
         {
             IsPushEnabled = false
@@ -173,11 +173,11 @@ public class ContainerRegistryRunTests
 
         var runLro = await registryLro.Value.ScheduleRunAsync(WaitUntil.Completed, buildContent);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(runLro.Value.Data.RunId, Is.Not.Null.And.Not.Empty);
             Assert.That(runLro.Value.Data.Status.ToString(), Is.EqualTo("Succeeded"));
-        });
+        }
     }
 
     [Test]

@@ -45,7 +45,7 @@ internal class AcrDockerExecutor(ITopazLogger logger) : ExecutorBase(logger)
                 buildContext = contextPath;
             }
 
-            var buildArgs = $"build -f \"{dockerFilePath}\" -t \"{imageName}\" \"{buildContext}\"";
+            var buildArgs = $"build -f {dockerFilePath} -t {imageName} {buildContext}";
             AppendLogAsync(logPath, $"Running: docker {buildArgs}");
             var buildOk = await RunProcessAsync("docker", buildArgs, logPath, null, cancellationToken);
             if (!buildOk) return false;
