@@ -535,6 +535,60 @@ public class ContainerRegistryTests : TopazFixture
     }
 
     [Test]
+    public async Task AcrTaskRun_RunEndpoint_ShouldReturnAutoRunAndArchiveSetting()
+    {
+        const string registryName = "topazacrrun01";
+        const string resourceGroup = "test-acr-run-rg";
+        const string taskName = "run-task";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+        await RunAzureCliCommand(
+            $"az acr task create --name {taskName} --registry {registryName} " +
+            $"--resource-group {resourceGroup} --cmd \"echo hello\" --no-push --context /dev/null");
+
+        await RunAzureCliCommand(
+            $"az rest --method post " +
+            $"--url \"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/subscriptions/$(az account show --query id -o tsv)/resourceGroups/{resourceGroup}/providers/Microsoft.ContainerRegistry/registries/{registryName}/tasks/{taskName}/run?api-version=2019-04-01\" " +
+            "--body '{\"properties\":{\"isArchiveEnabled\":true}}'",
+            resp =>
+            {
+                var properties = resp["properties"] ?? resp;
+                Assert.Multiple(() =>
+                {
+                    Assert.That(properties["runId"]?.GetValue<string>(), Is.Not.Null.And.Not.Empty);
+                    Assert.That(properties["runType"]?.GetValue<string>(), Is.EqualTo("AutoRun"));
+                    Assert.That(properties["status"]?.GetValue<string>(), Is.EqualTo("Succeeded"));
+                    Assert.That(properties["isArchiveEnabled"]?.GetValue<bool>(), Is.True);
+                });
+            });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task AcrTaskRun_RunEndpoint_WhenTaskDoesNotExist_ShouldReportTaskNotFound()
+    {
+        const string registryName = "topazacrrun01";
+        const string resourceGroup = "test-acr-run-rg";
+        const string taskName = "missing-task";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+
+        await RunAzureCliCommand(
+            $"az rest --method post " +
+            $"--url \"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/subscriptions/$(az account show --query id -o tsv)/resourceGroups/{resourceGroup}/providers/Microsoft.ContainerRegistry/registries/{registryName}/tasks/{taskName}/run?api-version=2019-04-01\" " +
+            "--body '{}' 2>&1 | grep -q 'TaskNotFound'");
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task AcrTaskRun_ShowRun_ShouldReturnRunDetails()
     {
         const string registryName = "topazacrrun01";
