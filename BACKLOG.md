@@ -134,21 +134,6 @@ TODO: Azure Cosmos DB: VectorDistance query support (vector search stub)
   labels: enhancement, cosmos-db, ai-agents
 -->
 
-### ACR Tasks — multi-step task files
-
-<!--
-TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
-  Extend multi-step execution to the EncodedTaskRunRequest path: base64-decode
-  `encodedTaskContent` to recover the YAML, then apply the same step execution logic as
-  FileTaskRunRequest above.
-  The decoded YAML may also carry an `encodedContext` (base64-encoded tar.gz of the build
-  context); if present, extract it to a temporary directory before running any build steps.
-  milestone: v1.11
-  labels: enhancement, container-registry
--->
-
----
-
 ## v1.12
 
 ### ACR Enhancements
