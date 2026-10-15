@@ -8,6 +8,38 @@ keywords: [ACR Tasks, Azure Container Registry tasks, Topaz ACR, local container
 
 Azure Container Registry (ACR) Tasks define container builds and command steps associated with a registry. Topaz implements the ACR Tasks management API and can execute supported runs using the Docker CLI and Docker Engine available to the Topaz process. It does not run tasks in Azure's managed build service.
 
+## Architecture
+
+The client uses the Azure Resource Manager (ARM) API to manage task definitions and start runs. Topaz stores task and run resources, then dispatches supported work to an executor that uses the host's Docker environment. Run state and logs are available to the client through the control plane.
+
+```mermaid
+flowchart LR
+    Client[Azure SDK or CLI]
+    API[Topaz Container Registry control plane]
+    Store[(Task and run resources<br/>and run logs)]
+    DockerBuild[Docker build executor]
+    FileTask[Task-file executor]
+    Docker[Host Docker CLI and Engine]
+    Git[Git source]
+
+    Client -->|Create, update, list tasks| API
+    API -->|Persist task definition| Store
+    Client -->|Trigger task or schedule run| API
+    API -->|Create run: Queued| Store
+    API -->|Dispatch Docker build| DockerBuild
+    API -->|Dispatch YAML task| FileTask
+    FileTask -->|Clone when source ends in .git| Git
+    DockerBuild -->|docker build; optional push| Docker
+    FileTask -->|Sequential build, push, and cmd steps| Docker
+    DockerBuild -->|Append output| Store
+    FileTask -->|Append output| Store
+    DockerBuild -->|Execution result| API
+    FileTask -->|Execution result| API
+    API -->|Update run status| Store
+    Client -->|Get or list runs; get log| API
+    API -->|Run status and log| Client
+```
+
 ## Task definitions and runs
 
 Task definitions are registry resources. Topaz supports creating, updating, retrieving, listing, and deleting tasks. It stores task properties such as the platform, step, timeout, credentials, and trigger configuration.
