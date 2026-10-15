@@ -213,7 +213,7 @@ public class ContainerRegistryRunTests
         var registryLro = await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
 
         var buildContent = new ContainerRegistryDockerBuildContent(
-            "Dockerfile",
+            "docker/Dockerfile",
             new ContainerRegistryPlatformProperties(ContainerRegistryOS.Linux))
         {
             IsPushEnabled = false
