@@ -231,6 +231,15 @@ internal sealed partial class ContainerRegistryControlPlane
                     "Executing {0}: File run '{1}' queued for task '{2}'.", nameof(TriggerTaskRun), runId, taskName);
                 return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, buildResult);
             }
+            case AcrTaskEncodedTaskStep encodedTaskStep:
+            {
+                var buildResult = RunFileTaskRequest(subscriptionIdentifier, resourceGroupIdentifier,
+                    registryName, taskName, AcrTaskFileTaskStep.FromEncoded(encodedTaskStep), runId);
+
+                logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(TriggerTaskRun),
+                    "Executing {0}: Encoded run '{1}' queued for task '{2}'.", nameof(TriggerTaskRun), runId, taskName);
+                return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, buildResult);
+            }
         }
 
         // Non-Docker step or Docker unavailable: immediate-Succeeded.
@@ -394,6 +403,26 @@ internal sealed partial class ContainerRegistryControlPlane
                     "Failed to execute scheduled task run");
             }
 
+            logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ScheduleRun),
+                "Executing {0}: Docker run '{1}' queued.", nameof(ScheduleRun), runId);
+
+            return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, result);
+        }
+
+        if (string.Equals(type, "EncodedTaskRunRequest") && _fileTaskRunExecutor.IsAvailable())
+        {
+            var encodedTaskRunRequest = TopazApiRequest.Deserialize<ScheduleEncodedTaskRunRequest>(rawRequest)!;
+            var decoded = encodedTaskRunRequest.Decode();
+            
+            var result = ExecuteScheduledTaskRun(subscriptionIdentifier, resourceGroupIdentifier,
+                registryName, ScheduleTaskRunRequest.From(encodedTaskRunRequest, decoded), runId, cancellationToken);
+
+            if (result == null)
+            {
+                return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Failed, null,
+                    "Failed to execute scheduled task run");
+            }
+            
             logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ScheduleRun),
                 "Executing {0}: Docker run '{1}' queued.", nameof(ScheduleRun), runId);
 

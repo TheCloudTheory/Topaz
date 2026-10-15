@@ -345,8 +345,8 @@ public class ContainerRegistryRunTests
         var taskContent = """
                           version: v1.1.0
                           steps:
-                            - cmd: echo "hello from step 1"
-                            - cmd: echo "hello from step 2"
+                            - cmd: bash echo "hello from step 1"
+                            - cmd: bash echo "hello from step 2"
                           """;
         var encodedTaskContent = Convert.ToBase64String(Encoding.UTF8.GetBytes(taskContent));
         var runContent = new ContainerRegistryEncodedTaskRunContent(

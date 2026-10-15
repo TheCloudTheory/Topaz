@@ -12,7 +12,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
     private readonly ITopazLogger _logger = logger;
     public bool IsAvailable() => CheckAvailability();
 
-    public async Task<bool> ExecuteAsync(ScheduleTaskRunRequest fileTaskStep, string logPath,
+    public async Task<bool> ExecuteAsync(ScheduleTaskRunRequest request, string logPath,
         string registryName,
         string runId,
         string username,
@@ -26,38 +26,50 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
 
         try
         {
-            if (!string.IsNullOrWhiteSpace(fileTaskStep.SourceLocation) &&
-                fileTaskStep.SourceLocation.EndsWith(".git") && !string.IsNullOrWhiteSpace(fileTaskStep.TaskFilePath))
+            var tempDir = GenerateTempDir(runId);
+            var content = string.Empty;
+            
+            if (!string.IsNullOrWhiteSpace(request.SourceLocation) &&
+                request.SourceLocation.EndsWith(".git") &&
+                !string.IsNullOrWhiteSpace(request.TaskFilePath))
             {
-                AppendLogAsync(logPath, $"Cloning context from {fileTaskStep.SourceLocation}...");
-
-                var tempDir = GenerateTempDir(runId);
-                var cloneOk = await RunProcessAsync("git", $"clone {fileTaskStep.SourceLocation} {tempDir}", logPath,
+                AppendLogAsync(logPath, $"Cloning context from {request.SourceLocation}...");
+            
+                var cloneOk = await RunProcessAsync("git", $"clone {request.SourceLocation} {tempDir}", logPath,
                     tempDir, cancellationToken);
                 if (!cloneOk)
                 {
-                    AppendLogAsync(logPath, $"Error cloning context from {fileTaskStep.SourceLocation}");
+                    AppendLogAsync(logPath, $"Error cloning context from {request.SourceLocation}");
                     return false;
                 }
 
-                var taskFilePath = Path.Combine(tempDir, fileTaskStep.TaskFilePath);
+                var taskFilePath = Path.Combine(tempDir, request.TaskFilePath);
                 if (!File.Exists(taskFilePath))
                 {
                     AppendLogAsync(logPath, $"Task file {taskFilePath} does not exist");
                     return false;
                 }
-
-                var content = await File.ReadAllTextAsync(taskFilePath, cancellationToken);
-                var result = await ParseAndRunFileTask(content, logPath, registryName, runId, tempDir, username,
-                    password, cancellationToken);
-                if (!result)
-                {
-                    AppendLogAsync(logPath, $"Error parsing and running file task.");
-                    return false;
-                }
-
-                AppendLogAsync(logPath, "Run completed successfully.");
+                
+                content = await File.ReadAllTextAsync(taskFilePath, cancellationToken);
             }
+
+            // For EncodedTaskRunRequest the content is passed after being decoded 
+            // from the base64 encoded string. It reuses the same model though for
+            // simplicity.
+            if (!string.IsNullOrWhiteSpace(request.TaskFileContent))
+            {
+                content = request.TaskFileContent;
+            }
+            
+            var result = await ParseAndRunFileTask(content, logPath, registryName, runId, tempDir, username,
+                password, cancellationToken);
+            if (!result)
+            {
+                AppendLogAsync(logPath, $"Error parsing and running file task.");
+                return false;
+            }
+
+            AppendLogAsync(logPath, "Run completed successfully.");
 
             return true;
         }

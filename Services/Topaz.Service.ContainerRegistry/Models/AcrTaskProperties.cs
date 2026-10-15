@@ -47,6 +47,11 @@ internal sealed class AcrTaskFileTaskStep : AcrTaskStepProperties
     public string? TaskFilePath { get; init; }
     public List<AcrTaskSetValue>? Values { get; init; }
     public string? ValuesFilePath { get; init; }
+
+    public static AcrTaskFileTaskStep FromEncoded(AcrTaskEncodedTaskStep encodedTaskStep)
+    {
+        return new AcrTaskFileTaskStep();
+    }
 }
 
 internal sealed class AcrTaskArgument

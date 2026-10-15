@@ -9,6 +9,7 @@ internal sealed class ScheduleTaskRunRequest : TopazApiRequest, IValidatable
 {
 	public AcrTaskPlatformProperties? Platform { get; init; }
 	public string? TaskFilePath { get; init; }
+	public string? TaskFileContent { get; init; }
 	public string Type { get; init; } = string.Empty;
 	public AcrTaskAgentProperties? AgentConfiguration { get; init; }
 	public AcrTaskCredentials? Credentials { get; init; }
@@ -31,5 +32,14 @@ internal sealed class ScheduleTaskRunRequest : TopazApiRequest, IValidatable
 		}
 
 		return Timeout is < 300 or > 28800 ? (false, "Timeout must be between 300 and 28800 seconds.") : (true, null);
+	}
+
+	public static ScheduleTaskRunRequest From(ScheduleEncodedTaskRunRequest encodedTaskRunRequest, string decoded)
+	{
+		return new ScheduleTaskRunRequest
+		{
+			Platform = encodedTaskRunRequest.Platform,
+			TaskFileContent = decoded
+		};
 	}
 }
