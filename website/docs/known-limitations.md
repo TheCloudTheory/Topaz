@@ -238,29 +238,10 @@ This is a standard TLS trust-store configuration requirement and not a Topaz bug
 
 ---
 
-## ACR Tasks — multi-step task files not executed
+## ACR Tasks — task-file directives are only partially supported
 
 **Affected services:** Azure Container Registry — ACR Tasks (`FileTaskRunRequest`, `EncodedTaskRunRequest`)
 
-Topaz supports real Docker execution for `DockerBuildRequest` runs (introduced in v1.7-beta). However, multi-step task files submitted via `FileTaskRunRequest` (a `.yaml` file path) or `EncodedTaskRunRequest` (base64-encoded YAML) are not parsed or executed. These runs report `provisioningState: Succeeded` immediately without running any steps.
+Topaz parses and executes task-file steps in order, but only supports `build`, `push`, and `cmd` step types. It does not evaluate conditional step ordering (`when`), retries, environment variables, values files, volumes, or secrets. See [ACR Tasks in Topaz](./concepts/acr-tasks.md) for the execution model and Docker requirements.
 
-Multi-step task YAML supports `build`, `push`, and `cmd` step types with `when` dependency ordering, retry logic, and environment variables — see the [ACR Tasks multi-step reference](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-tasks-multi-step). None of these directives are evaluated by Topaz.
-
-### Impact
-
-Workflows that use `az acr run --file acr-task.yaml` or pass encoded task YAML to `scheduleRun` will receive an immediate `Succeeded` response with no actual work performed. Step outputs, produced images, and push operations are all silently skipped.
-
-`DockerBuildRequest` runs (`az acr build`, `az acr run --cmd`) are unaffected and execute real Docker builds when Docker is available on the host.
-
-**Workaround:** run multi-step task files directly with `docker run` or a local task runner during development. Use `DockerBuildRequest` for steps that can be expressed as a single `docker build` plus optional push.
-
-### Planned fix — v1.11
-
-Parse the task YAML from `taskFilePath` / `encodedTaskContent` and execute each step sequentially:
-- `build` steps → `docker build`
-- `cmd` steps → `docker run`
-- `push` steps → `docker push`
-- `when` dependencies → topological step ordering
-
-Stream combined per-step output to the log content endpoint (`GET /v2/runs/{runId}/log`). Transition the run through `Queued → Running → Succeeded / Failed` using the same async LRO pattern as `DockerBuildRequest`.
-
+Topaz also requires a working host Docker Engine to execute the steps. Some scheduled run requests can return a `Succeeded` status without executing work when Docker is unavailable. Do not rely on that status alone to verify execution.
