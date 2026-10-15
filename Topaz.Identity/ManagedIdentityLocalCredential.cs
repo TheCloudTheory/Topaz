@@ -9,8 +9,8 @@ namespace Topaz.Identity;
 public sealed class ManagedIdentityLocalCredential(Guid principalId) : TokenCredential
 {
     public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken)
-        => new(JwtHelper.GenerateJwt(principalId.ToString()), DateTimeOffset.MaxValue);
+        => JwtHelper.GenerateLocalAccessToken(principalId.ToString());
 
     public override ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken)
-        => ValueTask.FromResult(new AccessToken(JwtHelper.GenerateJwt(principalId.ToString()), DateTimeOffset.MaxValue));
+        => ValueTask.FromResult(JwtHelper.GenerateLocalAccessToken(principalId.ToString()));
 }

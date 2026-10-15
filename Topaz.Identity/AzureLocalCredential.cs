@@ -6,16 +6,10 @@ public sealed class AzureLocalCredential(string objectId, bool isForGraph = fals
     : TokenCredential
 {
     public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken)
-    {
-        var tokenString = JwtHelper.GenerateJwt(objectId, isForGraph, preferredUsername);
-        return new AccessToken(tokenString, DateTimeOffset.MaxValue);
-    }
-    
+        => JwtHelper.GenerateLocalAccessToken(objectId, isForGraph, preferredUsername);
+
     public override ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken)
-    {
-        var tokenString = JwtHelper.GenerateJwt(objectId, isForGraph, preferredUsername);
-        return ValueTask.FromResult(new AccessToken(tokenString, DateTimeOffset.MaxValue));
-    }
+        => ValueTask.FromResult(JwtHelper.GenerateLocalAccessToken(objectId, isForGraph, preferredUsername));
 }
 
 public sealed class AzureFixedTokenLocalCredential(string token) : TokenCredential

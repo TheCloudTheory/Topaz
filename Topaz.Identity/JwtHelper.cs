@@ -1,5 +1,6 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Azure.Core;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Topaz.Identity;
@@ -23,6 +24,18 @@ public static class JwtHelper
             preferredUsername);
     }
 
+    internal static AccessToken GenerateLocalAccessToken(string objectId, bool isForGraph = false, string? preferredUsername = null)
+    {
+        var expiresOn = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.AddMinutes(55).ToUnixTimeSeconds());
+        var token = CreateJwt(
+            objectId,
+            isForGraph ? "https://topaz.local.dev:8899/.graph" : "https://topaz.local.dev:8899",
+            preferredUsername,
+            expiresOn.UtcDateTime);
+
+        return new AccessToken(token, expiresOn);
+    }
+
     /// <summary>
     /// Issues a short-lived ACR token (refresh or access) signed with the same key as all other Topaz JWTs.
     /// </summary>
@@ -31,7 +44,11 @@ public static class JwtHelper
         return CreateJwt(objectId, "https://topaz.local.dev:8899");
     }
 
-    private static string CreateJwt(string objectId, string audience, string? preferredUsername = null)
+    private static string CreateJwt(
+        string objectId,
+        string audience,
+        string? preferredUsername = null,
+        DateTime? expires = null)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var claims = new List<Claim>
@@ -55,7 +72,7 @@ public static class JwtHelper
             Audience = audience,
             NotBefore = DateTime.UtcNow,
             IssuedAt = DateTime.UtcNow,
-            Expires = DateTime.UtcNow.AddHours(1),
+            Expires = expires ?? DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(SecretKey), SecurityAlgorithms.HmacSha256Signature)
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
