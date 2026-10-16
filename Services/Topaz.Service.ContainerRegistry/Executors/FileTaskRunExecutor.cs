@@ -239,12 +239,12 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         if (commandSegments.Length <= 1)
         {
             return await RunProcessAsync("docker",
-                $"run {nameParameter}{detachedParameter}{networkParameter}--rm --volume {workingDirectory}:/workspace --workdir /workspace {image}",
+                $"run {nameParameter}{detachedParameter}{networkParameter} --rm --volume {workingDirectory}:/workspace --workdir /workspace {image}",
                 logPath, workingDirectory, cancellationToken);
         }
 
         return await RunProcessAsync("docker",
-            $"run {nameParameter}{detachedParameter}{networkParameter}--rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}",
+            $"run {nameParameter}{detachedParameter}{networkParameter} --rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}",
             logPath, workingDirectory, cancellationToken);
     }
 
