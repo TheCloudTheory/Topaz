@@ -178,15 +178,17 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         if (!string.IsNullOrEmpty(step.Cmd))
         {
             AppendLogAsync(logPath, $"Running command: {step.Cmd}");
-            return await RunCommand(step.Cmd, registryName, logPath, runId, workingDirectory, aliases, cancellationToken);
+            return await RunCommand(step.Cmd, step.Detach, registryName, logPath, runId, workingDirectory, aliases, cancellationToken);
         }
         
         return false;
     }
 
-    private async Task<bool> RunCommand(string stepCmd, string registryName, string logPath, string runId,
+    private async Task<bool> RunCommand(string stepCmd, bool? detach, string registryName, string logPath, string runId,
         string workingDirectory, Dictionary<string, string> aliases, CancellationToken cancellationToken)
     {
+        detach ??= false;
+        var detachedParameter = detach.Value ? "-d " : "";
         var compiledStep = CompileCommonPlaceholders(stepCmd, registryName, runId, aliases);
         var commandSegments = compiledStep.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var image = commandSegments[0];
@@ -194,22 +196,28 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         // If CMD is `docker`, assume it's a Docker command and run it directly
         if (image == "docker")
         {
-            return await RunProcessAsync("docker", string.Join(" ", commandSegments.Skip(1)), logPath, workingDirectory, cancellationToken);
+            return await RunProcessAsync("docker", string.Join(" ", commandSegments.Skip(1)), logPath, workingDirectory,
+                cancellationToken);
         }
 
         // It's possible that the command is `az`, assume it's an Azure CLI command and run it directly
         if (image == "az")
         {
-            return await RunProcessAsync("az", string.Join(" ", commandSegments.Skip(1)), logPath, workingDirectory, cancellationToken);
+            return await RunProcessAsync("az", string.Join(" ", commandSegments.Skip(1)), logPath, workingDirectory,
+                cancellationToken);
         }
-        
+
         // If no additional arguments of a command are provided, do not attempt to pass them
         if (commandSegments.Length <= 1)
         {
-            return await RunProcessAsync("docker", $"run --rm --volume {workingDirectory}:/workspace --workdir /workspace {image}", logPath, workingDirectory, cancellationToken);
+            return await RunProcessAsync("docker",
+                $"run {detachedParameter}--rm --volume {workingDirectory}:/workspace --workdir /workspace {image}",
+                logPath, workingDirectory, cancellationToken);
         }
-        
-        return await RunProcessAsync("docker", $"run --rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}", logPath, workingDirectory, cancellationToken);
+
+        return await RunProcessAsync("docker",
+            $"run {detachedParameter}--rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}",
+            logPath, workingDirectory, cancellationToken);
     }
 
     private async Task<bool> PushImage(List<string> stepPush, string registryName, string logPath, string runId,
