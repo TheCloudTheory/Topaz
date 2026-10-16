@@ -4,7 +4,7 @@ using Topaz.Host.Models;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
-namespace Topaz.Host;
+namespace Topaz.Host.Endpoints;
 
 internal sealed class GetHealthEndpoint(ITopazLogger logger) : IEndpointDefinition
 {

@@ -4,7 +4,7 @@ using Spectre.Console.Cli;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
-namespace Topaz.Host;
+namespace Topaz.Host.Commands;
 
 [UsedImplicitly]
 internal sealed class StartHostCommand : AsyncCommand<StartHostCommand.Settings>

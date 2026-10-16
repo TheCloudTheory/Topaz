@@ -44,6 +44,7 @@ using Topaz.FinOps;
 using Spectre.Console;
 using Topaz.Chaos;
 using Topaz.ForwardProxy;
+using Topaz.Host.Endpoints;
 using Topaz.Importer;
 using Topaz.Service.ApiManagement;
 using Topaz.Service.ContainerInstances;

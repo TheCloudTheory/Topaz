@@ -1,4 +1,5 @@
 using Spectre.Console.Cli;
+using Topaz.Host.Commands;
 
 namespace Topaz.Host;
 
