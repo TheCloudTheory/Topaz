@@ -159,6 +159,13 @@ TODO: ACR Tasks: Mount secrets
   labels: enhancement, container-registry
 -->
 
+<!--
+TODO: ACR Tasks: Cleanup
+  Perform cleanup of artifacts created by local ACR task emulation.
+  milestone: v1.12
+  labels: enhancement, container-registry
+-->
+
 ### API Management — policy execution subset
 
 <!--

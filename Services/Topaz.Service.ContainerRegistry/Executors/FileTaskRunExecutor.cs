@@ -123,6 +123,14 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
             AppendLogAsync(logPath, $"Login failed.");
             return false;
         }
+        
+        // ACR provides a default network which steps use to run their commands.
+        var dockerNetworkResult = await CreateDockerNetworkIfNotExists(logPath, workingDirectory, cancellationToken);
+        if (!dockerNetworkResult.result)
+        {
+            AppendLogAsync(logPath, $"Failed to create docker network.");
+            return false;
+        }
 
         foreach (var step in task.Steps)
         {
@@ -132,7 +140,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
                 return false;
             }
 
-            var result = await ParseAndExecuteStep(step, logPath, registryName, runId, workingDirectory, aliases, cancellationToken);
+            var result = await ParseAndExecuteStep(step, dockerNetworkResult.networkName, logPath, registryName, runId, workingDirectory, aliases, cancellationToken);
             if (!result)
             {
                 return false;
@@ -140,6 +148,15 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         }
 
         return true;
+    }
+
+    private async Task<(bool result, string networkName)> CreateDockerNetworkIfNotExists(string logPath, string workingDirectory, CancellationToken cancellationToken)
+    {
+        var networkName = $"topaz-{Guid.NewGuid().ToString("N")[..8]}";
+        var result = await RunProcessAsync("docker", $"network create {networkName}", logPath, workingDirectory,
+            cancellationToken);
+        
+        return (result, networkName);
     }
 
     private static Dictionary<string, string> ResolveAliases(ContainerRegistryTaskAliases aliases)
@@ -156,7 +173,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         return aliasesResolved;
     }
 
-    private async Task<bool> ParseAndExecuteStep(ContainerRegistryTaskStep step, string logPath,
+    private async Task<bool> ParseAndExecuteStep(ContainerRegistryTaskStep step, string networkName, string logPath,
         string registryName,
         string runId,
         string workingDirectory,
@@ -178,18 +195,18 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         if (!string.IsNullOrEmpty(step.Cmd))
         {
             AppendLogAsync(logPath, $"Running command: {step.Cmd}");
-            return await RunCommand(step.Cmd, step.Detach, registryName, logPath, runId, workingDirectory, aliases, cancellationToken);
+            return await RunCommand(step, networkName, registryName, logPath, runId, workingDirectory, aliases, cancellationToken);
         }
         
         return false;
     }
 
-    private async Task<bool> RunCommand(string stepCmd, bool? detach, string registryName, string logPath, string runId,
+    private async Task<bool> RunCommand(ContainerRegistryTaskStep step, string networkName, string registryName, string logPath, string runId,
         string workingDirectory, Dictionary<string, string> aliases, CancellationToken cancellationToken)
     {
-        detach ??= false;
-        var detachedParameter = detach.Value ? "-d " : "";
-        var compiledStep = CompileCommonPlaceholders(stepCmd, registryName, runId, aliases);
+        var detach = step.Detach ?? false;
+        var detachedParameter = detach ? "-d " : "";
+        var compiledStep = CompileCommonPlaceholders(step.Cmd!, registryName, runId, aliases);
         var commandSegments = compiledStep.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var image = commandSegments[0];
 
@@ -215,16 +232,19 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
             await RunProcessAsync("docker", $"build -t {image} -f {image}.dockerfile .", logPath, workingDirectory, cancellationToken);
         }
 
+        var nameParameter = string.IsNullOrWhiteSpace(step.Id) ? "" : $"--name {step.Id}";
+        var networkParameter = $"--network {networkName}";
+
         // If no additional arguments of a command are provided, do not attempt to pass them
         if (commandSegments.Length <= 1)
         {
             return await RunProcessAsync("docker",
-                $"run {detachedParameter}--rm --volume {workingDirectory}:/workspace --workdir /workspace {image}",
+                $"run {nameParameter}{detachedParameter}{networkParameter}--rm --volume {workingDirectory}:/workspace --workdir /workspace {image}",
                 logPath, workingDirectory, cancellationToken);
         }
 
         return await RunProcessAsync("docker",
-            $"run {detachedParameter}--rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}",
+            $"run {nameParameter}{detachedParameter}{networkParameter}--rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}",
             logPath, workingDirectory, cancellationToken);
     }
 
