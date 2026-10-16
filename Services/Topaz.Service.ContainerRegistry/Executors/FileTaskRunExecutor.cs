@@ -206,6 +206,14 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
             return await RunProcessAsync("az", string.Join(" ", commandSegments.Skip(1)), logPath, workingDirectory,
                 cancellationToken);
         }
+        
+        // It's also possible that the image is not available locally, but there's a *.dockerfile in the cloned context.
+        // In this case, we need to build the image first.
+        if (IsDockerfileAvailableLocally(workingDirectory, image))
+        {
+            _logger.LogDebug(nameof(FileTaskRunExecutor), nameof(RunCommand), $"Building image {image} from {image}.dockerfile");
+            await RunProcessAsync("docker", $"build -t {image} -f {image}.dockerfile .", logPath, workingDirectory, cancellationToken);
+        }
 
         // If no additional arguments of a command are provided, do not attempt to pass them
         if (commandSegments.Length <= 1)
@@ -218,6 +226,11 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         return await RunProcessAsync("docker",
             $"run {detachedParameter}--rm --volume {workingDirectory}:/workspace --workdir /workspace {image} {string.Join(" ", commandSegments.Skip(1))}",
             logPath, workingDirectory, cancellationToken);
+    }
+
+    private static bool IsDockerfileAvailableLocally(string workingDirectory, string image)
+    {
+        return File.Exists(Path.Combine(workingDirectory, $"{image}.dockerfile"));
     }
 
     private async Task<bool> PushImage(List<string> stepPush, string registryName, string logPath, string runId,
