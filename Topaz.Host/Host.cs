@@ -110,6 +110,16 @@ public class Host
         Console.WriteLine("==============================================================================");
         Console.WriteLine("STARTING FROM 1.11 VERSION, TOPAZ WILL REQUIRE LICENSE IF RUNNING COMMERCIALLY");
         Console.WriteLine("==============================================================================");
+        Console.WriteLine();
+
+        if (_options.RunWithoutLicense)
+        {
+            Console.WriteLine("=============================================================================================");
+            Console.WriteLine("Topaz is running without license. This is intended for development and testing purposes only.");
+            Console.WriteLine("See https://topaz.thecloudtheory.com/docs/next/licensing-and-pricing/ for details.");
+            Console.WriteLine("=============================================================================================");
+            Console.WriteLine();
+        }
 
         Bootstrap();
 

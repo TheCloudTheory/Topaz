@@ -30,7 +30,8 @@ internal sealed class StartHostCommand : AsyncCommand<StartHostCommand.Settings>
             CertificateKey = settings.CertificateKey,
             EnableLoggingToFile = settings.EnableLoggingToFile,
             DefaultSubscription = settings.DefaultSubscription,
-            EmulatorIpAddress = settings.EmulatorIpAddress
+            EmulatorIpAddress = settings.EmulatorIpAddress,
+            RunWithoutLicense = settings.RunWithoutLicense,
         }, logger);
 
         using var cts = new CancellationTokenSource();
@@ -86,5 +87,9 @@ internal sealed class StartHostCommand : AsyncCommand<StartHostCommand.Settings>
         [Description("IP address to listen on. Defaults to 127.0.0.1.")]
         [CommandOption("--emulator-ip-address")]
         public string? EmulatorIpAddress { get; set; }
+
+        [Description("Run without a license. This is only intended for development purposes.")]
+        [CommandOption("--run-without-license")]
+        public bool RunWithoutLicense { get; set; } = false;
     }
 }

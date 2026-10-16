@@ -7,4 +7,5 @@ public sealed class GlobalOptions
     public bool EnableLoggingToFile { get; set; }
     public Guid? DefaultSubscription { get; init; }
     public string? EmulatorIpAddress { get; set; }
+    public bool RunWithoutLicense { get; set; }
 }

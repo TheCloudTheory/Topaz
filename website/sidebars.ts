@@ -99,6 +99,7 @@ const sidebars: SidebarsConfig = {
       collapsible: false,
       className: 'sidebar-section-header',
       items: [
+        'licensing-and-pricing',
         'local-azure-emulator',
         {
           type: 'category',
