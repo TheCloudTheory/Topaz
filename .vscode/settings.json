@@ -7,5 +7,10 @@
         "./scripts/build-docker.sh": true,
         "strings": true,
         "mkdir": true
+    },
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "When generating commit messages, append a standard `Release-note:` trailer. For user-visible changes, write `Release-note: <concise description of user impact>`. For internal-only or refactor-only changes, write `Release-note: none`. Describe changes to existing behavior as fixes or improvements, not as new features. If user impact is unclear, use `none`."
     }
+  ]
 }

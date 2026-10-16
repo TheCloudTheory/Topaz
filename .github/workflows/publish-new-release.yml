@@ -25,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Set run ID
       id: set-run-id
       run: |
@@ -50,51 +52,30 @@ jobs:
     - name: Generate release notes
       id: release-notes
       env:
-        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ steps.read-tag.outputs.tag }}
       run: |
-        TAG="${{ steps.read-tag.outputs.tag }}"
-        # Strip trailing .N to derive milestone name, e.g. v1.1-beta.5 -> v1.1-beta
-        MILESTONE=$(echo "$TAG" | sed 's/\.[0-9]*$//')
-        echo "Looking for milestone: $MILESTONE"
-
-        MILESTONE_NUMBER=$(gh api repos/${{ github.repository }}/milestones \
-          --jq ".[] | select(.title == \"$MILESTONE\") | .number")
-
-        if [ -z "$MILESTONE_NUMBER" ]; then
-          echo "No milestone found for '$MILESTONE', skipping release notes."
-          echo "## $TAG" > release-notes.md
-          exit 0
+        ANCESTOR_TAGS=$(git tag --merged "$TAG^")
+        if [ -n "$ANCESTOR_TAGS" ]; then
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "$TAG^")
+          RANGE="$PREVIOUS_TAG..$TAG"
+          echo "Collecting release notes from $PREVIOUS_TAG to $TAG"
+        else
+          RANGE="$TAG"
+          echo "No previous tag found; collecting release notes from repository history"
         fi
 
-        echo "Found milestone #$MILESTONE_NUMBER"
-
-        gh api "repos/${{ github.repository }}/issues?milestone=$MILESTONE_NUMBER&state=closed&per_page=100" \
-          --jq '[.[] | select(.pull_request == null)]' > /tmp/issues.json
+        NOTES=$(git log "$RANGE" --reverse \
+          --format='%(trailers:key=Release-note,valueonly)' |
+          awk 'NF && tolower($0) != "none" { print "- " $0 }')
 
         {
           echo "## What's Changed in $TAG"
-          echo ""
-
-          BREAKING_COUNT=$(jq '[.[] | select(any(.labels[]; .name == "breaking-change"))] | length' /tmp/issues.json)
-          if [ "$BREAKING_COUNT" -gt 0 ]; then
-            echo "### ⚠️ Breaking Changes"
-            jq -r '.[] | select(any(.labels[]; .name == "breaking-change")) | "- " + .title + " ([#" + (.number|tostring) + "](" + .html_url + "))"' /tmp/issues.json
-            echo ""
+          echo
+          if [ -n "$NOTES" ]; then
+            printf '%s\n' "$NOTES"
+          else
+            echo "_No release notes provided in commit trailers._"
           fi
-
-          OTHER_COUNT=$(jq '[.[] | select(any(.labels[]; .name == "breaking-change") | not)] | length' /tmp/issues.json)
-          if [ "$OTHER_COUNT" -gt 0 ]; then
-            echo "### Closed Issues"
-            jq -r '.[] | select(any(.labels[]; .name == "breaking-change") | not) | "- " + .title + " ([#" + (.number|tostring) + "](" + .html_url + "))"' /tmp/issues.json
-            echo ""
-          fi
-
-          if [ "$BREAKING_COUNT" -eq 0 ] && [ "$OTHER_COUNT" -eq 0 ]; then
-            echo "_No closed issues found for milestone \`$MILESTONE\`._"
-            echo ""
-          fi
-
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/milestone/$MILESTONE_NUMBER?closed=1"
         } > release-notes.md
 
         echo "Generated release notes:"

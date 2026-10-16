@@ -80,6 +80,18 @@ The full conventions are in [CLAUDE.md](CLAUDE.md).
 4. A maintainer will review. Expect feedback within a few days for small changes; larger changes may take longer.
 5. Once approved and the CLA is confirmed, the PR will be merged.
 
+## Release notes
+
+For user-visible changes, add a `Release-note:` trailer to the commit message with a concise description of the user impact:
+
+```text
+Fix App Configuration purge protection
+
+Release-note: Purge protection now blocks purging protected stores.
+```
+
+Use `Release-note: none` for internal changes. The release workflow gathers these trailers between tags; commits without a trailer are omitted.
+
 ## Reporting bugs
 
 Open a [GitHub issue](https://github.com/TheCloudTheory/Topaz/issues). Include the Topaz version, the Azure SDK / CLI version you are using, and a minimal reproduction.
