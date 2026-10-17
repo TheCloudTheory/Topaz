@@ -411,7 +411,7 @@ jobs:
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
     - name: Publish Topaz test log
-      if: failure() && steps.test.outcome == 'failure'
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: topaz-test-log
