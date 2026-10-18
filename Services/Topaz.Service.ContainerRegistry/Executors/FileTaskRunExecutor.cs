@@ -140,7 +140,10 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
                 return false;
             }
 
-            var result = await ParseAndExecuteStep(step, dockerNetworkResult.networkName, logPath, registryName, runId, workingDirectory, aliases, cancellationToken);
+            var cts = new CancellationTokenSource();
+            cts.CancelAfter(step.Timeout);
+            var result = await ParseAndExecuteStep(step, dockerNetworkResult.networkName, logPath, registryName, runId, workingDirectory, aliases, cts.Token);
+            
             if (!result)
             {
                 return false;

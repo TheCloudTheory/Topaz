@@ -36,7 +36,12 @@ internal sealed class ContainerRegistryTaskStep
 	public int? RetryDelay { get; init; }
 	public ContainerRegistryTaskSecret? Secret { get; init; }
 	public int? StartDelay { get; init; }
-	public int? Timeout { get; init; }
+
+	/// <summary>
+	/// The default timeout for a task is 600 seconds.
+	/// </summary>
+	public int Timeout { get; init; } = 600;
+	
 	public List<ContainerRegistryTaskVolumeMount>? VolumeMounts { get; init; }
 	public List<string>? When { get; init; }
 	public string? User { get; init; }
