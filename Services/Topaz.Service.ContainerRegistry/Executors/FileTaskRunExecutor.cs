@@ -141,7 +141,10 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
             }
 
             var cts = new CancellationTokenSource();
-            cts.CancelAfter(step.Timeout);
+            
+            // Set the automatic cancellation timeout of a token as per step timeout.
+            // Timeout is in seconds, but CancellationTokenSource expects milliseconds.
+            cts.CancelAfter(step.Timeout * 1000);
             var result = await ParseAndExecuteStep(step, dockerNetworkResult.networkName, logPath, registryName, runId, workingDirectory, aliases, cts.Token);
             
             if (!result)
