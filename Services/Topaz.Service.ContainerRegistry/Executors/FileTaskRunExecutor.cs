@@ -132,7 +132,8 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
             return false;
         }
 
-        foreach (var step in task.Steps)
+        var orderedSteps = OrderSteps(task.Steps);
+        foreach (var step in orderedSteps)
         {
             if(cancellationToken.IsCancellationRequested)
             {
@@ -154,6 +155,33 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
         }
 
         return true;
+    }
+
+    private List<ContainerRegistryTaskStep> OrderSteps(List<ContainerRegistryTaskStep> steps)
+    {
+        var temp = new List<ContainerRegistryTaskStep>(steps);
+        var result = new List<ContainerRegistryTaskStep>();
+
+        while (temp.Count > 0)
+        {
+            foreach (var step in steps)
+            {
+                if(step.When == null || step.When.FirstOrDefault() == "-")
+                {
+                    result.Add(step);
+                    temp.Remove(step);
+                    continue;
+                }
+            
+                if(step.When.All(dependency => result.Any(s => s.Id == dependency)))
+                {
+                    result.Add(step);
+                    temp.Remove(step);
+                }
+            }
+        }
+         
+        return result;
     }
 
     private async Task<(bool result, string networkName)> CreateDockerNetworkIfNotExists(string logPath, string workingDirectory, CancellationToken cancellationToken)
@@ -238,7 +266,7 @@ internal sealed class FileTaskRunExecutor(ITopazLogger logger) : ExecutorBase(lo
             await RunProcessAsync("docker", $"build -t {image} -f {image}.dockerfile .", logPath, workingDirectory, cancellationToken);
         }
 
-        var nameParameter = string.IsNullOrWhiteSpace(step.Id) ? "" : $"--name {step.Id}";
+        var nameParameter = string.IsNullOrWhiteSpace(step.Id) ? "" : $"--name {step.Id} ";
         var networkParameter = $"--network {networkName}";
 
         // If no additional arguments of a command are provided, do not attempt to pass them
