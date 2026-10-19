@@ -1,6 +1,5 @@
 using System.Text.Json;
 using JetBrains.Annotations;
-using Topaz.Service.ContainerRegistry.Models;
 
 namespace Topaz.Service.ContainerRegistry.Models.Requests;
 

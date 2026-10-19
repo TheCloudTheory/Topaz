@@ -257,14 +257,14 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "Request body: {0}", requestBodyContent);
             }
             
-            logger.LogError(nameof(Router), nameof(CallEndpoint), "Failed to parse JSON body. Error: {0}", ex.Message);
+            logger.LogError(nameof(Router), nameof(CallEndpoint), "Failed to parse JSON body. Error: {0}. Stack trace: {1}", ex.Message, ex.StackTrace);
             
             response!.Content = new StringContent("Failed to parse JSON body.");
             response.StatusCode = HttpStatusCode.InternalServerError;
         }
         catch(Exception ex)
         {
-            logger.LogError(nameof(Router), nameof(CallEndpoint), ex.Message);
+            logger.LogError(nameof(Router), nameof(CallEndpoint), "Failed to call the endpoint. Error: {0}. Stack trace: {1}", ex.Message, ex.StackTrace);
             
             response!.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;

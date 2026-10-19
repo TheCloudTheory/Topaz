@@ -12,9 +12,14 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Tasks;
 
 internal sealed class CreateOrUpdateAcrTaskEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(GlobalSettings.JsonOptions)
+    {
+        AllowOutOfOrderMetadataProperties = true
+    };
+
     private readonly ContainerRegistryControlPlane _controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+    public string ProviderNamespace => "Microsoft.ContainerRegistry";
 
     public string[] Endpoints =>
     [
@@ -36,7 +41,7 @@ internal sealed class CreateOrUpdateAcrTaskEndpoint(Pipeline eventPipeline, ITop
 
         using var reader = new StreamReader(context.Request.Body);
         var content = reader.ReadToEnd();
-        var request = JsonSerializer.Deserialize<CreateOrUpdateAcrTaskRequest>(content, GlobalSettings.JsonOptions);
+        var request = JsonSerializer.Deserialize<CreateOrUpdateAcrTaskRequest>(content, JsonOptions);
 
         if (request == null)
         {
