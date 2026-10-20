@@ -3,6 +3,7 @@ using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.ContainerRegistry.Models;
 using Topaz.Service.ContainerRegistry.Models.Requests;
+using Topaz.Service.ContainerRegistry.Models.Responses;
 using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -414,5 +415,18 @@ internal sealed partial class ContainerRegistryControlPlane(
             ? new ControlPlaneOperationResult<TaskUserCredentials>(OperationResult.NotFound, null,
                 "Task user credentials not found", "NotFound")
             : new ControlPlaneOperationResult<TaskUserCredentials>(OperationResult.Success, credentials);
+    }
+
+    public ControlPlaneOperationResult<SourceUploadDefinition> GetBuildSourceUploadUrl(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string registryName)
+    {
+        var result = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (result.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<SourceUploadDefinition>(OperationResult.NotFound, null, result.Reason,
+                result.Code);
+        }
+        
+        var response = SourceUploadDefinition.FromRegistry(result.Resource!);
+        return new ControlPlaneOperationResult<SourceUploadDefinition>(OperationResult.Success, response);
     }
 }

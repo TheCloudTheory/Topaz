@@ -56,6 +56,7 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
         new RegenerateContainerRegistryCredentialEndpoint(eventPipeline, logger),
         new ListContainerRegistryUsagesEndpoint(eventPipeline, logger),
         new ListReplicationsEndpoint(),
+        new GetBuildSourceUploadUrlEndpoint(eventPipeline, logger),
         // Data plane — blob uploads (OCI Distribution Spec)
         new InitiateBlobUploadEndpoint(AcrDataPlane(), logger),
         new PatchBlobUploadEndpoint(AcrDataPlane(), logger),

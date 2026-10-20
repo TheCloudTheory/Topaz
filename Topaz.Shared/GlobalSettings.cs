@@ -114,6 +114,8 @@ public static class
     public const ushort DefaultQueueStoragePort = DefaultStoragePort;
     public const ushort DefaultFileStoragePort = DefaultStoragePort;
 
+    public static string GetBlobStorageEndpoint(string accountName) => $"https://{accountName}.blob.{TopazHostname}:{DefaultStoragePort}";
+
     /// <summary>
     /// The default port value used for connections to Cosmos DB endpoints in the application.
     /// </summary>

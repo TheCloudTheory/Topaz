@@ -559,7 +559,7 @@ public class ContainerRegistryTests : TopazFixture
                 {
                     Assert.That(properties["runId"]?.GetValue<string>(), Is.Not.Null.And.Not.Empty);
                     Assert.That(properties["runType"]?.GetValue<string>(), Is.EqualTo("AutoRun"));
-                    Assert.That(properties["status"]?.GetValue<string>(), Is.EqualTo("Succeeded"));
+                    Assert.That(properties["status"]?.GetValue<string>(), Is.EqualTo("Queued"));
                     Assert.That(properties["isArchiveEnabled"]?.GetValue<bool>(), Is.True);
                 });
             });
@@ -759,8 +759,11 @@ public class ContainerRegistryTests : TopazFixture
             resp =>
             {
                 runId = resp["runId"]?.GetValue<string>();
-                Assert.That(runId, Is.Not.Null.And.Not.Empty);
-                Assert.That(resp["status"]?.GetValue<string>(), Is.EqualTo("Succeeded"));
+                Assert.Multiple(() =>
+                {
+                    Assert.That(runId, Is.Not.Null.And.Not.Empty);
+                    Assert.That(resp["status"]?.GetValue<string>(), Is.EqualTo("Succeeded"));
+                });
             });
 
         await RunAzureCliCommand(
