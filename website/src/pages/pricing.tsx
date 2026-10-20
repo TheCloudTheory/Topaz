@@ -114,6 +114,16 @@ function LicenseTiers() {
             </div>
           ))}
         </div>
+        <div className={styles.trialCallout}>
+          <h3 className={styles.trialTitle}>Need time to evaluate?</h3>
+          <p>Trial licenses are also available.</p>
+          <Link
+            className="button button--primary"
+            to="/contact/"
+          >
+            Ask about a trial license →
+          </Link>
+        </div>
         <p className={styles.billingNote}>
           <strong>Billing:</strong> Commercial licenses cost $49 per seat per
           year, with no usage-based fees. Shared-mode deployments require a
