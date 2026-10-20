@@ -430,6 +430,8 @@ public class Host
                         {
                             var socket = await listener.AcceptSocketAsync();
                             _ = endpoint.HandleTcpConnection(socket); // fire-and-forget per connection
+                            
+                            return;
                         }
                         catch (Exception ex)
                         {
@@ -514,7 +516,7 @@ public class Host
                             foreach (var port in httpEndpoint.PortsAndProtocol.Ports)
                             {
                                 _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
-                                    $"Starting HTTPS endpoint: {_topazIpAddress}:{port}");
+                                    $"Starting HTTPS endpoints: {_topazIpAddress}:{port}");
 
                                 if (usedPorts.Contains(port))
                                 {
@@ -533,7 +535,7 @@ public class Host
                                 if (!IsRunningInsideContainer() && port == GlobalSettings.AmqpTlsConnectionPort)
                                 {
                                     _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
-                                        $"Port {GlobalSettings.AmqpTlsConnectionPort} used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");
+                                        $"Port {GlobalSettings.AmqpTlsConnectionPort} used by AMQP endpoint will be skipped as Topaz isn't running inside a container.");
                                     continue;
                                 }
 
