@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Topaz.Dns;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Shared.Exceptions;
+using Topaz.Service.Shared.Infrastructure;
 using Topaz.Shared;
 
 namespace Topaz.Service.Shared;
@@ -87,15 +89,14 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     /// </returns>
     private static string ResolveIdCasing(string parentPath, string id)
     {
-        if (Directory.Exists(Path.Combine(parentPath, id))) return id;
-        if (!Directory.Exists(parentPath)) return id;
+        if (Directory.Exists(Path.Combine(parentPath, id)) || !Directory.Exists(parentPath)) return id;
 
         var match = Directory.EnumerateDirectories(parentPath)
             .FirstOrDefault(d => string.Equals(Path.GetFileName(d), id, StringComparison.OrdinalIgnoreCase));
         return match != null ? Path.GetFileName(match) : id;
     }
 
-    protected static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier,
+    private static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier,
         ResourceGroupIdentifier? resourceGroupIdentifier)
     {
         if (subscriptionIdentifier == null)
@@ -209,6 +210,16 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     public void Create<TModel>(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier? resourceGroupIdentifier, string? id, TModel model)
     {
+        if (QuotaHandler.IsQuotaApplicable(TService.UniqueName))
+        {
+            var quota = QuotaHandler.GetQuotaForService(TService.UniqueName);
+            var currentUsage = List(subscriptionIdentifier, resourceGroupIdentifier, id).Count();
+            if (currentUsage >= quota)
+            {
+                throw new TopazQuotaExceededException($"Quota exceeded for service {TService.UniqueName}. Current usage: {currentUsage}, quota: {quota}");
+            }
+        }
+        
         var instanceName = string.IsNullOrWhiteSpace(id)
             ? resourceGroupIdentifier == null
                 ? subscriptionIdentifier.Value.ToString()

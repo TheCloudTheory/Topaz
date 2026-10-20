@@ -1,4 +1,4 @@
-namespace Topaz.Service.Shared;
+namespace Topaz.Service.Shared.Exceptions;
 
 /// <summary>
 /// Represents an exception thrown when a conflict occurs during a resource operation.
