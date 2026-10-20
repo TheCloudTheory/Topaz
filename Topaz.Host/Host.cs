@@ -52,6 +52,7 @@ using Topaz.Service.ContainerRegistry.Executors;
 using Topaz.Service.EventGrid;
 using Topaz.Service.Redis;
 using Topaz.Shared;
+using LicenseManager = Topaz.Shared.LicenseManager;
 
 namespace Topaz.Host;
 
@@ -106,6 +107,8 @@ public class Host
         Console.WriteLine();
         Console.WriteLine($"  Azure emulator  •  v{ThisAssembly.AssemblyInformationalVersion}");
         Console.WriteLine();
+        
+        LicenseManager.GetLicenseSplashScreen(_options.LicenseKey);
         
         Console.WriteLine("==============================================================================");
         Console.WriteLine("STARTING FROM 1.11 VERSION, TOPAZ WILL REQUIRE LICENSE IF RUNNING COMMERCIALLY");

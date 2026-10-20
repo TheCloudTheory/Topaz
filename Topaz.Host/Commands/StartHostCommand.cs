@@ -32,6 +32,7 @@ internal sealed class StartHostCommand : AsyncCommand<StartHostCommand.Settings>
             DefaultSubscription = settings.DefaultSubscription,
             EmulatorIpAddress = settings.EmulatorIpAddress,
             RunWithoutLicense = settings.RunWithoutLicense,
+            LicenseKey = settings.LicenseKey,
         }, logger);
 
         using var cts = new CancellationTokenSource();
@@ -57,6 +58,7 @@ internal sealed class StartHostCommand : AsyncCommand<StartHostCommand.Settings>
         }
     }
 
+    [UsedImplicitly]
     internal sealed class Settings : CommandSettings
     {
         [Description("Log level. Available values: Debug, Information, Warning, Error.")]
@@ -91,5 +93,9 @@ internal sealed class StartHostCommand : AsyncCommand<StartHostCommand.Settings>
         [Description("Run without a license. This is only intended for development purposes.")]
         [CommandOption("--run-without-license")]
         public bool RunWithoutLicense { get; set; } = false;
+        
+        [Description("License key to use for the emulator.")]
+        [CommandOption("--license-key")]
+        public string? LicenseKey { get; set; }
     }
 }

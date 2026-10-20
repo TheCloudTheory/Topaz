@@ -8,4 +8,5 @@ public sealed class GlobalOptions
     public Guid? DefaultSubscription { get; init; }
     public string? EmulatorIpAddress { get; set; }
     public bool RunWithoutLicense { get; set; }
+    public string? LicenseKey { get; set; }
 }
