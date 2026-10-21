@@ -24,7 +24,8 @@ internal sealed class AcrRunResourceProperties
     public JsonElement? Platform { get; set; }
     public JsonElement? AgentConfiguration { get; set; }
 
-    public static AcrRunResourceProperties CreateQueued(string runId, string? taskName, string runType)
+    public static AcrRunResourceProperties CreateQueued(string runId, string? taskName, string runType,
+        RunAcrTaskRequest.RunAcrTaskRequestProperties request)
     {
         var now = DateTimeOffset.UtcNow;
         return new AcrRunResourceProperties
@@ -36,7 +37,7 @@ internal sealed class AcrRunResourceProperties
             StartTime = now,
             RunType = runType,
             Task = taskName,
-            IsArchiveEnabled = false
+            IsArchiveEnabled = request.IsArchiveEnabled ?? false
         };
     }
 

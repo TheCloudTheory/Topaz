@@ -216,7 +216,7 @@ internal sealed partial class ContainerRegistryControlPlane
                 _acrDockerExecutor.IsAvailable():
             {
                 var buildResult = RunDockerBuildRequest(subscriptionIdentifier, resourceGroupIdentifier,
-                    registryName, taskName, dockerStep, runId);
+                    registryName, taskName, dockerStep, runId, request.Properties!);
 
                 logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(TriggerTaskRun),
                     "Executing {0}: Docker run '{1}' queued for task '{2}'.", nameof(TriggerTaskRun), runId, taskName);
@@ -225,7 +225,7 @@ internal sealed partial class ContainerRegistryControlPlane
             case AcrTaskFileTaskStep fileTaskStep:
             {
                 var buildResult = RunFileTaskRequest(subscriptionIdentifier, resourceGroupIdentifier,
-                    registryName, taskName, fileTaskStep, runId);
+                    registryName, taskName, fileTaskStep, runId, request.Properties!);
 
                 logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(TriggerTaskRun),
                     "Executing {0}: File run '{1}' queued for task '{2}'.", nameof(TriggerTaskRun), runId, taskName);
@@ -234,7 +234,7 @@ internal sealed partial class ContainerRegistryControlPlane
             case AcrTaskEncodedTaskStep encodedTaskStep:
             {
                 var buildResult = RunFileTaskRequest(subscriptionIdentifier, resourceGroupIdentifier,
-                    registryName, taskName, AcrTaskFileTaskStep.FromEncoded(encodedTaskStep), runId);
+                    registryName, taskName, AcrTaskFileTaskStep.FromEncoded(encodedTaskStep), runId, request.Properties!);
 
                 logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(TriggerTaskRun),
                     "Executing {0}: Encoded run '{1}' queued for task '{2}'.", nameof(TriggerTaskRun), runId, taskName);
@@ -256,9 +256,9 @@ internal sealed partial class ContainerRegistryControlPlane
 
     private AcrRunResource RunFileTaskRequest(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string registryName, string taskName,
-        AcrTaskFileTaskStep fileTaskStep, string runId)
+        AcrTaskFileTaskStep fileTaskStep, string runId, RunAcrTaskRequest.RunAcrTaskRequestProperties request)
     {
-        var properties = AcrRunResourceProperties.CreateQueued(runId, taskName, "AutoRun");
+        var properties = AcrRunResourceProperties.CreateQueued(runId, taskName, "AutoRun", request);
         var resource = new AcrRunResource(subscriptionIdentifier, resourceGroupIdentifier, registryName, runId,
             properties);
         provider.CreateOrUpdateSubresource(
@@ -325,7 +325,8 @@ internal sealed partial class ContainerRegistryControlPlane
 
     private AcrRunResource RunDockerBuildRequest(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string registryName, string taskName,
-        AcrTaskDockerBuildStep dockerStep, string runId)
+        AcrTaskDockerBuildStep dockerStep, string runId,
+        RunAcrTaskRequest.RunAcrTaskRequestProperties request)
     {
         var contextPath = dockerStep.ContextPath ?? ".";
         var dockerFilePath = dockerStep.DockerFilePath ?? "Dockerfile";
@@ -333,7 +334,7 @@ internal sealed partial class ContainerRegistryControlPlane
         var imageName = imageNames.Count > 0 ? imageNames[0] : registryName.ToLowerInvariant() + ":latest";
         var isPushEnabled = dockerStep.IsPushEnabled == true;
 
-        var properties = AcrRunResourceProperties.CreateQueued(runId, taskName, "AutoRun");
+        var properties = AcrRunResourceProperties.CreateQueued(runId, taskName, "AutoRun", request);
         var resource = new AcrRunResource(subscriptionIdentifier, resourceGroupIdentifier, registryName, runId,
             properties);
         provider.CreateOrUpdateSubresource(
@@ -534,7 +535,7 @@ internal sealed partial class ContainerRegistryControlPlane
             ? request.ImageNames[0]
             : registryName.ToLowerInvariant() + ":latest";
 
-        var properties = AcrRunResourceProperties.CreateQueued(runId, null, "QuickBuild");
+        var properties = AcrRunResourceProperties.CreateQueued(runId, null, "QuickBuild", new RunAcrTaskRequest.RunAcrTaskRequestProperties());
         var resource = new AcrRunResource(subscriptionIdentifier, resourceGroupIdentifier, registryName, runId,
             properties);
         provider.CreateOrUpdateSubresource(
