@@ -1,5 +1,6 @@
 using Azure.Core;
 using Topaz.EventPipeline;
+using Topaz.EventPipeline.Events;
 using Topaz.ResourceManager;
 using Topaz.Service.ContainerRegistry.Models;
 using Topaz.Service.ContainerRegistry.Models.Requests;
@@ -17,6 +18,7 @@ internal sealed partial class ContainerRegistryControlPlane(
     ContainerRegistryResourceProvider provider,
     ResourceGroupControlPlane resourceGroupControlPlane,
     SystemAssignedIdentityControlPlane systemAssignedIdentityControlPlane,
+    Pipeline eventPipeline,
     ITopazLogger logger) : IControlPlane
 {
     private const string RegistryNotFoundCode = "ContainerRegistryNotFound";
@@ -37,6 +39,7 @@ internal sealed partial class ContainerRegistryControlPlane(
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
             SubscriptionControlPlane.New(eventPipeline, logger), logger),
         SystemAssignedIdentityControlPlane.New(logger),
+        eventPipeline,
         logger);
 
     public OperationResult Deploy(GenericResource resource)
@@ -147,6 +150,8 @@ internal sealed partial class ContainerRegistryControlPlane(
         }
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource, isCreate);
+
+        NotifyAfterRegistryCreated(subscriptionIdentifier, resourceGroupIdentifier, resource, isCreate);
         
         // Also create task user credentials
         var existingCredentials = GetInternalTaskUserCredentials(subscriptionIdentifier, resourceGroupIdentifier, registryName);
@@ -183,6 +188,31 @@ internal sealed partial class ContainerRegistryControlPlane(
         return new ControlPlaneOperationResult<ContainerRegistryResource>(
             isCreate ? OperationResult.Created : OperationResult.Updated,
             resource);
+    }
+
+    /// <summary>
+    /// Publishes an event when a container registry is created.
+    /// </summary>
+    /// <param name="subscriptionIdentifier">The subscription that owns the registry.</param>
+    /// <param name="resourceGroupIdentifier">The resource group that owns the registry.</param>
+    /// <param name="registry">The created registry.</param>
+    /// <param name="isCreate"><see langword="true"/> if the operation created the registry; otherwise, <see langword="false"/>.</param>
+    private void NotifyAfterRegistryCreated(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ContainerRegistryResource registry, bool isCreate)
+    {
+        if (isCreate)
+        {
+            eventPipeline.TriggerEvent<ContainerRegistryCreatedEventData, ContainerRegistryCreatedEvent>(new ContainerRegistryCreatedEvent
+            {
+                Data = new ContainerRegistryCreatedEventData
+                {
+                    SubscriptionIdentifier = subscriptionIdentifier.Value,
+                    ResourceGroupIdentifier = resourceGroupIdentifier.Value,
+                    RegistryName = registry.Name,
+                    Location = registry.Location
+                }
+            });
+        }
     }
 
     public ControlPlaneOperationResult<ContainerRegistryResource> Get(

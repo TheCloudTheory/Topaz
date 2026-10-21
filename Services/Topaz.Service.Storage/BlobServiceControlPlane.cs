@@ -85,11 +85,6 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         return (exists, filePath);
     }
 
-    public string GetServicePath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
-    {
-        return provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
-    }
-
     public string GetContainerDataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {
         return provider.GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
@@ -169,9 +164,11 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
     public string? GetContainerPublicAccess(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {
-        if (!provider.ContainerExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName))
-            return null;
-        return provider.GetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+        return !provider.ContainerExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+            containerName)
+            ? null
+            : provider.GetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+                containerName);
     }
 
     public void SetContainerPublicAccess(SubscriptionIdentifier subscriptionIdentifier,

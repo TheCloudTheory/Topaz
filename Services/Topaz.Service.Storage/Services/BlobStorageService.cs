@@ -43,8 +43,4 @@ public class BlobStorageService(Pipeline eventPipeline, ITopazLogger logger) : I
         new GetBlobPropertiesEndpoint(eventPipeline, logger),
         new DeleteBlobEndpoint(eventPipeline, logger),
     ];
-
-    public void Bootstrap()
-    {
-    }
 }

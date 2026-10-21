@@ -32,8 +32,4 @@ public class QueueStorageService(Pipeline eventPipeline, ITopazLogger logger) : 
         new ClearMessagesEndpoint(eventPipeline, logger),
         new DeleteMessageEndpoint(eventPipeline, logger),
     ];
-
-    public void Bootstrap()
-    {
-    }
 }

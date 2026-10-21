@@ -36,8 +36,4 @@ public sealed class TableStorageService(Pipeline eventPipeline, ITopazLogger log
         new InsertTableEntityEndpoint(eventPipeline, logger),
         new SetTableAclEndpoint(eventPipeline, logger),
     ];
-
-    public void Bootstrap()
-    {
-    }
 }

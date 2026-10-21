@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
@@ -15,10 +16,10 @@ internal sealed class GetBuildSourceUploadUrlEndpoint(Pipeline eventPipeline, IT
 
     public string[] Endpoints =>
     [
-        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/tasks/{taskName}/listDetails"
+        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/listBuildSourceUploadUrl"
     ];
 
-    public string[] Permissions => ["Microsoft.ContainerRegistry/registries/tasks/listDetails/action"];
+    public string[] Permissions => ["Microsoft.ContainerRegistry/registries/listBuildSourceUploadUrl/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -29,10 +30,9 @@ internal sealed class GetBuildSourceUploadUrlEndpoint(Pipeline eventPipeline, IT
         var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
         var registryName = path.ExtractValueFromPath(8)!;
-        var taskName = path.ExtractValueFromPath(10)!;
 
-        var operation = _controlPlane.GetTask(
-            subscriptionIdentifier, resourceGroupIdentifier, registryName, taskName);
+        var operation = _controlPlane.GetBuildSourceUploadUrl(
+            subscriptionIdentifier, resourceGroupIdentifier, registryName);
 
         if (operation.Result == OperationResult.NotFound)
         {

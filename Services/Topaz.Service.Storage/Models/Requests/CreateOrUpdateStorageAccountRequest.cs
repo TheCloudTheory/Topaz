@@ -32,4 +32,19 @@ internal record CreateOrUpdateStorageAccountRequest
             Properties = data.Properties.ToObjectFromJson<StorageAccountResourceProperties>(GlobalSettings.JsonOptions)
         };
     }
+
+    public static CreateOrUpdateStorageAccountRequest ForContainerRegistry(string? location)
+    {
+        return new CreateOrUpdateStorageAccountRequest
+        {
+            Location = location,
+            Sku = new ResourceSku
+            {
+                Tier = "Standard",
+                Name = "Standard_LRS"
+            },
+            Kind = "StorageV2",
+            Properties = new StorageAccountResourceProperties()
+        };
+    }
 }

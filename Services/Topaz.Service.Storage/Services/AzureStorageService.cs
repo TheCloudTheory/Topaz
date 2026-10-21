@@ -1,11 +1,18 @@
-﻿using Topaz.Service.ResourceGroup;
+﻿using Topaz.EventPipeline;
+using Topaz.EventPipeline.Events;
+using Topaz.Identity;
+using Topaz.Service.Authorization.Domain;
+using Topaz.Service.Authorization.Models.Requests;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Endpoints.StorageAccount;
+using Topaz.Service.Storage.Models.Requests;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Services;
 
-public sealed class AzureStorageService(ITopazLogger logger) : IServiceDefinition
+public sealed class AzureStorageService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-storage");
@@ -40,8 +47,14 @@ public sealed class AzureStorageService(ITopazLogger logger) : IServiceDefinitio
         new GetArmQueueEndpoint(logger),
         new RevokeUserDelegationKeysEndpoint(logger)
     ];
-
-    public void Bootstrap()
+    
+    public void Register()
     {
+        var controlPlane = AzureStorageControlPlane.New(logger);
+
+        eventPipeline.RegisterHandler<ContainerRegistryCreatedEventData>(
+            ContainerRegistryCreatedEvent.EventName,
+            data => controlPlane.CreateOrUpdate(SubscriptionIdentifier.From(data!.SubscriptionIdentifier!.Value),
+                ResourceGroupIdentifier.From(data.ResourceGroupIdentifier), data.RegistryName!, CreateOrUpdateStorageAccountRequest.ForContainerRegistry(data.Location)));
     }
 }
