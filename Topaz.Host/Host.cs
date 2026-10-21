@@ -132,7 +132,7 @@ public class Host
         var idFactory = new CorrelationIdFactory();
         var services = new IServiceDefinition[]
         {
-            new AzureStorageService(_logger),
+            new AzureStorageService(_eventPipeline, _logger),
             new TableStorageService(_eventPipeline, _logger),
             new QueueStorageService(_eventPipeline, _logger),
             new ResourceGroupService(_eventPipeline, _logger),
