@@ -357,8 +357,11 @@ public class EventGridTopicTests
         Assert.That(receivedEvents, Is.Not.Null.And.Count.EqualTo(4));
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(receivedEvents.Any(e => e.GetProperty("eventType").GetString() == "Microsoft.EventGrid.SubscriptionValidationEvent"));
-            Assert.That(receivedEvents.Any(e => e.GetProperty("eventType").GetString() == "Example.EventType"));
+            Assert.That(receivedEvents.Any(e =>
+                e.GetProperty("eventType").GetString() == "Microsoft.EventGrid.SubscriptionValidationEvent"));
+            Assert.That(receivedEvents.Any(e => e.GetProperty("eventType").GetString() == "Example.EventType"), Is.True,
+                "Supposed to find 'Example.EventType' but event types were: " + string.Join(", ",
+                    receivedEvents.Select(e => e.GetProperty("eventType").GetString())));
             Assert.That(receivedEvents.Any(e => e.GetProperty("type").GetString() == "Example.EventType.CE"));
         }
     }
