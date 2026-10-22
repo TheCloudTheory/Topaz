@@ -13,7 +13,7 @@ internal sealed class CreateContainerEndpoint(Pipeline eventPipeline, ITopazLogg
 {
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["PUT /{containerName}"];
 
@@ -29,10 +29,12 @@ internal sealed class CreateContainerEndpoint(Pipeline eventPipeline, ITopazLogg
         }
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
-        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+        var resourceGroupIdentifier = storageAccount.GetResourceGroup();
 
         if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+        {
             return;
+        }
 
         try
         {

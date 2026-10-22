@@ -13,7 +13,7 @@ internal sealed class GetContainerPropertiesEndpoint(Pipeline eventPipeline, ITo
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => [
         "GET /{containerName}?restype=container",

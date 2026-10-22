@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Endpoints.Blob;
 internal sealed class GetBlobServiceStatsEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : BlobDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /?restype=service&comp=stats"];
 

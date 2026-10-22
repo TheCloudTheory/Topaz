@@ -1,8 +1,5 @@
 ﻿using Topaz.EventPipeline;
 using Topaz.EventPipeline.Events;
-using Topaz.Identity;
-using Topaz.Service.Authorization.Domain;
-using Topaz.Service.Authorization.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;

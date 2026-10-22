@@ -14,7 +14,7 @@ internal sealed class GetContainerAclEndpoint(Pipeline eventPipeline, ITopazLogg
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /{containerName}?restype=container&comp=acl"];
 

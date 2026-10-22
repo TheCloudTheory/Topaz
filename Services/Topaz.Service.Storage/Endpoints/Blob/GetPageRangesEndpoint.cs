@@ -19,7 +19,7 @@ internal sealed class GetPageRangesEndpoint(Pipeline eventPipeline, ITopazLogger
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /{containerName}/...?comp=pagelist"];
 

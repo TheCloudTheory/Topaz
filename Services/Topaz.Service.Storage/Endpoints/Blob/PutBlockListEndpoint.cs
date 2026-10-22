@@ -15,7 +15,7 @@ internal sealed class PutBlockListEndpoint(Pipeline eventPipeline, ITopazLogger 
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["PUT /{containerName}/...?comp=blocklist"];
 

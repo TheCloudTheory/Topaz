@@ -14,7 +14,7 @@ internal sealed class SnapshotBlobEndpoint(Pipeline eventPipeline, ITopazLogger 
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["PUT /{containerName}/...?comp=snapshot"];
 

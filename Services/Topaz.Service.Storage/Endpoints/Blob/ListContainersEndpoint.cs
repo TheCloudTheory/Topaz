@@ -14,7 +14,7 @@ internal sealed class ListContainersEndpoint(Pipeline eventPipeline, ITopazLogge
 {
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /"];
 

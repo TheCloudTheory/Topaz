@@ -11,7 +11,7 @@ internal sealed class SetBlobServicePropertiesEndpoint(Pipeline eventPipeline, I
 {
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["PUT /?restype=service&comp=properties"];
 

@@ -12,7 +12,7 @@ internal sealed class GetBlobServicePropertiesEndpoint(Pipeline eventPipeline, I
 {
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
 
-    public string? ProviderNamespace => "Microsoft.Storage";
+    public string ProviderNamespace => "Microsoft.Storage";
 
     public string[] Endpoints => ["GET /?restype=service&comp=properties"];
 
