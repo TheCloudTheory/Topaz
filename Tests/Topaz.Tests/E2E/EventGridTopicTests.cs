@@ -355,14 +355,18 @@ public class EventGridTopicTests
         }
         
         Assert.That(receivedEvents, Is.Not.Null.And.Count.EqualTo(4));
+        static string? GetEventType(JsonElement e) =>
+            e.TryGetProperty("eventType", out var eventType) ? eventType.GetString() :
+            e.TryGetProperty("type", out var type) ? type.GetString() : null;
+
         using (Assert.EnterMultipleScope())
         {
             Assert.That(receivedEvents.Any(e =>
-                e.GetProperty("eventType").GetString() == "Microsoft.EventGrid.SubscriptionValidationEvent"));
-            Assert.That(receivedEvents.Any(e => e.GetProperty("eventType").GetString() == "Example.EventType"), Is.True,
+                GetEventType(e) == "Microsoft.EventGrid.SubscriptionValidationEvent"));
+            Assert.That(receivedEvents.Any(e => GetEventType(e) == "Example.EventType"), Is.True,
                 "Supposed to find 'Example.EventType' but event types were: " + string.Join(", ",
-                    receivedEvents.Select(e => e.GetProperty("eventType").GetString())));
-            Assert.That(receivedEvents.Any(e => e.GetProperty("type").GetString() == "Example.EventType.CE"));
+                    receivedEvents.Select(e => GetEventType(e) ?? "<missing event type>")));
+            Assert.That(receivedEvents.Any(e => GetEventType(e) == "Example.EventType.CE"));
         }
     }
     
