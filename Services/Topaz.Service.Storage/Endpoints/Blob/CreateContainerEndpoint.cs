@@ -39,10 +39,6 @@ internal sealed class CreateContainerEndpoint(Pipeline eventPipeline, ITopazLogg
         try
         {
             var containerName = GetContainerName(context.Request.Path);
-
-            Logger.LogDebug(nameof(CreateContainerEndpoint), nameof(GetResponse),
-                "Creating container: {0}", containerName);
-
             var op = _controlPlane.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, containerName,
                 storageAccount!.Name, context.Request.Headers);
 

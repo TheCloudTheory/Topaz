@@ -28,6 +28,19 @@ internal sealed partial class CreateFileSystemEndpoint(Pipeline eventPipeline, I
         {
             return;
         }
+        
+        var filesystem = context.Request.Path.Value.ExtractValueFromPath(0)!;
+        var apiVersion = context.Request.Query["api-version"].ToString();
+        var op = _controlPlane.CreateFileSystem(storageAccount, filesystem, context.Request.Headers, apiVersion);
+
+        if (op.Result == OperationResult.Conflict)
+        {
+            response.CreateErrorResponse(op);
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.Created;
+        response.AppendHeaders(op);
     }
     
     public override (bool isValid, string[]? validationErrors) Validate(HttpContext context)

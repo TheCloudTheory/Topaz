@@ -158,4 +158,13 @@ public static class HttpResponseMessageExtensions
         response.StatusCode = HttpStatusCode.BadRequest;
         response.Content = JsonContent.Create(error);
     }
+    
+    public static void AppendHeaders(this HttpResponseMessage responseMessage, ControlPlaneOperationResult result)
+    {
+        if (result.Headers == null) return;
+        foreach (var header in result.Headers)
+        {
+            responseMessage.Headers.Add(header.Key, header.Value);
+        }
+    }
 }

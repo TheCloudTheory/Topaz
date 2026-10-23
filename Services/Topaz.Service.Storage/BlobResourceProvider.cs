@@ -31,10 +31,10 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
     
     public string GetContainerMetadataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {
-        var tablePath =
+        var blobPath =
             GetContainerPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
         
-        return Path.Combine(tablePath, ".metadata");
+        return Path.Combine(blobPath, ".metadata");
     }
     
     public bool ContainerExists(SubscriptionIdentifier subscriptionIdentifier,
