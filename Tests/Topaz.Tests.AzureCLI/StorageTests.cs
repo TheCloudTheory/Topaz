@@ -609,8 +609,8 @@ public class StorageTests : TopazFixture
             {
                 var policies = resp.AsObject();
                 Assert.That(policies, Is.Not.Null, "policy list should not be null after setting a policy");
-                Assert.That(policies!, Has.Count.EqualTo(1), "Expected exactly one policy");
-                Assert.That(policies!.ContainsKey(policyId), Is.True, $"Expected policy '{policyId}' to exist");
+                Assert.That(policies, Has.Count.EqualTo(1), "Expected exactly one policy");
+                Assert.That(policies.ContainsKey(policyId), Is.True, $"Expected policy '{policyId}' to exist");
             });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
@@ -1499,7 +1499,7 @@ public class StorageTests : TopazFixture
 
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/";
+            $"BlobEndpoint=https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
 
         // Create a container via primary
         await RunAzureCliCommand(
@@ -1508,7 +1508,7 @@ public class StorageTests : TopazFixture
         // List containers via the secondary endpoint
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{storageAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/";
+            $"BlobEndpoint=https://{storageAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
 
         await RunAzureCliCommand(
             $"az storage container list --connection-string \"{secondaryConnectionString}\"",
@@ -1543,7 +1543,7 @@ public class StorageTests : TopazFixture
 
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/";
+            $"QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
 
         // Create a queue via primary
         await RunAzureCliCommand(
@@ -1552,7 +1552,7 @@ public class StorageTests : TopazFixture
         // List queues via the secondary endpoint
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{storageAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/";
+            $"QueueEndpoint=https://{storageAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
         
         // Must wait for the queue to be created on the secondary by the background
         // job. Until `lastSyncDate` is set, the queue will not be listed.

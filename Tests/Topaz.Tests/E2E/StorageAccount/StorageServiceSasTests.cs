@@ -125,7 +125,10 @@ public class StorageServiceSasTests
         // The SDK may throw either RequestFailedException or JsonReaderException depending on whether
         // the empty error body can be parsed; both indicate the request was correctly denied.
         var sasClient = new BlobContainerClient(sasUri);
-        Assert.Catch<Exception>(() => sasClient.GetBlobs().ToArray());
+        Assert.Catch<Exception>(() =>
+        {
+            _ = sasClient.GetBlobs().ToArray();
+        });
     }
 
     [Test]
@@ -161,7 +164,7 @@ public class StorageServiceSasTests
         };
         var sharedKey = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
         var sasParams = sasBuilder.ToSasQueryParameters(sharedKey).ToString();
-        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sas-policy?{sasParams}");
+        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sas-policy?{sasParams}");
 
         // Act — list blobs using the policy-bound SAS.
         var sasClient = new BlobContainerClient(sasUri);
@@ -192,7 +195,7 @@ public class StorageServiceSasTests
 
         // Act — use AzureSasCredential so the SAS params are explicitly forwarded in every request.
         var queueEndpoint = new Uri(
-            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/sas-queue");
+            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sas-queue");
         var sasQueue = new QueueClient(queueEndpoint, new AzureSasCredential(sasUri.Query.TrimStart('?')));
         sasQueue.SendMessage("hello-queue");
         var messages = sasQueue.ReceiveMessages(maxMessages: 1).Value;
@@ -221,7 +224,7 @@ public class StorageServiceSasTests
 
         // Act — use AzureSasCredential so the SAS params are explicitly forwarded in every request.
         var tableEndpoint = new Uri(
-            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/SasTable");
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/SasTable");
         var sasTable = new TableClient(tableEndpoint, new AzureSasCredential(sasUri.Query.TrimStart('?')));
         var entities = sasTable.Query<TableEntity>().ToArray();
 
@@ -270,7 +273,7 @@ public class StorageServiceSasTests
         var sharedKey = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
         var sasParams = sasBuilder.ToSasQueryParameters(sharedKey).ToString();
         var queueEndpoint = new Uri(
-            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/sas-policy-queue");
+            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sas-policy-queue");
         var sasQueue = new QueueClient(queueEndpoint, new AzureSasCredential(sasParams));
 
         // Act
@@ -304,7 +307,7 @@ public class StorageServiceSasTests
         // Generate a SAS that references the policy by name (si=readpolicy, no sp/st/se on wire).
         var sasUri = tableClient.GenerateSasUri(new TableSasBuilder { TableName = "SasPolicyTable", Identifier = "readpolicy" });
         var tableEndpoint = new Uri(
-            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/SasPolicyTable");
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/SasPolicyTable");
         var sasTable = new TableClient(tableEndpoint, new AzureSasCredential(sasUri.Query.TrimStart('?')));
 
         // Act
@@ -350,14 +353,17 @@ public class StorageServiceSasTests
         var sharedKey = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
         var sasParams = sasBuilder.ToSasQueryParameters(sharedKey).ToString();
         var sasUri = new Uri(
-            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sas-revoke-blob?{sasParams}");
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sas-revoke-blob?{sasParams}");
 
         // Revoke: clear all stored policies.
         container.SetAccessPolicy(PublicAccessType.None, []);
 
         // Act + Assert — request with a now-revoked SAS must be denied.
         var sasClient = new BlobContainerClient(sasUri);
-        Assert.Catch<Exception>(() => sasClient.GetBlobs().ToArray());
+        Assert.Catch<Exception>(() =>
+        {
+            _ = sasClient.GetBlobs().ToArray();
+        });
     }
 
     [Test]
@@ -390,7 +396,7 @@ public class StorageServiceSasTests
         var sharedKey = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
         var sasParams = sasBuilder.ToSasQueryParameters(sharedKey).ToString();
         var queueEndpoint = new Uri(
-            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/sas-revoke-queue");
+            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sas-revoke-queue");
         var sasQueue = new QueueClient(queueEndpoint, new AzureSasCredential(sasParams));
 
         // Revoke: clear all stored policies.
@@ -416,14 +422,17 @@ public class StorageServiceSasTests
 
         var sasUri = tableClient.GenerateSasUri(new TableSasBuilder { TableName = "SasRevokeTable", Identifier = "revokeme" });
         var tableEndpoint = new Uri(
-            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/SasRevokeTable");
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/SasRevokeTable");
         var sasTable = new TableClient(tableEndpoint, new AzureSasCredential(sasUri.Query.TrimStart('?')));
 
         // Revoke: clear all stored policies.
         tableClient.SetAccessPolicy([]);
 
         // Act + Assert — request with a now-revoked SAS must be denied.
-        Assert.Catch<Exception>(() => sasTable.Query<TableEntity>().ToArray());
+        Assert.Catch<Exception>(() =>
+        {
+            _ = sasTable.Query<TableEntity>().ToArray();
+        });
     }
 
     // -----------------------------------------------------------------------
@@ -531,7 +540,7 @@ public class StorageServiceSasTests
         sasBuilder.SetPermissions(TableSasPermissions.Read);
         var readOnlySas = tableClient.GenerateSasUri(sasBuilder);
         var tableEndpoint = new Uri(
-            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/sp_mismatch_table");
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sp_mismatch_table");
         var readOnlyClient = new TableClient(tableEndpoint, new AzureSasCredential(readOnlySas.Query.TrimStart('?')));
 
         // Act & Assert — attempt to insert entity with read-only token must fail with 403.
@@ -557,7 +566,7 @@ public class StorageServiceSasTests
         sasBuilder.SetPermissions(TableSasPermissions.Read);
         var readOnlySas = tableClient.GenerateSasUri(sasBuilder);
         var tableEndpoint = new Uri(
-            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/sp_mismatch_del_table");
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sp_mismatch_del_table");
         var readOnlyClient = new TableClient(tableEndpoint, new AzureSasCredential(readOnlySas.Query.TrimStart('?')));
 
         // Act & Assert — attempt to delete entity with read-only token must fail with 403.
@@ -632,7 +641,7 @@ public class StorageServiceSasTests
         sasBuilder.SetPermissions(TableSasPermissions.Add);
         var addSas = tableClient.GenerateSasUri(sasBuilder);
         var tableEndpoint = new Uri(
-            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/sp_valid_table");
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sp_valid_table");
         var addClient = new TableClient(tableEndpoint, new AzureSasCredential(addSas.Query.TrimStart('?')));
 
         // Act — insert entity with add-only token should succeed.
@@ -669,7 +678,7 @@ public class StorageServiceSasTests
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
         var credential = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
         var sasUri = new UriBuilder(
-            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sip-blob/sip-test.txt")
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sip-blob/sip-test.txt")
         {
             Query = sasBuilder.ToSasQueryParameters(credential).ToString()
         }.Uri;
@@ -677,7 +686,7 @@ public class StorageServiceSasTests
         var sasClient = new BlobClient(sasUri);
 
         // Act & Assert — the SAS is structurally valid but caller IP (127.0.0.1) is outside 10.0.0.1.
-        var ex = Assert.Throws<Azure.RequestFailedException>(() => sasClient.DownloadContent());
+        var ex = Assert.Throws<RequestFailedException>(() => sasClient.DownloadContent());
         Assert.That(ex.Status, Is.EqualTo(403));
         Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationSourceIPMismatch"));
     }
@@ -703,7 +712,7 @@ public class StorageServiceSasTests
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
         var credential = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
         var sasUri = new UriBuilder(
-            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sip-allowed/sip-ok.txt")
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sip-allowed/sip-ok.txt")
         {
             Query = sasBuilder.ToSasQueryParameters(credential).ToString()
         }.Uri;
@@ -732,7 +741,7 @@ public class StorageServiceSasTests
         sasBuilder.SetPermissions(QueueSasPermissions.Add);
         var credential = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
         var sasUri = new UriBuilder(
-            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/sip-queue")
+            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sip-queue")
         {
             Query = sasBuilder.ToSasQueryParameters(credential).ToString()
         }.Uri;
@@ -740,7 +749,7 @@ public class StorageServiceSasTests
         var sasQueueClient = new QueueClient(sasUri);
 
         // Act & Assert
-        var ex = Assert.Throws<Azure.RequestFailedException>(() => sasQueueClient.SendMessage("hello"));
+        var ex = Assert.Throws<RequestFailedException>(() => sasQueueClient.SendMessage("hello"));
         Assert.That(ex.Status, Is.EqualTo(403));
         Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationSourceIPMismatch"));
     }
@@ -764,11 +773,11 @@ public class StorageServiceSasTests
         sasBuilder.SetPermissions(TableSasPermissions.Read);
         var sasUri = tableClient.GenerateSasUri(sasBuilder);
         var tableEndpoint = new Uri(
-            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/sipTable");
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sipTable");
         var sasTableClient = new TableClient(tableEndpoint, new AzureSasCredential(sasUri.Query.TrimStart('?')));
 
         // Act & Assert
-        var ex = Assert.Throws<Azure.RequestFailedException>(() => sasTableClient.Query<TableEntity>().ToList());
+        var ex = Assert.Throws<RequestFailedException>(() => sasTableClient.Query<TableEntity>().ToList());
         Assert.That(ex.Status, Is.EqualTo(403));
         Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationSourceIPMismatch"));
     }
@@ -794,7 +803,7 @@ public class StorageServiceSasTests
         var sharedKeyCredential = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
         var sasToken = sasBuilder.ToSasQueryParameters(sharedKeyCredential).ToString();
         var sasUri = new UriBuilder(
-            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sip-acct/sip-acct.txt")
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sip-acct/sip-acct.txt")
         {
             Query = sasToken
         }.Uri;
@@ -802,7 +811,7 @@ public class StorageServiceSasTests
         var sasClient = new BlobClient(sasUri);
 
         // Act & Assert
-        var ex = Assert.Throws<Azure.RequestFailedException>(() => sasClient.DownloadContent());
+        var ex = Assert.Throws<RequestFailedException>(() => sasClient.DownloadContent());
         Assert.That(ex.Status, Is.EqualTo(403));
         Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationSourceIPMismatch"));
     }
@@ -818,7 +827,7 @@ public class StorageServiceSasTests
 
         // Get a User Delegation Key via bearer credential.
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
-        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}");
+        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}");
         var blobServiceClient = new BlobServiceClient(serviceUri, credential);
         var keyExpiry = DateTimeOffset.UtcNow.AddHours(1);
         var udKey = await blobServiceClient.GetUserDelegationKeyAsync(
@@ -836,12 +845,12 @@ public class StorageServiceSasTests
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
         var sasParams = sasBuilder.ToSasQueryParameters(udKey, StorageAccountName);
         var sasUri = new Uri(
-            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sip-udkey/sip-ud.txt?{sasParams}");
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/sip-udkey/sip-ud.txt?{sasParams}");
 
         var sasClient = new BlobClient(sasUri);
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<Azure.RequestFailedException>(async () => await sasClient.DownloadContentAsync());
+        var ex = Assert.ThrowsAsync<RequestFailedException>(async () => await sasClient.DownloadContentAsync());
         Assert.That(ex!.Status, Is.EqualTo(403));
         Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationSourceIPMismatch"));
     }

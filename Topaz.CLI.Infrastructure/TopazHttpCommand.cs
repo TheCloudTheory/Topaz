@@ -24,15 +24,15 @@ public abstract class TopazHttpCommand<TSettings>(HttpClient httpClient) : Async
 
     /// <summary>Base URL for Blob storage data-plane operations.</summary>
     protected string BlobDataPlaneUrl(string accountName) =>
-        $"https://{accountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}";
+        $"https://{accountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}";
 
     /// <summary>Base URL for Queue storage data-plane operations.</summary>
     protected string QueueDataPlaneUrl(string accountName) =>
-        $"https://{accountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}";
+        $"https://{accountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}";
 
     /// <summary>Base URL for Table storage data-plane operations.</summary>
     protected string TableDataPlaneUrl(string accountName) =>
-        $"https://{accountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
+        $"https://{accountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}";
 
     /// <summary>Base URL for App Configuration data-plane operations.</summary>
     protected string AppConfigDataPlaneUrl(string storeName) =>

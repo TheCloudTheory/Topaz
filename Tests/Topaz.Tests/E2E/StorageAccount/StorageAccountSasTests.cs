@@ -106,7 +106,7 @@ public class StorageAccountSasTests
 
         // Act — list blobs using Account SAS (no Authorization header).
         var containerEndpoint = new Uri(
-            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/acct-sas-list");
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/acct-sas-list");
         var sasContainerClient = new BlobContainerClient(containerEndpoint, new AzureSasCredential(sasToken));
         var blobs = sasContainerClient.GetBlobs().ToArray();
 
@@ -138,8 +138,8 @@ public class StorageAccountSasTests
 
         // Act — download using Account SAS.
         var blobEndpoint = new Uri(
-            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/acct-sas-read/content.txt");
-        var sasBlobClient = new Azure.Storage.Blobs.BlobClient(blobEndpoint, new AzureSasCredential(sasToken));
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/acct-sas-read/content.txt");
+        var sasBlobClient = new BlobClient(blobEndpoint, new AzureSasCredential(sasToken));
         var downloaded = sasBlobClient.DownloadContent().Value;
 
         // Assert
@@ -167,9 +167,12 @@ public class StorageAccountSasTests
 
         // Act & Assert — Topaz must reject with 401/403.
         var containerEndpoint = new Uri(
-            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/acct-sas-expired");
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/acct-sas-expired");
         var sasContainerClient = new BlobContainerClient(containerEndpoint, new AzureSasCredential(sasToken));
-        Assert.Catch<Exception>(() => sasContainerClient.GetBlobs().ToArray());
+        Assert.Catch<Exception>(() =>
+        {
+            _ = sasContainerClient.GetBlobs().ToArray();
+        });
     }
 
     // -----------------------------------------------------------------------
@@ -193,7 +196,7 @@ public class StorageAccountSasTests
 
         // Act — send a message using Account SAS (path /acct-sas-queue/messages → Object level).
         var queueEndpoint = new Uri(
-            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/acct-sas-queue");
+            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/acct-sas-queue");
         var sasQueueClient = new QueueClient(queueEndpoint, new AzureSasCredential(sasToken));
         sasQueueClient.SendMessage("hello from account sas");
 
@@ -228,7 +231,7 @@ public class StorageAccountSasTests
 
         // Act — query entities using Account SAS.
         var tableEndpoint = new Uri(
-            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/AcctSasTable");
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/AcctSasTable");
         var sasTableClient = new TableClient(tableEndpoint, new AzureSasCredential(sasToken));
         var entities = sasTableClient.Query<TableEntity>().ToArray();
 

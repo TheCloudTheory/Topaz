@@ -106,13 +106,6 @@ public static class
     /// across storage operations in development or testing environments.
     /// </remarks>
     public const ushort DefaultStoragePort = 8891;
-    
-    // Legacy per-sub-service constants kept as aliases while callers are migrated.
-    // All storage data-plane sub-services now share DefaultStoragePort.
-    public const ushort DefaultTableStoragePort = DefaultStoragePort;
-    public const ushort DefaultBlobStoragePort = DefaultStoragePort;
-    public const ushort DefaultQueueStoragePort = DefaultStoragePort;
-    public const ushort DefaultFileStoragePort = DefaultStoragePort;
 
     public static string GetBlobStorageEndpoint(string accountName) => $"https://{accountName}.blob.{TopazHostname}:{DefaultStoragePort}";
 

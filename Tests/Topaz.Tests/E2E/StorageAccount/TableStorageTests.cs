@@ -18,7 +18,8 @@ namespace Topaz.Tests.E2E.StorageAccount
     {
         private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
         private static readonly Guid SubscriptionId = Guid.Parse("8D37D5AF-468B-4F61-A664-9E8B5AE3E4C2");
-    
+        private static readonly HttpClient HttpClient = new();
+
         private const string SubscriptionName = "sub-test";
         private const string ResourceGroupName = "test";
         private const string StorageAccountName = "tablestoragetests";
@@ -430,7 +431,7 @@ namespace Topaz.Tests.E2E.StorageAccount
 
             // Act
             entity.Name = "bar";
-            tableClient.UpdateEntity(entity, ETag.All, TableUpdateMode.Merge);
+            tableClient.UpdateEntity(entity, ETag.All);
 
             // Assert
             var updatedEntity = tableClient.Query<TestEntity>().ToArray().First();
@@ -720,21 +721,24 @@ namespace Topaz.Tests.E2E.StorageAccount
                 AzureLocation.WestEurope);
 
             var accountOp = await resourceGroup.Value.GetStorageAccounts()
-                .CreateOrUpdateAsync(Azure.WaitUntil.Completed, ragrsAccount, createContent);
+                .CreateOrUpdateAsync(WaitUntil.Completed, ragrsAccount, createContent);
             var ragrsKey = accountOp.Value.GetKeys().First().Value;
 
             var tableServiceClient = new TableServiceClient(
                 TopazResourceHelpers.GetAzureStorageConnectionString(ragrsAccount, ragrsKey));
 
             // Act
-            var stats = tableServiceClient.GetStatistics();
+            var stats = await tableServiceClient.GetStatisticsAsync();
 
             // Assert
             Assert.That(stats, Is.Not.Null);
             Assert.That(stats.Value, Is.Not.Null);
             Assert.That(stats.Value.GeoReplication, Is.Not.Null);
-            Assert.That(stats.Value.GeoReplication.Status.ToString(), Is.EqualTo("live"));
-            Assert.That(stats.Value.GeoReplication.LastSyncedOn, Is.GreaterThan(DateTimeOffset.MinValue));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(stats.Value.GeoReplication.Status.ToString(), Is.EqualTo("live"));
+                Assert.That(stats.Value.GeoReplication.LastSyncedOn, Is.GreaterThan(DateTimeOffset.MinValue));
+            }
         }
 
         [Test]
@@ -742,7 +746,7 @@ namespace Topaz.Tests.E2E.StorageAccount
         {
             // Arrange — configure a CORS rule on the table service
             var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
-            var properties = tableServiceClient.GetProperties().Value;
+            var properties = (await tableServiceClient.GetPropertiesAsync()).Value;
             properties.Cors.Clear();
             properties.Cors.Add(new TableCorsRule(
                 allowedOrigins: "http://cors-test.example.com",
@@ -750,23 +754,25 @@ namespace Topaz.Tests.E2E.StorageAccount
                 allowedHeaders: "*",
                 exposedHeaders: "x-ms-request-id",
                 maxAgeInSeconds: 300));
-            tableServiceClient.SetProperties(properties);
+            await tableServiceClient.SetPropertiesAsync(properties);
 
-            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
-            using var httpClient = new HttpClient();
+            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}";
             var request = new HttpRequestMessage(HttpMethod.Options, $"{baseUrl}/Tables");
             request.Headers.Add("Origin", "http://cors-test.example.com");
             request.Headers.Add("Access-Control-Request-Method", "GET");
 
             // Act
-            var response = await httpClient.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
 
             // Assert
-            Assert.That((int)response.StatusCode, Is.EqualTo(200));
-            Assert.That(response.Headers.Contains("Access-Control-Allow-Origin"), Is.True);
-            Assert.That(response.Headers.GetValues("Access-Control-Allow-Origin").First(),
-                Is.EqualTo("http://cors-test.example.com"));
-            Assert.That(response.Headers.Contains("Access-Control-Allow-Methods"), Is.True);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That((int)response.StatusCode, Is.EqualTo(200));
+                Assert.That(response.Headers.Contains("Access-Control-Allow-Origin"), Is.True);
+                Assert.That(response.Headers.GetValues("Access-Control-Allow-Origin").First(),
+                    Is.EqualTo("http://cors-test.example.com"));
+                Assert.That(response.Headers.Contains("Access-Control-Allow-Methods"), Is.True);
+            }
         }
 
         [Test]
@@ -774,7 +780,7 @@ namespace Topaz.Tests.E2E.StorageAccount
         {
             // Arrange — configure a CORS rule that does not match the request origin
             var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
-            var properties = tableServiceClient.GetProperties().Value;
+            var properties = (await tableServiceClient.GetPropertiesAsync()).Value;
             properties.Cors.Clear();
             properties.Cors.Add(new TableCorsRule(
                 allowedOrigins: "http://allowed-origin.example.com",
@@ -782,16 +788,15 @@ namespace Topaz.Tests.E2E.StorageAccount
                 allowedHeaders: "*",
                 exposedHeaders: "",
                 maxAgeInSeconds: 300));
-            tableServiceClient.SetProperties(properties);
+            await tableServiceClient.SetPropertiesAsync(properties);
 
-            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
-            using var httpClient = new HttpClient();
+            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}";
             var request = new HttpRequestMessage(HttpMethod.Options, $"{baseUrl}/Tables");
             request.Headers.Add("Origin", "http://other-origin.example.com");
             request.Headers.Add("Access-Control-Request-Method", "GET");
 
             // Act
-            var response = await httpClient.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
 
             // Assert
             Assert.That((int)response.StatusCode, Is.EqualTo(403));
@@ -802,10 +807,9 @@ namespace Topaz.Tests.E2E.StorageAccount
         {
             // Arrange
             var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
-            tableServiceClient.CreateTableIfNotExists("gettabletest");
+            await tableServiceClient.CreateTableIfNotExistsAsync("gettabletest");
 
-            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
-            using var httpClient = new HttpClient();
+            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}";
             var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/Tables('gettabletest')");
             var date = DateTimeOffset.UtcNow.ToString("R");
             var signature = ComputeSharedKeyLiteSignature(_key, StorageAccountName, "/Tables('gettabletest')", date);
@@ -813,20 +817,22 @@ namespace Topaz.Tests.E2E.StorageAccount
             request.Headers.Add("Authorization", $"SharedKeyLite {StorageAccountName}:{signature}");
 
             // Act
-            var response = await httpClient.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
             var body = await response.Content.ReadAsStringAsync();
 
-            // Assert
-            Assert.That((int)response.StatusCode, Is.EqualTo(200));
-            Assert.That(body, Does.Contain("gettabletest"));
+            using (Assert.EnterMultipleScope())
+            {
+                // Assert
+                Assert.That((int)response.StatusCode, Is.EqualTo(200));
+                Assert.That(body, Does.Contain("gettabletest"));
+            }
         }
 
         [Test]
         public async Task TableStorageTests_WhenGetTableByNameIsCalledForNonExistentTable_ItShouldReturn404()
         {
             // Arrange
-            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
-            using var httpClient = new HttpClient();
+            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}";
             var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/Tables('doesnotexist')");
             var date = DateTimeOffset.UtcNow.ToString("R");
             var signature = ComputeSharedKeyLiteSignature(_key, StorageAccountName, "/Tables('doesnotexist')", date);
@@ -834,7 +840,7 @@ namespace Topaz.Tests.E2E.StorageAccount
             request.Headers.Add("Authorization", $"SharedKeyLite {StorageAccountName}:{signature}");
 
             // Act
-            var response = await httpClient.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
 
             // Assert
             Assert.That((int)response.StatusCode, Is.EqualTo(404));
@@ -846,16 +852,15 @@ namespace Topaz.Tests.E2E.StorageAccount
             // Arrange — simulate the Go SDK (Terraform AzureRM) URL format where a %20-encoded space
             // is inserted between the comma and "RowKey" in the entity path.
             var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
-            tableServiceClient.CreateTableIfNotExists("gosdkentitytest");
+            await tableServiceClient.CreateTableIfNotExistsAsync("gosdkentitytest");
             var tableClient = tableServiceClient.GetTableClient("gosdkentitytest");
-            tableClient.AddEntity(new TestEntity { PartitionKey = "pk1", RowKey = "rk1", Name = "gosdk" });
+            await tableClient.AddEntityAsync(new TestEntity { PartitionKey = "pk1", RowKey = "rk1", Name = "gosdk" });
 
             // The Go SDK sends the path with %20 on the wire. Topaz (via Kestrel) re-encodes the
             // decoded path back to %20 when building the canonical resource for HMAC verification.
             // The client must therefore sign over the %20-encoded path (not the decoded form).
             var path = "/gosdkentitytest(PartitionKey='pk1',%20RowKey='rk1')";
-            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
-            using var httpClient = new HttpClient();
+            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}";
             var request = new HttpRequestMessage(HttpMethod.Get, new Uri(baseUrl + path));
             var date = DateTimeOffset.UtcNow.ToString("R");
             var signature = ComputeSharedKeyLiteSignature(_key, StorageAccountName, path, date);
@@ -863,7 +868,7 @@ namespace Topaz.Tests.E2E.StorageAccount
             request.Headers.Add("Authorization", $"SharedKeyLite {StorageAccountName}:{signature}");
 
             // Act
-            var response = await httpClient.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
 
             // Assert — must NOT return 401 (routing bug) and must return the entity
             Assert.That((int)response.StatusCode, Is.EqualTo(200));
@@ -879,29 +884,28 @@ namespace Topaz.Tests.E2E.StorageAccount
             //   * Path format (Giovanni): "/{table}(PartitionKey='{pk}', RowKey='{rk}')" — literal space after comma
             //   * CanonicalizedResource: "/" + accountName + url.EscapedPath() = %20-encoded path
             var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
-            tableServiceClient.CreateTableIfNotExists("sharedkeytabletest");
+            await tableServiceClient.CreateTableIfNotExistsAsync("sharedkeytabletest");
             var tableClient = tableServiceClient.GetTableClient("sharedkeytabletest");
-            tableClient.AddEntity(new TestEntity { PartitionKey = "pk1", RowKey = "rk1", Name = "sharedkey" });
+            await tableClient.AddEntityAsync(new TestEntity { PartitionKey = "pk1", RowKey = "rk1", Name = "sharedkey" });
 
             // Giovanni builds the URL with a literal space after the comma (RowKey=' rk1').
             // Go's url.URL.EscapedPath() encodes that space as %20, so the wire path and
             // the canonicalized resource both use %20.
             var pathWithLiteralSpace = "/sharedkeytabletest(PartitionKey='pk1', RowKey='rk1')";
             var uriWithLiteralSpace = new Uri(
-                $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}{pathWithLiteralSpace}");
+                $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}{pathWithLiteralSpace}");
             // AbsolutePath returns the %20-encoded form — same as Go's u.EscapedPath()
             var encodedPath = uriWithLiteralSpace.AbsolutePath;
 
             var date = DateTimeOffset.UtcNow.ToString("R");
             var signature = ComputeSharedKeyTableSignature(_key, StorageAccountName, encodedPath, date);
-
-            using var httpClient = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, uriWithLiteralSpace);
+            
             request.Headers.Add("x-ms-date", date);
             request.Headers.Add("Authorization", $"SharedKey {StorageAccountName}:{signature}");
 
             // Act
-            var response = await httpClient.SendAsync(request);
+            var response = await HttpClient.SendAsync(request);
 
             // Assert
             Assert.That((int)response.StatusCode, Is.EqualTo(200));
@@ -1005,8 +1009,11 @@ namespace Topaz.Tests.E2E.StorageAccount
 
             // Assert
             Assert.That(entities, Has.Length.EqualTo(1));
-            Assert.That(entities[0].ContainsKey("Name"), Is.True);
-            Assert.That(entities[0].ContainsKey("Age"), Is.False);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(entities[0].ContainsKey("Name"), Is.True);
+                Assert.That(entities[0].ContainsKey("Age"), Is.False);
+            }
         }
 
         [Test]
@@ -1014,11 +1021,11 @@ namespace Topaz.Tests.E2E.StorageAccount
         {
             // Arrange
             var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
-            tableServiceClient.CreateTable("pagetable");
+            await tableServiceClient.CreateTableAsync("pagetable");
             var tableClient = tableServiceClient.GetTableClient("pagetable");
 
             for (var i = 1; i <= 5; i++)
-                tableClient.AddEntity(new TestEntity { PartitionKey = "pk1", RowKey = $"rk{i}", Name = $"entity{i}" });
+                await tableClient.AddEntityAsync(new TestEntity { PartitionKey = "pk1", RowKey = $"rk{i}", Name = $"entity{i}" });
 
             // Act — request two entities per page; the SDK drives continuation automatically.
             var allEntities = new List<TestEntity>();

@@ -161,7 +161,7 @@ public class StorageAccountGeoReplicationTests
         var key = storageAccount.GetKeys().First().Value;
 
         var secondaryEndpoint =
-            $"https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/";
+            $"https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
 
 
         var statsUrl = $"{secondaryEndpoint}?restype=service&comp=stats";
@@ -196,7 +196,7 @@ public class StorageAccountGeoReplicationTests
         CreateStorageAccount(resourceGroup, LrsAccountName, StorageSkuName.StandardLrs);
 
         var secondaryEndpoint =
-            $"https://{LrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/";
+            $"https://{LrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
 
         // Act
         var response = await HttpClient.GetAsync($"{secondaryEndpoint}?restype=service&comp=stats");
@@ -221,7 +221,7 @@ public class StorageAccountGeoReplicationTests
             var secondaryConnectionString =
                 $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};" +
                 $"AccountKey={key};" +
-                $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+                $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
             var clientOptions = new BlobClientOptions
             {
@@ -266,7 +266,7 @@ public class StorageAccountGeoReplicationTests
             var secondaryConnectionString =
                 $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};" +
                 $"AccountKey={key};" +
-                $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+                $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
             var clientOptions = new QueueClientOptions
             {
@@ -309,7 +309,7 @@ public class StorageAccountGeoReplicationTests
             var key = storageAccount.GetKeys().First().Value;
 
             var secondaryEndpoint =
-                $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+                $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
 
             var tableClientOptions = new TableClientOptions
             {
@@ -354,7 +354,7 @@ public class StorageAccountGeoReplicationTests
 
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{RagrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"BlobEndpoint=https://{RagrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var clientOptions = new BlobClientOptions
         {
@@ -372,7 +372,7 @@ public class StorageAccountGeoReplicationTests
         // Act — list containers via the secondary endpoint
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var secondaryClient = new BlobServiceClient(secondaryConnectionString, clientOptions);
         var containers = secondaryClient.GetBlobContainersAsync().ToBlockingEnumerable().ToList();
@@ -402,7 +402,7 @@ public class StorageAccountGeoReplicationTests
         // Create a queue via the primary endpoint
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{RagrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+            $"QueueEndpoint=https://{RagrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var primaryClient = new QueueServiceClient(primaryConnectionString, clientOptions);
         await primaryClient.CreateQueueAsync("secondary-read-queue");
@@ -416,7 +416,7 @@ public class StorageAccountGeoReplicationTests
         // Act — list queues via the secondary endpoint
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+            $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var secondaryClient = new QueueServiceClient(secondaryConnectionString, clientOptions);
         var queues = secondaryClient.GetQueuesAsync().ToBlockingEnumerable().ToList();
@@ -446,7 +446,7 @@ public class StorageAccountGeoReplicationTests
         // Create a table and insert an entity via the primary endpoint
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"TableEndpoint=https://{RagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;";
+            $"TableEndpoint=https://{RagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var primaryServiceClient = new TableServiceClient(primaryConnectionString, tableClientOptions);
         await primaryServiceClient.CreateTableAsync("secondaryreadtable");
@@ -461,7 +461,7 @@ public class StorageAccountGeoReplicationTests
         
         // Act — query entities via the secondary endpoint
         var secondaryEndpoint =
-            $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+            $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
 
         var secondaryServiceClient = new TableServiceClient(
             new Uri(secondaryEndpoint),
@@ -488,7 +488,7 @@ public class StorageAccountGeoReplicationTests
 
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
         var client = new BlobServiceClient(secondaryConnectionString);
 
         // Act
@@ -510,7 +510,7 @@ public class StorageAccountGeoReplicationTests
 
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+            $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
         var client = new QueueServiceClient(secondaryConnectionString);
 
         var stats = await client.GetStatisticsAsync();
@@ -532,7 +532,7 @@ public class StorageAccountGeoReplicationTests
         // by appending "-secondary" to the account name — use the primary endpoint here.
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"TableEndpoint=https://{RagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;";
+            $"TableEndpoint=https://{RagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
         var client = new TableServiceClient(primaryConnectionString);
 
         var stats = await client.GetStatisticsAsync();
@@ -562,10 +562,10 @@ public class StorageAccountGeoReplicationTests
 
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={BlobLagRagrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{BlobLagRagrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"BlobEndpoint=https://{BlobLagRagrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={BlobLagRagrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{BlobLagRagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"BlobEndpoint=https://{BlobLagRagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var primaryClient = new BlobServiceClient(primaryConnectionString, clientOptions);
         var secondaryClient = new BlobServiceClient(secondaryConnectionString, clientOptions);
@@ -624,10 +624,10 @@ public class StorageAccountGeoReplicationTests
 
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={BlobLagRagzrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{BlobLagRagzrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"BlobEndpoint=https://{BlobLagRagzrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={BlobLagRagzrsAccountName};AccountKey={key};" +
-            $"BlobEndpoint=https://{BlobLagRagzrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+            $"BlobEndpoint=https://{BlobLagRagzrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var primaryClient = new BlobServiceClient(primaryConnectionString, clientOptions);
         var secondaryClient = new BlobServiceClient(secondaryConnectionString, clientOptions);
@@ -687,10 +687,10 @@ public class StorageAccountGeoReplicationTests
 
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={QueueLagRagrsAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{QueueLagRagrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+            $"QueueEndpoint=https://{QueueLagRagrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={QueueLagRagrsAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{QueueLagRagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+            $"QueueEndpoint=https://{QueueLagRagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var primaryClient = new QueueServiceClient(primaryConnectionString, clientOptions);
         var secondaryClient = new QueueServiceClient(secondaryConnectionString, clientOptions);
@@ -740,10 +740,10 @@ public class StorageAccountGeoReplicationTests
 
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={QueueLagRagzrsAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{QueueLagRagzrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+            $"QueueEndpoint=https://{QueueLagRagzrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={QueueLagRagzrsAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{QueueLagRagzrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+            $"QueueEndpoint=https://{QueueLagRagzrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var primaryClient = new QueueServiceClient(primaryConnectionString, clientOptions);
         var secondaryClient = new QueueServiceClient(secondaryConnectionString, clientOptions);
@@ -794,13 +794,13 @@ public class StorageAccountGeoReplicationTests
 
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={TableLagRagrsAccountName};AccountKey={key};" +
-            $"TableEndpoint=https://{TableLagRagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;";
+            $"TableEndpoint=https://{TableLagRagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var primaryServiceClient = new TableServiceClient(primaryConnectionString, clientOptions);
         await primaryServiceClient.CreateTableAsync("georeplag");
 
         var secondaryEndpoint =
-            $"https://{TableLagRagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+            $"https://{TableLagRagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
         var secondaryServiceClient = new TableServiceClient(
             new Uri(secondaryEndpoint),
             new TableSharedKeyCredential(TableLagRagrsAccountName, key),
@@ -847,13 +847,13 @@ public class StorageAccountGeoReplicationTests
 
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={TableLagRagzrsAccountName};AccountKey={key};" +
-            $"TableEndpoint=https://{TableLagRagzrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;";
+            $"TableEndpoint=https://{TableLagRagzrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
         var primaryServiceClient = new TableServiceClient(primaryConnectionString, clientOptions);
         await primaryServiceClient.CreateTableAsync("georeplag");
 
         var secondaryEndpoint =
-            $"https://{TableLagRagzrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+            $"https://{TableLagRagzrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
         var secondaryServiceClient = new TableServiceClient(
             new Uri(secondaryEndpoint),
             new TableSharedKeyCredential(TableLagRagzrsAccountName, key),
@@ -899,7 +899,7 @@ public class StorageAccountGeoReplicationTests
         // Send a message via primary
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{RagrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+            $"QueueEndpoint=https://{RagrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
         var primaryOptions = new QueueClientOptions
         {
             Transport = new Azure.Core.Pipeline.HttpClientTransport(
@@ -912,7 +912,7 @@ public class StorageAccountGeoReplicationTests
         // Attempt to receive (dequeue) from secondary
         var secondaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+            $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
         var secondaryOptions = new QueueClientOptions
         {
             Transport = new Azure.Core.Pipeline.HttpClientTransport(
@@ -944,7 +944,7 @@ public class StorageAccountGeoReplicationTests
 
         var primaryConnectionString =
             $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-            $"TableEndpoint=https://{RagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;";
+            $"TableEndpoint=https://{RagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
         var primaryService = new TableServiceClient(primaryConnectionString, tableOptions);
         await primaryService.CreateTableAsync("odatatest");
         var primary = primaryService.GetTableClient("odatatest");
@@ -958,7 +958,7 @@ public class StorageAccountGeoReplicationTests
             RagrsAccountName);
 
         var secondaryEndpoint =
-            $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+            $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
         var secondaryService = new TableServiceClient(new Uri(secondaryEndpoint),
             new TableSharedKeyCredential(RagrsAccountName, key), tableOptions);
         var secondary = secondaryService.GetTableClient("odatatest");
@@ -1006,20 +1006,20 @@ public class StorageAccountGeoReplicationTests
         // Write one resource to each service via primary
         var primaryBlob = new BlobServiceClient(
             $"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};" +
-            $"BlobEndpoint=https://{account}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;",
+            $"BlobEndpoint=https://{account}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;",
             blobOptions);
         await primaryBlob.CreateBlobContainerAsync("wmcontainer");
         await primaryBlob.GetBlobContainerClient("wmcontainer").GetBlobClient("wm.txt").UploadAsync(new BinaryData("x"));
 
         var primaryQueue = new QueueServiceClient(
             $"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};" +
-            $"QueueEndpoint=https://{account}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;",
+            $"QueueEndpoint=https://{account}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;",
             queueOptions);
         await primaryQueue.CreateQueueAsync("wmqueue");
 
         var primaryTable = new TableServiceClient(
             $"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};" +
-            $"TableEndpoint=https://{account}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;",
+            $"TableEndpoint=https://{account}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;",
             tableOptions);
         await primaryTable.CreateTableAsync("wmtable");
 
@@ -1032,20 +1032,20 @@ public class StorageAccountGeoReplicationTests
         // Verify all three are now visible on their respective secondary endpoints
         var secondaryBlob = new BlobServiceClient(
             $"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};" +
-            $"BlobEndpoint=https://{account}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;",
+            $"BlobEndpoint=https://{account}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;",
             blobOptions);
         var blobs = secondaryBlob.GetBlobContainerClient("wmcontainer").GetBlobs().ToList();
         Assert.That(blobs.Any(b => b.Name == "wm.txt"), Is.True, "Blob must be visible after single watermark advance");
 
         var secondaryQueue = new QueueServiceClient(
             $"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};" +
-            $"QueueEndpoint=https://{account}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;",
+            $"QueueEndpoint=https://{account}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;",
             queueOptions);
         var queues = secondaryQueue.GetQueuesAsync().ToBlockingEnumerable().ToList();
         Assert.That(queues.Any(q => q.Name == "wmqueue"), Is.True, "Queue must be visible after single watermark advance");
 
         var secondaryTable = new TableServiceClient(
-            new Uri($"https://{account}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/"),
+            new Uri($"https://{account}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/"),
             new TableSharedKeyCredential(account, key), tableOptions);
         var tables = secondaryTable.Query().ToList();
         Assert.That(tables.Any(t => t.Name == "wmtable"), Is.True, "Table must be visible after single watermark advance");
@@ -1076,10 +1076,10 @@ public class StorageAccountGeoReplicationTests
 
             var secondaryBlobService = new BlobServiceClient(
                 $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
-                $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;",
+                $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;",
                 blobOptions);
             var secondaryTableService = new TableServiceClient(
-                new Uri($"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/"),
+                new Uri($"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/"),
                 new TableSharedKeyCredential(RagrsAccountName, key), tableOptions);
 
             using (Assert.EnterMultipleScope())

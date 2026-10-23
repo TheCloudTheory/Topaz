@@ -72,7 +72,7 @@ public class CreateStorageToolTests
             McpTestFixture.ObjectId);
 
         Assert.That(result.BlobServiceUri,
-            Does.Contain($"{AccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}"));
+            Does.Contain($"{AccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}"));
     }
 
     [Test]
@@ -86,7 +86,7 @@ public class CreateStorageToolTests
             McpTestFixture.ObjectId);
 
         Assert.That(result.QueueServiceUri,
-            Does.Contain($"{AccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}"));
+            Does.Contain($"{AccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}"));
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class CreateStorageToolTests
             McpTestFixture.ObjectId);
 
         Assert.That(result.TableServiceUri,
-            Does.Contain($"{AccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}"));
+            Does.Contain($"{AccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}"));
     }
 
     [Test]
@@ -140,7 +140,7 @@ public class CreateStorageToolTests
             McpTestFixture.ObjectId);
 
         Assert.That(result.QueueServiceUri,
-            Does.Contain($"{AccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}"));
+            Does.Contain($"{AccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}"));
     }
 
     [Test]
@@ -189,7 +189,7 @@ public class CreateStorageToolTests
             McpTestFixture.ObjectId);
 
         Assert.That(result.TableServiceUri,
-            Does.Contain($"{AccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}"));
+            Does.Contain($"{AccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}"));
     }
 
     [Test]

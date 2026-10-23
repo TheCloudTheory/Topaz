@@ -54,7 +54,7 @@ public class BlobStorageUserDelegationSasTests
     public async Task UserDelegationKey_Generate_ReturnsValidKey()
     {
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
-        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}");
+        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}");
         var blobServiceClient = new BlobServiceClient(serviceUri, credential);
 
         var response = await blobServiceClient.GetUserDelegationKeyAsync(
@@ -74,7 +74,7 @@ public class BlobStorageUserDelegationSasTests
     public async Task UserDelegationSas_Blob_CanDownloadBlob()
     {
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
-        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}");
+        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}");
         var blobServiceClient = new BlobServiceClient(serviceUri, credential);
 
         var keyExpiry = DateTimeOffset.UtcNow.AddHours(1);
@@ -95,7 +95,7 @@ public class BlobStorageUserDelegationSasTests
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
         var sasParams = sasBuilder.ToSasQueryParameters(userDelegationKey, StorageAccountName);
-        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/{ContainerName}/{BlobName}?{sasParams}");
+        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/{ContainerName}/{BlobName}?{sasParams}");
 
         var sasClient = new BlobClient(sasUri);
         var download = await sasClient.DownloadContentAsync();
@@ -107,7 +107,7 @@ public class BlobStorageUserDelegationSasTests
     public async Task UserDelegationSas_Container_CanListBlobs()
     {
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
-        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}");
+        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}");
         var blobServiceClient = new BlobServiceClient(serviceUri, credential);
 
         var keyExpiry = DateTimeOffset.UtcNow.AddHours(1);
@@ -127,7 +127,7 @@ public class BlobStorageUserDelegationSasTests
         sasBuilder.SetPermissions(BlobContainerSasPermissions.List);
 
         var sasParams = sasBuilder.ToSasQueryParameters(userDelegationKey, StorageAccountName);
-        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/{ContainerName}?{sasParams}");
+        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/{ContainerName}?{sasParams}");
 
         var sasContainerClient = new BlobContainerClient(sasUri);
         var blobs = sasContainerClient.GetBlobsAsync();
@@ -143,7 +143,7 @@ public class BlobStorageUserDelegationSasTests
     {
         // Arrange — get a user delegation key and build a valid SAS from it
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
-        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}");
+        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}");
         var blobServiceClient = new BlobServiceClient(serviceUri, credential);
 
         var keyStart = DateTimeOffset.UtcNow.AddSeconds(-5);
@@ -161,7 +161,7 @@ public class BlobStorageUserDelegationSasTests
         };
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
         var sasParams = sasBuilder.ToSasQueryParameters(userDelegationKey, StorageAccountName);
-        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/{ContainerName}/{BlobName}?{sasParams}");
+        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/{ContainerName}/{BlobName}?{sasParams}");
 
         // Confirm the SAS works before revocation
         var sasClient = new BlobClient(sasUri);
@@ -183,7 +183,7 @@ public class BlobStorageUserDelegationSasTests
     public async Task UserDelegationSas_WithExpiredToken_ReturnsForbidden()
     {
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
-        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}");
+        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}");
         var blobServiceClient = new BlobServiceClient(serviceUri, credential);
 
         // Issue a key with a past expiry.
@@ -204,7 +204,7 @@ public class BlobStorageUserDelegationSasTests
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
         var sasParams = sasBuilder.ToSasQueryParameters(userDelegationKey, StorageAccountName);
-        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/{ContainerName}/{BlobName}?{sasParams}");
+        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/{ContainerName}/{BlobName}?{sasParams}");
 
         var sasClient = new BlobClient(sasUri);
         Assert.ThrowsAsync<Azure.RequestFailedException>(async () => await sasClient.DownloadContentAsync());
