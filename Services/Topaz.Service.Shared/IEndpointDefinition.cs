@@ -82,4 +82,19 @@ public interface IEndpointDefinition
     {
         return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Validates the endpoint's configuration or context for correctness and consistency.
+    /// This method is typically used to ensure that all required properties or settings
+    /// are properly defined before the endpoint is utilized.
+    /// </summary>
+    /// <returns>
+    /// A tuple containing a boolean indicating whether the validation was successful
+    /// and an array of validation error messages, if any. If the validation is successful,
+    /// the error array will be null or empty.
+    /// </returns>
+    public (bool isValid, string[]? validationErrors) Validate(HttpContext context)
+    {
+        return (true, null);
+    }
 }

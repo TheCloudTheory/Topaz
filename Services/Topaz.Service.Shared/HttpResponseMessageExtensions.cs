@@ -150,4 +150,12 @@ public static class HttpResponseMessageExtensions
         response.StatusCode = HttpStatusCode.BadRequest;
         response.Content = JsonContent.Create(error);
     }
+    
+    public static void CreateBadRequestResponse(this HttpResponseMessage response, string[] errors)
+    {
+        var error = new GenericErrorResponse("BadRequest", $"Invalid request: {string.Join(", ", errors)}");
+
+        response.StatusCode = HttpStatusCode.BadRequest;
+        response.Content = JsonContent.Create(error);
+    }
 }

@@ -243,6 +243,16 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 response = chaosResult.response;
                 return response!;
             }
+            
+            // Validate the request before handling the actual logic
+            var validationResult = endpoint.Validate(context);
+            if (!validationResult.isValid)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.CreateBadRequestResponse(validationResult.validationErrors!);
+                
+                return response;
+            }
 
             context.User = principal!;
             // ReSharper disable once MethodHasAsyncOverload

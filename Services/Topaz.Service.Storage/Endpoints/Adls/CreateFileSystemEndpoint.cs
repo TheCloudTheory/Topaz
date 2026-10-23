@@ -1,12 +1,14 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Storage.Endpoints.Adls;
 
-internal sealed class CreateFileSystemEndpoint(Pipeline eventPipeline, ITopazLogger logger) : AdlsDataPlaneEndpointBase(eventPipeline, logger)
+internal sealed partial class CreateFileSystemEndpoint(Pipeline eventPipeline, ITopazLogger logger) : AdlsDataPlaneEndpointBase(eventPipeline, logger)
 {
     public override string[] Endpoints => ["PUT /{filesystem}?resource=filesystem"];
     public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];
@@ -27,4 +29,28 @@ internal sealed class CreateFileSystemEndpoint(Pipeline eventPipeline, ITopazLog
             return;
         }
     }
+    
+    public override (bool isValid, string[]? validationErrors) Validate(HttpContext context)
+    {
+        var filesystem = context.Request.Path.Value.ExtractValueFromPath(0);
+        if(string.IsNullOrWhiteSpace(filesystem))
+        {
+            return (false, ["filesystem is required"]);
+        }
+        
+        if(filesystem.Length is < 3 or > 63)
+        {
+            return (false, ["filesystem must be between 3 and 63 characters"]);
+        }
+        
+        if(!FileSystemRegex().IsMatch(filesystem))
+        {
+            return (false, ["filesystem must start with a letter or number, and can contain letters, numbers, and dashes. It must not end with a dash, and must not contain consecutive dashes"]);
+        }
+
+        return (true, null);
+    }
+
+    [GeneratedRegex(@"^[a-z0-9](?!.*--)[a-z0-9-]{1,61}[a-z0-9]$")]
+    private static partial Regex FileSystemRegex();
 }

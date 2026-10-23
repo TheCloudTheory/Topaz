@@ -16,4 +16,9 @@ internal class AdlsDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogger lo
     {
         throw new NotImplementedException();
     }
+    
+    public virtual (bool isValid, string[]? validationErrors) Validate(HttpContext context)
+    {
+        return (true, null);
+    }
 }
