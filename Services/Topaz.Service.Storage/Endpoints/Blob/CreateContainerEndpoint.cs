@@ -9,17 +9,17 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Endpoints.Blob;
 
 internal sealed class CreateContainerEndpoint(Pipeline eventPipeline, ITopazLogger logger)
-    : BlobDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
+    : BlobDataPlaneEndpointBase(eventPipeline, logger)
 {
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
 
     public string ProviderNamespace => "Microsoft.Storage";
 
-    public string[] Endpoints => ["PUT /{containerName}"];
+    public override string[] Endpoints => ["PUT /{containerName}"];
 
-    public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];
+    public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];
 
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))

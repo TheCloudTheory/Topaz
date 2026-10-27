@@ -14,11 +14,11 @@ internal sealed class GetBlobServiceStatsEndpoint(Pipeline eventPipeline, ITopaz
 {
     public string ProviderNamespace => "Microsoft.Storage";
 
-    public string[] Endpoints => ["GET /?restype=service&comp=stats"];
+    public override string[] Endpoints => ["GET /?restype=service&comp=stats"];
 
-    public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/read"];
+    public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/read"];
 
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccountFromSecondaryHost(context.Request.Headers, out var storageAccount))
         {

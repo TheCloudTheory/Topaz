@@ -15,15 +15,15 @@ internal sealed class GetContainerPropertiesEndpoint(Pipeline eventPipeline, ITo
 
     public string ProviderNamespace => "Microsoft.Storage";
 
-    public string[] Endpoints => [
+    public override string[] Endpoints => [
         "GET /{containerName}?restype=container",
         // Legacy SDK (7.x) uses HEAD instead of GET
         "HEAD /{containerName}?restype=container"
     ];
 
-    public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/read"];
+    public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/read"];
 
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
         {

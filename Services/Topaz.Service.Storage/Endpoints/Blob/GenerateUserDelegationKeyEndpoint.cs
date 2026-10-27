@@ -26,11 +26,11 @@ internal sealed class GenerateUserDelegationKeyEndpoint(Pipeline eventPipeline, 
 {
     public string ProviderNamespace => "Microsoft.Storage";
 
-    public string[] Endpoints => ["POST /?restype=service&comp=userdelegationkey"];
+    public override string[] Endpoints => ["POST /?restype=service&comp=userdelegationkey"];
 
-    public string[] Permissions => [];
+    public override string[] Permissions => [];
 
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         // This operation requires Bearer (OAuth) authentication.
         // SharedKey and unauthenticated callers are rejected with 403, matching Azure behavior.

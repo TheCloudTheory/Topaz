@@ -10,7 +10,7 @@ namespace Topaz.Service.Storage.Endpoints.Adls;
 
 internal sealed partial class CreateFileSystemEndpoint(Pipeline eventPipeline, ITopazLogger logger) : AdlsDataPlaneEndpointBase(eventPipeline, logger)
 {
-    public override string[] Endpoints => ["PUT /{filesystem}?resource=filesystem"];
+    public override string[] Endpoints => ["PUT /{filesystem}"];
     public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
@@ -31,7 +31,7 @@ internal sealed partial class CreateFileSystemEndpoint(Pipeline eventPipeline, I
         
         var filesystem = context.Request.Path.Value.ExtractValueFromPath(0)!;
         var apiVersion = context.Request.Query["api-version"].ToString();
-        var op = _controlPlane.CreateFileSystem(storageAccount, filesystem, context.Request.Headers, apiVersion);
+        var op = ControlPlane.CreateFileSystem(storageAccount, filesystem, context.Request.Headers, apiVersion);
 
         if (op.Result == OperationResult.Conflict)
         {

@@ -17,11 +17,11 @@ internal sealed class GetBlobPropertiesEndpoint(Pipeline eventPipeline, ITopazLo
 
     public string ProviderNamespace => "Microsoft.Storage";
 
-    public string[] Endpoints => ["HEAD /{containerName}/..."];
+    public override string[] Endpoints => ["HEAD /{containerName}/..."];
 
-    public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"];
+    public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"];
 
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out var originalStorageAccountName))
         {

@@ -15,11 +15,11 @@ internal sealed class SetContainerAclEndpoint(Pipeline eventPipeline, ITopazLogg
 
     public string ProviderNamespace => "Microsoft.Storage";
 
-    public string[] Endpoints => ["PUT /{containerName}?restype=container&comp=acl"];
+    public override string[] Endpoints => ["PUT /{containerName}?restype=container&comp=acl"];
 
-    public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];
+    public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];
 
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))

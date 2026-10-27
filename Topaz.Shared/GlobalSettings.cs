@@ -115,6 +115,13 @@ public static class
     public static string GetBlobStorageEndpoint(string accountName) => $"https://{accountName}.blob.storage.{TopazHostname}:{DefaultStoragePort}";
 
     /// <summary>
+    /// Constructs the Data Lake Storage endpoint URL based on the provided account name and the global Topaz hostname and storage port.
+    /// </summary>
+    /// <param name="accountName">The name of the storage account for which the endpoint URL is to be constructed.</param>
+    /// <returns>A string containing the Blob Storage endpoint URL.</returns>
+    public static string GetAdlsStorageEndpoint(string accountName) => $"https://{accountName}.dfs.storage.{TopazHostname}:{DefaultStoragePort}";
+
+    /// <summary>
     /// The default port value used for connections to Cosmos DB endpoints in the application.
     /// </summary>
     /// <remarks>

@@ -7,7 +7,7 @@ namespace Topaz.Service.Storage.Endpoints.Adls;
 
 internal class AdlsDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogger logger) : DataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
-    protected readonly AdlsServiceControlPlane _controlPlane = new(logger);
+    protected readonly AdlsServiceControlPlane ControlPlane = new(logger);
     
     public string ProviderNamespace => "Microsoft.Storage";
     public string RequiredHostServiceLabel => "dfs";

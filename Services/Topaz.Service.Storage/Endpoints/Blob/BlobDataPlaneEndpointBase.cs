@@ -15,14 +15,21 @@ using BlobProperties = Topaz.Service.Storage.Models.BlobProperties;
 
 namespace Topaz.Service.Storage.Endpoints.Blob;
 
-internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogger logger) : DataPlaneEndpointBase(eventPipeline, logger)
+internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogger logger) : DataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     protected readonly ITopazLogger Logger = logger;
 
+    public virtual string[] Endpoints => [];
+    public virtual string[] Permissions => [];
     public string RequiredHostServiceLabel => "blob";
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultStoragePort], Protocol.Https);
+    
+    public virtual void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        throw new NotImplementedException();
+    }
 
     /// <summary>
     /// Blob storage data-plane endpoints manage their own auth via <see cref="DataPlaneEndpointBase.IsRequestAuthorized"/>.

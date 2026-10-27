@@ -14,11 +14,11 @@ internal sealed class GetBlobServicePropertiesEndpoint(Pipeline eventPipeline, I
 
     public string ProviderNamespace => "Microsoft.Storage";
 
-    public string[] Endpoints => ["GET /?restype=service&comp=properties"];
+    public override string[] Endpoints => ["GET /?restype=service&comp=properties"];
 
-    public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/read"];
+    public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/read"];
 
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
         {

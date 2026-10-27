@@ -15,11 +15,11 @@ internal sealed class GetContainerMetadataEndpoint(Pipeline eventPipeline, ITopa
 
     public string ProviderNamespace => "Microsoft.Storage";
 
-    public string[] Endpoints => ["GET /{containerName}?comp=metadata"];
+    public override string[] Endpoints => ["GET /{containerName}?comp=metadata"];
 
-    public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/read"];
+    public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/read"];
 
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
         {

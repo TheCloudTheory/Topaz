@@ -13,11 +13,11 @@ internal sealed class SetBlobServicePropertiesEndpoint(Pipeline eventPipeline, I
 
     public string ProviderNamespace => "Microsoft.Storage";
 
-    public string[] Endpoints => ["PUT /?restype=service&comp=properties"];
+    public override string[] Endpoints => ["PUT /?restype=service&comp=properties"];
 
-    public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/write"];
+    public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/write"];
 
-    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount, out _))
