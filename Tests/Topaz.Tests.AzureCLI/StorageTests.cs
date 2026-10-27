@@ -5,6 +5,23 @@ namespace Topaz.Tests.AzureCLI;
 public class StorageTests : TopazFixture
 {
     [Test]
+    public async Task Adls_CreateFileSystem_UsesDfsFilesystemRoute()
+    {
+        const string storageAccountName = "topazadlsroute01";
+        const string resourceGroup = "test-adls-route-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS --enable-hierarchical-namespace");
+
+        await RunAzureCliCommand(
+            $"az rest --method put --url \"https://{storageAccountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/test-filesystem?resource=filesystem\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\"");
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task StorageAccount_CheckName_Available()
     {
         await RunAzureCliCommand("az storage account check-name --name topazstoragechk01", (resp) =>

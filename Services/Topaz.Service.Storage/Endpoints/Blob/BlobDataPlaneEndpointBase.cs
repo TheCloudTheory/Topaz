@@ -30,6 +30,11 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
     {
         throw new NotImplementedException();
     }
+    
+    public virtual (bool isValid, string[]? validationErrors) Validate(HttpContext context)
+    {
+        return (true, null);
+    }
 
     /// <summary>
     /// Blob storage data-plane endpoints manage their own auth via <see cref="DataPlaneEndpointBase.IsRequestAuthorized"/>.
