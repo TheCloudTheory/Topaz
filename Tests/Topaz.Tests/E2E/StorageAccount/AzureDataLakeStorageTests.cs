@@ -14,8 +14,6 @@ internal sealed class AzureDataLakeStorageTests
     private const string SubscriptionName = "sub-adls-test";
     private const string ResourceGroupName = "test";
     private const string StorageAccountName = "adlsstoragetests";
-
-    private string _key = null!;
     
     [SetUp]
     public async Task SetUp()
