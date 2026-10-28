@@ -1,6 +1,9 @@
 #!/bin/bash
+set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARENT="topaz"
+CERT="$SCRIPT_DIR/$PARENT"
 SUFFIX=".local.dev"
 openssl req \
 -x509 \
@@ -8,8 +11,8 @@ openssl req \
 -sha256 \
 -days 365 \
 -nodes \
--keyout $PARENT.key \
--out $PARENT.crt \
+-keyout "$CERT.key" \
+-out "$CERT.crt" \
 -subj "/CN=${PARENT}" \
 -extensions v3_ca \
 -config <( \
@@ -44,9 +47,11 @@ openssl req \
   echo "DNS.17 = *.applicationinsights.${PARENT}${SUFFIX}"; \
   echo "DNS.18 = api.loganalytics.${PARENT}${SUFFIX}"; \
   echo "DNS.19 = *.eventgrid.${PARENT}${SUFFIX}"; \
-  echo "DNS.20 = *.redis.cache.${PARENT}${SUFFIX}")
+  echo "DNS.20 = *.redis.cache.${PARENT}${SUFFIX}"; \
+  echo "DNS.21 = *.dfs.storage.${PARENT}${SUFFIX}"; \
+  )
 
-openssl x509 -noout -text -in $PARENT.crt
+openssl x509 -noout -text -in "$CERT.crt"
 
-bash "$(dirname "$0")/convert.sh"
-bash "$(dirname "$0")/distribute.sh"
+bash "$SCRIPT_DIR/convert.sh"
+bash "$SCRIPT_DIR/distribute.sh"
