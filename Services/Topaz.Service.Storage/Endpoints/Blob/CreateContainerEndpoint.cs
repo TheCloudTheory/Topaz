@@ -69,18 +69,18 @@ internal sealed partial class CreateContainerEndpoint(Pipeline eventPipeline, IT
     
     public override (bool isValid, string[]? validationErrors) Validate(HttpContext context)
     {
-        var filesystem = context.Request.Path.Value.ExtractValueFromPath(0);
-        if(string.IsNullOrWhiteSpace(filesystem))
+        var container = context.Request.Path.Value.ExtractValueFromPath(1);
+        if(string.IsNullOrWhiteSpace(container))
         {
             return (false, ["filesystem is required"]);
         }
         
-        if(filesystem.Length is < 3 or > 63)
+        if(container.Length is < 3 or > 63)
         {
             return (false, ["filesystem must be between 3 and 63 characters"]);
         }
         
-        if(!ContainerRegex().IsMatch(filesystem))
+        if(!ContainerRegex().IsMatch(container))
         {
             return (false, ["filesystem must start with a letter or number, and can contain letters, numbers, and dashes. It must not end with a dash, and must not contain consecutive dashes"]);
         }

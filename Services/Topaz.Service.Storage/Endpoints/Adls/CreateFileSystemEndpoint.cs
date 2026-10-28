@@ -46,7 +46,7 @@ internal sealed partial class CreateFileSystemEndpoint(Pipeline eventPipeline, I
     
     public override (bool isValid, string[]? validationErrors) Validate(HttpContext context)
     {
-        var filesystem = context.Request.Path.Value.ExtractValueFromPath(0);
+        var filesystem = context.Request.Path.Value.ExtractValueFromPath(1);
         if(string.IsNullOrWhiteSpace(filesystem))
         {
             return (false, ["filesystem is required"]);
