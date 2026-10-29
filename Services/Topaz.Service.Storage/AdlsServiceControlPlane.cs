@@ -46,11 +46,17 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         return new ControlPlaneOperationResult(OperationResult.Created, null, null, responseHeaders);
     }
 
-    public ControlPlaneOperationResult GetFileSystem(StorageAccountResource storageAccount, string filesystem, string apiVersion)
+    public ControlPlaneOperationResult<Filesystem> GetFileSystem(StorageAccountResource storageAccount, string filesystemName, string apiVersion)
     {
         logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(GetFileSystem),
-            $"Getting filesystem {filesystem} on storage account {storageAccount.Name}");
+            $"Getting filesystem {filesystemName} on storage account {storageAccount.Name}");
 
+        var filesystem = _provider.GetAs<Filesystem>(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), filesystemName);
+        if (filesystem == null)
+        {
+            return new ControlPlaneOperationResult<Filesystem>(OperationResult.NotFound, null);
+        }
+        
         var headers = new Dictionary<string, string>
         {
             { "Date", DateTime.UtcNow.ToString("R") },
@@ -64,6 +70,6 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
             { "x-ms-deny-encryption-scope-override", "false" } // false unless the filesystem is configured to prohibit override
         };
 
-        return new ControlPlaneOperationResult(OperationResult.Success, null, null, headers);
+        return new ControlPlaneOperationResult<Filesystem>(OperationResult.Success, filesystem, null, null, headers);
     }
 }

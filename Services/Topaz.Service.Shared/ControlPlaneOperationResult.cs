@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Http;
 using Topaz.Shared;
 
 namespace Topaz.Service.Shared;
@@ -9,10 +8,14 @@ public class ControlPlaneOperationResult<TResource>(
     OperationResult result,
     TResource? resource,
     string? reason = null,
-    string? code = null)
+    string? code = null,
+    IDictionary<string, string>? headers = null)
 {
     [JsonIgnore]
     public OperationResult Result { get; } = result;
+    
+    [JsonIgnore]
+    public IDictionary<string, string>? Headers { get; } = headers;
 
     public TResource? Resource { get; } = resource;
     public string? Reason { get; } = reason;

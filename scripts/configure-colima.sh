@@ -7,6 +7,11 @@ set -euo pipefail
 
 CURRENT_DIR=$(dirname "$0")
 
+# Prune, delete, and start Colima to ensure a clean environment before configuring certificates.
+colima prune --force
+colima delete --force
+colima start
+
 colima ssh -- sudo mkdir -p "/etc/docker/certs.d/topazacrrun01.cr.topaz.local.dev:8892"
 cat "$CURRENT_DIR/../certificate/topaz.crt" |
 colima ssh -- sudo tee "/etc/docker/certs.d/topazacrrun01.cr.topaz.local.dev:8892/ca.crt" >/dev/null
