@@ -34,6 +34,19 @@ if lsof -Pi :53 -sTCP:LISTEN -t >/dev/null 2>&1 || ss -tulpn | grep -q ':53 ' 2>
         echo "nameserver 8.8.4.4" >> /etc/resolv.conf
         
         echo "systemd-resolved stopped and disabled."
+
+        for attempt in {1..10}; do
+            if ! lsof -Pi :53 -sTCP:LISTEN -t >/dev/null 2>&1 && ! ss -tulpn | grep -q ':53 ' 2>/dev/null; then
+                break
+            fi
+            sleep 1
+        done
+
+        if lsof -Pi :53 -sTCP:LISTEN -t >/dev/null 2>&1 || ss -tulpn | grep -q ':53 ' 2>/dev/null; then
+            echo "ERROR: Port 53 is still in use after stopping systemd-resolved."
+            lsof -i :53 2>/dev/null || ss -tulpn | grep ':53 '
+            exit 1
+        fi
     else
         echo "ERROR: Port 53 is in use by another service."
         echo "Please identify and stop the service using port 53:"
@@ -99,7 +112,12 @@ fi
 
 # Enable and start dnsmasq service
 systemctl enable dnsmasq
-systemctl restart dnsmasq
+if ! systemctl restart dnsmasq; then
+    echo "ERROR: dnsmasq failed to start. Service diagnostics:"
+    systemctl status dnsmasq --no-pager || echo "Unable to retrieve dnsmasq service status."
+    journalctl -u dnsmasq -n 50 --no-pager || echo "Unable to retrieve dnsmasq journal."
+    exit 1
+fi
 
 echo "--------------------------------------------"
 echo "Step 3 - Verifying dnsmasq service status..."
