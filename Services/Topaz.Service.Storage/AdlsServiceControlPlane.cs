@@ -30,13 +30,14 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         
         var properties = headers["x-ms-properties"].ToString();
         var encryptionScope = headers["x-ms-encryption-scope"].ToString();
+        var filesystemMetadata = new Filesystem(properties, encryptionScope);
         
-        _provider.CreateFileSystem(storageAccount, filesystem, new Filesystem(properties, encryptionScope));
+        _provider.CreateFileSystem(storageAccount, filesystem, filesystemMetadata);
         
         var responseHeaders = new Dictionary<string, string>
         {
             { "Date", DateTime.UtcNow.ToString("R") },
-            { "ETag", $"\"{new ETag("1234567")}\"" },
+            { "ETag", $"\"{filesystemMetadata.ETag}\"" },
             { "Last-Modified", DateTime.UtcNow.ToString("R") },
             { "x-ms-request-id", Guid.NewGuid().ToString() },
             { "x-ms-version", apiVersion },
@@ -61,7 +62,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         var headers = new Dictionary<string, string>
         {
             { "Date", DateTime.UtcNow.ToString("R") },
-            { "ETag", $"\"{new ETag("1234567")}\"" },
+            { "ETag", $"\"{filesystem.ETag}\"" },
             { "Last-Modified", DateTime.UtcNow.ToString("R") },
             { "x-ms-request-id", Guid.NewGuid().ToString() },
             { "x-ms-version", apiVersion },
