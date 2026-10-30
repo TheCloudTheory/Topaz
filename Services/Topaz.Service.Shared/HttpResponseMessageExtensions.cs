@@ -164,6 +164,13 @@ public static class HttpResponseMessageExtensions
         if (result.Headers == null) return;
         foreach (var header in result.Headers)
         {
+            // Some headers belong to response content
+            if (header.Key == "Last-Modified")
+            {
+                responseMessage.Content.Headers.Add(header.Key, header.Value);
+                continue;
+            }
+            
             responseMessage.Headers.Add(header.Key, header.Value);
         }
     }

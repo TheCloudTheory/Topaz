@@ -15,7 +15,7 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         IHeaderDictionary? headers = null)
     {
         if (provider.ContainerExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName))
-            return new ControlPlaneOperationResult<Container>(OperationResult.Conflict, null, null, null);
+            return new ControlPlaneOperationResult<Container>(OperationResult.Conflict, null);
 
         var now = DateTimeOffset.UtcNow;
         var container = new Container
@@ -33,7 +33,7 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
             provider.SetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccountName, containerName, publicAccess);
 
-        return new ControlPlaneOperationResult<Container>(OperationResult.Created, container, null, null);
+        return new ControlPlaneOperationResult<Container>(OperationResult.Created, container);
     }
 
     public ControlPlaneOperationResult<ContainerEnumerationResult> ListContainers(
@@ -46,9 +46,7 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
 
         return new ControlPlaneOperationResult<ContainerEnumerationResult>(
             OperationResult.Success,
-            new ContainerEnumerationResult(storageAccountName, containers.ToArray()!),
-            null,
-            null);
+            new ContainerEnumerationResult(storageAccountName, [.. containers]!));
     }
     
     public ControlPlaneOperationResult DeleteContainer(SubscriptionIdentifier subscriptionIdentifier,
@@ -111,11 +109,10 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         var propertiesFilePath = Path.Combine(path, "blob-service-properties.xml");
 
         if (!File.Exists(propertiesFilePath))
-            return new ControlPlaneOperationResult<string>(OperationResult.Success, DefaultBlobServicePropertiesXml,
-                null, null);
+            return new ControlPlaneOperationResult<string>(OperationResult.Success, DefaultBlobServicePropertiesXml);
 
         return new ControlPlaneOperationResult<string>(OperationResult.Success,
-            File.ReadAllText(propertiesFilePath), null, null);
+            File.ReadAllText(propertiesFilePath));
     }
 
     public ControlPlaneOperationResult SetBlobServiceProperties(SubscriptionIdentifier subscriptionIdentifier,

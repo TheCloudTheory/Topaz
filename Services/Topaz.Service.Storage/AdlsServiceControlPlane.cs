@@ -1,3 +1,4 @@
+using Azure;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
@@ -35,7 +36,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         var responseHeaders = new Dictionary<string, string>
         {
             { "Date", DateTime.UtcNow.ToString("R") },
-            { "ETag", "123456789" },
+            { "ETag", $"\"{new ETag("1234567")}\"" },
             { "Last-Modified", DateTime.UtcNow.ToString("R") },
             { "x-ms-request-id", Guid.NewGuid().ToString() },
             { "x-ms-version", apiVersion },
@@ -60,7 +61,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         var headers = new Dictionary<string, string>
         {
             { "Date", DateTime.UtcNow.ToString("R") },
-            { "ETag", "123456789" },
+            { "ETag", $"\"{new ETag("1234567")}\"" },
             { "Last-Modified", DateTime.UtcNow.ToString("R") },
             { "x-ms-request-id", Guid.NewGuid().ToString() },
             { "x-ms-version", apiVersion },

@@ -30,7 +30,7 @@ internal sealed partial class CreateFileSystemEndpoint(Pipeline eventPipeline, I
             return;
         }
         
-        var filesystem = context.Request.Path.Value.ExtractValueFromPath(0)!;
+        var filesystem = context.Request.Path.Value.ExtractValueFromPath(1)!;
         var apiVersion = context.Request.Query["api-version"].ToString();
         var op = ControlPlane.CreateFileSystem(storageAccount, filesystem, context.Request.Headers, apiVersion);
 

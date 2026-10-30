@@ -24,22 +24,22 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
         return Path.Combine(storageAccountName, ".adls", filesystemName);
     }
 
-    private string GetFilesystemMetadataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+    private string GetFilesystemMetadataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string filesystemName)
     {
         var blobPath =
-            GetFilesystemPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+            GetFilesystemPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, filesystemName);
         
         return Path.Combine(blobPath, ".metadata");
     }
     
     private string GetFilesystemPathWithReplacedValues(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string filesystemName)
     {
         var storageAccountPath =
             GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
-        containerName = PathGuard.SanitizeName(containerName);
-        return Path.Combine(storageAccountPath, ".adls", containerName);
+        filesystemName = PathGuard.SanitizeName(filesystemName);
+        return Path.Combine(storageAccountPath, ".adls", filesystemName);
     }
 
     private string GetFilesystemDataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string filesystemName)
