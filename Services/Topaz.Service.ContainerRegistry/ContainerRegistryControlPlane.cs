@@ -9,6 +9,8 @@ using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Storage;
+using Topaz.Service.Storage.Security;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
 
@@ -41,6 +43,8 @@ internal sealed partial class ContainerRegistryControlPlane(
         SystemAssignedIdentityControlPlane.New(logger),
         eventPipeline,
         logger);
+    
+    private readonly AzureStorageControlPlane _azureStorageControlPlane = AzureStorageControlPlane.New(logger);
 
     public OperationResult Deploy(GenericResource resource)
     {
@@ -456,7 +460,17 @@ internal sealed partial class ContainerRegistryControlPlane(
                 result.Code);
         }
         
-        var response = SourceUploadDefinition.FromRegistry(result.Resource!);
+        var storageAccount = _azureStorageControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (storageAccount.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<SourceUploadDefinition>(OperationResult.NotFound, null, storageAccount.Reason,
+                storageAccount.Code);
+        }
+
+        var sas = new SharedAccessSignatureGenerator(logger).CreateServiceSasContainer(storageAccount.Resource!.Name,
+            storageAccount.Resource!.Keys[0].Value, "container");
+        var response = SourceUploadDefinition.FromRegistry(result.Resource!, sas);
+        
         return new ControlPlaneOperationResult<SourceUploadDefinition>(OperationResult.Success, response);
     }
 }

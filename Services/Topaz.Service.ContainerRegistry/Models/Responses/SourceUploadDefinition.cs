@@ -10,13 +10,15 @@ internal sealed class SourceUploadDefinition : TopazApiModel
     public string? UploadUrl { get; set; }
     public string? RelativePath { get; set; }
 
-    public static SourceUploadDefinition? FromRegistry(ContainerRegistryResource registry)
+    public static SourceUploadDefinition? FromRegistry(ContainerRegistryResource registry,
+        string sas)
     {
         var relativePath = $"source/{DateTime.UtcNow:yyyyMMddHHmm}/{Guid.NewGuid()}.tar.gz";
         return new SourceUploadDefinition
         {
             RelativePath = relativePath,
-            UploadUrl = $"{GlobalSettings.GetBlobStorageEndpoint(registry.Name)}/container/{relativePath}"
+            UploadUrl =
+                $"{GlobalSettings.GetBlobStorageEndpoint(registry.Name)}/container/{relativePath}?{sas}"
         };
     }
 }
