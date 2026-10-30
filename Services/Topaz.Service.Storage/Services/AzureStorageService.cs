@@ -48,10 +48,18 @@ public sealed class AzureStorageService(Pipeline eventPipeline, ITopazLogger log
     public void Register()
     {
         var controlPlane = AzureStorageControlPlane.New(logger);
+        var blobControlPlane = BlobServiceControlPlane.New(logger);
 
         eventPipeline.RegisterHandler<ContainerRegistryCreatedEventData>(
             ContainerRegistryCreatedEvent.EventName,
-            data => controlPlane.CreateOrUpdate(SubscriptionIdentifier.From(data!.SubscriptionIdentifier!.Value),
-                ResourceGroupIdentifier.From(data.ResourceGroupIdentifier), data.RegistryName!, CreateOrUpdateStorageAccountRequest.ForContainerRegistry(data.Location)));
+            data =>
+            {
+                _ = controlPlane.CreateOrUpdate(SubscriptionIdentifier.From(data!.SubscriptionIdentifier!.Value),
+                    ResourceGroupIdentifier.From(data.ResourceGroupIdentifier), data.RegistryName!,
+                    CreateOrUpdateStorageAccountRequest.ForContainerRegistry(data.Location));
+                _ = blobControlPlane.CreateContainer(SubscriptionIdentifier.From(data.SubscriptionIdentifier!.Value),
+                    ResourceGroupIdentifier.From(data.ResourceGroupIdentifier), data.ContainerName!,
+                    data.RegistryName!);
+            });
     }
 }

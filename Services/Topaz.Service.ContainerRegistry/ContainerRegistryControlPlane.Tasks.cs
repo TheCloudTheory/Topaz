@@ -354,7 +354,7 @@ internal sealed partial class ContainerRegistryControlPlane
         CancellationToken cancellationToken)
     {
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ScheduleRun),
-            "Executing {0}: registry={1}", nameof(ScheduleRun), registryName);
+            "Executing {0}: registry={1}, request={2}", nameof(ScheduleRun), registryName, rawRequest);
 
         var registryOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
         if (registryOperation.Result == OperationResult.NotFound)

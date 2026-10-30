@@ -5,11 +5,17 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Security;
 using Topaz.Service.Storage.Serialization;
+using Topaz.Shared;
 
 namespace Topaz.Service.Storage;
 
 internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
 {
+    internal static BlobServiceControlPlane New(ITopazLogger logger)
+    {
+        return new BlobServiceControlPlane(new BlobResourceProvider(logger));
+    }
+    
     public ControlPlaneOperationResult<Container> CreateContainer(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string containerName, string storageAccountName,
         IHeaderDictionary? headers = null)

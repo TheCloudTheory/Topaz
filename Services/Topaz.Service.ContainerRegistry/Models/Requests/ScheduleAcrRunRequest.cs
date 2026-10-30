@@ -7,10 +7,18 @@ namespace Topaz.Service.ContainerRegistry.Models.Requests;
 internal sealed class ScheduleAcrRunRequest : TopazApiRequest
 {
     public string Type { get; init; } = string.Empty;
+    public RunPlatform? Platform { get; init; }
 
     // DockerBuildRequest fields
     public string? ContextPath { get; init; }
     public string? DockerFilePath { get; init; }
     public string[]? ImageNames { get; init; }
     public bool IsPushEnabled { get; init; }
+
+    [UsedImplicitly]
+    internal class RunPlatform
+    {
+        public string? Os { get; init; }
+        public string? Architecture { get; init; }
+    }
 }

@@ -775,7 +775,7 @@ public class ContainerRegistryTests : TopazFixture
                 {
                     Assert.That(resp["properties"]?["runType"]?.GetValue<string>(), Is.EqualTo("QuickRun"));
                     Assert.That(resp["properties"]?["status"]?.GetValue<string>(), Is.EqualTo("Succeeded"));
-                    Assert.That(resp["properties"]?["platform"]?["os"]?.GetValue<string>(), Is.EqualTo("Linux"));
+                    Assert.That(resp["properties"]?["platform"]?["os"]?.GetValue<string>(), Is.EqualTo("linux"));
                 });
             });
 

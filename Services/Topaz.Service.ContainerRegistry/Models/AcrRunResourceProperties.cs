@@ -83,7 +83,8 @@ internal sealed class AcrRunResourceProperties
             StartTime = now,
             FinishTime = now,
             RunType = runType,
-            IsArchiveEnabled = false
+            IsArchiveEnabled = false,
+            Platform = JsonSerializer.SerializeToElement(request.Platform, GlobalSettings.JsonOptions),
         };
     }
 

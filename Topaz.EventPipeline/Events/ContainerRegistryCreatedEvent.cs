@@ -15,4 +15,5 @@ public sealed class ContainerRegistryCreatedEventData
     public required string? ResourceGroupIdentifier { get; init; }
     public required string? RegistryName { get; init; }
     public required string? Location { get; init; }
+    public string? ContainerName { get; init; } = "container";
 }

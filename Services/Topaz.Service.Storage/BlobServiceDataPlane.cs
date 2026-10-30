@@ -11,6 +11,11 @@ namespace Topaz.Service.Storage;
 
 internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane, ITopazLogger logger)
 {
+    internal static BlobServiceDataPlane New(ITopazLogger logger)
+    {
+        return new BlobServiceDataPlane(BlobServiceControlPlane.New(logger), logger);
+    }
+    
     private readonly AzureStorageControlPlane _controlPlane = AzureStorageControlPlane.New(logger);
 
     public DataPlaneOperationResult<BlobEnumerationResult> ListBlobs(SubscriptionIdentifier subscriptionIdentifier,
