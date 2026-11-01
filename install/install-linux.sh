@@ -13,47 +13,9 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Check if port 53 is already in use
 echo "--------------------------------------------"
-echo "Checking for port 53 conflicts..."
+echo "Configuring dnsmasq to listen on 127.0.0.1..."
 echo "--------------------------------------------"
-
-if lsof -Pi :53 -sTCP:LISTEN -t >/dev/null 2>&1 || ss -tulpn | grep -q ':53 ' 2>/dev/null; then
-    echo "Port 53 is already in use. Checking for systemd-resolved..."
-    
-    if systemctl is-active --quiet systemd-resolved; then
-        echo "systemd-resolved is running on port 53. Stopping and disabling it..."
-        systemctl stop systemd-resolved
-        systemctl disable systemd-resolved
-        
-        # Backup and update resolv.conf
-        if [ -L /etc/resolv.conf ]; then
-            rm /etc/resolv.conf
-        fi
-        echo "nameserver 8.8.8.8" > /etc/resolv.conf
-        echo "nameserver 8.8.4.4" >> /etc/resolv.conf
-        
-        echo "systemd-resolved stopped and disabled."
-
-        for attempt in {1..10}; do
-            if ! lsof -Pi :53 -sTCP:LISTEN -t >/dev/null 2>&1 && ! ss -tulpn | grep -q ':53 ' 2>/dev/null; then
-                break
-            fi
-            sleep 1
-        done
-
-        if lsof -Pi :53 -sTCP:LISTEN -t >/dev/null 2>&1 || ss -tulpn | grep -q ':53 ' 2>/dev/null; then
-            echo "ERROR: Port 53 is still in use after stopping systemd-resolved."
-            lsof -i :53 2>/dev/null || ss -tulpn | grep ':53 '
-            exit 1
-        fi
-    else
-        echo "ERROR: Port 53 is in use by another service."
-        echo "Please identify and stop the service using port 53:"
-        lsof -i :53 2>/dev/null || ss -tulpn | grep ':53 '
-        exit 1
-    fi
-fi
 
 # Detect package manager
 if command -v apt-get &> /dev/null; then
@@ -86,7 +48,9 @@ echo "--------------------------------------------"
 mkdir -p $DNSMASQ_CONF_DIR
 
 # Configure dnsmasq to resolve .topaz.local.dev domains and subdomains
-echo "address=/.topaz.local.dev/127.0.0.1" > $DNSMASQ_CONF_DIR/topaz.local.dev.conf
+echo "listen-address=127.0.0.1" > $DNSMASQ_CONF_DIR/topaz.local.dev.conf
+echo "bind-interfaces" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
+echo "address=/.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
 echo "address=/.keyvault.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
 echo "address=/.vault.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
 echo "address=/.storage.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
@@ -161,8 +125,12 @@ if systemctl is-active --quiet NetworkManager; then
 else
     echo "NetworkManager not detected. Configuring /etc/resolv.conf..."
     
-    # Backup existing resolv.conf if it's not a symlink we already removed
-    if [ -f /etc/resolv.conf ] && [ ! -L /etc/resolv.conf ]; then
+    # Replace resolver-managed symlinks so local queries go directly to dnsmasq.
+    if [ -L /etc/resolv.conf ]; then
+        cp -L /etc/resolv.conf /etc/resolv.conf.backup
+        rm /etc/resolv.conf
+        echo "Backup created at /etc/resolv.conf.backup"
+    elif [ -f /etc/resolv.conf ]; then
         cp /etc/resolv.conf /etc/resolv.conf.backup
         echo "Backup created at /etc/resolv.conf.backup"
     fi

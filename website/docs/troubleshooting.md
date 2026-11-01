@@ -54,14 +54,15 @@ dig test.topaz.local.dev @127.0.0.1
 scutil --dns | grep topaz
 ```
 
-**Linux** — run as root (handles the `systemd-resolved` conflict automatically):
+**Linux** — run as root:
 ```bash
 sudo ./install/install-linux.sh
 ```
 
-If port 53 is already in use by `systemd-resolved`, the script stops and disables it before installing dnsmasq. Confirm with:
+The script binds dnsmasq to `127.0.0.1` and leaves other DNS listeners, including `systemd-resolved`, running. If another service already uses `127.0.0.1:53`, inspect the dnsmasq logs:
 ```bash
 systemctl status dnsmasq
+journalctl -u dnsmasq -n 50 --no-pager
 dig test.topaz.local.dev @127.0.0.1
 ```
 
