@@ -1,9 +1,17 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Topaz.Shared;
 
 namespace Topaz.Tests.AzureCLI;
 
 public class StorageTests : TopazFixture
 {
+    private static readonly string[] Expected =
+    [
+        "Date", "ETag", "Last-Modified", "x-ms-request-id", "x-ms-version", "x-ms-properties",
+                    "x-ms-namespace-enabled", "x-ms-default-encryption-scope", "x-ms-deny-encryption-scope-override"
+    ];
+
     [Test]
     public async Task Adls_CreateFileSystem_UsesDfsFilesystemRoute()
     {
@@ -16,6 +24,30 @@ public class StorageTests : TopazFixture
 
         await RunAzureCliCommand(
             $"az rest --method put --url \"https://{storageAccountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/test-filesystem?resource=filesystem\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\"");
+
+        await RunAzureCliCommand(
+            $"az rest --method head --url \"https://{storageAccountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/test-filesystem?resource=filesystem&api-version=2023-08-03\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\" --debug",
+            stderrAssertion: stderr =>
+            {
+                Assert.That(stderr, Does.Contain("Response status: 200"));
+                Assert.That(stderr, Does.Contain("Response headers:"));
+                var responseHeaders = stderr[stderr.IndexOf("Response headers:", StringComparison.Ordinal)..];
+                var headers = Regex.Matches(responseHeaders, @"^INFO: cli\.azure\.cli\.core\.util:\s+'([^']+)': '([^']*)'\s*$", RegexOptions.Multiline)
+                    .ToDictionary(match => match.Groups[1].Value, match => match.Groups[2].Value, StringComparer.OrdinalIgnoreCase);
+
+                Assert.That(headers.Keys, Is.SupersetOf(Expected).Using<string>((left, right) => string.Compare(left, right, StringComparison.OrdinalIgnoreCase)), responseHeaders);
+                Assert.Multiple(() =>
+                {
+                    Assert.That(headers["ETag"], Does.Match("^\"[^\"]+\"$"));
+                    Assert.That(DateTimeOffset.TryParseExact(headers["Date"], "R", CultureInfo.InvariantCulture, DateTimeStyles.None, out _), Is.True);
+                    Assert.That(DateTimeOffset.TryParseExact(headers["Last-Modified"], "R", CultureInfo.InvariantCulture, DateTimeStyles.None, out _), Is.True);
+                    Assert.That(headers["x-ms-request-id"], Is.Not.Empty);
+                    Assert.That(headers["x-ms-version"], Is.EqualTo("2023-08-03"));
+                    Assert.That(headers["x-ms-properties"], Is.Empty);
+                    Assert.That(headers["x-ms-namespace-enabled"], Is.EqualTo("true").IgnoreCase);
+                    Assert.That(headers["x-ms-deny-encryption-scope-override"], Is.EqualTo("false"));
+                });
+            });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");

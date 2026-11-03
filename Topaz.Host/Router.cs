@@ -145,7 +145,8 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         
         foreach (var header in response.Headers)
         {
-            context.Response.Headers.Add(header.Key, new StringValues(header.Value.ToArray()));
+            logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), $"Appending header: {header.Key}");
+            context.Response.Headers.Add(header.Key, new StringValues([.. header.Value]));
         }
 
         // Also forward content headers (e.g. Content-Length) so endpoints can
@@ -154,7 +155,9 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         foreach (var header in response.Content.Headers)
         {
             if (string.Equals(header.Key, "Content-Type", StringComparison.OrdinalIgnoreCase)) continue;
-            context.Response.Headers[header.Key] = new StringValues(header.Value.ToArray());
+            
+            logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), $"Appending content header: {header.Key}");
+            context.Response.Headers[header.Key] = new StringValues([.. header.Value]);
         }
         
         switch (response.StatusCode)

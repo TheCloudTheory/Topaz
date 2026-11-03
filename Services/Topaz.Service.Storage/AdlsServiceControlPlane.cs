@@ -37,7 +37,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         var responseHeaders = new Dictionary<string, string>
         {
             { "Date", DateTime.UtcNow.ToString("R") },
-            { "ETag", $"\"{filesystemMetadata.ETag}\"" },
+            { "ETag", filesystemMetadata.ETag!.Value.ToString("H") },
             { "Last-Modified", DateTime.UtcNow.ToString("R") },
             { "x-ms-request-id", Guid.NewGuid().ToString() },
             { "x-ms-version", apiVersion },
@@ -53,7 +53,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(GetFileSystem),
             $"Getting filesystem {filesystemName} on storage account {storageAccount.Name}");
 
-        var filesystem = _provider.GetAs<Filesystem>(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), filesystemName);
+        var filesystem = _provider.GetFileSystem(storageAccount, filesystemName);
         if (filesystem == null)
         {
             return new ControlPlaneOperationResult<Filesystem>(OperationResult.NotFound, null);
@@ -62,7 +62,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         var headers = new Dictionary<string, string>
         {
             { "Date", DateTime.UtcNow.ToString("R") },
-            { "ETag", $"\"{filesystem.ETag}\"" },
+            { "ETag", filesystem.ETag!.Value.ToString("H") },
             { "Last-Modified", DateTime.UtcNow.ToString("R") },
             { "x-ms-request-id", Guid.NewGuid().ToString() },
             { "x-ms-version", apiVersion },

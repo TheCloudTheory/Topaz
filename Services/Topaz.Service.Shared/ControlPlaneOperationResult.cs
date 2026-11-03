@@ -46,4 +46,9 @@ public class ControlPlaneOperationResult(
     {
         return JsonSerializer.Serialize(this, GlobalSettings.JsonOptionsCli);
     }
+
+    public static ControlPlaneOperationResult CreateWithNoBody<TResult>(ControlPlaneOperationResult<TResult> result)
+    {
+        return new ControlPlaneOperationResult(result.Result, result.Reason, result.Code, result.Headers);
+    }
 }

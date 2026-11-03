@@ -158,7 +158,7 @@ public class TopazFixture
         await _network!.DisposeAsync();
     }
 
-    protected async Task RunAzureCliCommand(string command, Action<JsonNode>? assertion = null, int exitCode = 0, bool skipIfWarning = false)
+    protected async Task RunAzureCliCommand(string command, Action<JsonNode>? assertion = null, int exitCode = 0, bool skipIfWarning = false, Action<string>? stderrAssertion = null)
     {
         if (_containerAzureCli != null && _containerTopaz != null)
         {
@@ -199,6 +199,7 @@ public class TopazFixture
             $"`{command}` command failed. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
  
         assertion?.Invoke(JsonNode.Parse(result.Stdout)!);
+        stderrAssertion?.Invoke(result.Stderr);
     }
 
     protected async Task TryRunAzureCliCommand(string command)

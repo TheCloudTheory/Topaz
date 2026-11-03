@@ -19,6 +19,9 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
         Directory.CreateDirectory(data);
     }
     
+    public Filesystem? GetFileSystem(StorageAccountResource storageAccount, string filesystemName) =>
+        GetAs<Filesystem>(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), GetFilesystemId(storageAccount.Name, filesystemName));
+
     private static string GetFilesystemId(string storageAccountName, string filesystemName)
     {
         return Path.Combine(storageAccountName, ".adls", filesystemName);

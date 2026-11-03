@@ -16,6 +16,7 @@ public sealed class AzureDataLakeStorageService(Pipeline eventPipeline, ITopazLo
     public string Name => "Azure Data Lake Storage";
     
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new CreateFileSystemEndpoint(eventPipeline, logger)
+        new CreateFileSystemEndpoint(eventPipeline, logger),
+        new GetFileSystemPropertiesEndpoint(eventPipeline, logger)
     ];
 }

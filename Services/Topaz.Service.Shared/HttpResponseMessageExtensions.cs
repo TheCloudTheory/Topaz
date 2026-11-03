@@ -174,4 +174,9 @@ public static class HttpResponseMessageExtensions
             responseMessage.Headers.Add(header.Key, header.Value);
         }
     }
+    
+    public static void AppendHeaders<TResult>(this HttpResponseMessage responseMessage, ControlPlaneOperationResult<TResult> result)
+    {
+        responseMessage.AppendHeaders(ControlPlaneOperationResult.CreateWithNoBody(result));
+    }
 }
