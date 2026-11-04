@@ -10,7 +10,7 @@ namespace Topaz.Service.Storage.Endpoints.Adls;
 
 internal sealed partial class DeleteFileSystemPropertiesEndpoint(Pipeline eventPipeline, ITopazLogger logger) : AdlsDataPlaneEndpointBase(eventPipeline, logger)
 {
-    public override string[] Endpoints => ["HEAD /{filesystem}?resource=filesystem"];
+    public override string[] Endpoints => ["DELETE /{filesystem}?resource=filesystem"];
     
     public override string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/delete"];
 
