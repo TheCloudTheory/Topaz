@@ -36,7 +36,7 @@ internal sealed partial class CreateFileSystemEndpoint(Pipeline eventPipeline, I
 
         if (op.Result == OperationResult.Conflict)
         {
-            response.CreateErrorResponse(op);
+            response.CreateErrorResponse(op, HttpStatusCode.Conflict);
             return;
         }
         

@@ -32,7 +32,7 @@ internal sealed partial class DeleteFileSystemPropertiesEndpoint(Pipeline eventP
         
         var filesystem = context.Request.Path.Value.ExtractValueFromPath(1)!;
         var apiVersion = context.Request.Query["api-version"].ToString();
-        var op = ControlPlane.BeginDeletingFilesystem(storageAccount, filesystem, apiVersion);
+        var op = ControlPlane.BeginDeletingFilesystem(storageAccount, filesystem, apiVersion, context.Request.Headers);
 
         switch (op.Result)
         {
@@ -40,7 +40,10 @@ internal sealed partial class DeleteFileSystemPropertiesEndpoint(Pipeline eventP
                 response.StatusCode = HttpStatusCode.NotFound;
                 return;
             case OperationResult.Conflict:
-                response.CreateErrorResponse(op);
+                response.CreateNotFoundResponse(op);
+                return;
+            case OperationResult.PreconditionFailed:
+                response.CreateErrorResponse(op, HttpStatusCode.PreconditionFailed);
                 return;
             default:
                 response.StatusCode = HttpStatusCode.OK;

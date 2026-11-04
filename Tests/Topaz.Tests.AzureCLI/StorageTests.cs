@@ -54,6 +54,90 @@ public class StorageTests : TopazFixture
     }
 
     [Test]
+    public async Task Adls_DeleteFileSystem_MarksItForDeletion()
+    {
+        const string storageAccountName = "topazadlsdel01";
+        const string resourceGroup = "test-adls-delete-rg";
+        const string filesystem = "delete-filesystem";
+        var filesystemUrl = $"https://{storageAccountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/{filesystem}?resource=filesystem&api-version=2023-08-03";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS --enable-hierarchical-namespace");
+        await RunAzureCliCommand(
+            $"az rest --method put --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\"");
+
+        await RunAzureCliCommand(
+            $"az rest --method delete --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\" --debug",
+            stderrAssertion: stderr => Assert.That(stderr, Does.Contain("Response status: 200")));
+
+        await RunAzureCliCommand(
+            $"az rest --method head --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\" --debug",
+            exitCode: 1,
+            stderrAssertion: stderr => Assert.That(stderr, Does.Contain("Response status: 404")));
+
+        await RunAzureCliCommand(
+            $"az rest --method put --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\" --debug",
+            exitCode: 1,
+            stderrAssertion: stderr =>
+            {
+                Assert.That(stderr, Does.Contain("Response status: 409"));
+                Assert.That(stderr, Does.Contain("FilesystemBeingDeleted"));
+            });
+
+        await RunAzureCliCommand(
+            $"az rest --method delete --url \"https://{storageAccountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/missing-filesystem?resource=filesystem&api-version=2023-08-03\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\" --debug",
+            exitCode: 1,
+            stderrAssertion: stderr => Assert.That(stderr, Does.Contain("Response status: 404")));
+
+        await RunAzureCliCommand(
+            $"az rest --method delete --url \"https://{storageAccountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/invalid--filesystem?resource=filesystem&api-version=2023-08-03\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\" --debug",
+            exitCode: 1,
+            stderrAssertion: stderr => Assert.That(stderr, Does.Contain("Response status: 400")));
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task Adls_DeleteFileSystem_HonorsConditionalHeaders()
+    {
+        const string storageAccountName = "topazadlscond01";
+        const string resourceGroup = "test-adls-conditional-delete-rg";
+        const string filesystem = "conditional-filesystem";
+        var filesystemUrl = $"https://{storageAccountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/{filesystem}?resource=filesystem&api-version=2023-08-03";
+        var futureDate = DateTime.UtcNow.AddMinutes(5).ToString("R", CultureInfo.InvariantCulture);
+        var pastDate = DateTime.UtcNow.AddMinutes(-5).ToString("R", CultureInfo.InvariantCulture);
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS --enable-hierarchical-namespace");
+        await RunAzureCliCommand(
+            $"az rest --method put --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\"");
+
+        await RunAzureCliCommand(
+            $"az rest --method delete --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\" \"If-Modified-Since={futureDate}\" --debug",
+            exitCode: 1,
+            stderrAssertion: stderr => Assert.That(stderr, Does.Contain("Response status: 412")));
+
+        await RunAzureCliCommand(
+            $"az rest --method delete --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\" \"If-Unmodified-Since={pastDate}\" --debug",
+            exitCode: 1,
+            stderrAssertion: stderr => Assert.That(stderr, Does.Contain("Response status: 412")));
+
+        await RunAzureCliCommand(
+            $"az rest --method head --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\" --debug",
+            stderrAssertion: stderr => Assert.That(stderr, Does.Contain("Response status: 200")));
+
+        await RunAzureCliCommand(
+            $"az rest --method delete --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version=2023-08-03\" \"If-Unmodified-Since={futureDate}\" --debug",
+            stderrAssertion: stderr => Assert.That(stderr, Does.Contain("Response status: 200")));
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task StorageAccount_CheckName_Available()
     {
         await RunAzureCliCommand("az storage account check-name --name topazstoragechk01", (resp) =>

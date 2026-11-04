@@ -16,13 +16,15 @@ internal sealed class Filesystem : TopazApiModel
         Name = name;
         Properties = properties;
         EncryptionScope = encryptionScope;
-        ETag = new ETag(DateTime.UtcNow.Ticks.ToString());
+        LastModified = DateTimeOffset.UtcNow;
+        ETag = new ETag(LastModified.Value.UtcDateTime.Ticks.ToString());
     }
 
     public string? Name { get; init; }
     public string? EncryptionScope { get; init; }
     public string? Properties { get; init; }
     public ETag? ETag { get; init; }
+    public DateTimeOffset? LastModified { get; init; }
     public bool DeleteScheduled { get; set; }
     public DateTimeOffset? ScheduledDeleteDate { get; set; }
 

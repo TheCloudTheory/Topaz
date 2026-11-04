@@ -40,7 +40,7 @@ internal sealed partial class GetFileSystemPropertiesEndpoint(Pipeline eventPipe
                 response.StatusCode = HttpStatusCode.NotFound;
                 return;
             case OperationResult.Conflict:
-                response.CreateErrorResponse(op);
+                response.CreateNotFoundResponse(op);
                 return;
             default:
                 response.StatusCode = HttpStatusCode.OK;

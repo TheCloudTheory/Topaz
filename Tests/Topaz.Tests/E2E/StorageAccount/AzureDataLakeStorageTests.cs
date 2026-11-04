@@ -120,6 +120,15 @@ internal sealed class AzureDataLakeStorageTests
         Assert.That(exception!.Status, Is.EqualTo(409));
     }
 
+    [Test]
+    public async Task AzureDataLakeStorage_DeleteFileSystem_WhenMissing_ReturnsNotFound()
+    {
+        var filesystem = CreateDataLakeServiceClient().GetFileSystemClient("missing-filesystem");
+
+        var exception = Assert.ThrowsAsync<RequestFailedException>(async () => await filesystem.DeleteAsync());
+
+        Assert.That(exception!.Status, Is.EqualTo(404));
+    }
     [TestCase("ab")]
     [TestCase("invalid-")]
     [TestCase("invalid--name")]
@@ -143,4 +152,5 @@ internal sealed class AzureDataLakeStorageTests
             serviceUri,
             new StorageSharedKeyCredential(StorageAccountName, _key));
     }
+
 }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using System.Globalization;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
 using Topaz.Shared;
@@ -72,7 +73,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         {
             { "Date", DateTime.UtcNow.ToString("R") },
             { "ETag", filesystem.ETag!.Value.ToString("H") },
-            { "Last-Modified", DateTime.UtcNow.ToString("R") },
+            { "Last-Modified", filesystem.LastModified?.ToString("R", CultureInfo.InvariantCulture) ?? DateTime.UtcNow.ToString("R") },
             { "x-ms-request-id", Guid.NewGuid().ToString() },
             { "x-ms-version", apiVersion },
             { "x-ms-properties", "" }, // To be set if there are custom user properties
@@ -115,7 +116,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         return new ControlPlaneOperationResult<Filesystem[]>(OperationResult.Success, filesystems);
     }
 
-    public ControlPlaneOperationResult BeginDeletingFilesystem(StorageAccountResource storageAccount, string filesystem, string apiVersion)
+    public ControlPlaneOperationResult BeginDeletingFilesystem(StorageAccountResource storageAccount, string filesystem, string apiVersion, IHeaderDictionary requestHeaders)
     {
         logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(CreateFileSystem),
             $"Creating filesystem {filesystem} on storage account {storageAccount.Name}");
@@ -132,8 +133,17 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
             return new ControlPlaneOperationResult(OperationResult.Conflict, existingFilesystem.Reason, existingFilesystem.Code);
         }
 
-        existingFilesystem.Resource!.MarkForDeletion();
-        _provider.UpdateFilesystem(storageAccount, filesystem, existingFilesystem.Resource!);
+        var existingFilesystemResource = existingFilesystem.Resource!;
+        var lastModified = existingFilesystemResource.LastModified ?? DateTimeOffset.MinValue;
+        if (DateTimeOffset.TryParse(requestHeaders["If-Modified-Since"], CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var ifModifiedSince) && lastModified <= ifModifiedSince ||
+            DateTimeOffset.TryParse(requestHeaders["If-Unmodified-Since"], CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var ifUnmodifiedSince) && lastModified > ifUnmodifiedSince)
+        {
+            return new ControlPlaneOperationResult(OperationResult.PreconditionFailed,
+                "The condition specified using HTTP conditional header(s) is not met.", "ConditionNotMet");
+        }
+
+        existingFilesystemResource.MarkForDeletion();
+        _provider.UpdateFilesystem(storageAccount, filesystem, existingFilesystemResource);
         
         return new ControlPlaneOperationResult(OperationResult.Success);
     }
