@@ -2,7 +2,7 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
 
-namespace Topaz.Service.Storage;
+namespace Topaz.Service.Storage.BackgroundServices;
 
 internal sealed class GeoReplicationSyncScheduler(
     AzureStorageControlPlane controlPlane,

@@ -17,6 +17,7 @@ public sealed class AzureDataLakeStorageService(Pipeline eventPipeline, ITopazLo
     
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new CreateFileSystemEndpoint(eventPipeline, logger),
-        new GetFileSystemPropertiesEndpoint(eventPipeline, logger)
+        new GetFileSystemPropertiesEndpoint(eventPipeline, logger),
+        new DeleteFileSystemPropertiesEndpoint(eventPipeline, logger),
     ];
 }

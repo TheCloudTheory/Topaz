@@ -1,4 +1,3 @@
-using Azure;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
@@ -21,16 +20,21 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(CreateFileSystem),
             $"Creating filesystem {filesystem} on storage account {storageAccount.Name}");
 
-        var existingFilesystem = GetFileSystem(storageAccount, filesystem, apiVersion);
+        var existingFilesystem= GetFileSystem(storageAccount, filesystem, apiVersion);
         
         if (existingFilesystem.Result == OperationResult.Success)
         {
             return new ControlPlaneOperationResult(OperationResult.Conflict, "The specified filesystem already exists.", "FilesystemAlreadyExists");
         }
         
+        if (existingFilesystem.Result == OperationResult.Conflict)
+        {
+            return new ControlPlaneOperationResult(OperationResult.Conflict, existingFilesystem.Reason, existingFilesystem.Code);
+        }
+        
         var properties = headers["x-ms-properties"].ToString();
         var encryptionScope = headers["x-ms-encryption-scope"].ToString();
-        var filesystemMetadata = new Filesystem(properties, encryptionScope);
+        var filesystemMetadata = new Filesystem(filesystem, properties, encryptionScope);
         
         _provider.CreateFileSystem(storageAccount, filesystem, filesystemMetadata);
         
@@ -56,7 +60,12 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         var filesystem = _provider.GetFileSystem(storageAccount, filesystemName);
         if (filesystem == null)
         {
-            return new ControlPlaneOperationResult<Filesystem>(OperationResult.NotFound, null);
+            return new ControlPlaneOperationResult<Filesystem>(OperationResult.NotFound, null, "The specified filesystem does not exist.", "FilesystemNotFound");
+        }
+        
+        if (filesystem.DeleteScheduled)
+        {
+            return new ControlPlaneOperationResult<Filesystem>(OperationResult.Conflict, null, "The specified filesystem is being deleted.", "FilesystemBeingDeleted");
         }
         
         var headers = new Dictionary<string, string>
@@ -73,5 +82,59 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         };
 
         return new ControlPlaneOperationResult<Filesystem>(OperationResult.Success, filesystem, null, null, headers);
+    }
+
+    public ControlPlaneOperationResult DeleteFileSystem(StorageAccountResource storageAccount, string filesystem, string apiVersion)
+    {
+        logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(CreateFileSystem),
+            $"Creating filesystem {filesystem} on storage account {storageAccount.Name}");
+
+        var existingFilesystem= GetFileSystem(storageAccount, filesystem, apiVersion);
+        if (existingFilesystem.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, existingFilesystem.Reason, existingFilesystem.Code);
+        }
+        
+        // The filesystem may be already being deleted. If that's the case, 
+        if (existingFilesystem.Result == OperationResult.Conflict)
+        {
+            return new ControlPlaneOperationResult(OperationResult.Conflict, existingFilesystem.Reason, existingFilesystem.Code);
+        }
+
+        _provider.DeleteFileSystem(storageAccount, filesystem);
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<Filesystem[]> ListFilesystems(StorageAccountResource storageAccount)
+    {
+        logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(ListFilesystems),
+            $"Listing filesystems on storage account {storageAccount.Name}");
+        
+        var filesystems = _provider.ListFilesystems(storageAccount);
+        
+        return new ControlPlaneOperationResult<Filesystem[]>(OperationResult.Success, filesystems);
+    }
+
+    public ControlPlaneOperationResult BeginDeletingFilesystem(StorageAccountResource storageAccount, string filesystem, string apiVersion)
+    {
+        logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(CreateFileSystem),
+            $"Creating filesystem {filesystem} on storage account {storageAccount.Name}");
+
+        var existingFilesystem= GetFileSystem(storageAccount, filesystem, apiVersion);
+        if (existingFilesystem.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, existingFilesystem.Reason, existingFilesystem.Code);
+        }
+        
+        // The filesystem may be already being deleted. If that's the case, 
+        if (existingFilesystem.Result == OperationResult.Conflict)
+        {
+            return new ControlPlaneOperationResult(OperationResult.Conflict, existingFilesystem.Reason, existingFilesystem.Code);
+        }
+
+        existingFilesystem.Resource!.MarkForDeletion();
+        _provider.UpdateFilesystem(storageAccount, filesystem, existingFilesystem.Resource!);
+        
+        return new ControlPlaneOperationResult(OperationResult.Success);
     }
 }

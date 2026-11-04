@@ -72,7 +72,7 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
     public void DeleteContainer(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {
-        base.Delete(subscriptionIdentifier, resourceGroupIdentifier,
+        Delete(subscriptionIdentifier, resourceGroupIdentifier,
             GetContainerId(storageAccountName, containerName));
     }
 

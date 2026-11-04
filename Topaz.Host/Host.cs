@@ -51,6 +51,7 @@ using Topaz.Service.ContainerInstances;
 using Topaz.Service.ContainerRegistry.Executors;
 using Topaz.Service.EventGrid;
 using Topaz.Service.Redis;
+using Topaz.Service.Storage.BackgroundServices;
 using Topaz.Shared;
 using LicenseManager = Topaz.Shared.LicenseManager;
 
@@ -273,7 +274,9 @@ public class Host
                 AppConfigurationServiceControlPlane.New(_eventPipeline, _logger),
                 GlobalSettings.SoftDeletePurgeSchedulerInterval, _logger),
             new EventGridEventDeliveryBackgroundService(SubscriptionControlPlane.New(_eventPipeline, _logger),
-                EventGridTopicControlPlane.New(_eventPipeline, _logger), Client, _logger, TimeSpan.FromSeconds(10))
+                EventGridTopicControlPlane.New(_eventPipeline, _logger), Client, _logger, TimeSpan.FromSeconds(10)),
+            new FilesystemRemover(AzureStorageControlPlane.New(_logger),
+                subscriptionControlPlane, _logger)
         };
 
         InFlightMessageStore.SetRuleLoader(

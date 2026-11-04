@@ -10,7 +10,7 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
 {
     public void CreateFileSystem(StorageAccountResource storageAccount, string filesystemName, Filesystem filesystem)
     {
-        base.Create(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), GetFilesystemId(storageAccount.Name, filesystemName), filesystem);
+        Create(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), GetFilesystemId(storageAccount.Name, filesystemName), filesystem);
         
         var metadata = Path.Combine(GetFilesystemMetadataPath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), storageAccount.Name, filesystemName));
         Directory.CreateDirectory(metadata);
@@ -48,5 +48,32 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
     private string GetFilesystemDataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string filesystemName)
     {
         return Path.Combine(GetFilesystemPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, filesystemName), "data");
+    }
+
+    public void DeleteFileSystem(StorageAccountResource storageAccount, string filesystemName)
+    {
+        Delete(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), GetFilesystemId(storageAccount.Name, filesystemName), softDelete: true);
+    }
+
+    public Filesystem[] ListFilesystems(StorageAccountResource storageAccount)
+    {
+        var storageAccountPath =
+            GetServiceInstancePath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(),
+                storageAccount.Name);
+        var path = Path.Combine(storageAccountPath, ".adls");
+        var filesystemsDirectories = Directory.GetDirectories(path);
+        var filesystems = (from directory in filesystemsDirectories
+            select new DirectoryInfo(directory).Name
+            into filesystemName
+            select GetFileSystem(storageAccount, filesystemName)
+            into filesystem
+            select filesystem!).ToList();
+
+        return [.. filesystems];
+    }
+
+    public void UpdateFilesystem(StorageAccountResource storageAccount, string filesystemName, Filesystem filesystem)
+    {
+        CreateOrUpdate(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), GetFilesystemId(storageAccount.Name, filesystemName), filesystem);
     }
 }
