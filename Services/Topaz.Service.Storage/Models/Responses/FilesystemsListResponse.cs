@@ -11,7 +11,17 @@ internal sealed class FilesystemsListResponse : TopazApiModel
 
     public static FilesystemsListResponse From(Filesystem[] filesystems, int? maxResults, string? prefix)
     {
-        return new FilesystemsListResponse()
+        if (maxResults.HasValue)
+        {
+            filesystems = [.. filesystems.Take(maxResults.Value)];
+        }
+        
+        if(!string.IsNullOrWhiteSpace(prefix))
+        {
+            filesystems = [.. filesystems.Where(x => x.Name!.StartsWith(prefix))];
+        }
+        
+        return new FilesystemsListResponse
         {
             Filesystems = [.. filesystems.Select(FilesystemResponse.From)]
         };
