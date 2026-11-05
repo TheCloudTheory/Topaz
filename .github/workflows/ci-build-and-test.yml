@@ -388,6 +388,13 @@ jobs:
           NODEJS_JOINED=$(IFS='|'; echo "${NODEJS_PARTS[*]}")
           echo "nodejs_filter=$NODEJS_JOINED" >> "$GITHUB_OUTPUT"
         fi
+    - name: Terraform Tests
+      if: steps.build.outcome == 'success' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || steps.changes.outputs.terraform == 'true')
+      run: |
+        dotnet test Tests/Topaz.Tests.Terraform/Topaz.Tests.Terraform.csproj -m:1 --no-build --verbosity normal --logger "trx;verbosity=minimal" \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ github.workspace }}/TestResults \
+          --filter "FullyQualifiedName~Topaz.Tests.Terraform"
     - name: Test
       id: test
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true'
@@ -425,13 +432,6 @@ jobs:
         name: topaz-isolated-log
         path: '**/topaz-isolated.log'
         if-no-files-found: ignore
-    - name: Terraform Tests
-      if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || steps.changes.outputs.terraform == 'true')
-      run: |
-        dotnet test -m:1 --no-build --verbosity normal --logger "trx;verbosity=minimal" \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ${{ github.workspace }}/TestResults \
-          --filter "FullyQualifiedName~Topaz.Tests.Terraform"
     - name: Build Python container
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.py_skip != 'true'
       run: ./scripts/build-python-container.sh
@@ -491,13 +491,13 @@ jobs:
           --filter "$FILTER"
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true')
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true' || steps.changes.outputs.terraform == 'true')
       with:
         large_files: true
         files: |
           ${{ github.workspace }}/**/*.trx
     - name: ReportGenerator
-      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true') && hashFiles('TestResults/**/coverage.cobertura.xml') != ''
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true' || steps.changes.outputs.terraform == 'true') && hashFiles('TestResults/**/coverage.cobertura.xml') != ''
       uses: danielpalme/ReportGenerator-GitHub-Action@5.4.8
       with:
         reports: ./TestResults/**/coverage.cobertura.xml
@@ -516,7 +516,7 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PR_NUMBER: ${{ github.event.number }}
     - name: Publish coverage in build summary
-      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true')
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true' || steps.changes.outputs.terraform == 'true')
       run: |
         if [[ -f coveragereport/SummaryGithub.md ]]; then
           cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY

@@ -18,6 +18,7 @@ public class TopazFixture
     // https://hub.docker.com/r/hashicorp/terraform/tags
     private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.84.0";
     private const string TerraformVersion = "1.10.5";
+    private const string LoginCommand = "az login --username topazadmin@topaz.local.dev --password admin --output none";
 
     // Serializes PreInitializeProviderTemplates across all parallel fixture instances.
     // Multiple test classes share the same bind-mounted plugin cache; without a lock, concurrent
@@ -242,7 +243,7 @@ public class TopazFixture
 
             await RunTerraformContainerCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"", maxAttempts: 5);
             await RunTerraformContainerCommand("az cloud set -n Topaz", maxAttempts: 3);
-            await RunTerraformContainerCommand("az login --username topazadmin@topaz.local.dev --password admin", maxAttempts: 3);
+            await RunTerraformContainerCommand(LoginCommand, maxAttempts: 3);
             await EnsureSubscriptionExistsInTopaz();
             await RunTerraformContainerCommand($"az account set --subscription {_subscriptionId}", maxAttempts: 3);
 
@@ -311,6 +312,7 @@ public class TopazFixture
             _containerTerraform!.ExecAsync(new List<string>
             {
                 "/bin/sh", "-c",
+                $"{LoginCommand} && az account set --subscription {_subscriptionId} && " +
                 $"SSL_CERT_FILE=/tmp/combined.pem terraform -chdir={workDir} destroy -auto-approve"
             }).GetAwaiter().GetResult();
         }
@@ -413,6 +415,7 @@ public class TopazFixture
         if (expectedExitCode != 0)
             return;
         assertOutputs?.Invoke(outputs);
+        await RefreshAuthentication();
         await ExecTerraform($"terraform -chdir={workDir} destroy -auto-approve");
     }
 
@@ -443,6 +446,7 @@ public class TopazFixture
 
         try
         {
+            await RefreshAuthentication();
             await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve", expectedExitCode);
         }
         catch (AssertionException ex) when (IsRecoverableProviderStartupError(ex.Message))
@@ -466,6 +470,7 @@ public class TopazFixture
                 $"cp -a {templateDir}/.terraform {workDir}/.terraform && " +
                 $"(cp {templateDir}/.terraform.lock.hcl {workDir}/.terraform.lock.hcl 2>/dev/null || true)");
 
+            await RefreshAuthentication();
             await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve", expectedExitCode);
         }
 
@@ -608,6 +613,12 @@ public class TopazFixture
 
         var topazLogs = ReadDockerLogs("topaz.local.dev");
         Assert.Fail($"Topaz endpoint did not become ready in time. Recent logs:\n{topazLogs}");
+    }
+
+    private async Task RefreshAuthentication()
+    {
+        await RunTerraformContainerCommand(LoginCommand, maxAttempts: 3);
+        await RunTerraformContainerCommand($"az account set --subscription {_subscriptionId}", maxAttempts: 3);
     }
 
     private async Task RunTerraformContainerCommand(string command, int maxAttempts = 1)
