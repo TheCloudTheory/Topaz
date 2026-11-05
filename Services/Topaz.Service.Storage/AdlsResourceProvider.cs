@@ -55,20 +55,30 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
         Delete(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), GetFilesystemId(storageAccount.Name, filesystemName), softDelete: true);
     }
 
-    public Filesystem[] ListFilesystems(StorageAccountResource storageAccount)
+    public async Task<Filesystem[]> ListFilesystems(StorageAccountResource storageAccount, CancellationToken cancellationToken)
     {
-        var storageAccountPath =
-            GetServiceInstancePath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(),
-                storageAccount.Name);
-        var path = Path.Combine(storageAccountPath, ".adls");
-        var filesystemsDirectories = Directory.GetDirectories(path);
-        var filesystems = (from directory in filesystemsDirectories
-            select new DirectoryInfo(directory).Name
-            into filesystemName
-            select GetFileSystem(storageAccount, filesystemName)
-            into filesystem
-            select filesystem!).ToList();
+        cancellationToken.ThrowIfCancellationRequested();
+        
+        List<Filesystem> filesystems = [];
+        var task = new Task(() =>
+        {
+            var storageAccountPath =
+                GetServiceInstancePath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(),
+                    storageAccount.Name);
+            var path = Path.Combine(storageAccountPath, ".adls");
+            var filesystemsDirectories = Directory.GetDirectories(path);
+            filesystems =
+            [
+                .. from directory in filesystemsDirectories
+                select new DirectoryInfo(directory).Name
+                into filesystemName
+                select GetFileSystem(storageAccount, filesystemName)
+                into filesystem
+                select filesystem!
+            ];
+        });
 
+        await task.WaitAsync(cancellationToken);
         return [.. filesystems];
     }
 

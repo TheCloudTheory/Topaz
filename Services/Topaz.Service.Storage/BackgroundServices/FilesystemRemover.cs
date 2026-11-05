@@ -34,7 +34,7 @@ internal sealed class FilesystemRemover(
         {
             while (await timer.WaitForNextTickAsync(cancellationToken))
             {
-                await ScanAndDeleteAsync();
+                await ScanAndDeleteAsync(cancellationToken);
             }
         }
         catch (OperationCanceledException)
@@ -43,14 +43,14 @@ internal sealed class FilesystemRemover(
         }
     }
 
-    private Task ScanAndDeleteAsync()
+    private async Task ScanAndDeleteAsync(CancellationToken cancellationToken)
     {
         try
         {
             var subscriptionsResult = subscriptionControlPlane.List();
             if (subscriptionsResult.Resource == null)
             {
-                return Task.CompletedTask;
+                return;
             }
 
             foreach (var subscription in subscriptionsResult.Resource)
@@ -61,25 +61,22 @@ internal sealed class FilesystemRemover(
 
                 foreach (var account in accountsResult.Resource)
                 {
-                    var filesystems = _adlsServiceControlPlane.ListFilesystems(account);
+                    var filesystems = await _adlsServiceControlPlane.ListFilesystems(account, "", cancellationToken);
                     foreach (var filesystem in filesystems.Resource!)
                     {
                         if (filesystem.DeleteScheduled && DateTime.UtcNow > filesystem.ScheduledDeleteDate)
                         {
                             _adlsServiceControlPlane.DeleteFileSystem(account, filesystem.Name!, "");
                         }
-                        
                     }
                 }
             }
 
             ExecutedAt = DateTimeOffset.UtcNow;
-            return Task.CompletedTask;
         }
         catch (Exception exception)
         {
             logger.LogError(nameof(GeoReplicationSyncScheduler), nameof(ScanAndDeleteAsync), exception.Message);
-            return Task.FromException(exception);
         }
     }
 }

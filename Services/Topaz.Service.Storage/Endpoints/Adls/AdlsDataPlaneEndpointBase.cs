@@ -18,6 +18,11 @@ internal class AdlsDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogger lo
     {
         throw new NotImplementedException();
     }
+
+    public virtual Task GetResponseAsync(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        throw new NotImplementedException();
+    }
     
     public virtual (bool isValid, string[]? validationErrors) Validate(HttpContext context)
     {
