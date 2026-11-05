@@ -59,27 +59,21 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
     {
         cancellationToken.ThrowIfCancellationRequested();
         
-        List<Filesystem> filesystems = [];
-        var task = new Task(() =>
+        var storageAccountPath =
+            GetServiceInstancePath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(),
+                storageAccount.Name);
+        var path = Path.Combine(storageAccountPath, ".adls");
+        var filesystems = await Task.Run(() =>
         {
-            var storageAccountPath =
-                GetServiceInstancePath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(),
-                    storageAccount.Name);
-            var path = Path.Combine(storageAccountPath, ".adls");
             var filesystemsDirectories = Directory.Exists(path) ? Directory.GetDirectories(path) : [];
-            filesystems =
-            [
-                .. from directory in filesystemsDirectories
+            return (from directory in filesystemsDirectories
                 select new DirectoryInfo(directory).Name
                 into filesystemName
                 select GetFileSystem(storageAccount, filesystemName)
                 into filesystem
-                select filesystem!
-            ];
-        });
-
-        await task.WaitAsync(cancellationToken);
-        return [.. filesystems];
+                select filesystem!).ToArray();
+        }, cancellationToken);
+        return filesystems;
     }
 
     public void UpdateFilesystem(StorageAccountResource storageAccount, string filesystemName, Filesystem filesystem)

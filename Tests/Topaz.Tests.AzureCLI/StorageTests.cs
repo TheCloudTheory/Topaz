@@ -54,6 +54,43 @@ public class StorageTests : TopazFixture
     }
 
     [Test]
+    public async Task Adls_ListFileSystems_UsesDfsAccountRoute()
+    {
+        const string storageAccountName = "topazadlslist01";
+        const string resourceGroup = "test-adls-list-rg";
+        const string apiVersion = "2023-08-03";
+        var storageEndpoint = $"https://{storageAccountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}";
+        var accountUrl = $"{storageEndpoint}/?resource=account&api-version={apiVersion}";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS --enable-hierarchical-namespace");
+
+        await RunAzureCliCommand(
+            $"az rest --method get --url \"{accountUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version={apiVersion}\"",
+            response => Assert.That(response["filesystems"]!.AsArray(), Is.Empty));
+
+        foreach (var filesystem in new[] { "list-alpha", "list-beta", "other-filesystem" })
+        {
+            await RunAzureCliCommand(
+                $"az rest --method put --url \"{storageEndpoint}/{filesystem}?resource=filesystem&api-version={apiVersion}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version={apiVersion}\"");
+        }
+
+        await RunAzureCliCommand(
+            $"az rest --method get --url \"{accountUrl}&prefix=list-\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version={apiVersion}\"",
+            response =>
+            {
+                var filesystems = response["filesystems"]!.AsArray()
+                    .Select(filesystem => filesystem!["name"]!.GetValue<string>())
+                    .ToArray();
+                Assert.That(filesystems, Is.EquivalentTo(new[] { "list-alpha", "list-beta" }));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task Adls_DeleteFileSystem_MarksItForDeletion()
     {
         const string storageAccountName = "topazadlsdel01";
