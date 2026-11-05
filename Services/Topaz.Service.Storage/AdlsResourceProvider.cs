@@ -66,7 +66,7 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
                 GetServiceInstancePath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(),
                     storageAccount.Name);
             var path = Path.Combine(storageAccountPath, ".adls");
-            var filesystemsDirectories = Directory.GetDirectories(path);
+            var filesystemsDirectories = Directory.Exists(path) ? Directory.GetDirectories(path) : [];
             filesystems =
             [
                 .. from directory in filesystemsDirectories

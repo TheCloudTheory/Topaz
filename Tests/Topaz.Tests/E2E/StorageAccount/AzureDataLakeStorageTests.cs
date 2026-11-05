@@ -129,6 +129,27 @@ internal sealed class AzureDataLakeStorageTests
 
         Assert.That(exception!.Status, Is.EqualTo(404));
     }
+
+    [Test]
+    public void AzureDataLakeStorage_ListFileSystems_WhenEmpty_ReturnsEmpty()
+    {
+        var filesystems = CreateDataLakeServiceClient().GetFileSystems().ToArray();
+
+        Assert.That(filesystems, Is.Empty);
+    }
+
+    [Test]
+    public async Task AzureDataLakeStorage_ListFileSystems_WithPrefix_ReturnsOnlyMatchingFileSystems()
+    {
+        var serviceClient = CreateDataLakeServiceClient();
+        await serviceClient.CreateFileSystemAsync("list-prefix-one");
+        await serviceClient.CreateFileSystemAsync("other-filesystem");
+
+        var filesystems = serviceClient.GetFileSystems(prefix: "list-prefix").ToArray();
+
+        Assert.That(filesystems.Select(filesystem => filesystem.Name), Is.EqualTo(new[] { "list-prefix-one" }));
+    }
+
     [TestCase("ab")]
     [TestCase("invalid-")]
     [TestCase("invalid--name")]

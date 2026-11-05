@@ -130,6 +130,17 @@ public class BlobStorageTests
     }
 
     [Test]
+    public void BlobStorageTests_WhenContainerListingHasNoMatches_ItShouldReturnAnEmptyResult()
+    {
+        var blobClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        blobClient.CreateBlobContainer("available-container");
+
+        var containers = blobClient.GetBlobContainers(prefix: "missing-prefix").ToArray();
+
+        Assert.That(containers, Is.Empty);
+    }
+
+    [Test]
     public void BlobStorageTests_WhenContainerBlobsAreListed_TheyShouldReturned()
     {
         // Arrange

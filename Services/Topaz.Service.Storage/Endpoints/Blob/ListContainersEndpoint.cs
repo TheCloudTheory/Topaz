@@ -40,7 +40,7 @@ internal sealed class ListContainersEndpoint(Pipeline eventPipeline, ITopazLogge
                 "Handling listing containers for {0}.", storageAccount!.Name);
 
             var op = _controlPlane.ListContainers(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name);
+                storageAccount!.Name, context.Request.Query["prefix"].ToString());
 
             if (op.Result != OperationResult.Success || op.Resource == null)
             {

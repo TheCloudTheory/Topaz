@@ -45,14 +45,20 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
     public ControlPlaneOperationResult<ContainerEnumerationResult> ListContainers(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
-        string storageAccountName)
+        string storageAccountName,
+        string? prefix = null)
     {
         var containers =
             provider.ListAs<Container>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, 10);
+        if (!string.IsNullOrEmpty(prefix))
+            containers = [.. containers.Where(container => container.Name?.StartsWith(prefix, StringComparison.Ordinal) == true)];
 
         return new ControlPlaneOperationResult<ContainerEnumerationResult>(
             OperationResult.Success,
-            new ContainerEnumerationResult(storageAccountName, [.. containers]!));
+            new ContainerEnumerationResult(storageAccountName, [.. containers]!)
+            {
+                Prefix = prefix
+            });
     }
     
     public ControlPlaneOperationResult DeleteContainer(SubscriptionIdentifier subscriptionIdentifier,
