@@ -54,6 +54,29 @@ public class StorageTests : TopazFixture
     }
 
     [Test]
+    public async Task Adls_SetFileSystemProperties_UsesDfsFilesystemRoute()
+    {
+        const string storageAccountName = "topazadlsprops01";
+        const string resourceGroup = "test-adls-props-rg";
+        const string filesystem = "properties-filesystem";
+        const string apiVersion = "2023-08-03";
+        var filesystemUrl = $"https://{storageAccountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/{filesystem}?resource=filesystem&api-version={apiVersion}";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS --enable-hierarchical-namespace");
+        await RunAzureCliCommand(
+            $"az rest --method put --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version={apiVersion}\" \"x-ms-properties=owner:initial\"");
+
+        await RunAzureCliCommand(
+            $"az rest --method patch --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version={apiVersion}\" \"x-ms-properties=owner:topaz,purpose:testing\" --debug",
+            stderrAssertion: stderr => Assert.That(stderr, Does.Contain("Response status: 200")));
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task Adls_ListFileSystems_UsesDfsAccountRoute()
     {
         const string storageAccountName = "topazadlslist01";

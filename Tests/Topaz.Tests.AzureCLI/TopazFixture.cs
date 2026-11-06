@@ -117,6 +117,7 @@ public class TopazFixture
             .WithExtraHost("topazstorqueuesvc01.queue.storage.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazstorqueuesvc02.queue.storage.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazadlsroute01.dfs.storage.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("topazadlsprops01.dfs.storage.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazadlslist01.dfs.storage.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazadlsdel01.dfs.storage.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazadlscond01.dfs.storage.topaz.local.dev", _containerTopaz.IpAddress)

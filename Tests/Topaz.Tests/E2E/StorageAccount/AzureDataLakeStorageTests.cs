@@ -2,6 +2,7 @@ using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Storage;
+using Azure.Storage.Blobs;
 using Azure.Storage.Files.DataLake;
 using Topaz.CLI;
 using Topaz.Identity;
@@ -106,6 +107,25 @@ internal sealed class AzureDataLakeStorageTests
         var result = await serviceClient.CreateFileSystemAsync("test-filesystem");
 
         Assert.That(result.GetRawResponse().Status, Is.EqualTo(201));
+    }
+
+    [Test]
+    public async Task AzureDataLakeStorage_SetFileSystemProperties_ThroughBlobSdk_PersistsMetadata()
+    {
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        var filesystem = serviceClient.GetBlobContainerClient("blob-sdk-filesystem");
+        await filesystem.CreateIfNotExistsAsync();
+
+        await filesystem.SetMetadataAsync(new Dictionary<string, string>
+        {
+            ["owner"] = "topaz",
+            ["purpose"] = "blob-sdk"
+        });
+
+        var properties = await filesystem.GetPropertiesAsync();
+
+        Assert.That(properties.Value.Metadata["owner"], Is.EqualTo("topaz"));
+        Assert.That(properties.Value.Metadata["purpose"], Is.EqualTo("blob-sdk"));
     }
 
     [Test]
