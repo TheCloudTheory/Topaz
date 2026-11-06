@@ -37,6 +37,9 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
 
         var properties = headers["x-ms-properties"].ToString();
         var encryptionScope = headers["x-ms-encryption-scope"].ToString();
+        
+        logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(CreateFileSystem), $"Creating filesystem `{filesystem}` with properties `{properties}` and encryption scope {encryptionScope}");
+        
         var filesystemMetadata = new Filesystem(filesystem, properties, encryptionScope);
 
         _provider.CreateFileSystem(storageAccount, filesystem, filesystemMetadata);

@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using Azure;
-using Microsoft.Extensions.Primitives;
 using Topaz.Service.Shared;
 
 namespace Topaz.Service.Storage.Models;
@@ -21,10 +20,13 @@ internal sealed class Filesystem : TopazApiModel
         ETag = new ETag(LastModified.Value.UtcDateTime.Ticks.ToString());
     }
 
-    private Dictionary<string, string> AsDictionary(string properties)
+    private static Dictionary<string, string> AsDictionary(string properties)
     {
         var segments = properties.Split(",");
-        return segments.Select(segment => segment.Split(":")).ToDictionary(pair => pair[0], pair => pair[1]);
+        
+        return string.IsNullOrWhiteSpace(properties) || segments.Length == 0
+            ? new Dictionary<string, string>()
+            : segments.Select(segment => segment.Split("=")).ToDictionary(pair => pair[0], pair => pair[1]);
     }
 
     public string? Name { get; init; }
@@ -59,6 +61,6 @@ internal sealed class Filesystem : TopazApiModel
     public void UpdateProperties(string requestProperties)
     {
         var segments = requestProperties.Split(",");
-        Properties = segments.Select(segment => segment.Split(":")).ToDictionary(pair => pair[0], pair => pair[1]);
+        Properties = segments.Select(segment => segment.Split("=")).ToDictionary(pair => pair[0], pair => pair[1]);
     }
 }
