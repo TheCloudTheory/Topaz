@@ -148,8 +148,8 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
     public ControlPlaneOperationResult BeginDeletingFilesystem(StorageAccountResource storageAccount, string filesystem,
         string apiVersion, IHeaderDictionary requestHeaders)
     {
-        logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(CreateFileSystem),
-            $"Creating filesystem {filesystem} on storage account {storageAccount.Name}");
+        logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(BeginDeletingFilesystem),
+            $"Beginning deleting of {filesystem} on storage account {storageAccount.Name}");
 
         var existingFilesystem = GetFileSystem(storageAccount, filesystem, apiVersion);
         if (existingFilesystem.Result == OperationResult.NotFound)
@@ -180,5 +180,55 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         _provider.UpdateFilesystem(storageAccount, filesystem, existingFilesystemResource);
 
         return new ControlPlaneOperationResult(OperationResult.Success);
+    }
+
+    public ControlPlaneOperationResult SetFileSystemProperties(StorageAccountResource storageAccount, string filesystem,
+        string apiVersion, IHeaderDictionary requestHeaders)
+    {
+        logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(SetFileSystemProperties),
+            $"Setting properties on {filesystem} on storage account {storageAccount.Name}");
+        
+        var existingFilesystem = GetFileSystem(storageAccount, filesystem, apiVersion);
+        if (existingFilesystem.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult(existingFilesystem.Result, existingFilesystem.Reason,
+                existingFilesystem.Code);
+        }
+        
+        if(requestHeaders.TryGetValue("x-ms-properties", out var requestProperties))
+        {
+            existingFilesystem.Resource!.UpdateProperties(requestProperties.ToString());
+        }
+        else
+        {
+            // If the header is not provided, then all the properties are removed from a filesystem
+            existingFilesystem.Resource!.ClearProperties();
+        }
+        
+        var lastModified = existingFilesystem.Resource.LastModified ?? DateTimeOffset.MinValue;
+        if (DateTimeOffset.TryParse(requestHeaders["If-Modified-Since"], CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal, out var ifModifiedSince) && lastModified <= ifModifiedSince ||
+            DateTimeOffset.TryParse(requestHeaders["If-Unmodified-Since"], CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal, out var ifUnmodifiedSince) && lastModified > ifUnmodifiedSince)
+        {
+            return new ControlPlaneOperationResult(OperationResult.PreconditionFailed,
+                "The condition specified using HTTP conditional header(s) is not met.", "ConditionNotMet");
+        }
+        
+        _provider.UpdateFilesystem(storageAccount, filesystem, existingFilesystem.Resource!);
+        
+        var headers = new Dictionary<string, string>
+        {
+            { "Date", DateTime.UtcNow.ToString("R") },
+            { "Etag", existingFilesystem.Resource!.ETag!.Value.ToString("H") },
+            {
+                "Last-Modified",
+                existingFilesystem.Resource!.LastModified?.ToString("R", CultureInfo.InvariantCulture) ?? DateTime.UtcNow.ToString("R")
+            },
+            { "x-ms-request-id", Guid.NewGuid().ToString() },
+            { "x-ms-version", apiVersion }
+        };
+        
+        return new ControlPlaneOperationResult(OperationResult.Success, null, null, headers);
     }
 }

@@ -1,3 +1,4 @@
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
@@ -66,7 +67,11 @@ internal sealed class FilesystemRemover(
                     {
                         if (filesystem.DeleteScheduled && DateTime.UtcNow > filesystem.ScheduledDeleteDate)
                         {
-                            _adlsServiceControlPlane.DeleteFileSystem(account, filesystem.Name!, "");
+                            var op = _adlsServiceControlPlane.DeleteFileSystem(account, filesystem.Name!, "");
+                            if (op.Result != OperationResult.Deleted)
+                            {
+                                logger.LogError(nameof(FilesystemRemover), nameof(ScanAndDeleteAsync), $"Failed to delete filesystem {filesystem.Name} in account {account.Name}");
+                            }
                         }
                     }
                 }
