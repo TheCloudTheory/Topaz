@@ -66,11 +66,24 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand(
             $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS --enable-hierarchical-namespace");
         await RunAzureCliCommand(
-            $"az rest --method put --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version={apiVersion}\" \"x-ms-properties=owner:initial\"");
+            $"az rest --method put --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version={apiVersion}\"");
 
         await RunAzureCliCommand(
-            $"az rest --method patch --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version={apiVersion}\" \"x-ms-properties=owner:topaz,purpose:testing\" --debug",
+            $"az rest --method patch --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version={apiVersion}\" \"x-ms-properties=owner=dG9wYXo=,purpose=dGVzdGluZw==\" --debug",
             stderrAssertion: stderr => Assert.That(stderr, Does.Contain("Response status: 200")));
+
+        await RunAzureCliCommand(
+            $"az rest --method head --url \"{filesystemUrl}\" --resource \"https://storage.azure.com/\" --headers \"x-ms-version={apiVersion}\" --debug",
+            stderrAssertion: stderr =>
+            {
+                Assert.That(stderr, Does.Contain("Response status: 200"));
+                var responseHeaders = stderr[stderr.IndexOf("Response headers:", StringComparison.Ordinal)..];
+                var headers = Regex.Matches(responseHeaders, @"^INFO: cli\.azure\.cli\.core\.util:\s+'([^']+)': '([^']*)'\s*$", RegexOptions.Multiline)
+                    .ToDictionary(match => match.Groups[1].Value, match => match.Groups[2].Value, StringComparer.OrdinalIgnoreCase);
+
+                Assert.That(headers["x-ms-properties"], Does.Contain("owner=dG9wYXo="));
+                Assert.That(headers["x-ms-properties"], Does.Contain("purpose=dGVzdGluZw=="));
+            });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");

@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json.Serialization;
 using Azure;
 using Topaz.Service.Shared;
@@ -22,12 +23,19 @@ internal sealed class Filesystem : TopazApiModel
 
     private static Dictionary<string, string> AsDictionary(string properties)
     {
-        var segments = properties.Split(",");
-        
-        return string.IsNullOrWhiteSpace(properties) || segments.Length == 0
-            ? new Dictionary<string, string>()
-            : segments.Select(segment => segment.Split("=")).ToDictionary(pair => pair[0], pair => pair[1]);
+        if (string.IsNullOrWhiteSpace(properties))
+        {
+            return [];
+        }
+
+        return properties
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(property => property.Split('=', 2))
+            .ToDictionary(pair => pair[0], pair => Encoding.UTF8.GetString(Convert.FromBase64String(pair[1])));
     }
+
+    public string ToPropertiesHeader() => string.Join(",", (Properties ?? []).Select(property =>
+        $"{property.Key}={Convert.ToBase64String(Encoding.UTF8.GetBytes(property.Value))}"));
 
     public string? Name { get; init; }
     public string? EncryptionScope { get; init; }
@@ -55,12 +63,11 @@ internal sealed class Filesystem : TopazApiModel
 
     /// <summary>
     /// Updates the filesystem properties by replacing the current property collection with values parsed from a comma-separated string of key-value pairs.
-    /// Each property entry is expected to use a colon to separate the property name from its value.
+    /// Each property entry uses a name and a base64-encoded value separated by an equals sign.
     /// </summary>
     /// <param name="requestProperties">The comma-separated property string used to populate the filesystem properties.</param>
     public void UpdateProperties(string requestProperties)
     {
-        var segments = requestProperties.Split(",");
-        Properties = segments.Select(segment => segment.Split("=")).ToDictionary(pair => pair[0], pair => pair[1]);
+        Properties = AsDictionary(requestProperties);
     }
 }

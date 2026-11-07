@@ -87,7 +87,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
             },
             { "x-ms-request-id", Guid.NewGuid().ToString() },
             { "x-ms-version", apiVersion },
-            { "x-ms-properties", "" }, // To be set if there are custom user properties
+            { "x-ms-properties", filesystem.ToPropertiesHeader() },
             { "x-ms-namespace-enabled", storageAccount.Properties.IsHnsEnabled.ToString() ?? "false" },
             {
                 "x-ms-default-encryption-scope", ""
