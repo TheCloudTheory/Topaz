@@ -46,7 +46,7 @@ brew tap thecloudtheory/topaz
 brew install topaz
 ```
 
-You will still need to complete **Step 2** (trusting the certificate). The certificate is installed at `$(brew --prefix)/bin/topaz.crt`.
+You will still need to complete **Step 2** (trusting the certificate). The certificate is installed at `$(brew --prefix topaz)/libexec/topaz.crt`.
 
 :::
 
@@ -116,7 +116,7 @@ Topaz exposes HTTPS endpoints using a self-signed certificate. You need to add i
 
 | Installation | Certificate location |
 |---|---|
-| Homebrew (macOS / Linux) | `$(brew --prefix)/bin/topaz.crt` |
+| Homebrew (macOS) | `$(brew --prefix topaz)/libexec/topaz.crt` |
 | Shell installer | `~/.topaz/topaz.crt` |
 | Standalone executable (release ZIP) | `topaz.crt` in the same directory as the binary |
 | Docker | Copy from the container: `docker run --rm --entrypoint cat thecloudtheory/topaz-host:<tag> /app/topaz.crt > topaz.crt` |
