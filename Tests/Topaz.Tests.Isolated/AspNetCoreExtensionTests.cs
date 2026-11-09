@@ -399,4 +399,26 @@ public class AspNetCoreExtensionTests
             Assert.That(setting.Value.ContentType, Is.EqualTo("application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8"));
         });
     }
+
+    [Test]
+    public async Task WhenSubscriptionIsCreatedOrUpdated_ChangesArePreserved()
+    {
+        var subscriptionId = Guid.NewGuid();
+        var builder = new ConfigurationBuilder();
+        var objectId = Globals.GlobalAdminId;
+        var credentials = new AzureLocalCredential(objectId);
+
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, SubscriptionName, credentials)
+            .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope);
+        
+        await builder.AddTopaz(subscriptionId, objectId).CreateOrUpdateSubscription(subscriptionId, SubscriptionName, credentials);
+        
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        
+        Assert.That(resourceGroup, Is.Not.Null);
+        Assert.That(resourceGroup.Value.Data.Name, Is.EqualTo(ResourceGroupName));
+    }
 }

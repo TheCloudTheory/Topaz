@@ -38,12 +38,30 @@ public static class TopazConfigurationExtensions
     /// <param name="builder">The TopazEnvironmentBuilder instance.</param>
     /// <param name="subscriptionId">The GUID for the new subscription.</param>
     /// <param name="subscriptionName">The display name for the new subscription.</param>
+    /// <param name="credentials">The Azure credentials used to create the subscription.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
     public static async Task<TopazEnvironmentBuilder> AddSubscription(this TopazEnvironmentBuilder builder,
         Guid subscriptionId, string subscriptionName, AzureLocalCredential credentials)
     {
         using var topaz = new TopazArmClient(credentials);
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Creates a new subscription or updates an existing subscription with the specified name.
+    /// </summary>
+    /// <param name="builder">The Topaz environment builder instance.</param>
+    /// <param name="subscriptionId">The unique identifier of the subscription to create or update.</param>
+    /// <param name="subscriptionName">The name to assign to the subscription.</param>
+    /// <param name="credentials">The local Azure credentials used to authenticate the subscription operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the original Topaz environment builder instance.</returns>
+    public static async Task<TopazEnvironmentBuilder> CreateOrUpdateSubscription(this TopazEnvironmentBuilder builder,
+        Guid subscriptionId, string subscriptionName, AzureLocalCredential credentials)
+    {
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateOrUpdateSubscriptionAsync(subscriptionId, subscriptionName);
 
         return builder;
     }

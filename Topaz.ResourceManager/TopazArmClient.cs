@@ -1,4 +1,3 @@
-using System.ClientModel.Primitives;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -46,6 +45,30 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         }
         
         response.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>
+    /// Creates a subscription if it does not exist, or updates the existing subscription with the specified name.
+    /// </summary>
+    /// <param name="subscriptionId">The unique identifier of the subscription.</param>
+    /// <param name="subscriptionName">The name to assign to the subscription.</param>
+    public async Task CreateOrUpdateSubscriptionAsync(Guid subscriptionId, string subscriptionName)
+    {
+        var getRequest = new HttpRequestMessage(HttpMethod.Get, $"subscriptions/{subscriptionId}");
+        getRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        
+        var response = await _httpClient.SendAsync(getRequest);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            await CreateSubscriptionAsync(subscriptionId, subscriptionName);
+            return;
+        }
+        
+        response.EnsureSuccessStatusCode();
+        
+        await UpdateSubscriptionAsync(subscriptionId, subscriptionName, new Dictionary<string, string>());
     }
 
     public async Task PurgeKeyVault(Guid subscriptionId, string keyVaultName, string location)
@@ -448,7 +471,7 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
             properties = new
             {
                 mode = "Incremental",
-                template = System.Text.Json.JsonSerializer.Deserialize<object>(templateJson)
+                template = JsonSerializer.Deserialize<object>(templateJson)
             }
         };
 
@@ -456,8 +479,8 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
             $"providers/Microsoft.Resources/deployments/{deploymentName}")
         {
             Content = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(body),
-                System.Text.Encoding.UTF8, "application/json")
+                JsonSerializer.Serialize(body),
+                Encoding.UTF8, "application/json")
         };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
             (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
@@ -512,7 +535,7 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
             properties = new
             {
                 mode = "Incremental",
-                template = System.Text.Json.JsonSerializer.Deserialize<object>(templateJson)
+                template = JsonSerializer.Deserialize<object>(templateJson)
             }
         };
 
@@ -520,8 +543,8 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
             $"providers/Microsoft.Resources/deployments/{deploymentName}/validate")
         {
             Content = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(body),
-                System.Text.Encoding.UTF8, "application/json")
+                JsonSerializer.Serialize(body),
+                Encoding.UTF8, "application/json")
         };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
             (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
@@ -590,7 +613,7 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
             properties = new
             {
                 mode = "Incremental",
-                template = System.Text.Json.JsonSerializer.Deserialize<object>(templateJson)
+                template = JsonSerializer.Deserialize<object>(templateJson)
             }
         };
 
@@ -598,8 +621,8 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
             $"providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{deploymentName}")
         {
             Content = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(body),
-                System.Text.Encoding.UTF8, "application/json")
+                JsonSerializer.Serialize(body),
+                Encoding.UTF8, "application/json")
         };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
             (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
@@ -818,23 +841,6 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         }
 
         return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
-    }
-
-    /// <summary>
-    /// Returns <see langword="true"/> when the Topaz host is up and responding to requests.
-    /// Uses the unauthenticated <c>GET /health</c> endpoint so no credentials are required.
-    /// </summary>
-    public async Task<bool> CheckIfReadyAsync()
-    {
-        try
-        {
-            var response = await _httpClient.GetAsync("health");
-            return response.IsSuccessStatusCode;
-        }
-        catch (HttpRequestException)
-        {
-            return false;
-        }
     }
 
     public void Dispose()
