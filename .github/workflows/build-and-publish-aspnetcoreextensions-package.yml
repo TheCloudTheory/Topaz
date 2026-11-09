@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   build:
@@ -23,5 +24,10 @@ jobs:
         dotnet-version: 10.0.x
     - name: Pack NuGet package
       run: dotnet pack ./Topaz.AspNetCore.Extensions/Topaz.AspNetCore.Extensions.csproj -c Release --include-symbols -o ./publish
+    - name: NuGet login
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
     - name: Push NuGet package
-      run: dotnet nuget push "./publish/*.nupkg" -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+      run: dotnet nuget push "./publish/*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
