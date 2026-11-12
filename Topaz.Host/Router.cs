@@ -213,7 +213,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
             if (!isAuthorized)
             {
                 response.StatusCode = HttpStatusCode.Unauthorized;
-                response.Content = new StringContent(string.Empty);
+                response.Content ??= new StringContent(string.Empty);
                 return response;
             }
 
