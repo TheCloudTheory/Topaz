@@ -50,6 +50,9 @@ jobs:
       run: |
         cd certificate
         ./ubuntu-install.sh
+        sudo mkdir -p "/etc/docker/certs.d/topazacrrun01.cr.topaz.local.dev:8892"
+        sudo cp topaz.crt "/etc/docker/certs.d/topazacrrun01.cr.topaz.local.dev:8892/ca.crt"
+        sudo systemctl restart docker
     - name: Configure DNS resolution
       run: |
         sudo ./install/install-linux.sh
