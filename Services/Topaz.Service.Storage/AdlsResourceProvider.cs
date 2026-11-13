@@ -80,4 +80,11 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
     {
         CreateOrUpdate(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), GetFilesystemId(storageAccount.Name, filesystemName), filesystem);
     }
+
+    public bool CheckIfPathExists(StorageAccountResource storageAccount, string filesystem, string path)
+    {
+        var dataPath = GetFilesystemDataPath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), storageAccount.Name, filesystem);
+        var fullPath = Path.Combine(dataPath, path);
+        return File.Exists(fullPath);
+    }
 }

@@ -20,6 +20,7 @@ public sealed class AzureDataLakeStorageService(Pipeline eventPipeline, ITopazLo
         new GetFileSystemPropertiesEndpoint(eventPipeline, logger),
         new DeleteFileSystemPropertiesEndpoint(eventPipeline, logger),
         new ListFilesystemsEndpoint(eventPipeline, logger),
-        new SetFileSystemPropertiesEndpoint(eventPipeline, logger)
+        new SetFileSystemPropertiesEndpoint(eventPipeline, logger),
+        new CreatePathEndpoint(eventPipeline, logger)
     ];
 }

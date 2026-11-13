@@ -234,4 +234,38 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         
         return new ControlPlaneOperationResult(OperationResult.Success, null, null, headers);
     }
+
+    public ControlPlaneOperationResult CreatePath(StorageAccountResource storageAccount, string filesystem, string path, IHeaderDictionary requestHeaders, string apiVersion)
+    {
+        logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(CreatePath),
+            $"Creating path {filesystem}/{path} on storage account {storageAccount.Name}");
+        
+        var existingFilesystem = GetFileSystem(storageAccount, filesystem, apiVersion);
+        if (existingFilesystem.Result != OperationResult.Success)
+        {
+            return new ControlPlaneOperationResult(existingFilesystem.Result, existingFilesystem.Reason,
+                existingFilesystem.Code);
+        }
+        
+        var headers = new Dictionary<string, string>
+        {
+            { "Date", DateTime.UtcNow.ToString("R") },
+            { "Etag", existingFilesystem.Resource!.ETag!.Value.ToString("H") },
+            {
+                "Last-Modified",
+                existingFilesystem.Resource!.LastModified?.ToString("R", CultureInfo.InvariantCulture) ?? DateTime.UtcNow.ToString("R")
+            },
+            { "x-ms-request-id", Guid.NewGuid().ToString() },
+            { "x-ms-version", apiVersion }
+        };
+        
+        var exists = _provider.CheckIfPathExists(storageAccount, filesystem, path);
+        if (exists && requestHeaders.TryGetValue("If-None-Match", out var ifNoneMatch) && ifNoneMatch == "*")
+        {
+            // If destination path exists and If-None-Match is provided with "*", fail the operation
+            return new ControlPlaneOperationResult(OperationResult.Conflict, null, null, headers);
+        }
+
+        return new ControlPlaneOperationResult(OperationResult.Success);
+    }
 }
