@@ -33,7 +33,7 @@ internal sealed partial class CreatePathEndpoint(Pipeline eventPipeline, ITopazL
         var filesystem = context.Request.Path.Value.ExtractValueFromPath(1)!;
         var path = context.Request.Path.Value.ExtractValueFromPath(2)!;
         var apiVersion = context.Request.Query["api-version"].ToString();
-        var op = ControlPlane.CreatePath(storageAccount, filesystem, path, context.Request.Headers, apiVersion);
+        var op = ControlPlane.CreatePath(storageAccount, filesystem, path, context.Request.Headers, apiVersion, context.Request.Body);
 
         if (op.Result == OperationResult.Conflict)
         {

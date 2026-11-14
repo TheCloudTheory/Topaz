@@ -89,11 +89,17 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
         return File.Exists(fullPath);
     }
 
-    public void StoreFile(StorageAccountResource storageAccount, string filesystem, string path, Dictionary<string, string> headersToStore)
+    public void StoreFile(StorageAccountResource storageAccount, string filesystem, string path,
+        Dictionary<string, string> headersToStore, Stream requestBody)
     {
         var dataPath = GetFilesystemDataPath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), storageAccount.Name, filesystem);
         var fullPath = Path.Combine(dataPath, path);
+        var metadataPath = Path.Combine(dataPath, "__metadata_" + path);
         
-        File.WriteAllText(fullPath, JsonSerializer.Serialize(headersToStore));
+        File.WriteAllText(metadataPath, JsonSerializer.Serialize(headersToStore));
+
+        using var sr = new StreamReader(requestBody);
+        var content = sr.ReadToEnd();
+        File.WriteAllText(fullPath, content);
     }
 }

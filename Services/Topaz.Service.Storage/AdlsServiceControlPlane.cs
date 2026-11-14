@@ -235,7 +235,8 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         return new ControlPlaneOperationResult(OperationResult.Success, null, null, headers);
     }
 
-    public ControlPlaneOperationResult CreatePath(StorageAccountResource storageAccount, string filesystem, string path, IHeaderDictionary requestHeaders, string apiVersion)
+    public ControlPlaneOperationResult CreatePath(StorageAccountResource storageAccount, string filesystem, string path,
+        IHeaderDictionary requestHeaders, string apiVersion, Stream requestBody)
     {
         logger.LogDebug(nameof(AdlsServiceControlPlane), nameof(CreatePath),
             $"Creating path {filesystem}/{path} on storage account {storageAccount.Name}");
@@ -288,7 +289,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
             headersToStore[headerKey] = headersToStore[headerKey];
         }
         
-        _provider.StoreFile(storageAccount, filesystem, path, headersToStore);
+        _provider.StoreFile(storageAccount, filesystem, path, headersToStore, requestBody);
 
         return new ControlPlaneOperationResult(OperationResult.Success);
     }
