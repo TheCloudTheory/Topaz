@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
@@ -86,5 +87,13 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
         var dataPath = GetFilesystemDataPath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), storageAccount.Name, filesystem);
         var fullPath = Path.Combine(dataPath, path);
         return File.Exists(fullPath);
+    }
+
+    public void StoreFile(StorageAccountResource storageAccount, string filesystem, string path, Dictionary<string, string> headersToStore)
+    {
+        var dataPath = GetFilesystemDataPath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), storageAccount.Name, filesystem);
+        var fullPath = Path.Combine(dataPath, path);
+        
+        File.WriteAllText(fullPath, JsonSerializer.Serialize(headersToStore));
     }
 }

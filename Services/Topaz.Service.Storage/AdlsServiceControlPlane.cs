@@ -247,7 +247,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
                 existingFilesystem.Code);
         }
         
-        var headers = new Dictionary<string, string>
+        var responseHeaders = new Dictionary<string, string>
         {
             { "Date", DateTime.UtcNow.ToString("R") },
             { "Etag", existingFilesystem.Resource!.ETag!.Value.ToString("H") },
@@ -263,8 +263,32 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         if (exists && requestHeaders.TryGetValue("If-None-Match", out var ifNoneMatch) && ifNoneMatch == "*")
         {
             // If destination path exists and If-None-Match is provided with "*", fail the operation
-            return new ControlPlaneOperationResult(OperationResult.Conflict, null, null, headers);
+            return new ControlPlaneOperationResult(OperationResult.Conflict, null, null, responseHeaders);
         }
+
+        // There are certain headers which will be stored along with the file
+        var headerKeysToStore = new[]
+        {
+            "Cache-Control",
+            "Content-Encoding",
+            "Content-Language",
+            "Content-Disposition",
+            "x-ms-cache-control",
+            "x-ms-content-type",
+            "x-ms-content-encoding",
+            "x-ms-content-language",
+            "x-ms-content-disposition",
+            "x-ms-properties"
+        };
+
+        var headersToStore = new Dictionary<string, string>();
+        foreach (var headerKey in headerKeysToStore)
+        {
+            if (!headersToStore.ContainsKey(headerKey)) continue;
+            headersToStore[headerKey] = headersToStore[headerKey];
+        }
+        
+        _provider.StoreFile(storageAccount, filesystem, path, headersToStore);
 
         return new ControlPlaneOperationResult(OperationResult.Success);
     }
