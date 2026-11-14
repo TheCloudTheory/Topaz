@@ -266,7 +266,7 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
             // If destination path exists and If-None-Match is provided with "*", fail the operation
             return new ControlPlaneOperationResult(OperationResult.Conflict, null, null, responseHeaders);
         }
-
+        
         // There are certain headers which will be stored along with the file
         var headerKeysToStore = new[]
         {
@@ -287,6 +287,14 @@ internal sealed class AdlsServiceControlPlane(ITopazLogger logger)
         {
             if (!headersToStore.ContainsKey(headerKey)) continue;
             headersToStore[headerKey] = headersToStore[headerKey];
+        }
+
+        if (exists && requestHeaders.TryGetValue("x-ms-rename-source", out var renameSource))
+        {
+            // If rename source is given, we will rename the provided file or directory to the value
+            // provided in the URL
+            _provider.Rename(storageAccount, filesystem, path, headersToStore, renameSource);
+            return new  ControlPlaneOperationResult(OperationResult.Success, null, null, headersToStore);
         }
         
         _provider.StoreFile(storageAccount, filesystem, path, headersToStore, requestBody);

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Primitives;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
@@ -101,5 +102,19 @@ internal sealed class AdlsResourceProvider(ITopazLogger logger) : ResourceProvid
         using var sr = new StreamReader(requestBody);
         var content = sr.ReadToEnd();
         File.WriteAllText(fullPath, content);
+    }
+
+    public void Rename(StorageAccountResource storageAccount, string filesystem, string path,
+        Dictionary<string, string> headersToStore, StringValues renameSource)
+    {
+        var dataPath = GetFilesystemDataPath(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), storageAccount.Name, filesystem);
+        var fullPath = Path.Combine(dataPath, path);
+        var sourcePath = Path.Combine(dataPath, renameSource.ToString());
+        var metadataPath = Path.Combine(dataPath, "__metadata_" + path);
+        var sourceMetadataPath = Path.Combine(dataPath, "__metadata_" + renameSource);
+        
+        File.Replace(sourcePath, fullPath, null);
+        File.Replace(sourceMetadataPath, metadataPath, null);
+        File.WriteAllText(metadataPath, JsonSerializer.Serialize(headersToStore));
     }
 }
