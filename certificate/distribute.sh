@@ -6,6 +6,7 @@ CRT="$SCRIPT_DIR/topaz.crt"
 KEY="$SCRIPT_DIR/topaz.key"
 
 DESTINATIONS=(
+  "$SCRIPT_DIR/.."
   "$SCRIPT_DIR/../.devcontainer"
   "$SCRIPT_DIR/../Topaz.Host"
   "$SCRIPT_DIR/../Topaz.Portal"
