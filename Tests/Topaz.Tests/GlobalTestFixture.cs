@@ -21,7 +21,9 @@ public class GlobalTestFixture
         var host = new TopazHost(new GlobalOptions
         {
             EnableLoggingToFile = true,
-            EmulatorIpAddress = "0.0.0.0"
+            EmulatorIpAddress = "0.0.0.0",
+            CertificateFile = Path.Combine(AppContext.BaseDirectory, "topaz.crt"),
+            CertificateKey = Path.Combine(AppContext.BaseDirectory, "topaz.key")
         }, logger);
 
         _topaz = host.StartAsync(CancellationTokenSource.Token);
