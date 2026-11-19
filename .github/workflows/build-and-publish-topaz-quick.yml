@@ -32,6 +32,12 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Configure Docker registry certificate
+      run: |
+        CERT="Tests/Topaz.Tests/bin/Debug/net10.0/topaz.crt"
+        sudo mkdir -p "/etc/docker/certs.d/topazacrrun01.cr.topaz.local.dev:8892"
+        sudo cp "$CERT" "/etc/docker/certs.d/topazacrrun01.cr.topaz.local.dev:8892/ca.crt"
+        sudo systemctl restart docker
     - name: Publish Linux (interim)
       run: |
         dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r linux-x64 -o ./publish
